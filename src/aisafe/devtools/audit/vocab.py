@@ -106,9 +106,12 @@ APPROVAL_SYMBOLS = re.compile(
     r"|\binput\(\s*f?[\"'][^\"'\n]*(?i:confirm|approve|proceed|continue|y/n|yes)[^\"'\n]*[\"'])"
 )
 
-# Literals that switch a gate off. `-y` only counts beside a destructive CLI (`rm`,
-# package managers, `kubectl`, `terraform`, `gh`, `az`, `aws`, `gcloud`, `docker`):
-# a bare `-y` is `npx -y`, which is supply chain (AUD-602), not gate bypass.
+# Literals that switch a gate off. `-y` and `--yes` only count beside a destructive CLI
+# (`rm`, package managers, `kubectl`, `terraform`, `gh`, `az`, `aws`, `gcloud`, `docker`)
+# or an agent CLI (`aider`, `claude`, `codex`, `gemini`, `goose`, `opencode`): a bare
+# `-y` is `npx -y`, which is supply chain (AUD-602), and a bare `--yes` is a release
+# script (`cz bump --changelog --yes` was reported as a bypassed gate, twice, in one
+# Makefile). The agent flags that switch approval off are unambiguous on their own.
 # The key/value forms accept an optional closing quote before the separator so a
 # JSON `"auto_approve": true` reads the same as YAML `auto_approve: true`.
 _GATE_BYPASS_KV = (
@@ -117,8 +120,11 @@ _GATE_BYPASS_KV = (
     r"|\bapproval_callback\b[\"']?\s*[:=]\s*(?:None|null|undefined)\b"
 )
 _GATE_BYPASS_CLI = (
-    r"\bskip_confirmation\b|--yes\b"
-    r"|\b(?:rm|apt(?:-get)?|yum|dnf|kubectl|terraform|gh|az|aws|gcloud|docker)\b[^\n|;&]*\s-y\b"
+    r"\bskip_confirmation\b"
+    r"|\b(?:rm|apt(?:-get)?|yum|dnf|kubectl|terraform|gh|az|aws|gcloud|docker"
+    r"|aider|claude|codex|gemini|goose|opencode)\b[^\n|;&]*\s(?:-y|--yes(?:-always)?)\b"
+    r"|--dangerously-skip-permissions\b|--dangerously-bypass-approvals-and-sandbox\b"
+    r"|--yolo\b|--full-auto\b|(?<![\w-])-{1,2}auto-approve\b"
 )
 GATE_BYPASS = re.compile(f"(?:{_GATE_BYPASS_KV}|{_GATE_BYPASS_CLI})")
 
@@ -160,6 +166,9 @@ GATE_TEXT_ANCHORS: tuple[str, ...] = (
     "autoApprove",
     "skip_confirmation",
     "-y",
+    "dangerously",
+    "full-auto",
+    "auto-approve",
 )
 
 # Names that bound an agent loop (AUD-102). Excludes bare counters (`i`, `n`, `count`,
@@ -231,9 +240,25 @@ KILL_SWITCH_SYMBOLS: tuple[str, ...] = (
     "emergency_stop",
     "pause_agent",
     "agent_disabled",
+    "chat_disabled",
+    "maintenance_mode",
+    # camelCase spellings (TypeScript, Go, Java); the rows match case-insensitively. A
+    # gateway's `config.chatDisabled` was the only kill switch in a four-service
+    # application, and the audit reported every service behind it as having none.
+    "killswitch",
+    "circuitbreaker",
+    "emergencystop",
+    "agentdisabled",
+    "chatdisabled",
+    "maintenancemode",
 )
 
-_KILL_SWITCH_ENV_NAMES = r"(?:AGENT_DISABLED|KILL_SWITCH|EMERGENCY_STOP|PAUSE_AGENT)"
+# The env names a kill switch is read from. `*_DISABLED` is kept to the names that stop
+# the AI path (`CHAT_DISABLED`, `AGENT_DISABLED`): `TELEMETRY_DISABLED` switches nothing off.
+_KILL_SWITCH_ENV_NAMES = (
+    r"(?:(?:AGENT|CHAT|AI|LLM|ASSISTANT|BOT|COPILOT|MODEL)_(?:DISABLED|PAUSED|OFF)"
+    r"|KILL_SWITCH|EMERGENCY_STOP|PAUSE_AGENT|MAINTENANCE_MODE)"
+)
 
 # Kill-switch reads at runtime, one regex per idiom. None of them match a bare
 # assignment (`AGENT_DISABLED = False`) or a Settings field declaration.
@@ -242,12 +267,19 @@ KILL_SWITCH_ENV_READS: tuple[re.Pattern[str], ...] = (
     re.compile(r"\bos\.environ(?:\.get)?\s*[\[(]\s*[\"']" + _KILL_SWITCH_ENV_NAMES + r"\b"),
     # os.getenv("AGENT_DISABLED")  /  getenv("KILL_SWITCH")
     re.compile(r"\bgetenv\(\s*[\"']" + _KILL_SWITCH_ENV_NAMES + r"\b"),
-    # process.env.AGENT_DISABLED  /  process.env["AGENT_DISABLED"]
-    re.compile(r"\bprocess\.env(?:\.|\s*\[\s*[\"'])" + _KILL_SWITCH_ENV_NAMES + r"\b"),
+    # process.env.AGENT_DISABLED  /  process.env["AGENT_DISABLED"]  /  env.CHAT_DISABLED
+    # (a parsed env object)  /  import.meta.env.CHAT_DISABLED  (Vite)
+    re.compile(
+        r"\b(?:process\.|import\.meta\.)?env(?:\.|\s*\[\s*[\"'])" + _KILL_SWITCH_ENV_NAMES + r"\b"
+    ),
     # os.Getenv("AGENT_DISABLED")  (Go)
     re.compile(r"\bos\.Getenv\(\s*\"" + _KILL_SWITCH_ENV_NAMES + r"\b"),
-    # settings.kill_switch  /  settings.agent_disabled  (a read; `settings.x = ...` excluded)
-    re.compile(r"\bsettings\.(?:kill_switch|agent_disabled)\b(?!\s*=[^=])"),
+    # settings.kill_switch  /  settings.chat_disabled  (a read; `settings.x = ...` excluded)
+    re.compile(
+        r"\bsettings\.(?:kill_switch|agent_disabled|chat_disabled|maintenance_mode)\b(?!\s*=[^=])"
+    ),
+    # Deno.env.get("CHAT_DISABLED")
+    re.compile(r"\bDeno\.env\.get\(\s*[\"']" + _KILL_SWITCH_ENV_NAMES + r"\b"),
 )
 
 # This package declares GUARDRAILS_DISABLE_ALL in `Settings` and documents it in

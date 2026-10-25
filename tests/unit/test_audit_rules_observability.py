@@ -125,6 +125,31 @@ def test_701_fires_on_py_agent_with_no_tracing(py_agent, audit_context):
     assert not [u for u in unknown if "AUD-701" in u.rule_ids]
 
 
+def test_701_skips_a_root_unit_that_holds_no_code(tmp_path: Path, audit_context):
+    """
+    The root of a monorepo is an AI surface as soon as `.env` names a model, and it makes
+    no model call of its own. Asked for tracing on calls it never made, a real root unit
+    was reported while the services behind it, which did trace, were not. The same guard
+    AUD-107 uses applies: no model call, ingress or tool in the unit, no finding.
+    """
+    files = {
+        "pyproject.toml": "[project]\nname = 'r'\n",
+        ".env.example": "INTENT_MODEL=gpt-4o-mini\nOPENAI_API_KEY=your-key-here\n",
+        "migrate.py": "from pathlib import Path\n\ndef main():\n    Path('o').write_text('x')\n",
+        "svc/pyproject.toml": "[project]\nname = 'svc'\n",
+        "svc/app.py": (
+            "from openai import OpenAI\n\nclient = OpenAI()\n\n\ndef ask(q):\n"
+            "    return client.chat.completions.create(model='gpt-4o', messages=[])\n"
+        ),
+    }
+    for rel, text in files.items():
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(text, encoding="utf-8")
+    findings, _ = _run(NoLLMObservability, audit_context(tmp_path))
+    assert [(f.display_id, f.scope.name) for f in findings] == [("AUD-701", "svc")]
+
+
 def test_701_apm_only_is_low_sub_finding_not_silence(audit_fixture, audit_context):
     findings, _ = _run(NoLLMObservability, audit_context(audit_fixture("apm_only")))
     assert [f.display_id for f in findings] == ["AUD-701/apm-only"]
@@ -172,6 +197,11 @@ def test_701_is_per_unit(tmp_path: Path):
     plain = Unit(id="u3", root="svc/plain", manifest=None, language="python", ai_surface=False)
     inventory = Inventory(
         units=[blind, traced, plain],
+        # Both AI units make a call of their own; a unit that makes none is skipped.
+        llm_calls=[
+            {"unit": "u1", "file": "svc/traced/app.py", "line": 3, "provider": "openai"},
+            {"unit": "u2", "file": "svc/blind/app.py", "line": 3, "provider": "openai"},
+        ],
         observability=[{"lib": "langfuse", "file": "svc/traced/app.py", "line": 1}],
     )
     ctx = AuditContext(root=tmp_path, inventory=inventory)

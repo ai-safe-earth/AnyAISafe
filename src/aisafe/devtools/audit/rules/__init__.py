@@ -441,6 +441,26 @@ def hits_in(ctx: AuditContext, table: str, *, unit: str | None = None, file: str
     return out
 
 
+def has_request_path(ctx: AuditContext, unit: Unit) -> bool:
+    """
+    True when the unit has something a per-request control could sit in front of: a
+    model call, an ingress point, or a tool of its own.
+
+    `ai_surface` alone is not that. A unit earns the flag from a model id in a config
+    file, and the repository root is where `.env.example` lives -- so in any project
+    with a root-level env template and the code in subdirectories, the root unit is an
+    AI surface holding no code. AUD-107 asked such a unit for a kill switch "at the top
+    of every request" when it served none, and AUD-701 for tracing on model calls it
+    never made; the only way to clear either would have been to satisfy the rule while
+    building nothing.
+    """
+    for key in ("llm_calls", "ingress", "tools"):
+        for row in getattr(ctx.inventory, key, None) or []:
+            if isinstance(row, dict) and row.get("unit") == unit.id:
+                return True
+    return False
+
+
 # Precision gating -- evaluated on every call, never snapshotted at import, so a
 # `measured_precision` set after this module loads gates the right rules.
 

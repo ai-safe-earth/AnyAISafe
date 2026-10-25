@@ -1301,6 +1301,31 @@ def test_kill_switch_read_versus_declaration(tmp_path: Path) -> None:
     assert inert and inert[0].file == ".env.example"
 
 
+def test_kill_switch_read_in_a_typescript_gateway(tmp_path: Path) -> None:
+    """A gateway's `config.chatDisabled` and the `env.CHAT_DISABLED` it comes from are reads."""
+    root = project(
+        tmp_path,
+        {
+            "gateway/package.json": '{"name": "gw"}\n',
+            "gateway/src/config.ts": (
+                'export const config = {\n  chatDisabled: env.CHAT_DISABLED === "true",\n};\n'
+            ),
+            "gateway/src/server.ts": (
+                'app.addHook("onRequest", async (request, reply) => {\n'
+                "  if (!config.chatDisabled) return;\n"
+                "  return reply.send(note);\n"
+                "});\n"
+            ),
+            "gateway/src/types.ts": "export type Config = { chatDisabled: boolean };\n",
+        },
+    )
+    _inv, hits, _facts = run(root)
+    reads = {(h.file, h.line) for h in by_table(hits, "kill_switch_read")}
+    assert reads == {("gateway/src/config.ts", 2), ("gateway/src/server.ts", 2)}
+    # The type declaration names the switch without reading it.
+    assert "gateway/src/types.ts" in {h.file for h in by_table(hits, "kill_switch_symbol")}
+
+
 def test_ingress_to_prompt_fallback(tmp_path: Path) -> None:
     root = project(
         tmp_path,

@@ -612,8 +612,11 @@ def test_aud107_declared_only_reports_absence_and_inert(audit_fixture, audit_con
     assert [f.display_id for f in findings] == ["AUD-107", "AUD-107/inert"]
     absence, inert = findings
     assert absence.notes and "declared but never read" in absence.notes
+    # The fixture's own package name (`killswitch-declared-only`) carries the camelCase
+    # symbol: a declaration row, never a read.
     assert [(e.role, e.file, e.line) for e in absence.evidence] == [
         ("absence", ".", 0),
+        ("declared", "pyproject.toml", 2),
         ("declared", "settings.py", 10),
     ]
     assert inert.location == (".env.example", 2)
@@ -636,6 +639,64 @@ def test_aud107_grep_tier_matches_deep(py_agent, audit_context):
     deep = _eval(NoKillSwitch, audit_context(py_agent))
     grep = _eval(NoKillSwitch, audit_context(py_agent, deep=False))
     assert [f.fingerprint for f in deep] == [f.fingerprint for f in grep]
+
+
+GATEWAY_TS = (
+    'import fastify from "fastify";\n'
+    'import { config } from "./config";\n'
+    "const app = fastify();\n"
+    'app.addHook("onRequest", async (req, reply) => {\n'
+    "  if (!config.chatDisabled) return;\n"
+    '  return reply.send({ text: "paused" });\n'
+    "});\n"
+    'app.post("/api/chat/stream", async (req) => forward(req.body));\n'
+)
+
+
+def test_aud107_edge_switch_in_a_gateway_lowers_the_finding(tmp_path: Path, audit_context):
+    """
+    A TypeScript gateway in front of the model service reads `config.chatDisabled` on every
+    request: that is the rule's own "switch at the edge". The gateway makes no model call,
+    so it is not an AI surface and the per-unit loop never saw it; every service behind it
+    was reported as having no kill switch, at medium. Now the edge is found: the service's
+    finding stays (a worker or a direct call does not pass the gateway) but drops to low,
+    names the edge, and keeps its fingerprint so an older baseline still matches.
+    """
+    root = _write_tree(
+        tmp_path / "edge",
+        {
+            "gateway/package.json": '{"name": "gw", "dependencies": {"fastify": "4.0.0"}}\n',
+            "gateway/src/server.ts": GATEWAY_TS,
+            "gateway/src/config.ts": 'export const config = { chatDisabled: env.CHAT_DISABLED === "true" };\n',
+            "svc/pyproject.toml": "[project]\nname = 'svc'\n",
+            "svc/app.py": OPENAI_AGENT,
+        },
+    )
+    with_edge = _eval(NoKillSwitch, audit_context(root))
+    assert [f.scope.name for f in with_edge] == ["svc"]
+    finding = with_edge[0]
+    assert finding.severity is Severity.LOW
+    assert finding.sub is None
+    assert "edge switch" in finding.title
+    assert [e.role for e in finding.evidence] == ["absence", "edge"]
+    # The first read in the gateway by path: the env read in config.ts, which feeds server.ts.
+    assert (finding.evidence[1].file, finding.evidence[1].line) == ("gateway/src/config.ts", 1)
+    assert finding.notes and "gateway/src/config.ts:1" in finding.notes
+    assert "direct call to this unit is not" in finding.notes
+
+    # With no read in the gateway the same service is reported at medium, under the same
+    # fingerprint. The gateway unit stays so the unit numbering, which the absence text
+    # carries, does not move.
+    (root / "gateway/src/server.ts").write_text(
+        GATEWAY_TS.replace("  if (!config.chatDisabled) return;\n", ""), encoding="utf-8"
+    )
+    (root / "gateway/src/config.ts").write_text(
+        "export const config = { port: 3000 };\n", encoding="utf-8"
+    )
+    alone = _eval(NoKillSwitch, audit_context(root))
+    assert [f.scope.name for f in alone] == ["svc"]
+    assert alone[0].severity is Severity.MEDIUM
+    assert alone[0].fingerprint == finding.fingerprint
 
 
 # ---------------------------------------------------------------------------

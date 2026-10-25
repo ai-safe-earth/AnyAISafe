@@ -191,6 +191,9 @@ def test_trifecta_mcp_server_supplies_missing_leg(tmp_path, audit_context):
         assert "mcp server web" in roles["untrusted"].snippet
         assert "implied by MCP server 'web'" in (f.notes or "")
         assert "data flow not verified" in (f.notes or "")
+        # A leg implied by a server's name is weaker evidence than a call in code.
+        assert f.severity == Severity.HIGH
+        assert "high, not critical" in (f.notes or "")
 
 
 def test_trifecta_trusted_remote_host_is_not_untrusted_ingress(tmp_path, audit_context):
@@ -207,6 +210,65 @@ def test_trifecta_trusted_remote_host_is_not_untrusted_ingress(tmp_path, audit_c
     servers = ctx.inventory.mcp["servers"]
     assert [s["trusted"] for s in servers] == [True]
     assert "untrusted" in servers[0]["implied_legs"]
+    findings, _ = _run(LethalTrifecta, ctx)
+    assert findings == []
+
+
+ADMIN_SCRIPT = (
+    "import os\n"
+    "import httpx\n"
+    "\n"
+    "\n"
+    "def main():\n"
+    "    key = os.environ.get('SUPABASE_SERVICE_ROLE_KEY', '')\n"
+    "    users = httpx.get('https://db.example/auth/v1/admin/users', headers={'k': key})\n"
+    "    httpx.put('https://db.example/auth/v1/admin/users/1', json=users.json())\n"
+)
+
+
+def test_trifecta_scope_needs_a_model_on_its_call_paths(tmp_path, audit_context):
+    """
+    Three legs with no model between them is a script, not an agent. A one-shot admin
+    script (service key, list users over HTTP, reset a password) was reported as a
+    critical trifecta because its unit held an agent elsewhere; the agent itself had
+    nothing to do with the script. The same three legs become a trifecta the moment the
+    model is on the path: here the second script hands the fetched users to `ask`.
+    """
+    _write(tmp_path, "agent.py", AGENT_PY)
+    _write(tmp_path, "scripts/admin.py", ADMIN_SCRIPT)
+    findings, rule = _run(LethalTrifecta, audit_context(tmp_path, deep=True))
+    assert findings == []
+    assert rule.unknown == []
+
+    _write(
+        tmp_path,
+        "scripts/triage.py",
+        "from agent import ask\n"
+        + ADMIN_SCRIPT.replace("json=users.json()", "json=ask(users.text)"),
+    )
+    findings, rule = _run(LethalTrifecta, audit_context(tmp_path, deep=True))
+    assert [(f.scope.kind, f.scope.name) for f in findings] == [
+        ("function", "scripts/triage.py::main")
+    ]
+    assert findings[0].severity == Severity.CRITICAL
+
+
+def test_trifecta_unit_tier_needs_a_model_in_the_unit(tmp_path, audit_context):
+    """An AI surface by config alone (a model id in `.env.example`) is not an agent loop."""
+    _write(tmp_path, ".env.example", "INTENT_MODEL=gpt-4o-mini\n")
+    _write(tmp_path, "store.py", 'import os\n\nDB_URL = os.environ.get("DB_URL", "")\n')
+    _write(
+        tmp_path,
+        "runner.py",
+        "import subprocess\n\n\ndef run(cmd):\n    subprocess.run(cmd, shell=True)\n",
+    )
+    _write(
+        tmp_path,
+        "web.py",
+        "import requests\n\n\ndef fetch(url):\n    return requests.get(url).text\n",
+    )
+    ctx = audit_context(tmp_path, deep=False)
+    assert any(u.ai_surface for u in ctx.inventory.units)
     findings, _ = _run(LethalTrifecta, ctx)
     assert findings == []
 

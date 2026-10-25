@@ -1,7 +1,7 @@
 {
   "schema": "aisg/1",
   "kind": "audit-baseline",
-  "generated_at": "2026-10-23T09:53:31Z",
+  "generated_at": "2026-10-25T18:56:26Z",
   "tool": {
     "name": "aisafe-audit",
     "version": "0.1.0"
@@ -11,7 +11,6 @@
     "10293589c3096cd4",
     "1765a41d7508cb42",
     "1fac5fbdf5d3a5cc",
-    "39cc612e7bfa2ec1",
     "3a440bce6867fd96",
     "4a967929f06e5b9e",
     "4df379239326ff4d",
@@ -19,9 +18,7 @@
     "63f94b128c7d6243",
     "66ee667b3d843c92",
     "6b6262dc43099eaa",
-    "6e03e5340084b138",
     "71b307b18527ec82",
-    "75fec78c0a644375",
     "78fb1a3c4007a491",
     "7da8a798f54a2565",
     "80af32970a9c7027",
@@ -70,6 +67,12 @@
       "reason": "warning text naming the flag inside that same warnings.warn call; the disable-all flag is declared in Settings and .env.example but nothing in aisafe.core or aisafe.modules reads it. This repository is a guardrails library, not a deployed AI system, so no runtime kill switch is wired"
     },
     {
+      "fingerprint": "a34c37f6bac76ccd",
+      "rule": "AUD-101/docs",
+      "file": "plugins/aisafe/skills/ai-safety-audit/references/controls.md:124",
+      "reason": "the packaged skill's controls reference names the Claude Code permission-bypass flag as a literal to remove from CI and hooks: a documentation mention, not a grant (the Claude Code plugin's mirror of the canonical copy)"
+    },
+    {
       "fingerprint": "1765a41d7508cb42",
       "rule": "AUD-101/docs",
       "file": "src/aisafe/skills/ai-safety-audit/references/controls.md:124",
@@ -80,24 +83,6 @@
       "rule": "AUD-202",
       "file": "src/aisafe/cli.py:38",
       "reason": "the aisafe CLI epilog shows an example aisafe hook install command with the installer's non-interactive confirmation flag: aisafe hook install prints the unified diff of the host's hook file first and writes only when the operator passes the flag or answers yes at a tty; the hook's own shell policy asks before an agent runs the installer; no agent approval gate is involved"
-    },
-    {
-      "fingerprint": "75fec78c0a644375",
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1503",
-      "reason": "the installer's non-interactive confirmation flag: aisafe hook install prints the unified diff of the host's hook file first and writes only when the operator passes the flag or answers yes at a tty; the hook's own shell policy asks before an agent runs the installer; no agent approval gate is involved (anchor src/aisafe/devtools/hook.py:1493)"
-    },
-    {
-      "fingerprint": "6e03e5340084b138",
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1628",
-      "reason": "the installer's non-interactive confirmation flag: aisafe hook install prints the unified diff of the host's hook file first and writes only when the operator passes the flag or answers yes at a tty; the hook's own shell policy asks before an agent runs the installer; no agent approval gate is involved (anchor src/aisafe/devtools/hook.py:1618)"
-    },
-    {
-      "fingerprint": "39cc612e7bfa2ec1",
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1632",
-      "reason": "the installer's non-interactive confirmation flag: aisafe hook install prints the unified diff of the host's hook file first and writes only when the operator passes the flag or answers yes at a tty; the hook's own shell policy asks before an agent runs the installer; no agent approval gate is involved (anchor src/aisafe/devtools/hook.py:1622)"
     },
     {
       "fingerprint": "08b0e1380a7102bd",
@@ -212,12 +197,6 @@
       "rule": "AUD-1001",
       "file": ".:0",
       "reason": "no system card because this repository is a guardrails library, not an AI system; `aisafe init` writes the card for the deployments that use it"
-    },
-    {
-      "fingerprint": "a34c37f6bac76ccd",
-      "rule": "AUD-101/docs",
-      "file": "plugins/aisafe/skills/ai-safety-audit/references/controls.md:124",
-      "reason": "the packaged skill's controls reference names the Claude Code permission-bypass flag as a literal to remove from CI and hooks: a documentation mention, not a grant (the Claude Code plugin's mirror of the canonical copy)"
     }
   ],
   "index": {
@@ -240,11 +219,6 @@
       "rule": "AUD-801",
       "file": "src/aisafe/integrations/nemo_rails.py:61",
       "title": "Guard present but unmeasured"
-    },
-    "39cc612e7bfa2ec1": {
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1632",
-      "title": "Inert or bypassed gate"
     },
     "3a440bce6867fd96": {
       "rule": "AUD-107/inert",
@@ -281,20 +255,10 @@
       "file": "src/aisafe/config/settings.py:294",
       "title": "No kill switch"
     },
-    "6e03e5340084b138": {
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1628",
-      "title": "Inert or bypassed gate"
-    },
     "71b307b18527ec82": {
       "rule": "AUD-801",
       "file": "src/aisafe/__init__.py:48",
       "title": "Guard present but unmeasured"
-    },
-    "75fec78c0a644375": {
-      "rule": "AUD-202",
-      "file": "src/aisafe/devtools/hook.py:1503",
-      "title": "Inert or bypassed gate"
     },
     "78fb1a3c4007a491": {
       "rule": "AUD-107/inert",

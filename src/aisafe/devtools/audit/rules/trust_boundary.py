@@ -277,6 +277,47 @@ def _scope_anchor(pyfacts: Any, scope: Scope) -> tuple[str, int]:
     return _posix(scope.name or "."), 1 if scope.kind == "file" else 0
 
 
+def _model_keys(pyfacts: Any) -> set[str]:
+    """Call-graph keys of the functions (or module bodies) that make a model call."""
+    out: set[str] = set()
+    for call in getattr(pyfacts, "llm_calls", None) or []:
+        file = _posix(getattr(call, "file", "") or "")
+        if not file:
+            continue
+        function = getattr(call, "function", None)
+        out.add(f"func:{file}::{function}" if function else f"module:{file}")
+    return out
+
+
+def _scope_reaches_model(pyfacts: Any, scope: Scope) -> bool:
+    """
+    True when a model call sits on the call paths that gave `scope` its legs. Three legs
+    with no model between them is a script, not an agent: `create_admin_user.py` read a
+    service key, listed users over HTTP and reset a password, and was reported as a
+    critical trifecta in a repository whose agent lived three directories away.
+    """
+    model_keys = _model_keys(pyfacts)
+    if not model_keys:
+        return False
+    return any(key in model_keys for key in _scope_keys(pyfacts, scope))
+
+
+def _unit_has_model(ctx: AuditContext, unit: Unit) -> bool:
+    """A model call in the unit, or an MCP config there (the host agent is the model)."""
+    for row in ctx.inventory.llm_calls or []:
+        if isinstance(row, dict) and row.get("unit") == unit.id:
+            return True
+    mcp = ctx.inventory.mcp if isinstance(ctx.inventory.mcp, dict) else {}
+    for entry in mcp.get("configs") or []:
+        file = _posix(entry.get("file") if isinstance(entry, dict) else "")
+        if not file:
+            continue
+        owner = _unit_for_path(ctx, file)
+        if owner is not None and owner.id == unit.id:
+            return True
+    return False
+
+
 @dataclass
 class _UnitLegs:
     """Unit-tier legs: inventory entries per role, plus MCP-implied ones kept apart."""
@@ -357,6 +398,12 @@ class LethalTrifecta(AuditRule):
     known_failure_modes = (
         "unit-level scope over-approximates in monorepos",
         "MCP legs implied by package name",
+        "a scope that holds all three legs but reaches no model call is not reported: an "
+        "admin script that reads a key, fetches and writes is not an agent; an agent whose "
+        "model call is dispatched by a framework the call graph cannot follow falls to the "
+        "unit tier",
+        "a leg implied by an MCP server's name is weaker evidence than a call in code; a "
+        "unit-tier finding that rests on one is reported high, not critical",
         "call-graph reach is depth-3; a call is an edge only when the name is defined in "
         "the caller's file or resolves to one definition, so dispatch through a name a "
         "library defines many times (`call`, `forward`, `__init__`) is not followed",
@@ -428,6 +475,8 @@ class LethalTrifecta(AuditRule):
                         )
                     )
                     continue
+                if not _scope_reaches_model(pyfacts, scope):
+                    continue
                 file, line = _scope_anchor(pyfacts, scope)
                 findings.append(
                     self.finding(
@@ -443,6 +492,8 @@ class LethalTrifecta(AuditRule):
 
         for unit in ctx.inventory.units:
             if not unit.ai_surface or unit.id in deep_hit_units:
+                continue
+            if not _unit_has_model(ctx, unit):
                 continue
             legs = _inventory_legs(ctx, unit)
             covered = bool(deep_files) and bool(legs.code_files) and legs.code_files <= deep_files
@@ -463,6 +514,11 @@ class LethalTrifecta(AuditRule):
                 evidence.append(ev)
                 mcp_notes.append(f"{role} leg implied by MCP server '{name}' ({ev.file})")
             root = _posix(unit.root or ".")
+            notes = [_UNIT_NOTE] + mcp_notes
+            if mcp_notes:
+                notes.append(
+                    "a leg implied by a server name is weaker evidence than code: high, not critical"
+                )
             findings.append(
                 self.finding(
                     file=root,
@@ -470,8 +526,9 @@ class LethalTrifecta(AuditRule):
                     snippet=f"unit {root}",
                     evidence=evidence,
                     scope=Scope(kind="unit", unit=unit.id, name=root),
+                    severity=Severity.HIGH if mcp_notes else None,
                     match_kind=MatchKind.STRUCTURED,
-                    notes="; ".join([_UNIT_NOTE] + mcp_notes),
+                    notes="; ".join(notes),
                 )
             )
         return _sorted(findings)

@@ -143,13 +143,15 @@ _BUDGET_ROWS = _word_rows(vocab.BUDGET_SYMBOLS)
 _LOOP_CAP_ROWS = _word_rows(vocab.LOOP_CAP_SYMBOLS)
 _INERT_KILL_SWITCH_ROWS = _word_rows(vocab.INERT_KILL_SWITCH)
 # `kill_switch_symbol`: the name appears at all (a declaration counts). `kill_switch_read`:
-# an env read of a kill-switch name, or the symbol called, indexed, attribute-accessed or
-# tested (`if x` / `not x`). A bare assignment is a declaration, not a read; the AUD-107
-# rule wants the second table and reports the first as "declared but never read".
+# an env read of a kill-switch name, or the symbol called, indexed, attribute-accessed,
+# tested (`if x` / `not x` / `!x`) or compared (`x === "true"`). A bare assignment is a
+# declaration, not a read; the AUD-107 rule wants the second table and reports the first
+# as "declared but never read". The attribute form (`config.chatDisabled`) excludes an
+# assignment to it, so `settings.kill_switch = True` stays a declaration.
 _KILL_SWITCH_SYMBOL_ROWS = _word_rows(vocab.KILL_SWITCH_SYMBOLS)
 _KILL_SWITCH_READ_ROWS: Table = list(
     zip(
-        ("os_environ", "getenv", "process_env", "os_getenv", "settings_attr"),
+        ("os_environ", "getenv", "process_env", "os_getenv", "settings_attr", "deno_env"),
         vocab.KILL_SWITCH_ENV_READS,
     )
 ) + [
@@ -157,7 +159,9 @@ _KILL_SWITCH_READ_ROWS: Table = list(
         sym,
         re.compile(
             r"(?:\b(?:if|not|while|and|or|return|assert)\s+" + re.escape(sym) + r"\b"
-            r"|\b" + re.escape(sym) + r"\s*[(.\[])",
+            r"|\b" + re.escape(sym) + r"\s*[(.\[]"
+            r"|[.!]\s*" + re.escape(sym) + r"\b(?!\s*=[^=])"
+            r"|\b" + re.escape(sym) + r"\s*(?:\?\?|\|\||&&|===?|!==?|\?))",
             re.I,
         ),
     )

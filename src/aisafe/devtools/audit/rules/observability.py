@@ -33,7 +33,7 @@ from aisafe.devtools.audit.model import (
     Tier,
     Unit,
 )
-from aisafe.devtools.audit.rules import AuditRule, hits_in, unit_of
+from aisafe.devtools.audit.rules import AuditRule, has_request_path, hits_in, unit_of
 
 __all__ = [
     "RULES",
@@ -137,6 +137,8 @@ class NoLLMObservability(AuditRule):
         "OTel exporter) is invisible to a static scan.",
         "A tracing import that is never called still satisfies the rule: presence of the "
         "symbol is what is checked, not that spans are emitted.",
+        "A unit with no model call, ingress or tool of its own is skipped: the root of a "
+        "monorepo is an AI surface by its `.env` alone and makes no call to trace.",
     )
     recommendation = Recommendation(
         tier=Tier.T2,
@@ -175,7 +177,7 @@ class NoLLMObservability(AuditRule):
 
         findings: list[Finding] = []
         for unit in sorted(ctx.inventory.units, key=lambda u: (u.root or ".", u.id)):
-            if not unit.ai_surface:
+            if not unit.ai_surface or not has_request_path(ctx, unit):
                 continue
             entries = by_unit.get(unit.id, [])
             llm = [e for e in entries if not str(e.get("lib") or "").startswith(_APM_PREFIX)]

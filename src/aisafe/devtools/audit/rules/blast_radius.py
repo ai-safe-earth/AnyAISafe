@@ -33,7 +33,7 @@ from aisafe.devtools.audit.model import (
     Tier,
     Unit,
 )
-from aisafe.devtools.audit.rules import AuditRule, file_text, hits_in, unit_of
+from aisafe.devtools.audit.rules import AuditRule, file_text, has_request_path, hits_in, unit_of
 
 __all__ = [
     "RULES",
@@ -912,24 +912,27 @@ class BroadCredentials(AuditRule):
 # ---------------------------------------------------------------------------
 
 
-def _has_request_path(ctx: AuditContext, unit: Unit) -> bool:
+def _edge_kill_switch(ctx: AuditContext) -> tuple[Unit, Any] | None:
     """
-    True when the unit has something a per-request control could sit in front of: a
-    model call, an ingress point, or a tool of its own.
+    The first kill-switch read in any unit that serves requests, whatever its language
+    or AI surface, as (unit, hit).
 
-    `ai_surface` alone is not that. A unit earns the flag from a model id in a config
-    file, and the repository root is where `.env.example` lives -- so in any project
-    with a root-level env template and the code in subdirectories, the root unit is an
-    AI surface holding no code. Asked for a kill switch "at the top of every request",
-    it served no requests: the only file in it was a one-shot migration script, and
-    the only way to clear the finding would have been to read a flag there, satisfying
-    the rule while building nothing.
+    A gateway in front of the model services is where the switch belongs (the rule's own
+    alternative: "put the switch at the edge"), and a TypeScript gateway makes no model
+    call of its own, so it is not an AI surface and the per-unit loop never looks at it.
+    One application kept its only kill switch there (`config.chatDisabled`, read on every
+    chat request) and the audit reported all four services behind it as having none.
     """
-    for key in ("llm_calls", "ingress", "tools"):
-        for row in getattr(ctx.inventory, key, None) or []:
-            if isinstance(row, dict) and row.get("unit") == unit.id:
-                return True
-    return False
+    units = {u.id: u for u in ctx.inventory.units}
+    best: tuple[tuple[str, str, int], Unit, Any] | None = None
+    for hit in hits_in(ctx, "kill_switch_read"):
+        unit = units.get(getattr(hit, "unit", None))
+        if unit is None or not has_request_path(ctx, unit):
+            continue
+        key = (unit.root or ".", str(hit.file), int(hit.line or 0))
+        if best is None or key < best[0]:
+            best = (key, unit, hit)
+    return None if best is None else (best[1], best[2])
 
 
 class NoKillSwitch(AuditRule):
@@ -949,6 +952,9 @@ class NoKillSwitch(AuditRule):
         "`aisafe measure` and a runtime drill are what verify it.",
         "A switch implemented outside the code (a load balancer rule, a feature flag service "
         "under a name not in KILL_SWITCH_SYMBOLS) is not seen.",
+        "A switch read only at the edge (a gateway unit in front of the model services) is "
+        "credited to the units behind it as a note, at low severity: the finding stays, "
+        "because a worker, a cron job or a direct call to the unit does not pass the edge.",
         "`halt` and `feature_flag` are deliberately not recognised; a project using only those "
         "names is reported.",
         "A unit with no model call, ingress or tool of its own is skipped: there is no request "
@@ -977,8 +983,9 @@ class NoKillSwitch(AuditRule):
 
     def evaluate(self, ctx: AuditContext) -> list[Finding]:
         findings: list[Finding] = []
+        edge = _edge_kill_switch(ctx)
         for unit in sorted(ctx.inventory.units, key=lambda u: (u.root, u.id)):
-            if not unit.ai_surface or not _has_request_path(ctx, unit):
+            if not unit.ai_surface or not has_request_path(ctx, unit):
                 continue
             reads = hits_in(ctx, "kill_switch_read", unit=unit.id)
             if not reads:
@@ -996,6 +1003,27 @@ class NoKillSwitch(AuditRule):
                     )
                 if len(finding.evidence) > 1:
                     finding.notes = "a kill-switch name is declared but never read"
+                if edge is not None and edge[0].id != unit.id:
+                    # The snippet (and so the fingerprint) is unchanged: a baseline written
+                    # before the edge was recognised still matches. Severity and title
+                    # say what the edge changes; the note says what it does not.
+                    edge_unit, edge_hit = edge
+                    finding.severity = Severity.LOW
+                    finding.title = "No kill switch of its own (an edge switch exists)"
+                    finding.evidence.append(
+                        Evidence(
+                            role="edge",
+                            file=edge_hit.file,
+                            line=edge_hit.line,
+                            snippet=edge_hit.snippet,
+                        )
+                    )
+                    note = (
+                        f"an edge kill switch is read in {edge_unit.root or '.'} "
+                        f"({edge_hit.file}:{edge_hit.line}): a request that enters there is "
+                        "stopped; a worker, a cron job or a direct call to this unit is not"
+                    )
+                    finding.notes = f"{finding.notes}; {note}" if finding.notes else note
                 findings.append(finding)
             seen: set[tuple[str, int]] = set()
             for hit in sorted(

@@ -975,8 +975,11 @@ _BYPASS_EXAMPLES = (
     "confirm = False",
     "approval_callback = None",
     "skip_confirmation",
-    "--yes",
+    "gh pr merge --yes",
     "rm -rf build -y",
+    "claude -p 'x' --dangerously-skip-permissions",
+    "codex --full-auto",
+    "terraform apply -auto-approve",
 )
 
 

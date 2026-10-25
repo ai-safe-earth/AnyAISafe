@@ -249,9 +249,18 @@ def test_kill_switch_symbols_exact():
         "emergency_stop",
         "pause_agent",
         "agent_disabled",
+        "chat_disabled",
+        "maintenance_mode",
+        "killswitch",
+        "circuitbreaker",
+        "emergencystop",
+        "agentdisabled",
+        "chatdisabled",
+        "maintenancemode",
     )
     assert "halt" not in KILL_SWITCH_SYMBOLS
     assert "feature_flag" not in KILL_SWITCH_SYMBOLS
+    assert "disabled" not in KILL_SWITCH_SYMBOLS
 
 
 def test_inert_kill_switch():
@@ -265,6 +274,7 @@ ENV_READ_SAMPLES = [
     "if (process.env.EMERGENCY_STOP) { return; }",
     'v := os.Getenv("PAUSE_AGENT")',
     "if settings.kill_switch:",
+    'const paused = Deno.env.get("CHAT_DISABLED") === "true";',
 ]
 
 
@@ -295,6 +305,22 @@ def test_more_env_read_idioms():
     assert KILL_SWITCH_ENV_READS[0].search('os.environ["AGENT_DISABLED"]')
     assert KILL_SWITCH_ENV_READS[2].search('process.env["KILL_SWITCH"]')
     assert KILL_SWITCH_ENV_READS[4].search("settings.agent_disabled == True")
+
+
+def test_a_gateway_reads_its_switch_from_a_parsed_env_object():
+    """
+    The only kill switch in a four-service application was `chatDisabled: env.CHAT_DISABLED
+    === "true"` in a TypeScript gateway, and the audit reported every service as having
+    none: the name was not in the list and the idiom was not `process.env`.
+    """
+    env_read = KILL_SWITCH_ENV_READS[2]
+    assert env_read.search('chatDisabled: env.CHAT_DISABLED === "true",')
+    assert env_read.search("const off = import.meta.env.AI_DISABLED;")
+    assert env_read.search('process.env["ASSISTANT_PAUSED"]')
+    assert KILL_SWITCH_ENV_READS[4].search("if settings.chat_disabled:")
+    # `*_DISABLED` is not a family: only the names that stop the AI path count.
+    for line in ("process.env.TELEMETRY_DISABLED", "env.CACHE_DISABLED", "os.getenv('CORS_OFF')"):
+        assert not any(p.search(line) for p in KILL_SWITCH_ENV_READS), line
 
 
 # --------------------------------------------------------------------------- #
@@ -403,7 +429,20 @@ def test_gate_bypass_positive_and_negative():
     assert GATE_BYPASS.search("ToolPolicyGuard(require_approval=['x'], approval_callback=None)")
     assert GATE_BYPASS.search("autoApprove: true")
     assert GATE_BYPASS.search("apt-get install -y curl")
+    assert GATE_BYPASS.search("gh pr merge --yes")
     assert not GATE_BYPASS.search("npx -y @modelcontextprotocol/server-fetch")
+    # A bare `--yes` is a release script or an installer, not a gate: this line was
+    # reported as a bypassed gate, at critical, twice in one Makefile.
+    assert not GATE_BYPASS.search("uvx --from commitizen==3.13.0 cz bump --changelog --yes")
+    assert not GATE_BYPASS.search("pip install --yes requests")
+    assert not GATE_BYPASS.search("npx --yes @scope/pkg")
+    # An agent CLI run with its approval gate off is the bypass this rule is for.
+    assert GATE_BYPASS.search("claude -p 'fix it' --dangerously-skip-permissions")
+    assert GATE_BYPASS.search("aider --yes-always --message 'x'")
+    assert GATE_BYPASS.search("codex --full-auto")
+    assert GATE_BYPASS.search("gemini --yolo")
+    assert GATE_BYPASS.search("terraform apply -auto-approve")
+    assert not GATE_BYPASS.search("terraform plan --no-auto-approve")
     assert not GATE_BYPASS.search("ToolPolicyGuard(require_approval=['x'], approval_callback=cb)")
 
 
