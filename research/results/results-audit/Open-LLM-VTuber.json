@@ -1,0 +1,2421 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/Open-LLM-VTuber",
+    "git_sha": "992309c0aa19845960228f880013d4685fde93b5",
+    "dirty": true,
+    "exclude": [],
+    "only": []
+  },
+  "generated_at": "2026-10-26T21:13:08Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 2,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 2,
+    "fail_on": "never",
+    "unknown_items": 9,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1102",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1102",
+      "rule_id": "AUD-1102",
+      "sub": null,
+      "fingerprint": "cbb46685b9219abb",
+      "title": "Emotion or biometric inference on persons",
+      "severity": "high",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/open_llm_vtuber/agent/agent_factory.py",
+          "line": 7,
+          "snippet": "from .agents.hume_ai import HumeAIAgent"
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(f)",
+        "EU:Art.5(1)(g)",
+        "EU:Art.6",
+        "GDPR:Art.9",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T3",
+        "summary": "Remove the inference or restrict it to a documented, lawful use with a legal basis and an Annex III review; emotion recognition at work or in education and biometric categorisation of protected characteristics are listed practices under Art. 5.",
+        "alternatives": [
+          "remove the inference or restrict it to a medical or safety use with a documented legal basis",
+          "replace emotion inference with explicit, user-stated preferences",
+          "an Annex III conformity review before deployment",
+          "aisafe: nothing here applies; the control is removing or scoping the inference"
+        ],
+        "package": {
+          "mechanism": "none",
+          "symbols": [],
+          "same_control": false,
+          "leaves_open": ""
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-005b",
+        "EU-AIA-005c"
+      ],
+      "known_failure_modes": [
+        "text-only sentiment analysis is not counted: the EU definition of emotion recognition rests on biometric data",
+        "a library imported for a demo counts as use; DetectFaces without Emotions does not",
+        "whether the inference happens in a workplace or an education setting is read from the lint rule's words (employee, student), not from the deployment"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "emotion or affect inference signal (affect:hume). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1105/synthetic",
+      "rule_id": "AUD-1105",
+      "sub": "synthetic",
+      "fingerprint": "eb4e0d9b723dd0c7",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/open_llm_vtuber/config_manager/tts.py",
+          "line": 500,
+          "snippet": "en=\"API address of the spark tts gradio web frontend. For example: http://127.0.0.1:7860/voice_clone\","
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/config_manager/tts.py",
+          "line": 501,
+          "snippet": "zh=\"\u4f60\u7684API\u5730\u5740\u3002\u4e3e\u4f8b\uff1ahttp://127.0.0.1:7860/voice_clone\","
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/config_manager/tts.py",
+          "line": 504,
+          "snippet": "en=\"The API endpoint name. For example: voice_clone,voice_creation\","
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/config_manager/tts.py",
+          "line": 505,
+          "snippet": "zh=\"\u4f60\u7684API\u540d\u79f0\u3002\u4e3e\u4f8b\uff1avoice_clone\uff0cvoice_creation\","
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/config_manager/tts.py",
+          "line": 775,
+          "snippet": "def check_tts_config(cls, values: \"TTSConfig\", info: ValidationInfo):"
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/conversations/tts_manager.py",
+          "line": 130,
+          "snippet": "async def _process_tts("
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/conversations/tts_manager.py",
+          "line": 166,
+          "snippet": "async def _generate_audio(self, tts_engine: TTSInterface, text: str) -> str:"
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/routes.py",
+          "line": 73,
+          "snippet": "def init_webtool_routes(default_context_cache: ServiceContext) -> APIRouter:"
+        },
+        {
+          "role": "also",
+          "file": "src/open_llm_vtuber/routes.py",
+          "line": 202,
+          "snippet": "async def tts_endpoint(websocket: WebSocket):"
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "generated content without a label (EU-AIA-050b). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say.; +33 more sites"
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: live2d-models/mao_pro/runtime/mao_pro.4096/texture_00.png",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/Open-LLM-VTuber",
+      "git_sha": "992309c0aa19845960228f880013d4685fde93b5",
+      "dirty": true,
+      "scanned_files": 214,
+      "skipped_files": 0,
+      "bytes": 2153894,
+      "duration_ms": 3924,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 125,
+      "typescript": 2,
+      "go": 0,
+      "other": 87
+    },
+    "llm_calls": [
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/claude_llm.py",
+        "line": 10,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m61"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/claude_llm.py",
+        "line": 122,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.stream(",
+        "unit": "u0",
+        "model_ref": "m61"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/openai_compatible_llm.py",
+        "line": 7,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/openai_compatible_llm.py",
+        "line": 102,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/stateless_llm.py",
+        "line": 139,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.openai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/stateless_llm.py",
+        "line": 159,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.mistral.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/stateless_llm.py",
+        "line": 180,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/stateless_llm.py",
+        "line": 189,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.anthropic.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/openai_tts.py",
+        "line": 7,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m62"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 100,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m2",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 111,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m3",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 122,
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "pinned": true,
+        "source": "config"
+      },
+      {
+        "id": "m4",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 130,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m5",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 139,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m6",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 144,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m7",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 149,
+        "provider": "google",
+        "model": "gemini-2.0-flash-exp",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m8",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 154,
+        "provider": "other",
+        "model": "glm-4-flash",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m9",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 159,
+        "provider": "other",
+        "model": "deepseek-chat",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m10",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 164,
+        "provider": "mistral",
+        "model": "pixtral-large-latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m11",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 169,
+        "provider": "other",
+        "model": "llama-3.3-70b-versatile",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m12",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 175,
+        "provider": "other",
+        "model": "sherpa_onnx_asr",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m13",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 193,
+        "provider": "other",
+        "model": "small",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m14",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 209,
+        "provider": "other",
+        "model": "iic/SenseVoiceSmall",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m15",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 210,
+        "provider": "other",
+        "model": "fsmn-vad",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m16",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 211,
+        "provider": "other",
+        "model": "ct-punc",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m17",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 267,
+        "provider": "other",
+        "model": "whisper-large-v3-turbo",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m18",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 272,
+        "provider": "other",
+        "model": "edge_tts",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m19",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 282,
+        "provider": "other",
+        "model": "FunAudioLLM/CosyVoice2-0.5B",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m20",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 383,
+        "provider": "other",
+        "model": "tts_models/en/ljspeech/tacotron2-DDC",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m21",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 415,
+        "provider": "other",
+        "model": "kokoro",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m22",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 425,
+        "provider": "other",
+        "model": "speech-02-turbo",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m23",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 434,
+        "provider": "other",
+        "model": "eleven_multilingual_v2",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m24",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 444,
+        "provider": "other",
+        "model": "sonic-3",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m25",
+        "file": "config_templates/conf.ZH.default.yaml",
+        "line": 453,
+        "provider": "other",
+        "model": "null",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m26",
+        "file": "config_templates/conf.default.yaml",
+        "line": 101,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m27",
+        "file": "config_templates/conf.default.yaml",
+        "line": 112,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m28",
+        "file": "config_templates/conf.default.yaml",
+        "line": 123,
+        "provider": "anthropic",
+        "model": "claude-3-haiku-20240307",
+        "pinned": true,
+        "source": "config"
+      },
+      {
+        "id": "m29",
+        "file": "config_templates/conf.default.yaml",
+        "line": 131,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m30",
+        "file": "config_templates/conf.default.yaml",
+        "line": 140,
+        "provider": "ollama",
+        "model": "qwen2.5:latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m31",
+        "file": "config_templates/conf.default.yaml",
+        "line": 145,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m32",
+        "file": "config_templates/conf.default.yaml",
+        "line": 150,
+        "provider": "google",
+        "model": "gemini-2.0-flash-exp",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m33",
+        "file": "config_templates/conf.default.yaml",
+        "line": 155,
+        "provider": "other",
+        "model": "glm-4-flash",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m34",
+        "file": "config_templates/conf.default.yaml",
+        "line": 160,
+        "provider": "other",
+        "model": "deepseek-chat",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m35",
+        "file": "config_templates/conf.default.yaml",
+        "line": 165,
+        "provider": "mistral",
+        "model": "pixtral-large-latest",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m36",
+        "file": "config_templates/conf.default.yaml",
+        "line": 170,
+        "provider": "other",
+        "model": "llama-3.3-70b-versatile",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m37",
+        "file": "config_templates/conf.default.yaml",
+        "line": 176,
+        "provider": "other",
+        "model": "sherpa_onnx_asr",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m38",
+        "file": "config_templates/conf.default.yaml",
+        "line": 194,
+        "provider": "other",
+        "model": "small",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m39",
+        "file": "config_templates/conf.default.yaml",
+        "line": 211,
+        "provider": "other",
+        "model": "iic/SenseVoiceSmall",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m40",
+        "file": "config_templates/conf.default.yaml",
+        "line": 212,
+        "provider": "other",
+        "model": "fsmn-vad",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m41",
+        "file": "config_templates/conf.default.yaml",
+        "line": 213,
+        "provider": "other",
+        "model": "ct-punc",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m42",
+        "file": "config_templates/conf.default.yaml",
+        "line": 270,
+        "provider": "other",
+        "model": "whisper-large-v3-turbo",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m43",
+        "file": "config_templates/conf.default.yaml",
+        "line": 275,
+        "provider": "other",
+        "model": "edge_tts",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m44",
+        "file": "config_templates/conf.default.yaml",
+        "line": 375,
+        "provider": "other",
+        "model": "tts_models/en/ljspeech/tacotron2-DDC",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m45",
+        "file": "config_templates/conf.default.yaml",
+        "line": 383,
+        "provider": "other",
+        "model": "FunAudioLLM/CosyVoice2-0.5B",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m46",
+        "file": "config_templates/conf.default.yaml",
+        "line": 419,
+        "provider": "other",
+        "model": "kokoro",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m47",
+        "file": "config_templates/conf.default.yaml",
+        "line": 430,
+        "provider": "other",
+        "model": "speech-02-turbo",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m48",
+        "file": "config_templates/conf.default.yaml",
+        "line": 439,
+        "provider": "other",
+        "model": "eleven_multilingual_v2",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m49",
+        "file": "config_templates/conf.default.yaml",
+        "line": 449,
+        "provider": "other",
+        "model": "sonic-3",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m50",
+        "file": "config_templates/conf.default.yaml",
+        "line": 458,
+        "provider": "other",
+        "model": "null",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m51",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_melo.yaml",
+        "line": 13,
+        "provider": "other",
+        "model": "SherpaOnnxASR",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m52",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_melo.yaml",
+        "line": 56,
+        "provider": "other",
+        "model": "SherpaOnnxTTS",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m53",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_piper_en.yaml",
+        "line": 13,
+        "provider": "other",
+        "model": "SherpaOnnxASR",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m54",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_piper_en.yaml",
+        "line": 56,
+        "provider": "other",
+        "model": "SherpaOnnxTTS",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m55",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_vits_zh.yaml",
+        "line": 13,
+        "provider": "other",
+        "model": "SherpaOnnxASR",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m56",
+        "file": "doc/sample_conf/sherpaASRTTS_sense_voice_vits_zh.yaml",
+        "line": 56,
+        "provider": "other",
+        "model": "SherpaOnnxTTS",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m57",
+        "file": "doc/sample_conf/sherpaASR_paraformer.yaml",
+        "line": 13,
+        "provider": "other",
+        "model": "SherpaOnnxASR",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m58",
+        "file": "doc/sample_conf/sherpaASR_paraformer.yaml",
+        "line": 56,
+        "provider": "other",
+        "model": "edgeTTS",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m59",
+        "file": "doc/sample_conf/sherpaASR_sense_voice.yaml",
+        "line": 13,
+        "provider": "other",
+        "model": "SherpaOnnxASR",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m60",
+        "file": "doc/sample_conf/sherpaASR_sense_voice.yaml",
+        "line": 56,
+        "provider": "other",
+        "model": "edgeTTS",
+        "pinned": null,
+        "source": "config"
+      },
+      {
+        "id": "m61",
+        "file": "src/open_llm_vtuber/agent/stateless_llm/claude_llm.py",
+        "line": 18,
+        "provider": "anthropic",
+        "model": "claude-3-haiku-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m62",
+        "file": "src/open_llm_vtuber/tts/openai_tts.py",
+        "line": 25,
+        "provider": "other",
+        "model": "kokoro",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "mcp",
+        "file": "src/open_llm_vtuber/mcpp/mcp_client.py",
+        "line": 8,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [
+      {
+        "host": "cursor",
+        "file": ".cursor/rules/olv-core-rules.mdc",
+        "over_grants": [],
+        "default_mode": null,
+        "hooks": 0
+      }
+    ],
+    "data_sources": [
+      {
+        "file": "src/open_llm_vtuber/asr/azure_asr.py",
+        "line": 17,
+        "kind": "env",
+        "symbol": "getenv(\"AZURE_API_Key\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/agent.py",
+        "line": 69,
+        "kind": "vector",
+        "symbol": "qdrant",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/comment_sync.py",
+        "line": 27,
+        "kind": "fs",
+        "symbol": "open(self.user",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 27,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 83,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/mcpp/mcp_client.py",
+        "line": 10,
+        "kind": "mcp",
+        "symbol": "stdio_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/mcpp/mcp_client.py",
+        "line": 65,
+        "kind": "mcp",
+        "symbol": "stdio_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 29,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 61,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 86,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 91,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 96,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 201,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/gpt_sovits_tts.py",
+        "line": 51,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 49,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 95,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 388,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "run_server.py",
+        "line": 6,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "run_server.py",
+        "line": 68,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/hume_ai.py",
+        "line": 203,
+        "kind": "fs_write",
+        "symbol": "open(cache_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/ollama_llm.py",
+        "line": 35,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/ollama_llm.py",
+        "line": 65,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/stateless_llm_with_template.py",
+        "line": 160,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 89,
+        "kind": "fs_write",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 83,
+        "kind": "fs_write",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 145,
+        "kind": "fs_write",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 199,
+        "kind": "fs_write",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 343,
+        "kind": "fs_write",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/utils.py",
+        "line": 121,
+        "kind": "fs_write",
+        "symbol": "open(config_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/server.py",
+        "line": 161,
+        "kind": "fs_write",
+        "symbol": "shutil.rmtree",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/translate/deeplx.py",
+        "line": 20,
+        "kind": "http_post",
+        "symbol": "httpx.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/translate/tencent.py",
+        "line": 113,
+        "kind": "http_post",
+        "symbol": "httpx.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/cartesia_tts.py",
+        "line": 134,
+        "kind": "fs_write",
+        "symbol": "open(speech_file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/elevenlabs_tts.py",
+        "line": 111,
+        "kind": "fs_write",
+        "symbol": "open(speech_file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/fish_api_tts.py",
+        "line": 48,
+        "kind": "fs_write",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/gpt_sovits_tts.py",
+        "line": 56,
+        "kind": "fs_write",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/minimax_tts.py",
+        "line": 84,
+        "kind": "fs_write",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/siliconflow_tts.py",
+        "line": 58,
+        "kind": "fs_write",
+        "symbol": "open(cache_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/spark_tts.py",
+        "line": 39,
+        "kind": "fs_write",
+        "symbol": "shutil.copy",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/spark_tts.py",
+        "line": 53,
+        "kind": "fs_write",
+        "symbol": "shutil.copy",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/x_tts.py",
+        "line": 30,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/x_tts.py",
+        "line": 35,
+        "kind": "fs_write",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 9,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 60,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 65,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 74,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 88,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 116,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 118,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 122,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 46,
+        "kind": "fs_write",
+        "symbol": "shutil.copy",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 106,
+        "kind": "fs_write",
+        "symbol": "shutil.copy",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 140,
+        "kind": "fs_write",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 226,
+        "kind": "fs_write",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/from_version/v_1_1_1.py",
+        "line": 106,
+        "kind": "fs_write",
+        "symbol": "open(self.conf_yaml_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/comment_sync.py",
+        "line": 51,
+        "kind": "fs_write",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/language.py",
+        "line": 6,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/language.py",
+        "line": 30,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 3,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 20,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 30,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 42,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 44,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/version_manager.py",
+        "line": 80,
+        "kind": "fs_write",
+        "symbol": "open(model_path, \"w",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "run_server.py",
+        "line": 68,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/hume_ai.py",
+        "line": 203,
+        "kind": "fs",
+        "symbol": "open(cache_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/ollama_llm.py",
+        "line": 35,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/ollama_llm.py",
+        "line": 65,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/stateless_llm/stateless_llm_with_template.py",
+        "line": 160,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 27,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 83,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/asr/utils.py",
+        "line": 89,
+        "kind": "fs",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 83,
+        "kind": "fs",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 145,
+        "kind": "fs",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 199,
+        "kind": "fs",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/chat_history_manager.py",
+        "line": 343,
+        "kind": "fs",
+        "symbol": "open(filepath, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/config_manager/utils.py",
+        "line": 121,
+        "kind": "fs",
+        "symbol": "open(config_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/mcpp/server_registry.py",
+        "line": 45,
+        "kind": "fs",
+        "symbol": "shutil.which(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/server.py",
+        "line": 161,
+        "kind": "fs",
+        "symbol": "shutil.rmtree(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/translate/deeplx.py",
+        "line": 20,
+        "kind": "url",
+        "symbol": "httpx.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/translate/tencent.py",
+        "line": 113,
+        "kind": "url",
+        "symbol": "httpx.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/cartesia_tts.py",
+        "line": 134,
+        "kind": "fs",
+        "symbol": "open(speech_file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/elevenlabs_tts.py",
+        "line": 111,
+        "kind": "fs",
+        "symbol": "open(speech_file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/fish_api_tts.py",
+        "line": 48,
+        "kind": "fs",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/gpt_sovits_tts.py",
+        "line": 51,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/gpt_sovits_tts.py",
+        "line": 56,
+        "kind": "fs",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/minimax_tts.py",
+        "line": 68,
+        "kind": "url",
+        "symbol": "requests.request(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/minimax_tts.py",
+        "line": 84,
+        "kind": "fs",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/siliconflow_tts.py",
+        "line": 54,
+        "kind": "url",
+        "symbol": "requests.request(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/siliconflow_tts.py",
+        "line": 58,
+        "kind": "fs",
+        "symbol": "open(cache_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/spark_tts.py",
+        "line": 39,
+        "kind": "fs",
+        "symbol": "shutil.copyfile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/spark_tts.py",
+        "line": 53,
+        "kind": "fs",
+        "symbol": "shutil.copyfile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/x_tts.py",
+        "line": 30,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/tts/x_tts.py",
+        "line": 35,
+        "kind": "fs",
+        "symbol": "open(file_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 60,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 65,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 74,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 88,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 116,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 118,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/utils/install_utils.py",
+        "line": 122,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 46,
+        "kind": "fs",
+        "symbol": "shutil.copy2(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 106,
+        "kind": "fs",
+        "symbol": "shutil.copy2(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 140,
+        "kind": "fs",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/config_sync.py",
+        "line": 226,
+        "kind": "fs",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/from_version/v_1_1_1.py",
+        "line": 106,
+        "kind": "fs",
+        "symbol": "open(self.conf_yaml_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/comment_sync.py",
+        "line": 51,
+        "kind": "fs",
+        "symbol": "open(self.user_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/language.py",
+        "line": 30,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 20,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/upgrade_core/upgrade_utils.py",
+        "line": 42,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "upgrade_codes/version_manager.py",
+        "line": 80,
+        "kind": "fs",
+        "symbol": "open(model_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 49,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 95,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "web_tool/main.js",
+        "line": 388,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [
+      {
+        "lib": "apm:sentry",
+        "file": "uv.lock",
+        "line": 4857
+      }
+    ],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "src/open_llm_vtuber/agent/agents/basic_memory_agent.py",
+        "line": 301,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/basic_memory_agent.py",
+        "line": 381,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/basic_memory_agent.py",
+        "line": 414,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/basic_memory_agent.py",
+        "line": 519,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agents/basic_memory_agent.py",
+        "line": 560,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/conversations/tts_manager.py",
+        "line": 99,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/proxy_handler.py",
+        "line": 121,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/routes.py",
+        "line": 208,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/vad/silero.py",
+        "line": 210,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/websocket_handler.py",
+        "line": 215,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [
+      {
+        "file": ".github/workflows/codeql.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/create_release.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/docker-blacksmith.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/fossa_scan.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/ruff.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/update-requirements.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".pre-commit-config.yaml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "prompts/utils/live_prompt.txt",
+        "line": 1,
+        "kind": "disclosure",
+        "symbol": "virtual assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/open_llm_vtuber/agent/agent_factory.py",
+        "line": 7,
+        "kind": "affect",
+        "symbol": "hume_ai",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

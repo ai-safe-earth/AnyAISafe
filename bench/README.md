@@ -135,6 +135,20 @@ clone as the working directory, so a target's own `[tool.aisafe-audit]` applies 
 no external scanner is launched. The fetch is `aisafe.devtools._git.fetch_pinned`,
 shared with `aisafe fleet`; the bench corpus is a valid fleet list.
 
+## Another corpus, another folder: `--corpus`, `--out-dir`, `--rules`
+
+The persons study (`research/`) runs the same harness over its own pinned corpus,
+restricted to the rules it measures, with everything written under its own folder:
+
+```bash
+python bench/run.py --tool audit --corpus research/corpus.yaml --out-dir research/results     --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107 --keep-clones
+python bench/score.py --tool audit --csv research/results/findings-audit.csv     --results research/results/results-audit --out research/results/precision-audit.md
+```
+
+`--rules` is passed through as `aisafe audit --rules` and applies to the audit only. The
+clones are shared in `bench/.cache/` (ignored by git), so a repository in both corpora is
+fetched once per pinned commit.
+
 No audit row has been labelled yet. Until one has, every audit rule stays
 `measured_precision = None`, renders as `[UNMEASURED]`, and keeps firing. Do not
 type a number in ahead of the labelling.

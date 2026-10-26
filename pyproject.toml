@@ -243,7 +243,10 @@ fail_on_warnings = false    # set true for strict PR enforcement
 # self-audit reports the finding a second time, from the baseline itself.
 # tests/unit/test_audit_baseline.py pins that the committed file stays quiet.
 [tool.aisafe-audit]
-exclude = ["tests", "src/aisafe/probes"]
+# research/results and the bench audit CSVs are other repositories' findings flattened
+# for labelling: their snippet column quotes the matched line, so the self-audit would
+# report its own evidence (the JSON reports beside them are already skipped as own output).
+exclude = ["tests", "src/aisafe/probes", "research/results", "bench/findings-audit*.csv"]
 fail-on = "high"
 
 # -------------------------------------------------------

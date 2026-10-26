@@ -1,0 +1,1200 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/companion-app",
+    "git_sha": "a50c9371816440196049cca0eba9b1373341600e",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-26T21:12:21Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 1,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 9,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1105/no-disclosure",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "7a271c53d42611b5",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in it..."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in its code, config or prompt files. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/companion-app",
+      "git_sha": "a50c9371816440196049cca0eba9b1373341600e",
+      "dirty": true,
+      "scanned_files": 48,
+      "skipped_files": 0,
+      "bytes": 355195,
+      "duration_ms": 621,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 26,
+      "go": 0,
+      "other": 22
+    },
+    "llm_calls": [
+      {
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 4,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "from \"ai\"",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 2,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "from \"ai\"",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 2,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "from \"ai\"",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 107,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 43,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "pgvector.sql",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/app/utils/memory.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/scripts/indexPGVector.mjs",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/scripts/indexPinecone.mjs",
+        "line": 1,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 13,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 108,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 11,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 110,
+        "kind": "env",
+        "symbol": "process.env.REPLICATE_API_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 50,
+        "kind": "env",
+        "symbol": "process.env.STEAMSHIP_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 95,
+        "kind": "env",
+        "symbol": "process.env.STEAMSHIP_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 8,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "process.env.TWILIO_AUTH_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 11,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 115,
+        "kind": "env",
+        "symbol": "process.env.REPLICATE_API_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 21,
+        "kind": "env",
+        "symbol": "process.env.VECTOR_DB",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 30,
+        "kind": "env",
+        "symbol": "process.env.SUPABASE_PRIVATE_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 38,
+        "kind": "env",
+        "symbol": "process.env.PINECONE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 48,
+        "kind": "env",
+        "symbol": "process.env.VECTOR_DB",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 57,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/memory.ts",
+        "line": 71,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/TextToImgModal.tsx",
+        "line": 3,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 8,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 30,
+        "kind": "env",
+        "symbol": "process.env.UPSTASH_REDIS_REST_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 44,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPGVector.mjs",
+        "line": 14,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPGVector.mjs",
+        "line": 48,
+        "kind": "env",
+        "symbol": "process.env.SUPABASE_PRIVATE_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPGVector.mjs",
+        "line": 54,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPinecone.mjs",
+        "line": 11,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPinecone.mjs",
+        "line": 40,
+        "kind": "env",
+        "symbol": "process.env.PINECONE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/indexPinecone.mjs",
+        "line": 47,
+        "kind": "env",
+        "symbol": "process.env.OPENAI_API_KEY",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 8,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chatgpt/route.ts",
+        "line": 15,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 8,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/llama2-13b/route.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 3,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 23,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 91,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 12,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 75,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 8,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/vicuna13b/route.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/TextToImgModal.tsx",
+        "line": 21,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 2,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 14,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/utils/config.ts",
+        "line": 2,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 90,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 91,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "src/app/api/steamship/route.ts",
+        "line": 91,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/text/route.ts",
+        "line": 75,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/TextToImgModal.tsx",
+        "line": 21,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 90,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/scripts/exportToCharacter.mjs",
+        "line": 91,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [],
+    "ci": [
+      {
+        "file": ".github/workflows/main.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

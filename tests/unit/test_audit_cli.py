@@ -1464,4 +1464,6 @@ def test_repo_pyproject_carries_the_section() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     config = load_tool_config("aisafe-audit", start=repo_root)
     assert config["fail_on"] == "high"
-    assert config["exclude"] == "tests,src/aisafe/probes"
+    # research/results and the bench audit CSVs are other repositories' findings; their
+    # snippet column would make the self-audit report its own evidence.
+    assert config["exclude"] == "tests,src/aisafe/probes,research/results,bench/findings-audit*.csv"

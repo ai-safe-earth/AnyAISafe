@@ -1,0 +1,7045 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/khoj",
+    "git_sha": "ae229ca894c0b80ad84664afcfdde523b5e87057",
+    "dirty": true,
+    "exclude": [],
+    "only": []
+  },
+  "generated_at": "2026-10-26T21:18:30Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 4,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 2,
+      "low": 2,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 4,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 4,
+    "fail_on": "never",
+    "unknown_items": 10,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 2
+    },
+    "exit_code": 0,
+    "top": "AUD-1106",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1106",
+      "rule_id": "AUD-1106",
+      "sub": null,
+      "fingerprint": "20877862ed9eef6c",
+      "title": "No manipulation control on the response path",
+      "severity": "medium",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or co..."
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.15",
+        "LLM09",
+        "NIST:MEASURE-2.7",
+        "NIST:MANAGE-2.4"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Put a manipulation and disclosure control on the output stage and measure it: ManipulationGuard flags influence tactics, AIDisclosureGuard flags human claims.",
+        "alternatives": [
+          "aisafe ManipulationGuard and AIDisclosureGuard on output, then aisafe measure",
+          "LLM Guard output scanners for banned topics plus a judge",
+          "NeMo Guardrails output rails",
+          "a human-reviewed sample of transcripts per week"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "ManipulationGuard",
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "Both guards are regex tables with an optional judge and ship UNMEASURED; they lower the odds that a manipulative response reaches the user and do nothing about the prompt or the ranking logic that produced it."
+        }
+      },
+      "related_lint_rules": [],
+      "known_failure_modes": [
+        "a control outside the tree (a gateway, vendor moderation) is invisible",
+        "presence of the symbol is checked, not that it sits on the response path",
+        "fires only in a unit that also carries a profile, engagement or persona signal, so a neutral assistant without one is not reported here"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or config. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1101",
+      "rule_id": "AUD-1101",
+      "sub": null,
+      "fingerprint": "c39a37b6369f2b18",
+      "title": "Person profile bound into a prompt",
+      "severity": "medium",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/khoj/routers/helpers.py",
+          "line": 1843,
+          "snippet": "system_prompt = prompts.personality.format("
+        },
+        {
+          "role": "lint",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 246,
+          "snippet": "EU-GDPR-001: PII passed to LLM without documented processing purpose"
+        },
+        {
+          "role": "lint",
+          "file": "src/khoj/database/admin.py",
+          "line": 165,
+          "snippet": "EU-GDPR-001: PII passed to LLM without documented processing purpose"
+        }
+      ],
+      "controls": [
+        "GDPR:Art.22",
+        "GDPR:Art.9",
+        "GDPR:Art.5",
+        "EU:Art.5(1)(a)",
+        "EU:Art.10",
+        "LLM02",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Pass the model only the fields the task needs. A behavioural profile in the prompt is personal data processed for a new purpose; drop it, reduce it, or pseudonymise it and document the lawful basis.",
+        "alternatives": [
+          "drop the profile from the prompt and pass only the fields the task needs",
+          "pseudonymise with PIIDetector(action=\"tokenize\") and restore on output",
+          "document the lawful basis and purpose in a DPIA next to the prompt",
+          "Microsoft Presidio or LLM Guard Anonymize on the ingress path"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "PIIDetector",
+            "ManipulationGuard"
+          ],
+          "same_control": false,
+          "leaves_open": "PIIDetector(action=\"tokenize\") removes the entity types it knows from the prompt; a behavioural profile has no entity type and stays in the prompt until it is left out or reduced by hand. ManipulationGuard reads the response, not the profile."
+        }
+      },
+      "related_lint_rules": [
+        "EU-GDPR-001"
+      ],
+      "known_failure_modes": [
+        "the NAME is the signal: a `preferences` variable may hold a UI theme, and a profile fetched at runtime under a neutral name is missed",
+        "`conversation_history` and the other transcript names are excluded by design",
+        "grouped per unit, sub-finding and file, anchored on the first site by path"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "profile `personality` read above is bound into the prompt assembled here. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "7a271c53d42611b5",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in it..."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in its code, config or prompt files. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1105/synthetic",
+      "rule_id": "AUD-1105",
+      "sub": "synthetic",
+      "fingerprint": "65c3ccbbc87b0c3c",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1755,
+          "snippet": "async def aget_text_to_image_model_config():"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1759,
+          "snippet": "def get_text_to_image_model_config():"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1763,
+          "snippet": "def get_text_to_image_model_options():"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1767,
+          "snippet": "def get_user_text_to_image_model_config(user: KhojUser):"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1777,
+          "snippet": "async def aget_user_text_to_image_model(user: KhojUser) -> Optional[TextToImageModelConfig]:"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/adapters/__init__.py",
+          "line": 1792,
+          "snippet": "async def aset_user_text_to_image_model(user: KhojUser, text_to_image_model_config_id: int):"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/admin.py",
+          "line": 365,
+          "snippet": "def export_selected_minimal_objects(self, request, queryset):"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/management/commands/change_generated_images_url.py",
+          "line": 28,
+          "snippet": "def handle(self, *args, **options):"
+        },
+        {
+          "role": "also",
+          "file": "src/khoj/database/management/commands/convert_images_png_to_webp.py",
+          "line": 22,
+          "snippet": "def handle(self, *args, **options):"
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "generated content without a label (EU-AIA-050a). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say.; +11 more sites"
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "gitignored directories skipped",
+      "why": "1 gitignored director(ies) not walked: .vscode",
+      "how_to_resolve": "Re-run with --include-ignored to audit them; logs/, evals/ and data directories are where PII and eval corpora accumulate."
+    },
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "4 file(s) over the 2097152 byte limit not read: documentation/assets/img/dream_house.png, documentation/assets/img/plants_i_got.png, documentation/assets/img/quadratic_equation_khoj_web.gif, +1 more",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/khoj",
+      "git_sha": "ae229ca894c0b80ad84664afcfdde523b5e87057",
+      "dirty": true,
+      "scanned_files": 609,
+      "skipped_files": 0,
+      "bytes": 9461984,
+      "duration_ms": 9941,
+      "oversize_files": 4
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "documentation",
+        "manifest": "documentation/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u2",
+        "root": "src/interface/android",
+        "manifest": "src/interface/android/build.gradle",
+        "language": "jvm",
+        "ai_surface": false
+      },
+      {
+        "id": "u3",
+        "root": "src/interface/android/app",
+        "manifest": "src/interface/android/app/build.gradle",
+        "language": "jvm",
+        "ai_surface": false
+      },
+      {
+        "id": "u4",
+        "root": "src/interface/desktop",
+        "manifest": "src/interface/desktop/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u5",
+        "root": "src/interface/obsidian",
+        "manifest": "src/interface/obsidian/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u6",
+        "root": "src/interface/web",
+        "manifest": "src/interface/web/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u7",
+        "root": "src/telemetry",
+        "manifest": "src/telemetry/requirements.txt",
+        "language": "python",
+        "ai_surface": false
+      }
+    ],
+    "languages": {
+      "python": 252,
+      "typescript": 123,
+      "go": 0,
+      "other": 231,
+      "jvm": 3
+    },
+    "llm_calls": [
+      {
+        "file": "src/khoj/configure.py",
+        "line": 9,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 7,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "import anthropic",
+        "unit": "u0",
+        "model_ref": "m145"
+      },
+      {
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 111,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.stream(",
+        "unit": "u0",
+        "model_ref": "m145"
+      },
+      {
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 214,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.stream(",
+        "unit": "u0",
+        "model_ref": "m145"
+      },
+      {
+        "file": "src/khoj/processor/conversation/google/utils.py",
+        "line": 12,
+        "provider": "google",
+        "sdk": "google",
+        "api": "google.genai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/conversation/google/utils.py",
+        "line": 13,
+        "provider": "google",
+        "sdk": "google",
+        "api": "google.genai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/conversation/google/utils.py",
+        "line": 233,
+        "provider": "google",
+        "sdk": "google",
+        "api": ".generate_content(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 11,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m150"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 371,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m150"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 500,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".responses.create(",
+        "unit": "u0",
+        "model_ref": "m150"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 863,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.openai.",
+        "unit": "u0",
+        "model_ref": "m150"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 915,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m151"
+      },
+      {
+        "file": "src/khoj/processor/conversation/openai/whisper.py",
+        "line": 4,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 19,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m153"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 20,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m153"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 21,
+        "provider": "google",
+        "sdk": "google",
+        "api": "google.genai",
+        "unit": "u0",
+        "model_ref": "m153"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 128,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "        import openai",
+        "unit": "u0",
+        "model_ref": "m153"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m154"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 11,
+        "provider": "google",
+        "sdk": "google",
+        "api": "google.genai",
+        "unit": "u0",
+        "model_ref": "m154"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 336,
+        "provider": "google",
+        "sdk": "google",
+        "api": ".generate_content(",
+        "unit": "u0",
+        "model_ref": "m154"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 6,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 52,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 17,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m160"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 148,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m160"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 431,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.create(",
+        "unit": "u0",
+        "model_ref": "m161"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_agent_openai.py",
+        "line": 218,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".responses.create(",
+        "unit": "u0",
+        "model_ref": "m167"
+      },
+      {
+        "file": "src/khoj/routers/api.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 30,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "import anthropic",
+        "unit": "u0",
+        "model_ref": "m221"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 31,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m221"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 1144,
+        "provider": "azure",
+        "sdk": "azure",
+        "api": ".openai.azure.com",
+        "unit": "u0",
+        "model_ref": "m222"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 1145,
+        "provider": "azure",
+        "sdk": "azure",
+        "api": "AzureOpenAI(",
+        "unit": "u0",
+        "model_ref": "m222"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 1161,
+        "provider": "azure",
+        "sdk": "azure",
+        "api": ".openai.azure.com",
+        "unit": "u0",
+        "model_ref": "m222"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/utils/models.py",
+        "line": 4,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/khoj/utils/state.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".github/workflows/run_evals.yml",
+        "line": 46,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m2",
+        "file": ".github/workflows/run_evals.yml",
+        "line": 152,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m3",
+        "file": ".github/workflows/run_evals.yml",
+        "line": 225,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m4",
+        "file": "src/khoj/database/migrations/0004_content_types_and_more.py",
+        "line": 30,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/khoj/database/migrations/0004_content_types_and_more.py",
+        "line": 131,
+        "provider": "other",
+        "model": "githubconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/khoj/database/migrations/0005_embeddings_corpus_id.py",
+        "line": 15,
+        "provider": "other",
+        "model": "embeddings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/khoj/database/migrations/0008_alter_conversation_conversation_log.py",
+        "line": 13,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/khoj/database/migrations/0010_rename_embeddings_entry_and_more.py",
+        "line": 21,
+        "provider": "other",
+        "model": "entrydates",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/khoj/database/migrations/0010_rename_embeddings_entry_and_more.py",
+        "line": 26,
+        "provider": "other",
+        "model": "entrydates",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/khoj/database/migrations/0012_entry_file_source.py",
+        "line": 13,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/khoj/database/migrations/0014_alter_googleuser_picture.py",
+        "line": 13,
+        "provider": "other",
+        "model": "googleuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/khoj/database/migrations/0015_alter_subscription_user.py",
+        "line": 15,
+        "provider": "other",
+        "model": "subscription",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/khoj/database/migrations/0016_alter_subscription_renewal_date.py",
+        "line": 13,
+        "provider": "other",
+        "model": "subscription",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/khoj/database/migrations/0019_alter_googleuser_family_name_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "googleuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/khoj/database/migrations/0019_alter_googleuser_family_name_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "googleuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/khoj/database/migrations/0019_alter_googleuser_family_name_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "googleuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/khoj/database/migrations/0021_speechtotextmodeloptions_and_more.py",
+        "line": 31,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/khoj/database/migrations/0021_speechtotextmodeloptions_and_more.py",
+        "line": 33,
+        "provider": "mistral",
+        "model": "mistral-7b-instruct-v0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/khoj/database/migrations/0021_speechtotextmodeloptions_and_more.py",
+        "line": 36,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/khoj/database/migrations/0024_alter_entry_embeddings.py",
+        "line": 14,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/khoj/database/migrations/0025_clientapplication_khojuser_phone_number_and_more.py",
+        "line": 29,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/khoj/database/migrations/0025_clientapplication_khojuser_phone_number_and_more.py",
+        "line": 36,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/khoj/database/migrations/0025_searchmodelconfig_embeddings_inference_endpoint_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/khoj/database/migrations/0025_searchmodelconfig_embeddings_inference_endpoint_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/khoj/database/migrations/0026_searchmodelconfig_cross_encoder_inference_endpoint_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "src/khoj/database/migrations/0026_searchmodelconfig_cross_encoder_inference_endpoint_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "src/khoj/database/migrations/0028_khojuser_verified_phone_number.py",
+        "line": 13,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "src/khoj/database/migrations/0030_conversation_slug_and_title.py",
+        "line": 28,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "src/khoj/database/migrations/0030_conversation_slug_and_title.py",
+        "line": 33,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "src/khoj/database/migrations/0031_agent_conversation_agent.py",
+        "line": 47,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "src/khoj/database/migrations/0031_alter_googleuser_locale.py",
+        "line": 25,
+        "provider": "other",
+        "model": "googleuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "src/khoj/database/migrations/0033_rename_tuning_agent_personality.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "src/khoj/database/migrations/0034_alter_chatmodeloptions_chat_model.py",
+        "line": 8,
+        "provider": "mistral",
+        "model": "mistral-7b-instruct-v0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "src/khoj/database/migrations/0034_alter_chatmodeloptions_chat_model.py",
+        "line": 16,
+        "provider": "mistral",
+        "model": "mistral-7b-instruct-v0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "src/khoj/database/migrations/0034_alter_chatmodeloptions_chat_model.py",
+        "line": 27,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "src/khoj/database/migrations/0036_alter_processlock_name.py",
+        "line": 13,
+        "provider": "other",
+        "model": "processlock",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "src/khoj/database/migrations/0037_chatmodeloptions_openai_config_and_more.py",
+        "line": 29,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "src/khoj/database/migrations/0037_chatmodeloptions_openai_config_and_more.py",
+        "line": 40,
+        "provider": "other",
+        "model": "openaiprocessorconversationconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "src/khoj/database/migrations/0037_chatmodeloptions_openai_config_and_more.py",
+        "line": 45,
+        "provider": "other",
+        "model": "openaiprocessorconversationconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "src/khoj/database/migrations/0037_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "src/khoj/database/migrations/0037_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "src/khoj/database/migrations/0037_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "src/khoj/database/migrations/0037_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 28,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "src/khoj/database/migrations/0040_alter_processlock_name.py",
+        "line": 17,
+        "provider": "other",
+        "model": "processlock",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "src/khoj/database/migrations/0043_alter_chatmodeloptions_model_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "src/khoj/database/migrations/0044_conversation_file_filters.py",
+        "line": 13,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "src/khoj/database/migrations/0046_khojuser_email_verification_code_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "src/khoj/database/migrations/0046_khojuser_email_verification_code_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "src/khoj/database/migrations/0047_alter_entry_file_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "src/khoj/database/migrations/0049_texttoimagemodelconfig_api_key_and_more.py",
+        "line": 15,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "src/khoj/database/migrations/0049_texttoimagemodelconfig_api_key_and_more.py",
+        "line": 20,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "src/khoj/database/migrations/0049_texttoimagemodelconfig_api_key_and_more.py",
+        "line": 31,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "src/khoj/database/migrations/0050_alter_processlock_name.py",
+        "line": 13,
+        "provider": "other",
+        "model": "processlock",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m54",
+        "file": "src/khoj/database/migrations/0052_alter_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m55",
+        "file": "src/khoj/database/migrations/0052_alter_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m56",
+        "file": "src/khoj/database/migrations/0052_alter_searchmodelconfig_bi_encoder_docs_encode_config_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m57",
+        "file": "src/khoj/database/migrations/0053_agent_style_color_agent_style_icon.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m58",
+        "file": "src/khoj/database/migrations/0053_agent_style_color_agent_style_icon.py",
+        "line": 39,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m59",
+        "file": "src/khoj/database/migrations/0054_alter_agent_style_color.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m60",
+        "file": "src/khoj/database/migrations/0055_alter_agent_style_icon.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m61",
+        "file": "src/khoj/database/migrations/0056_chatmodeloptions_vision_enabled.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m62",
+        "file": "src/khoj/database/migrations/0056_searchmodelconfig_cross_encoder_model_config.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m63",
+        "file": "src/khoj/database/migrations/0057_remove_serverchatsettings_default_model_and_more.py",
+        "line": 14,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m64",
+        "file": "src/khoj/database/migrations/0057_remove_serverchatsettings_default_model_and_more.py",
+        "line": 19,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m65",
+        "file": "src/khoj/database/migrations/0057_remove_serverchatsettings_default_model_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m66",
+        "file": "src/khoj/database/migrations/0057_remove_serverchatsettings_default_model_and_more.py",
+        "line": 28,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m67",
+        "file": "src/khoj/database/migrations/0057_remove_serverchatsettings_default_model_and_more.py",
+        "line": 40,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m68",
+        "file": "src/khoj/database/migrations/0058_alter_chatmodeloptions_chat_model.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m69",
+        "file": "src/khoj/database/migrations/0059_searchmodelconfig_bi_encoder_confidence_threshold.py",
+        "line": 13,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m70",
+        "file": "src/khoj/database/migrations/0061_alter_chatmodeloptions_model_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m71",
+        "file": "src/khoj/database/migrations/0061_alter_texttoimagemodelconfig_model_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m72",
+        "file": "src/khoj/database/migrations/0063_conversation_temp_id.py",
+        "line": 26,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m73",
+        "file": "src/khoj/database/migrations/0063_conversation_temp_id.py",
+        "line": 32,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m74",
+        "file": "src/khoj/database/migrations/0064_remove_conversation_temp_id_alter_conversation_id.py",
+        "line": 69,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m75",
+        "file": "src/khoj/database/migrations/0064_remove_conversation_temp_id_alter_conversation_id.py",
+        "line": 73,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m76",
+        "file": "src/khoj/database/migrations/0064_remove_conversation_temp_id_alter_conversation_id.py",
+        "line": 78,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m77",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m78",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m79",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 22,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m80",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 31,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m81",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 38,
+        "provider": "other",
+        "model": "fileobject",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m82",
+        "file": "src/khoj/database/migrations/0065_remove_agent_avatar_remove_agent_public_and_more.py",
+        "line": 45,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m83",
+        "file": "src/khoj/database/migrations/0066_remove_agent_tools_agent_input_tools_and_more.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m84",
+        "file": "src/khoj/database/migrations/0066_remove_agent_tools_agent_input_tools_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m85",
+        "file": "src/khoj/database/migrations/0066_remove_agent_tools_agent_input_tools_and_more.py",
+        "line": 36,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m86",
+        "file": "src/khoj/database/migrations/0066_remove_agent_tools_agent_input_tools_and_more.py",
+        "line": 45,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m87",
+        "file": "src/khoj/database/migrations/0067_alter_agent_style_icon.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m88",
+        "file": "src/khoj/database/migrations/0068_alter_agent_output_modes.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m89",
+        "file": "src/khoj/database/migrations/0069_webscraper_serverchatsettings_web_scraper.py",
+        "line": 78,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m90",
+        "file": "src/khoj/database/migrations/0070_alter_agent_input_tools_alter_agent_output_modes.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m91",
+        "file": "src/khoj/database/migrations/0070_alter_agent_input_tools_alter_agent_output_modes.py",
+        "line": 34,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m92",
+        "file": "src/khoj/database/migrations/0071_subscription_enabled_trial_at_and_more.py",
+        "line": 20,
+        "provider": "other",
+        "model": "subscription",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m93",
+        "file": "src/khoj/database/migrations/0071_subscription_enabled_trial_at_and_more.py",
+        "line": 25,
+        "provider": "other",
+        "model": "subscription",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m94",
+        "file": "src/khoj/database/migrations/0072_entry_search_model.py",
+        "line": 14,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m95",
+        "file": "src/khoj/database/migrations/0074_alter_conversation_title.py",
+        "line": 13,
+        "provider": "other",
+        "model": "conversation",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m96",
+        "file": "src/khoj/database/migrations/0076_rename_openaiprocessorconversationconfig_aimodelapi_and_more.py",
+        "line": 17,
+        "provider": "other",
+        "model": "chatmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m97",
+        "file": "src/khoj/database/migrations/0076_rename_openaiprocessorconversationconfig_aimodelapi_and_more.py",
+        "line": 22,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m98",
+        "file": "src/khoj/database/migrations/0077_chatmodel_alter_agent_chat_model_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m99",
+        "file": "src/khoj/database/migrations/0077_chatmodel_alter_agent_chat_model_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m100",
+        "file": "src/khoj/database/migrations/0077_chatmodel_alter_agent_chat_model_and_more.py",
+        "line": 28,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m101",
+        "file": "src/khoj/database/migrations/0077_chatmodel_alter_agent_chat_model_and_more.py",
+        "line": 40,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m102",
+        "file": "src/khoj/database/migrations/0077_chatmodel_alter_agent_chat_model_and_more.py",
+        "line": 52,
+        "provider": "other",
+        "model": "userconversationconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m103",
+        "file": "src/khoj/database/migrations/0078_khojuser_email_verification_code_expiry.py",
+        "line": 13,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m104",
+        "file": "src/khoj/database/migrations/0079_entry_file_object.py",
+        "line": 59,
+        "provider": "other",
+        "model": "entry",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m105",
+        "file": "src/khoj/database/migrations/0079_searchmodelconfig_embeddings_inference_endpoint_type.py",
+        "line": 20,
+        "provider": "other",
+        "model": "searchmodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m106",
+        "file": "src/khoj/database/migrations/0080_speechtotextmodeloptions_ai_model_api.py",
+        "line": 14,
+        "provider": "other",
+        "model": "speechtotextmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m107",
+        "file": "src/khoj/database/migrations/0081_agent_is_hidden_chatmodel_description_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m108",
+        "file": "src/khoj/database/migrations/0081_agent_is_hidden_chatmodel_description_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m109",
+        "file": "src/khoj/database/migrations/0081_agent_is_hidden_chatmodel_description_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m110",
+        "file": "src/khoj/database/migrations/0083_alter_agent_output_modes_alter_agent_personality_and_more.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m111",
+        "file": "src/khoj/database/migrations/0083_alter_agent_output_modes_alter_agent_personality_and_more.py",
+        "line": 27,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m112",
+        "file": "src/khoj/database/migrations/0083_alter_agent_output_modes_alter_agent_personality_and_more.py",
+        "line": 32,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m113",
+        "file": "src/khoj/database/migrations/0083_alter_agent_output_modes_alter_agent_personality_and_more.py",
+        "line": 58,
+        "provider": "other",
+        "model": "processlock",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m114",
+        "file": "src/khoj/database/migrations/0084_alter_agent_input_tools.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m115",
+        "file": "src/khoj/database/migrations/0085_alter_agent_output_modes.py",
+        "line": 14,
+        "provider": "other",
+        "model": "agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m116",
+        "file": "src/khoj/database/migrations/0086_alter_texttoimagemodelconfig_model_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m117",
+        "file": "src/khoj/database/migrations/0087_alter_aimodelapi_api_key.py",
+        "line": 13,
+        "provider": "other",
+        "model": "aimodelapi",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m118",
+        "file": "src/khoj/database/migrations/0089_chatmodel_price_tier_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m119",
+        "file": "src/khoj/database/migrations/0089_chatmodel_price_tier_and_more.py",
+        "line": 18,
+        "provider": "other",
+        "model": "speechtotextmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m120",
+        "file": "src/khoj/database/migrations/0089_chatmodel_price_tier_and_more.py",
+        "line": 23,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m121",
+        "file": "src/khoj/database/migrations/0089_chatmodel_price_tier_and_more.py",
+        "line": 28,
+        "provider": "other",
+        "model": "voicemodeloption",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m122",
+        "file": "src/khoj/database/migrations/0090_alter_khojuser_uuid.py",
+        "line": 102,
+        "provider": "other",
+        "model": "khojuser",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m123",
+        "file": "src/khoj/database/migrations/0091_chatmodel_friendly_name_and_more.py",
+        "line": 29,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m124",
+        "file": "src/khoj/database/migrations/0091_chatmodel_friendly_name_and_more.py",
+        "line": 34,
+        "provider": "other",
+        "model": "speechtotextmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m125",
+        "file": "src/khoj/database/migrations/0091_chatmodel_friendly_name_and_more.py",
+        "line": 39,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m126",
+        "file": "src/khoj/database/migrations/0092_alter_chatmodel_model_type_alter_chatmodel_name_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m127",
+        "file": "src/khoj/database/migrations/0092_alter_chatmodel_model_type_alter_chatmodel_name_and_more.py",
+        "line": 22,
+        "provider": "other",
+        "model": "chatmodel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m128",
+        "file": "src/khoj/database/migrations/0092_alter_chatmodel_model_type_alter_chatmodel_name_and_more.py",
+        "line": 24,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m129",
+        "file": "src/khoj/database/migrations/0092_alter_chatmodel_model_type_alter_chatmodel_name_and_more.py",
+        "line": 27,
+        "provider": "other",
+        "model": "speechtotextmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m130",
+        "file": "src/khoj/database/migrations/0092_alter_chatmodel_model_type_alter_chatmodel_name_and_more.py",
+        "line": 32,
+        "provider": "other",
+        "model": "speechtotextmodeloptions",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m131",
+        "file": "src/khoj/database/migrations/0093_remove_localorgconfig_user_and_more.py",
+        "line": 13,
+        "provider": "other",
+        "model": "localorgconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m132",
+        "file": "src/khoj/database/migrations/0093_remove_localorgconfig_user_and_more.py",
+        "line": 17,
+        "provider": "other",
+        "model": "localpdfconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m133",
+        "file": "src/khoj/database/migrations/0093_remove_localorgconfig_user_and_more.py",
+        "line": 21,
+        "provider": "other",
+        "model": "localplaintextconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m134",
+        "file": "src/khoj/database/migrations/0094_serverchatsettings_think_free_deep_and_more.py",
+        "line": 14,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m135",
+        "file": "src/khoj/database/migrations/0094_serverchatsettings_think_free_deep_and_more.py",
+        "line": 26,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m136",
+        "file": "src/khoj/database/migrations/0094_serverchatsettings_think_free_deep_and_more.py",
+        "line": 38,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m137",
+        "file": "src/khoj/database/migrations/0094_serverchatsettings_think_free_deep_and_more.py",
+        "line": 50,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m138",
+        "file": "src/khoj/database/migrations/0095_alter_webscraper_type.py",
+        "line": 13,
+        "provider": "other",
+        "model": "webscraper",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m139",
+        "file": "src/khoj/database/migrations/0097_serverchatsettings_priority.py",
+        "line": 13,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m140",
+        "file": "src/khoj/database/migrations/0098_alter_texttoimagemodelconfig_model_type.py",
+        "line": 19,
+        "provider": "other",
+        "model": "texttoimagemodelconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m141",
+        "file": "src/khoj/database/migrations/0099_usermemory.py",
+        "line": 64,
+        "provider": "other",
+        "model": "userconversationconfig",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m142",
+        "file": "src/khoj/database/migrations/0099_usermemory.py",
+        "line": 69,
+        "provider": "other",
+        "model": "serverchatsettings",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m143",
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 229,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m144",
+        "file": "src/khoj/processor/conversation/anthropic/anthropic_chat.py",
+        "line": 51,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m145",
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-haiku-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m146",
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-opus-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m147",
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m148",
+        "file": "src/khoj/processor/conversation/google/gemini_chat.py",
+        "line": 60,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m149",
+        "file": "src/khoj/processor/conversation/openai/gpt.py",
+        "line": 98,
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m150",
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 879,
+        "provider": "openai",
+        "model": "gpt-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m151",
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 889,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m152",
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 889,
+        "provider": "openai",
+        "model": "o3-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m153",
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 689,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m154",
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 442,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m155",
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 442,
+        "provider": "google",
+        "model": "gemini-3-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m156",
+        "file": "src/khoj/processor/operator/__init__.py",
+        "line": 235,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m157",
+        "file": "src/khoj/processor/operator/__init__.py",
+        "line": 236,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m158",
+        "file": "src/khoj/processor/operator/__init__.py",
+        "line": 237,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m159",
+        "file": "src/khoj/processor/operator/__init__.py",
+        "line": 238,
+        "provider": "anthropic",
+        "model": "claude-opus-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m160",
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 149,
+        "provider": "other",
+        "model": "ui-tars",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m161",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 527,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m162",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 534,
+        "provider": "anthropic",
+        "model": "claude-opus-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m163",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 534,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m164",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 545,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m165",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 547,
+        "provider": "anthropic",
+        "model": "claude-opus-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m166",
+        "file": "src/khoj/processor/operator/operator_agent_anthropic.py",
+        "line": 547,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m167",
+        "file": "src/khoj/processor/operator/operator_agent_openai.py",
+        "line": 208,
+        "provider": "other",
+        "model": "computer-use-preview",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m168",
+        "file": "src/khoj/utils/constants.py",
+        "line": 14,
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m169",
+        "file": "src/khoj/utils/constants.py",
+        "line": 14,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m170",
+        "file": "src/khoj/utils/constants.py",
+        "line": 14,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m171",
+        "file": "src/khoj/utils/constants.py",
+        "line": 14,
+        "provider": "openai",
+        "model": "o4-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m172",
+        "file": "src/khoj/utils/constants.py",
+        "line": 15,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m173",
+        "file": "src/khoj/utils/constants.py",
+        "line": 15,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m174",
+        "file": "src/khoj/utils/constants.py",
+        "line": 15,
+        "provider": "google",
+        "model": "gemini-2.5-flash-lite",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m175",
+        "file": "src/khoj/utils/constants.py",
+        "line": 15,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m176",
+        "file": "src/khoj/utils/constants.py",
+        "line": 16,
+        "provider": "anthropic",
+        "model": "claude-3-5-haiku-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m177",
+        "file": "src/khoj/utils/constants.py",
+        "line": 16,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m178",
+        "file": "src/khoj/utils/constants.py",
+        "line": 33,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m179",
+        "file": "src/khoj/utils/constants.py",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m180",
+        "file": "src/khoj/utils/constants.py",
+        "line": 35,
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m181",
+        "file": "src/khoj/utils/constants.py",
+        "line": 36,
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m182",
+        "file": "src/khoj/utils/constants.py",
+        "line": 37,
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m183",
+        "file": "src/khoj/utils/constants.py",
+        "line": 38,
+        "provider": "openai",
+        "model": "o1-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m184",
+        "file": "src/khoj/utils/constants.py",
+        "line": 39,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m185",
+        "file": "src/khoj/utils/constants.py",
+        "line": 40,
+        "provider": "openai",
+        "model": "o3-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m186",
+        "file": "src/khoj/utils/constants.py",
+        "line": 41,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m187",
+        "file": "src/khoj/utils/constants.py",
+        "line": 42,
+        "provider": "openai",
+        "model": "o3-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m188",
+        "file": "src/khoj/utils/constants.py",
+        "line": 43,
+        "provider": "openai",
+        "model": "o4-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m189",
+        "file": "src/khoj/utils/constants.py",
+        "line": 44,
+        "provider": "openai",
+        "model": "gpt-5-2025-08-07",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m190",
+        "file": "src/khoj/utils/constants.py",
+        "line": 45,
+        "provider": "openai",
+        "model": "gpt-5-mini-2025-08-07",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m191",
+        "file": "src/khoj/utils/constants.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-5-nano-2025-08-07",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m192",
+        "file": "src/khoj/utils/constants.py",
+        "line": 48,
+        "provider": "google",
+        "model": "gemini-1.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m193",
+        "file": "src/khoj/utils/constants.py",
+        "line": 49,
+        "provider": "google",
+        "model": "gemini-1.5-flash-002",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m194",
+        "file": "src/khoj/utils/constants.py",
+        "line": 50,
+        "provider": "google",
+        "model": "gemini-1.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m195",
+        "file": "src/khoj/utils/constants.py",
+        "line": 51,
+        "provider": "google",
+        "model": "gemini-1.5-pro-002",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m196",
+        "file": "src/khoj/utils/constants.py",
+        "line": 52,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m197",
+        "file": "src/khoj/utils/constants.py",
+        "line": 53,
+        "provider": "google",
+        "model": "gemini-2.0-flash-lite",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m198",
+        "file": "src/khoj/utils/constants.py",
+        "line": 54,
+        "provider": "google",
+        "model": "gemini-2.5-flash-lite",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m199",
+        "file": "src/khoj/utils/constants.py",
+        "line": 55,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m200",
+        "file": "src/khoj/utils/constants.py",
+        "line": 56,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m201",
+        "file": "src/khoj/utils/constants.py",
+        "line": 57,
+        "provider": "google",
+        "model": "gemini-3-pro-preview",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m202",
+        "file": "src/khoj/utils/constants.py",
+        "line": 59,
+        "provider": "anthropic",
+        "model": "claude-3-5-haiku-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m203",
+        "file": "src/khoj/utils/constants.py",
+        "line": 60,
+        "provider": "anthropic",
+        "model": "claude-3-5-haiku",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m204",
+        "file": "src/khoj/utils/constants.py",
+        "line": 61,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m205",
+        "file": "src/khoj/utils/constants.py",
+        "line": 62,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m206",
+        "file": "src/khoj/utils/constants.py",
+        "line": 63,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet-20250219",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m207",
+        "file": "src/khoj/utils/constants.py",
+        "line": 64,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m208",
+        "file": "src/khoj/utils/constants.py",
+        "line": 65,
+        "provider": "anthropic",
+        "model": "claude-3-7-sonnet-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m209",
+        "file": "src/khoj/utils/constants.py",
+        "line": 66,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m210",
+        "file": "src/khoj/utils/constants.py",
+        "line": 67,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-20250514",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m211",
+        "file": "src/khoj/utils/constants.py",
+        "line": 68,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m212",
+        "file": "src/khoj/utils/constants.py",
+        "line": 69,
+        "provider": "anthropic",
+        "model": "claude-opus-4-0",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m213",
+        "file": "src/khoj/utils/constants.py",
+        "line": 70,
+        "provider": "anthropic",
+        "model": "claude-opus-4-20250514",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m214",
+        "file": "src/khoj/utils/constants.py",
+        "line": 71,
+        "provider": "anthropic",
+        "model": "claude-opus-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m215",
+        "file": "src/khoj/utils/constants.py",
+        "line": 72,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m216",
+        "file": "src/khoj/utils/constants.py",
+        "line": 73,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5-20250929",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m217",
+        "file": "src/khoj/utils/constants.py",
+        "line": 74,
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m218",
+        "file": "src/khoj/utils/constants.py",
+        "line": 75,
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m219",
+        "file": "src/khoj/utils/constants.py",
+        "line": 76,
+        "provider": "anthropic",
+        "model": "claude-opus-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m220",
+        "file": "src/khoj/utils/constants.py",
+        "line": 77,
+        "provider": "anthropic",
+        "model": "claude-opus-4-5-20251101",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m221",
+        "file": "src/khoj/utils/helpers.py",
+        "line": 987,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m222",
+        "file": "src/khoj/utils/helpers.py",
+        "line": 994,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m223",
+        "file": "src/khoj/utils/helpers.py",
+        "line": 994,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m224",
+        "file": "tests/conftest.py",
+        "line": 172,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m225",
+        "file": "tests/conftest.py",
+        "line": 178,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m226",
+        "file": "tests/conftest.py",
+        "line": 236,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m227",
+        "file": "tests/conftest.py",
+        "line": 238,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m228",
+        "file": "tests/conftest.py",
+        "line": 240,
+        "provider": "anthropic",
+        "model": "claude-haiku-4-5-20251001",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m229",
+        "file": "tests/conftest.py",
+        "line": 345,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m230",
+        "file": "tests/conftest.py",
+        "line": 347,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m231",
+        "file": "tests/conftest.py",
+        "line": 349,
+        "provider": "anthropic",
+        "model": "claude-3-5-haiku-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m232",
+        "file": "tests/evals/eval.py",
+        "line": 40,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m233",
+        "file": "tests/evals/eval.py",
+        "line": 654,
+        "provider": "google",
+        "model": "gemini-2.5-flash-lite",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m234",
+        "file": "tests/helpers.py",
+        "line": 240,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m235",
+        "file": "tests/test_api_automation.py",
+        "line": 23,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m236",
+        "file": "tests/test_api_automation.py",
+        "line": 41,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m237",
+        "file": "tests/test_conversation_utils.py",
+        "line": 11,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/content/docx/docx_to_entries.py",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/content/pdf/pdf_to_entries.py",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/content/text_to_entries.py",
+        "line": 9,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/anthropic/anthropic_chat.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/anthropic/utils.py",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/google/gemini_chat.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/google/utils.py",
+        "line": 14,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/openai/gpt.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/openai/utils.py",
+        "line": 12,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/prompts.py",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 22,
+        "unit": "u0"
+      },
+      {
+        "name": "mcp",
+        "file": "src/khoj/processor/tools/mcp.py",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/khoj/routers/helpers.py",
+        "line": 36,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "tests/test_conversation_utils.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "uv.lock",
+        "line": 1267,
+        "unit": "u0"
+      }
+    ],
+    "tools": [
+      {
+        "id": "t1",
+        "name": "click",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 252,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Click on a specific coordinate."
+      },
+      {
+        "id": "t2",
+        "name": "left_double",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 267,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Double click on a specific coordinate."
+      },
+      {
+        "id": "t3",
+        "name": "right_single",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 282,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Right click on a specific coordinate."
+      },
+      {
+        "id": "t4",
+        "name": "drag",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 297,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [
+          "db_write",
+          "external_action",
+          "irreversible"
+        ],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Perform a drag-and-drop operation along a path."
+      },
+      {
+        "id": "t5",
+        "name": "hotkey",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 322,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Press a key or key combination."
+      },
+      {
+        "id": "t6",
+        "name": "type",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 340,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Type text, usually into a focused input field."
+      },
+      {
+        "id": "t7",
+        "name": "scroll",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 352,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Scroll the page."
+      },
+      {
+        "id": "t8",
+        "name": "wait",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 372,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Pause execution for a specified duration."
+      },
+      {
+        "id": "t9",
+        "name": "goto",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 389,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [
+          "fetch"
+        ],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "Navigate to a specific URL."
+      },
+      {
+        "id": "t10",
+        "name": "back",
+        "file": "src/khoj/processor/operator/grounding_agent.py",
+        "line": 401,
+        "unit": "u0",
+        "kind": "openai_schema",
+        "capabilities": [
+          "fetch"
+        ],
+        "gated": false,
+        "gate_symbols": [],
+        "risk_tier": "low",
+        "description_snippet": "navigate back to the previous page."
+      }
+    ],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 419,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/web/app/common/layoutHelper.tsx",
+        "line": 9,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u6"
+      },
+      {
+        "file": "src/khoj/app/settings.py",
+        "line": 26,
+        "kind": "env",
+        "symbol": "getenv(\"KHOJ_DJANGO_SECRET_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/app/settings.py",
+        "line": 122,
+        "kind": "env",
+        "symbol": "getenv(\"POSTGRES_DB\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/app/settings.py",
+        "line": 150,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/app/settings.py",
+        "line": 185,
+        "kind": "env",
+        "symbol": "getenv(\"POSTGRES_PASSWORD\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 406,
+        "kind": "env",
+        "symbol": "os.environ.get(\"KHOJ_DJANGO_SECRET_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 35,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1504,
+        "kind": "env",
+        "symbol": "getenv(\"EXA_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1510,
+        "kind": "env",
+        "symbol": "getenv(\"EXA_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1514,
+        "kind": "env",
+        "symbol": "getenv(\"OLOSTEP_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1520,
+        "kind": "env",
+        "symbol": "getenv(\"OLOSTEP_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1524,
+        "kind": "env",
+        "symbol": "getenv(\"FIRECRAWL_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/adapters/__init__.py",
+        "line": 1530,
+        "kind": "env",
+        "symbol": "getenv(\"FIRECRAWL_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0003_vector_extension.py",
+        "line": 2,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0004_content_types_and_more.py",
+        "line": 6,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0004_content_types_and_more.py",
+        "line": 141,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0024_alter_entry_embeddings.py",
+        "line": 3,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0024_alter_entry_embeddings.py",
+        "line": 16,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0099_usermemory.py",
+        "line": 4,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/migrations/0099_usermemory.py",
+        "line": 29,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 14,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 443,
+        "kind": "env",
+        "symbol": "getenv(\"FIRECRAWL_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 447,
+        "kind": "env",
+        "symbol": "getenv(\"OLOSTEP_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 451,
+        "kind": "env",
+        "symbol": "getenv(\"EXA_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/speech/text_to_speech.py",
+        "line": 9,
+        "kind": "env",
+        "symbol": "getenv(\"ELEVEN_LABS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 38,
+        "kind": "env",
+        "symbol": "getenv(\"GOOGLE_SEARCH_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 41,
+        "kind": "env",
+        "symbol": "getenv(\"SERPER_DEV_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 44,
+        "kind": "env",
+        "symbol": "getenv(\"FIRECRAWL_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 48,
+        "kind": "env",
+        "symbol": "getenv(\"EXA_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/run_code.py",
+        "line": 237,
+        "kind": "env",
+        "symbol": "getenv(\"E2B_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 18,
+        "kind": "env",
+        "symbol": "getenv(\"STRIPE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 19,
+        "kind": "env",
+        "symbol": "getenv(\"STRIPE_SIGNING_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 57,
+        "kind": "env",
+        "symbol": "os.environ.get(\"RESEND_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 58,
+        "kind": "env",
+        "symbol": "os.environ.get(\"GOOGLE_CLIENT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 254,
+        "kind": "env",
+        "symbol": "os.environ[\"GOOGLE_CLIENT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 15,
+        "kind": "env",
+        "symbol": "getenv(\"RESEND_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 151,
+        "kind": "env",
+        "symbol": "getenv(\"NOTION_OAUTH_CLIENT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/notion.py",
+        "line": 18,
+        "kind": "env",
+        "symbol": "getenv(\"NOTION_OAUTH_CLIENT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/storage.py",
+        "line": 7,
+        "kind": "env",
+        "symbol": "getenv(\"AWS_ACCESS_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/storage.py",
+        "line": 8,
+        "kind": "env",
+        "symbol": "getenv(\"AWS_SECRET_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/twilio.py",
+        "line": 9,
+        "kind": "env",
+        "symbol": "getenv(\"TWILIO_AUTH_TOKEN\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 333,
+        "kind": "env",
+        "symbol": "getenv(\"E2B_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 30,
+        "kind": "env",
+        "symbol": "getenv(\"KHOJ_ADMIN_PASSWORD\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 36,
+        "kind": "env",
+        "symbol": "getenv(\"KHOJ_ADMIN_PASSWORD\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 47,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 115,
+        "kind": "env",
+        "symbol": "getenv(\"GEMINI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 141,
+        "kind": "env",
+        "symbol": "getenv(\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/state.py",
+        "line": 38,
+        "kind": "env",
+        "symbol": "getenv(\"STRIPE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/state.py",
+        "line": 39,
+        "kind": "env",
+        "symbol": "getenv(\"STRIPE_SIGNING_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 4,
+        "kind": "db",
+        "symbol": "sqlite3",
+        "unit": "u7"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 17,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u7"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 18,
+        "kind": "env",
+        "symbol": "getenv(\"POSTHOG_API_KEY\"",
+        "unit": "u7"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 41,
+        "kind": "db",
+        "symbol": "sqlite3",
+        "unit": "u7"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 36,
+        "kind": "env",
+        "symbol": "getenv(\"KHOJ_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 39,
+        "kind": "env",
+        "symbol": "getenv(\"GEMINI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 36,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 38,
+        "kind": "env",
+        "symbol": "getenv(\"GEMINI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 40,
+        "kind": "env",
+        "symbol": "getenv(\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 49,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 51,
+        "kind": "env",
+        "symbol": "getenv(\"GEMINI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 53,
+        "kind": "env",
+        "symbol": "getenv(\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/helpers.py",
+        "line": 55,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_client.py",
+        "line": 448,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_helpers.py",
+        "line": 105,
+        "kind": "env",
+        "symbol": "getenv(\"OLOSTEP_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_text_search.py",
+        "line": 386,
+        "kind": "env",
+        "symbol": "getenv(\"GITHUB_PAT_TOKEN\"",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 403,
+        "kind": "fetch",
+        "symbol": "axios.get",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/obsidian/src/api.ts",
+        "line": 3,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/api.ts",
+        "line": 18,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 113,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 583,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 990,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1048,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1144,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1191,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1218,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1521,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1592,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2167,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2193,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/search_modal.ts",
+        "line": 197,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/similar_view.ts",
+        "line": 181,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 660,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 686,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 708,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 42,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 47,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 95,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 232,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 78,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 241,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 249,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 538,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/chat/page.tsx",
+        "line": 414,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/chat/page.tsx",
+        "line": 555,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/auth.ts",
+        "line": 17,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 243,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 266,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 345,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 461,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/utils.ts",
+        "line": 15,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 123,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 258,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 395,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 111,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 123,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 140,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 159,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 903,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/appSidebar/appSidebar.tsx",
+        "line": 39,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatHistory/chatHistory.tsx",
+        "line": 420,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 159,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 310,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 348,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 374,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 215,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 891,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 916,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/useFileContent.ts",
+        "line": 23,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 77,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 142,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 470,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 37,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 188,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 221,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/page.tsx",
+        "line": 62,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/page.tsx",
+        "line": 549,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 591,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 662,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 681,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 707,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 750,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 172,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 199,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 210,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 377,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 397,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 421,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 448,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 489,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 541,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 568,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 585,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 630,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 663,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 679,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 696,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 720,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 744,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 767,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 1412,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 47,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 174,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 202,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 54,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/github/github_to_entries.py",
+        "line": 123,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/plaintext/plaintext_to_entries.py",
+        "line": 6,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/plaintext/plaintext_to_entries.py",
+        "line": 55,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/plaintext/plaintext_to_entries.py",
+        "line": 57,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 1056,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 272,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 279,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 292,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 19,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 22,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 29,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 42,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 45,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 48,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 348,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 349,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_browser.py",
+        "line": 352,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/speech/text_to_speech.py",
+        "line": 4,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/speech/text_to_speech.py",
+        "line": 33,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/mcp.py",
+        "line": 6,
+        "kind": "mcp",
+        "symbol": "sse_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/mcp.py",
+        "line": 7,
+        "kind": "mcp",
+        "symbol": "stdio_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/mcp.py",
+        "line": 73,
+        "kind": "mcp",
+        "symbol": "sse_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/mcp.py",
+        "line": 110,
+        "kind": "mcp",
+        "symbol": "stdio_client",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 9,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 337,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/tools/online_search.py",
+        "line": 581,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_chat.py",
+        "line": 123,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_chat.py",
+        "line": 124,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_phone.py",
+        "line": 10,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 27,
+        "kind": "webhook",
+        "symbol": "Webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 30,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 32,
+        "kind": "webhook",
+        "symbol": "Webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 78,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 180,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 114,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/twilio.py",
+        "line": 14,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 780,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 21,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u7"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 144,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 225,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 244,
+        "kind": "http_post",
+        "symbol": "axios.put",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1191,
+        "kind": "http_post",
+        "symbol": "fetch(`${this.setting.khojUrl}${deleteURL}`, { method: \"DELETE",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 241,
+        "kind": "http_post",
+        "symbol": "fetch(`/api/automation?automation_id=${automationId}`, { method: \"DELETE",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 249,
+        "kind": "http_post",
+        "symbol": "fetch(`/api/automation/trigger?automation_id=${automationId}`, { method: \"POST",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 199,
+        "kind": "http_post",
+        "symbol": "fetch(`/auth/token?token=${token}`, { method: \"DELETE",
+        "unit": "u6"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 54,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 451,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/images/image_to_entries.py",
+        "line": 71,
+        "kind": "fs_write",
+        "symbol": "open(tmp_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 1164,
+        "kind": "fs_write",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/embeddings.py",
+        "line": 73,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/embeddings.py",
+        "line": 140,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 268,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 7,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 55,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 510,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 520,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 640,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/operator_environment_computer.py",
+        "line": 661,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/speech/text_to_speech.py",
+        "line": 49,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api.py",
+        "line": 134,
+        "kind": "fs_write",
+        "symbol": "open(audio_filename, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_phone.py",
+        "line": 10,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 18,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 32,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 36,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 73,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 82,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 128,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 135,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 136,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 140,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_subscription.py",
+        "line": 145,
+        "kind": "payment",
+        "symbol": "stripe.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 260,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 6,
+        "kind": "email",
+        "symbol": "import resend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 43,
+        "kind": "email",
+        "symbol": "resend.Emails",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 62,
+        "kind": "email",
+        "symbol": "resend.Emails",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 101,
+        "kind": "email",
+        "symbol": "resend.Emails",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/email.py",
+        "line": 128,
+        "kind": "email",
+        "symbol": "resend.Emails",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 114,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 2587,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 2593,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/notion.py",
+        "line": 66,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/twilio.py",
+        "line": 14,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 257,
+        "kind": "fs_write",
+        "symbol": "open(app_env_filename, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 267,
+        "kind": "fs_write",
+        "symbol": "open(app_env_filename, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/conftest.py",
+        "line": 322,
+        "kind": "fs_write",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/conftest.py",
+        "line": 338,
+        "kind": "fs_write",
+        "symbol": "shutil.rmtree",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 173,
+        "kind": "http_post",
+        "symbol": "requests.patch(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 355,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 487,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 702,
+        "kind": "fs_write",
+        "symbol": "open(summary_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_markdown_to_entries.py",
+        "line": 272,
+        "kind": "fs_write",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_org_to_entries.py",
+        "line": 416,
+        "kind": "fs_write",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_orgnode.py",
+        "line": 401,
+        "kind": "fs_write",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_pdf_to_entries.py",
+        "line": 67,
+        "kind": "fs_write",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_plaintext_to_entries.py",
+        "line": 98,
+        "kind": "fs_write",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "src/interface/desktop/assets/purify.min.js",
+        "line": 2,
+        "kind": "html",
+        "symbol": ".innerHTML=",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 12,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 14,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 88,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 99,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 103,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 265,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 344,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 362,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 405,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 529,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 244,
+        "kind": "url",
+        "symbol": "axios.put(",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 245,
+        "kind": "url",
+        "symbol": "axios.patch(",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/main.js",
+        "line": 403,
+        "kind": "url",
+        "symbol": "axios.get(",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 9,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 21,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 39,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 78,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 139,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 147,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 160,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/renderer.js",
+        "line": 170,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/utils.js",
+        "line": 20,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/utils.js",
+        "line": 24,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/obsidian/src/api.ts",
+        "line": 3,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/api.ts",
+        "line": 18,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 113,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 229,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 494,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 498,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 583,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 627,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 645,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 791,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 794,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 841,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 844,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 970,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 990,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1023,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1026,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1048,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1066,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1136,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1144,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1155,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1191,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1194,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1218,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1459,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1521,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1592,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1641,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1927,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2011,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2167,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2193,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2248,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2251,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 2255,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/search_modal.ts",
+        "line": 197,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/similar_view.ts",
+        "line": 181,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 552,
+        "kind": "html",
+        "symbol": ".innerHTML =",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 660,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 686,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/obsidian/src/utils.ts",
+        "line": 708,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u5"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 42,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 47,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 95,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/agents/page.tsx",
+        "line": 232,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 78,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 241,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 249,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/automations/page.tsx",
+        "line": 538,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/chat/layout.tsx",
+        "line": 45,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/chat/page.tsx",
+        "line": 414,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/chat/page.tsx",
+        "line": 555,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/auth.ts",
+        "line": 17,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 243,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 266,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 345,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/chatFunctions.ts",
+        "line": 461,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/common/utils.ts",
+        "line": 15,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 123,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 258,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/agentCard/agentCard.tsx",
+        "line": 395,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 111,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 123,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 140,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 159,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/allConversations/allConversations.tsx",
+        "line": 903,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/appSidebar/appSidebar.tsx",
+        "line": 39,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatHistory/chatHistory.tsx",
+        "line": 420,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 159,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 310,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 348,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatInputArea/chatInputArea.tsx",
+        "line": 374,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 215,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 397,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 891,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 916,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/chatMessage.tsx",
+        "line": 993,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatMessage/useFileContent.ts",
+        "line": 23,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 77,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 142,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatSidebar/chatSidebar.tsx",
+        "line": 470,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/chatWoot/ChatwootWidget.tsx",
+        "line": 10,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 37,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 188,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/loginPrompt/loginPrompt.tsx",
+        "line": 221,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/referencePanel/referencePanel.tsx",
+        "line": 87,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/components/referencePanel/referencePanel.tsx",
+        "line": 103,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/layout.tsx",
+        "line": 59,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/page.tsx",
+        "line": 62,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/page.tsx",
+        "line": 549,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 591,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 662,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 681,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 707,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/search/page.tsx",
+        "line": 750,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 172,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 199,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 210,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 377,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 397,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 421,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 448,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 489,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 541,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 568,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 585,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 630,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 663,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 679,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 696,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 720,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 744,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 767,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/settings/page.tsx",
+        "line": 1412,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/layout.tsx",
+        "line": 43,
+        "kind": "html",
+        "symbol": "dangerouslySetInnerHTML",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 47,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 174,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/interface/web/app/share/chat/page.tsx",
+        "line": 202,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u6"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 451,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/github/github_to_entries.py",
+        "line": 123,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/images/image_to_entries.py",
+        "line": 71,
+        "kind": "fs",
+        "symbol": "open(tmp_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/markdown/markdown_to_entries.py",
+        "line": 88,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/markdown/markdown_to_entries.py",
+        "line": 101,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/markdown/markdown_to_entries.py",
+        "line": 117,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/org_mode/org_to_entries.py",
+        "line": 105,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/org_mode/org_to_entries.py",
+        "line": 122,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/org_mode/org_to_entries.py",
+        "line": 144,
+        "kind": "html",
+        "symbol": "{{{",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 1056,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/conversation/utils.py",
+        "line": 1164,
+        "kind": "fs",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/embeddings.py",
+        "line": 73,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/embeddings.py",
+        "line": 140,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 268,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 272,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 279,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/image/generate.py",
+        "line": 292,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 682,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 685,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 695,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 720,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 879,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 882,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 891,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/operator/grounding_agent_uitars.py",
+        "line": 918,
+        "kind": "eval",
+        "symbol": "eval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/speech/text_to_speech.py",
+        "line": 49,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api.py",
+        "line": 134,
+        "kind": "fs",
+        "symbol": "open(audio_filename, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/auth.py",
+        "line": 260,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 2587,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 2593,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/notion.py",
+        "line": 66,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 257,
+        "kind": "fs",
+        "symbol": "open(app_env_filename, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 267,
+        "kind": "fs",
+        "symbol": "open(app_env_filename, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 801,
+        "kind": "url",
+        "symbol": "requests.head(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/conftest.py",
+        "line": 322,
+        "kind": "fs",
+        "symbol": "open(file_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/conftest.py",
+        "line": 338,
+        "kind": "fs",
+        "symbol": "shutil.rmtree(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 144,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 173,
+        "kind": "url",
+        "symbol": "requests.patch(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 225,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 355,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 487,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/evals/eval.py",
+        "line": 702,
+        "kind": "fs",
+        "symbol": "open(summary_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_markdown_to_entries.py",
+        "line": 272,
+        "kind": "fs",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_org_to_entries.py",
+        "line": 416,
+        "kind": "fs",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_orgnode.py",
+        "line": 401,
+        "kind": "fs",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_pdf_to_entries.py",
+        "line": 67,
+        "kind": "fs",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_plaintext_to_entries.py",
+        "line": 98,
+        "kind": "fs",
+        "symbol": ".write_text(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [
+      {
+        "lib": "apm:opentelemetry",
+        "file": "src/interface/web/bun.lock",
+        "line": 1113
+      },
+      {
+        "lib": "langsmith",
+        "file": "uv.lock",
+        "line": 1427
+      }
+    ],
+    "evals": [
+      {
+        "tool": "evals_dir",
+        "file": ".github/workflows/run_evals.yml",
+        "in_ci": true,
+        "has_benign": false
+      },
+      {
+        "tool": "evals_dir",
+        "file": ".github/workflows/test.yml",
+        "in_ci": true,
+        "has_benign": false
+      },
+      {
+        "tool": "evals_dir",
+        "file": ".gitignore",
+        "in_ci": false,
+        "has_benign": false
+      },
+      {
+        "tool": "evals_dir",
+        "file": "tests/evals/eval.py",
+        "in_ci": false,
+        "has_benign": false
+      }
+    ],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 7,
+      "config_hits": 3,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "src/interface/desktop/assets/markdown-it.min.js",
+        "line": 4476,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/assets/markdown-it.min.js",
+        "line": 4808,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/assets/markdown-it.min.js",
+        "line": 6407,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/desktop/chatutils.js",
+        "line": 541,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u4"
+      },
+      {
+        "file": "src/interface/obsidian/src/chat_view.ts",
+        "line": 1473,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u5"
+      },
+      {
+        "file": "src/khoj/database/migrations/0079_entry_file_object.py",
+        "line": 17,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/database/models/__init__.py",
+        "line": 747,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/processor/content/notion/notion_to_entries.py",
+        "line": 89,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/api_chat.py",
+        "line": 1528,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/helpers.py",
+        "line": 754,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 257,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/utils/initialization.py",
+        "line": 266,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [
+      {
+        "file": ".github/workflows/build_khoj_el.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/desktop.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/dockerize.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/dockerize_telemetry_server.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/github_pages_deploy.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/pre-commit.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/pypi.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/release.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/run_evals.yml",
+        "runs_evals": true,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/test.yml",
+        "runs_evals": true,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/test_khoj_el.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".pre-commit-config.yaml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "src/interface/desktop/assets/pico.min.css",
+        "line": 4,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u4"
+      },
+      {
+        "file": "src/khoj/configure.py",
+        "line": 292,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u0"
+      },
+      {
+        "file": "src/khoj/routers/helpers.py",
+        "line": 1843,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/telemetry/telemetry.py",
+        "line": 32,
+        "kind": "profile_sdk",
+        "symbol": "posthog.capture(",
+        "unit": "u7"
+      },
+      {
+        "file": "tests/data/plaintext/wikipedia_tardigrades.html",
+        "line": 25,
+        "kind": "vulnerable",
+        "symbol": "disabledHelp",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/data/plaintext/wikipedia_tardigrades.html",
+        "line": 32,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/data/plaintext/wikipedia_tardigrades.html",
+        "line": 35,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/data/plaintext/wikipedia_tardigrades.html",
+        "line": 40,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/data/plaintext/wikipedia_tardigrades.html",
+        "line": 1981,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

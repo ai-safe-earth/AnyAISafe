@@ -76,3 +76,6 @@ bench/results-audit/*.json
 # report as a build artifact instead.
 /measure-report.json
 /probe-report.json
+
+# Bench and research clones (bench/run.py --keep-clones); never source of this repo
+/bench/.cache/

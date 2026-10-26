@@ -1,0 +1,305 @@
+# research/corpus.yaml
+# ---------------------------------------------------------------------
+# The persons corpus: public repositories whose software faces a person and
+# whose design can harm that person (companions, mental-health bots, memory
+# layers, recommenders, news digests, sales bots, social agents, tutors,
+# voice and face synthesis, advice bots). It measures the P11 "persons and
+# manipulation" rules (AUD-1101..1107) and every rule that follows from
+# research/catalogue.md.
+#
+# Selection (research/README.md, "Corpus"): each category holds at least one
+# large, maintained project and at least one small one, because the harms the
+# catalogue lists appear more often in small apps built fast than in frameworks.
+# `positive_control: true` marks a repository chosen because it visibly carries
+# a control the catalogue asks for (a crisis path before the model, citations on
+# answers, a human approval queue); a rule that reports it is wrong.
+#
+# Each repo is pinned to an exact commit so a precision number stays
+# reproducible. SHAs resolved from each repo's default branch HEAD on
+# 2026-10-26 via `git ls-remote --symref <url> HEAD`, recorded verbatim. To
+# refresh, re-run that command and update `sha`; never edit by hand.
+# `branch` is provenance only; the harness fetches `sha`.
+#
+# Run:  python bench/run.py --tool audit --corpus research/corpus.yaml \
+#           --out-dir research/results --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107
+# ---------------------------------------------------------------------
+
+corpus_resolved: 2026-10-26
+repos:
+  # ---- companions and personas ----------------------------------------
+  - name: companion-app
+    repo: a16z-infra/companion-app
+    url: https://github.com/a16z-infra/companion-app.git
+    sha: a50c9371816440196049cca0eba9b1373341600e
+    branch: main
+    category: companion
+    note: "The reference 'AI companion' template: persona prompts, per-user memory (Pinecone/Upstash), Clerk accounts."
+
+  - name: RealChar
+    repo: Shaunwei/RealChar
+    url: https://github.com/Shaunwei/RealChar.git
+    sha: bd452d7ab164098d251935276c870ddfc14a9046
+    branch: main
+    category: companion
+    note: "Real-time voice companion with character personas and memory; voice cloning of named characters."
+
+  - name: Open-LLM-VTuber
+    repo: Open-LLM-VTuber/Open-LLM-VTuber
+    url: https://github.com/Open-LLM-VTuber/Open-LLM-VTuber.git
+    sha: 992309c0aa19845960228f880013d4685fde93b5
+    branch: main
+    category: companion
+    note: "Voice companion with a Live2D avatar; the most-starred open companion (persona prompts, proactive speech)."
+
+  - name: persona_bot
+    repo: sh-i-z/persona_bot
+    url: https://github.com/sh-i-z/persona_bot.git
+    sha: 89b15f95e68c3bf43c8d92446d3d437daaedd5da
+    branch: main
+    category: companion
+    note: "Small: Boyfriend / Therapist / Best Friend personas, long-term memory and explicit user profiling in prompts."
+
+  - name: persona-chatbot
+    repo: awtb/persona-chatbot
+    url: https://github.com/awtb/persona-chatbot.git
+    sha: 5a78ede180a070fdefd4cae42651542554b0b0bd
+    branch: main
+    category: companion
+    note: "Small Telegram avatar bot: short-term history plus long-term fact memory about the person in PostgreSQL."
+
+  # ---- roleplay and character platforms --------------------------------
+  - name: SillyTavern
+    repo: SillyTavern/SillyTavern
+    url: https://github.com/SillyTavern/SillyTavern.git
+    sha: 06bde939fb1e9c4c8d8641d810f0a916b5bce127
+    branch: release
+    category: roleplay
+    note: "The largest roleplay front end: character cards, persona instructions, memory extensions."
+
+  - name: PocketRisu
+    repo: PocketRisu/PocketRisu
+    url: https://github.com/PocketRisu/PocketRisu.git
+    sha: 5da95f713a610219ddcf6c13de8779c52018196d
+    branch: main
+    category: roleplay
+    note: "Self-hosted roleplay platform forked from RisuAI; many providers, all data in one SQLite file."
+
+  - name: OpenRoleplayChat
+    repo: nordevelopment/OpenRoleplayChat
+    url: https://github.com/nordevelopment/OpenRoleplayChat.git
+    sha: ef3f124304ab3dec88b21e34801b55e96869e81c
+    branch: main
+    category: roleplay
+    note: "Small Node.js character chat with long-term memory and history summarisation."
+
+  - name: open-character-ai
+    repo: Anil-matcha/open-character-ai
+    url: https://github.com/Anil-matcha/open-character-ai.git
+    sha: e06088e30dbcffc64a48a4466f9a3518c8f52a32
+    branch: main
+    category: roleplay
+    note: "Character.AI clone with Stripe billing: personas next to a paywall (purchase pressure, upsell in chat)."
+
+  - name: ai-character-studio
+    repo: SamurAIGPT/ai-character-studio
+    url: https://github.com/SamurAIGPT/ai-character-studio.git
+    sha: b876f804617e3ad903df19e61636e9f15f397f56
+    branch: main
+    category: roleplay
+    note: "Replika-style SaaS template: credits, Stripe, character portraits; sold as a product skeleton."
+
+  # ---- mental health -----------------------------------------------------
+  - name: mental-health-chatbot
+    repo: amlan2419-code/mental-health-chatbot
+    url: https://github.com/amlan2419-code/mental-health-chatbot.git
+    sha: 25c8f9455ac7c39c24f1e1b26f8d8160a5ab1069
+    branch: main
+    category: mental-health
+    positive_control: true
+    note: "Regex crisis detection runs BEFORE the model and returns helplines: the control row 7 of the catalogue asks for."
+
+  - name: Mental-Health-Support-Chatbot
+    repo: Vikranth3140/Mental-Health-Support-Chatbot
+    url: https://github.com/Vikranth3140/Mental-Health-Support-Chatbot.git
+    sha: 2db9ba682f99774a87f709cad53d54628a5d08de
+    branch: main
+    category: mental-health
+    note: "Streamlit + GPT support bot with sentiment analysis and mood tracking (affect inference on a person)."
+
+  - name: ChatPsychiatrist
+    repo: EmoCareAI/ChatPsychiatrist
+    url: https://github.com/EmoCareAI/ChatPsychiatrist.git
+    sha: 7d131fae7f797e965ac19413a29722f236a29d5b
+    branch: master
+    category: mental-health
+    note: "Counselling model fine-tuned on instruction data; no documented crisis path."
+
+  - name: mental_health_companion_bot
+    repo: GPV99999/mental_health_companion_bot
+    url: https://github.com/GPV99999/mental_health_companion_bot.git
+    sha: a44877b742a13e9e82256e8183a39d66874b3891
+    branch: main
+    category: mental-health
+    note: "FastAPI companion that classifies the person's emotion locally before replying."
+
+  # ---- memory layers (persistence across sessions) ------------------------
+  - name: letta
+    repo: letta-ai/letta
+    url: https://github.com/letta-ai/letta.git
+    sha: 8816d3a8516893bfdc0fa14bfb1235226012e295
+    branch: main
+    category: memory
+    note: "MemGPT: agents that keep long-term memory about the person across sessions."
+
+  - name: mem0
+    repo: mem0ai/mem0
+    url: https://github.com/mem0ai/mem0.git
+    sha: 26cdefb46600c0fa5953c4b5ee5003c125539fc4
+    branch: main
+    category: memory
+    note: "Memory layer storing user facts across sessions; also in bench/corpus.yaml at an older commit."
+
+  - name: khoj
+    repo: khoj-ai/khoj
+    url: https://github.com/khoj-ai/khoj.git
+    sha: ae229ca894c0b80ad84664afcfdde523b5e87057
+    branch: master
+    category: memory
+    note: "Personal AI over the person's own notes and chats, with WhatsApp and automation features."
+
+  # ---- recommenders --------------------------------------------------------
+  - name: open-recommender
+    repo: KuchikiRenji/open-recommender
+    url: https://github.com/KuchikiRenji/open-recommender.git
+    sha: 368ecd03d40d39c7e59e9cace03ee8aaa57ec29e
+    branch: main
+    category: recommender
+    note: "Builds an interest profile from the person's Twitter likes and retweets, then recommends videos and articles."
+
+  - name: llm-convrec
+    repo: D3Mlab/llm-convrec
+    url: https://github.com/D3Mlab/llm-convrec.git
+    sha: 5702c9a454dfc10fdddbf49d02d645c0b623d360
+    branch: main
+    category: recommender
+    note: "Conversational recommender with an explicit user-preference state in the prompt."
+
+  # ---- news and answers ----------------------------------------------------
+  - name: ai-news-brief
+    repo: frankzch/ai-news-brief
+    url: https://github.com/frankzch/ai-news-brief.git
+    sha: 3b3e182384b27461ebed8512c9e506c7a2fbb002
+    branch: main
+    category: news
+    note: "94-source aggregator: the model filters, scores and summarises the news a reader sees."
+
+  - name: ai-news-digest
+    repo: m41245/ai-news-digest
+    url: https://github.com/m41245/ai-news-digest.git
+    sha: 2f8143532a7c6763acd0363970478e0d0116a8e1
+    branch: main
+    category: news
+    note: "FastAPI news platform with model-written summaries and categories."
+
+  - name: Perplexica
+    repo: ItzCrazyKns/Perplexica
+    url: https://github.com/ItzCrazyKns/Perplexica.git
+    sha: 348feca3e378fb4157b217724ed508dc707f853f
+    branch: master
+    category: news
+    positive_control: true
+    note: "Answer engine that cites its sources on every answer: the grounding control of catalogue row 23."
+
+  # ---- sales and support ---------------------------------------------------
+  - name: chattermate
+    repo: chattermate/chattermate.chat
+    url: https://github.com/chattermate/chattermate.chat.git
+    sha: 464440ceedc7b0f2ef66613b4e9384d33ae27a57
+    branch: main
+    category: support-sales
+    note: "Support platform with Shopify integration and human handoff; the bot sits between a shop and a customer."
+
+  - name: whatsapp-chatbot
+    repo: bibinprathap/whatsapp-chatbot
+    url: https://github.com/bibinprathap/whatsapp-chatbot.git
+    sha: 71906575e97afc352afd9355f5d58dbad5c2b5f1
+    branch: master
+    category: support-sales
+    note: "WhatsApp sales agent that turns chat into orders through function calling."
+
+  # ---- social agents (persuasion at scale) ---------------------------------
+  - name: eliza
+    repo: elizaOS/eliza
+    url: https://github.com/elizaOS/eliza.git
+    sha: 04658de1b942510e0d37efc777c154530f5c0ef1
+    branch: develop
+    category: social-agent
+    note: "Autonomous agents with character files that post and reply on X, Discord and Telegram."
+
+  - name: dot-automation
+    repo: pippinlovesdot/dot-automation
+    url: https://github.com/pippinlovesdot/dot-automation.git
+    sha: f5e38ada1aab860b07393acc96f661f265ae4b2a
+    branch: main
+    category: social-agent
+    note: "Autonomous Twitter personas that post on a schedule and reply to mentions unattended."
+
+  - name: social-media-agent
+    repo: langchain-ai/social-media-agent
+    url: https://github.com/langchain-ai/social-media-agent.git
+    sha: 53e93f2c6cd5933e6b1f820b70de12036784cc40
+    branch: main
+    category: social-agent
+    positive_control: true
+    note: "Drafts posts with a human approval step before anything is published."
+
+  # ---- tutors and learners --------------------------------------------------
+  - name: tutor-gpt
+    repo: plastic-labs/tutor-gpt
+    url: https://github.com/plastic-labs/tutor-gpt.git
+    sha: 5c2f92416c042fae89ef7b957b4076418b39c26f
+    branch: main
+    category: tutor
+    note: "Tutor that models the learner's mind (theory of mind) and keeps a profile of the student."
+
+  - name: llamatutor
+    repo: Nutlope/llamatutor
+    url: https://github.com/Nutlope/llamatutor.git
+    sha: e29ac56679d60140b451466b2b17151cb000d88a
+    branch: main
+    category: tutor
+    note: "Small tutor that takes a topic and an education level; a likely minor on the other side."
+
+  # ---- voice and face synthesis --------------------------------------------
+  - name: OpenVoice
+    repo: myshell-ai/OpenVoice
+    url: https://github.com/myshell-ai/OpenVoice.git
+    sha: 74a1d147b17a8c3092dd5430504bd83ef6c7eb23
+    branch: main
+    category: synthesis
+    note: "Instant voice cloning from a short sample; the impersonation primitive of catalogue rows 20 and 21."
+
+  - name: Deep-Live-Cam
+    repo: hacksider/Deep-Live-Cam
+    url: https://github.com/hacksider/Deep-Live-Cam.git
+    sha: f8f9b85275b06edc039a22d17867751e9f20933b
+    branch: main
+    category: synthesis
+    note: "Real-time face swap on a webcam from one photo; labelling and consent controls, if any, live here."
+
+  # ---- advice (medical, financial) -----------------------------------------
+  - name: ChatDoctor
+    repo: Kent0n-Li/ChatDoctor
+    url: https://github.com/Kent0n-Li/ChatDoctor.git
+    sha: e77bd7ebafbffb6d82be3410cd0d4ebebe75a516
+    branch: main
+    category: advice
+    note: "Medical advice model and chat; catalogue row 24 (disclaimer, referral)."
+
+  - name: FinGPT
+    repo: AI4Finance-Foundation/FinGPT
+    url: https://github.com/AI4Finance-Foundation/FinGPT.git
+    sha: ac5c5443fbeeafad801e7a3c188e4f24cfaad4d8
+    branch: master
+    category: advice
+    note: "Financial models and advisory demos; catalogue row 24."

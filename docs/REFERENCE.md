@@ -172,6 +172,7 @@ AnyAISafe/
 │
 ├── .claude-plugin/, plugins/aisafe/   # The Claude Code plugin; its skill copy is a byte-identical mirror (scripts/sync_skill.py)
 ├── bench/                       # Precision bench: SHA-pinned corpus, labelled findings
+├── research/                    # The persons study: catalogue of behaviours, 33-repo corpus, log, results
 ├── docs/                        # REFERENCE.md (this file)
 ├── tests/
 │   ├── conftest.py              # Puts src/ on sys.path for uninstalled runs

@@ -25,6 +25,12 @@ Usage:
     python bench/run.py --only langchain crewAI
     python bench/run.py --keep-clones      # leave checkouts in bench/.cache
     python bench/run.py --experimental     # include sub-threshold rules (lint only)
+
+Another corpus, written somewhere else, a subset of the rules (research/):
+    python bench/run.py --tool audit --corpus research/corpus.yaml \
+        --out-dir research/results --rules AUD-1101,AUD-1102
+`--out-dir` holds that run's results-audit/ and both CSVs; `bench/score.py` then
+takes `--csv`, `--results` and `--out` pointing into it. Clones share bench/.cache.
 """
 
 from __future__ import annotations
@@ -69,22 +75,27 @@ CSV_COLUMNS = ["repo", "file", "line", "rule_id", "message", "verdict"]
 AUDIT_CSV_COLUMNS = ["repo", "file", "line", "rule_id", "sub", "message", "snippet", "verdict"]
 
 
-def paths_for(tool: str) -> tuple[Path, Path, Path, list[str]]:
-    """(results dir, sampled CSV, full CSV, columns) for a tool."""
+def paths_for(tool: str, base: Path = BENCH) -> tuple[Path, Path, Path, list[str]]:
+    """(results dir, sampled CSV, full CSV, columns) for a tool, under `base`."""
     if tool == "audit":
-        return RESULTS_AUDIT, CSV_AUDIT_PATH, CSV_AUDIT_ALL_PATH, AUDIT_CSV_COLUMNS
-    return RESULTS, CSV_PATH, CSV_ALL_PATH, CSV_COLUMNS
+        return (
+            base / RESULTS_AUDIT.name,
+            base / CSV_AUDIT_PATH.name,
+            base / CSV_AUDIT_ALL_PATH.name,
+            AUDIT_CSV_COLUMNS,
+        )
+    return base / RESULTS.name, base / CSV_PATH.name, base / CSV_ALL_PATH.name, CSV_COLUMNS
 
 
-def load_corpus() -> list[dict]:
+def load_corpus(path: Path = CORPUS) -> list[dict]:
     try:
         import yaml
     except ModuleNotFoundError:
         sys.exit("pyyaml is required: pip install pyyaml")
-    data = yaml.safe_load(CORPUS.read_text(encoding="utf-8"))
+    data = yaml.safe_load(path.read_text(encoding="utf-8"))
     repos = data.get("repos") or []
     if not repos:
-        sys.exit(f"No repos listed in {CORPUS}")
+        sys.exit(f"No repos listed in {path}")
     for r in repos:
         missing = {"name", "url", "sha"} - set(r)
         if missing:
@@ -151,11 +162,13 @@ def lint(path: Path, out_stem: Path, experimental: bool) -> tuple[int, dict | No
     return max(codes), summary
 
 
-def audit(path: Path, out_file: Path) -> tuple[int, dict | None]:
+def audit(path: Path, out_file: Path, rules: str | None = None) -> tuple[int, dict | None]:
     """
     Run `aisafe audit . --format json --no-external` with the clone as cwd (so the
     target's own `[tool.aisafe-audit]` applies, as under the skill). Exit 0 and 1
-    are both a completed audit; 2 is fatal and says so.
+    are both a completed audit; 2 is fatal and says so. `rules` is a CSV of rule
+    ids passed through as `--rules`, so a corpus built for one group measures
+    only that group.
     """
     argv = [
         sys.executable,
@@ -171,6 +184,8 @@ def audit(path: Path, out_file: Path) -> tuple[int, dict | None]:
         "-o",
         str(out_file.resolve()),
     ]
+    if rules:
+        argv += ["--rules", rules]
     proc = subprocess.run(
         argv, capture_output=True, text=True, cwd=str(path), env=_child_env(), timeout=3600
     )
@@ -334,17 +349,39 @@ def main(argv: list[str] | None = None) -> int:
             "The complete set is always written to the -all CSV."
         ),
     )
+    p.add_argument(
+        "--corpus",
+        type=Path,
+        default=CORPUS,
+        metavar="YAML",
+        help=f"corpus manifest to run (default: {CORPUS.relative_to(ROOT)})",
+    )
+    p.add_argument(
+        "--out-dir",
+        type=Path,
+        default=BENCH,
+        metavar="DIR",
+        help="where results-audit/ (or results/) and the two CSVs go (default: bench/)",
+    )
+    p.add_argument(
+        "--rules",
+        default=None,
+        metavar="CSV",
+        help="audit only these rule ids, passed through as `aisafe audit --rules` (audit only)",
+    )
     args = p.parse_args(argv)
+    if args.rules and args.tool != "audit":
+        sys.exit("--rules applies to --tool audit only")
 
-    results_dir, csv_path, csv_all_path, columns = paths_for(args.tool)
+    results_dir, csv_path, csv_all_path, columns = paths_for(args.tool, args.out_dir)
     rows_of = rows_from_audit_json if args.tool == "audit" else rows_from_json
 
-    repos = load_corpus()
+    repos = load_corpus(args.corpus)
     if args.only:
         wanted = {n.lower() for n in args.only}
         repos = [r for r in repos if r["name"].lower() in wanted]
         if not repos:
-            available = ", ".join(r["name"] for r in load_corpus())
+            available = ", ".join(r["name"] for r in load_corpus(args.corpus))
             sys.exit(f"--only matched nothing. Available: {available}")
 
     results_dir.mkdir(parents=True, exist_ok=True)
@@ -366,7 +403,7 @@ def main(argv: list[str] | None = None) -> int:
 
         try:
             if args.tool == "audit":
-                code, summary = audit(clone, results_dir / f"{name}.json")
+                code, summary = audit(clone, results_dir / f"{name}.json", args.rules)
             else:
                 code, summary = lint(clone, results_dir / name, args.experimental)
         except subprocess.TimeoutExpired:
@@ -444,6 +481,12 @@ def main(argv: list[str] | None = None) -> int:
             print(f"  - {f}")
     print(f"\nNEXT: label the `verdict` column ({unlabelled} blank) with tp / fp / unclear,")
     tool_flag = " --tool audit" if args.tool == "audit" else ""
+    if args.out_dir.resolve() != BENCH.resolve():
+        out = args.out_dir
+        tool_flag += (
+            f" --csv {csv_path} --results {results_dir} "
+            f"--out {out / ('precision-audit.md' if args.tool == 'audit' else 'precision.md')}"
+        )
     print(f"      then run:  python bench/score.py{tool_flag}")
     return 1 if failures else 0
 
