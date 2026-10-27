@@ -153,6 +153,7 @@ SUBSYSTEM_OF_RULE: dict[str, str] = {
     "AUD-1105": "persons",
     "AUD-1106": "persons",
     "AUD-1107": "persons",
+    "AUD-1108": "persons",
 }
 
 

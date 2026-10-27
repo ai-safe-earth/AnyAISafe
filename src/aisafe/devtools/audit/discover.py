@@ -915,10 +915,178 @@ def _scan_eval_files(ctx: _FileCtx) -> None:
             ctx.add("eval_tool", key, 1, 1, name, name, by_name=True)
 
 
+# A model call made with a plain HTTP client to a gateway no SDK row names. Three things
+# together, each tied to the call rather than merely nearby:
+# - the call's target is an absolute external URL or a model-API path: a literal first
+#   argument, or a variable the call passes that is assigned one (a constant at the top of
+#   the file counts). A relative target (`fetch("/api/chat", ...)`) is the app calling
+#   itself, so a chat frontend posting {model, messages} to its own backend never counts;
+# - a `model` key in an object or dict literal within the request's lines (not a
+#   TypeScript field type, not a SQL parameter, not a plain assignment);
+# - a generation key (messages, max_tokens, system_prompt) in the same lines.
+# Found by the 2026-10-27 corpus sweep, where a companion app calling a gateway with
+# `fetch` was invisible to every rule.
+_HTTP_CALL_RE = re.compile(
+    r"(?:(?<![\w.$])|\b(?:window|globalThis|self)\.)fetch\s*\("
+    r"|\baxios(?:\.post)?\s*\(|\brequests\.post\s*\(|\bhttpx\.post\s*\("
+    r"|(?:session|client|http|api)\.post\s*\(|\bgot\.post\s*\(|\bky\.post\s*\("
+    r"|\burlopen\s*\(|\bhttp\.(?:Post|NewRequest(?:WithContext)?)\s*\("
+)
+_HTTP_TYPE_VALUE = (
+    r"(?:string|number|boolean|any|unknown|String|Number|[A-Z]\w*(?:\[\])?\s*[;,]?\s*$|\{)"
+)
+_HTTP_MODEL_KEY_RE = re.compile(
+    r"""["']model["']\s*:|(?:^|[{,])\s*model\s*:(?!\s*""" + _HTTP_TYPE_VALUE + r""")"""
+    r"""|(?:^|[{,])\s*model\s*(?:,|\}|$)"""
+)
+_HTTP_GEN_NAMES = (
+    r"(?:messages|max_tokens|max_new_tokens|max_output_tokens|maxTokens|system_prompt|systemPrompt)"
+)
+_HTTP_GEN_KEY_RE = re.compile(
+    r"""["']""" + _HTTP_GEN_NAMES + r"""["']\s*:"""
+    r"""|(?:^|[{,])\s*""" + _HTTP_GEN_NAMES + r"""\s*:(?!\s*""" + _HTTP_TYPE_VALUE + r""")"""
+    r"""|(?:^|[{,])\s*""" + _HTTP_GEN_NAMES + r"""\s*(?:,|\}|$)"""
+)
+_HTTP_TARGET_RE = re.compile(
+    r"""https?://(?!localhost\b|127\.0\.0\.1\b|0\.0\.0\.0\b|\[::1\])[A-Za-z0-9-]+(?:\.[A-Za-z0-9-]+)+"""
+    r"""|/(?:v\d+/)?chat/completions\b|/v1/messages\b|:(?:stream)?[gG]enerateContent\b"""
+    r"""|/v1/completions\b|/ai/run/"""
+)
+_HTTP_ARG_RE = re.compile(
+    r"""\s*(?:[rbfuRBFU]{0,2}(["'`])(?P<lit>[^"'`]*)|(?P<ident>[A-Za-z_$][\w$.]*))"""
+)
+# `${BASE}/v1` in a template literal, `{BASE}` in an f-string: names the URL comes from.
+_HTTP_INTERPOLATED_RE = re.compile(r"\$?\{\s*([A-Za-z_$][\w$]*)")
+_HTTP_COMMENT_RE = re.compile(r"^\s*(?:#|//|/\*|\*|<!--)")
+_HTTP_CALL_WORDS = ("fetch", ".post", "post(", "axios", "urlopen", "Post(", "NewRequest")
+_HTTP_GEN_WORDS = (
+    "messages",
+    "max_tokens",
+    "max_new_tokens",
+    "max_output_tokens",
+    "maxTokens",
+    "system_prompt",
+    "systemPrompt",
+)
+_HTTP_TARGET_WORDS = (
+    "http",
+    "/chat/completions",
+    "/v1/messages",
+    "enerateContent",
+    "/v1/completions",
+    "/ai/run/",
+)
+_HTTP_BEFORE, _HTTP_AFTER = 25, 12
+
+
+def _http_call_match(line: str) -> re.Match[str] | None:
+    """The first HTTP call on `line`, searched only in a short window around each place a
+    call word appears: a dozen alternatives tried at every position of a long minified
+    line is what made this scan slow."""
+    for word in _HTTP_CALL_WORDS:
+        start = line.find(word)
+        while start != -1:
+            match = _HTTP_CALL_RE.search(line, max(0, start - 40), start + len(word) + 40)
+            if match is not None:
+                return match
+            start = line.find(word, start + 1)
+    return None
+
+
+def _http_call_target(line: str, start: int) -> tuple[str, str] | None:
+    """('literal', text) or ('ident', name) for the call's URL argument: the first one, or
+    the second for Go's `http.NewRequest("POST", url, ...)`."""
+    rest = line[start:]
+    if "NewRequest" in line[:start]:
+        comma = rest.find(",")
+        if comma == -1:
+            return None
+        rest = rest[comma + 1 :]
+    match = _HTTP_ARG_RE.match(rest)
+    if match is None:
+        return None
+    if match.group("lit") is not None:
+        return ("literal", match.group("lit"))
+    return ("ident", match.group("ident").split(".")[-1])
+
+
+def _scan_http_llm_calls(ctx: _FileCtx) -> None:
+    """`llm_call` hits of key `generic_http` for model calls made with a plain HTTP client.
+    The per-line facts are computed once per file, and only when a call line exists, so a
+    minified bundle costs one pass, not one window per call."""
+    # Substring prefilters first: on a bundle most lines hold none of these words, and a
+    # plain `in` costs a fraction of a regex pass over a long line.
+    lines = ctx.lines
+    calls = [
+        (number, match)
+        for number, line in enumerate(lines, 1)
+        if (match := _http_call_match(line)) is not None
+    ]
+    if not calls:
+        return
+    have = {m.hit.line for m in ctx.out if m.hit.table == "llm_call"}
+    code = [_HTTP_COMMENT_RE.match(line) is None for line in lines]
+    model_lines = [
+        n for n, line in enumerate(lines, 1) if "model" in line and _HTTP_MODEL_KEY_RE.search(line)
+    ]
+    gen_lines = [
+        n
+        for n, line in enumerate(lines, 1)
+        if any(word in line for word in _HTTP_GEN_WORDS) and _HTTP_GEN_KEY_RE.search(line)
+    ]
+    target_lines = [
+        n
+        for n, line in enumerate(lines, 1)
+        if code[n - 1]
+        and any(word in line for word in _HTTP_TARGET_WORDS)
+        and _HTTP_TARGET_RE.search(line)
+    ]
+
+    def within(lines: list[int], lo: int, hi: int) -> bool:
+        i = bisect_right(lines, lo - 1)
+        return i < len(lines) and lines[i] <= hi
+
+    def assigned_a_target(name: str) -> bool:
+        # A target line, or one of the three lines above it, assigns `name`.
+        assign = re.compile(
+            r"(?<![\w$.])"
+            + re.escape(name)
+            + r"\s*(?::[^=]*)?=(?!=)|\b"
+            + re.escape(name)
+            + r"\s*:"
+        )
+        for n in target_lines:
+            for k in range(max(1, n - 3), n + 1):
+                if code[k - 1] and assign.search(ctx.lines[k - 1]):
+                    return True
+        return False
+
+    for number, match in calls:
+        if number in have or not code[number - 1]:
+            continue
+        lo, hi = number - _HTTP_BEFORE, number + _HTTP_AFTER
+        if not (within(model_lines, lo, hi) and within(gen_lines, lo, hi)):
+            continue
+        target = _http_call_target(ctx.lines[number - 1], match.end())
+        if target is None:
+            continue
+        kind, value = target
+        if kind == "literal":
+            if not _HTTP_TARGET_RE.search(value) and not any(
+                assigned_a_target(name) for name in _HTTP_INTERPOLATED_RE.findall(value)
+            ):
+                continue
+        elif not assigned_a_target(value):
+            continue
+        line = ctx.lines[number - 1]
+        ctx.add("llm_call", "generic_http", number, match.start() + 1, line, match.group(0))
+
+
 def _scan_code(ctx: _FileCtx) -> None:
     lang = ctx.record.lang
     table_for = patterns.table_for
     _scan_rows(ctx, "llm_call", table_for(lang, patterns.LLM_CALL_PATTERNS))
+    _scan_http_llm_calls(ctx)
     _scan_model_ids(ctx, config=False)
     _scan_rows(ctx, "framework", table_for(lang, patterns.FRAMEWORK_PATTERNS))
     _scan_tools(ctx)
@@ -1001,7 +1169,11 @@ def _matches(record: FileRecord, text: str) -> list[_Match]:
         _scan_aisafe_preset(ctx)
         if PurePosixPath(relpath).suffix.lower() in _STRUCTURED_EXTS:
             _scan_rows(ctx, "gate_bypass", _GATE_BYPASS_CONFIG_ROWS)
-        _scan_person_signals(ctx, "config")
+        # A probe, measure or audit report is evidence of a past run, not the product's
+        # prompts: its detector regexes and quoted snippets would read as person signals
+        # (a failing crisis probe report carries the referral regex and silenced AUD-1108).
+        if not _looks_like_report(record):
+            _scan_person_signals(ctx, "config")
         return ctx.out
     _scan_code(ctx)
     return ctx.out

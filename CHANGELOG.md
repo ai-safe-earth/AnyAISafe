@@ -8,6 +8,35 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ## [Unreleased]
 
+### Added
+
+- **AUD-1108, no crisis path where a person confides in the AI.** A unit that takes user
+  input, calls a model, and whose prompts cast the model as a therapist, partner, friend or
+  in-character persona is reported when it shows no crisis path: no helpline or
+  crisis-protocol name in its code, config or prompts, and no self-harm detection in its
+  code. A prompt that only names a crisis to dismiss it is not a path. HIGH;
+  `/mental-health` and `/vulnerable` are CRITICAL. In a 33-repository study of
+  person-facing AI software (`research/`), 16 of 19 apps where a person chats had no
+  self-harm handling at all.
+- **Scenario families for `aisafe probe`.** A family with `kind: scenario` sends several
+  turns as one conversation (`{{session}}` or `{{history}}` in the request template) and
+  judges the last reply; with `expect: present` a missing marker is the failure, reported
+  `MISSING` and counted in the report's new `summary.missing`. The first family,
+  `crisis_disclosure`, checks that a reply to a suicide or self-harm disclosure carries a
+  referral, and does not accept one that steers the person away from help. Scenario
+  families run only when named with `--families`; `aisafe measure` never loads them.
+  AUD-902 no longer calls a missing referral "an attack that got through".
+- **AUD-1104 sees engagement as real prompts write it**: proactive speech when the person
+  has gone quiet, "keep the conversation going", an engaging experience as the goal, "create
+  a bond". A new `/outreach` sub-finding (MEDIUM) pairs a scheduled job with a send to a
+  person in one file, the shape of an abandoned-cart nudge or a re-engagement e-mail.
+- **Model calls through a plain HTTP client are seen.** A `fetch`, `requests.post`, client
+  `.post` or Go `http.NewRequest` whose target is an external URL or a model-API path
+  (a literal, or a constant assigned one), with `model` and a generation key in the
+  request's object literal, is a model call (`sdk: generic_http`). A companion app calling
+  a gateway this way had been invisible to every rule. A frontend calling its own backend
+  (`fetch("/api/chat", ...)`) does not count.
+
 ### Changed
 
 - The Claude Code plugin is now called `aisafe`, like the package:
@@ -26,6 +55,17 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Fixed
 
+- `aisafe probe`: a `--response-path` that resolves to nothing in a 2xx reply is now an
+  error. Before, the empty text read as "the marker did not come back", so a wrong path
+  reported every attack as passed. Every request now gets its own `{{session}}` id
+  (single-turn cases sent an empty one), and a template that carries no payload anywhere
+  is refused, including `{{history}}` inside a longer string, which was never replaced.
+- Fewer false findings on real projects: a bare `--yes` (a release script) is no longer a
+  bypassed gate (AUD-202); kill-switch reads in TypeScript and Deno forms are seen, and a
+  switch read only at a gateway in front of the model services is credited as a note at low
+  severity (AUD-107); a unit with no model call, ingress or tool of its own is not asked for
+  a kill switch or for tracing (AUD-107, AUD-701); a scope with all three trifecta legs but
+  no model call on its path is a script, not an agent (AUD-301).
 - The hook bootstrap (`hook.sh`, `hook.ps1`) now fails open when uvx or pipx cannot fetch
   the pinned `aisafe` release, for example offline. Before, the launcher's error status
   reached the agent host: Claude Code reported a hook error, and Cursor could read the

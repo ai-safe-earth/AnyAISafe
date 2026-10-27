@@ -1,10 +1,11 @@
 # aisafe-audit: ignore-file
 """aisafe/devtools/audit/rules/persons.py
 --------------------------------------
-P11 "persons and manipulation": AUD-1101..1107. Where the code or the prompts touch
+P11 "persons and manipulation": AUD-1101..1108. Where the code or the prompts touch
 PEOPLE -- a behavioural profile bound into a prompt, emotion or biometric inference,
 scoring or automated decisions about persons, an engagement objective, a concealed AI
-nature, no control on the response path, no recorded prompt review.
+nature, no control on the response path, no recorded prompt review, no crisis path
+where a person confides in the model.
 
 Three evidence tiers feed one finding per decision: the grep tier (`person_signal` hits
 and the `person_signal_candidate` hits a pydeep prompt literal promotes), the AST tier
@@ -56,6 +57,7 @@ __all__ = [
     "AIDisclosureAbsent",
     "AffectInference",
     "EngagementObjective",
+    "NoCrisisPath",
     "NoManipulationControl",
     "PersonProfileInPrompt",
     "PersonScoring",
@@ -82,6 +84,7 @@ _PERSON_KINDS = _SIGNAL_KINDS_1106 | {
     "scoring",
     "objective_code",
     "vulnerable",
+    "confidant",
 }
 
 
@@ -747,6 +750,11 @@ class EngagementObjective(AuditRule):
         "the finding says what co-occurred",
         "a prompt that discusses engagement tactics in order to avoid them is a mention when "
         "a discussion cue sits within 80 characters; without one it is reported",
+        "the outreach sub-finding pairs a schedule and a send in one file: a reminder the person "
+        "set, or an alert to an operator's own channel, is reported too, and a schedule in one "
+        "file with the send in another (a job queue) is not paired",
+        "a request for a clarifying question (keep the conversation going when the question is "
+        "unclear) reads as an engagement instruction",
     )
     recommendation = Recommendation(
         tier=Tier.T2,
@@ -783,6 +791,32 @@ class EngagementObjective(AuditRule):
                 return other.symbol
         return None
 
+    def _outreach(self, ctx: AuditContext, facts: _Facts, groups: dict) -> None:
+        """A scheduled job and a send to a person in the same file: `/outreach`, MEDIUM.
+        Both lines go on the finding; whichever comes first in the file anchors it."""
+        schedules: dict[str, _Signal] = {}
+        for signal in facts.by_kind("outreach_schedule"):
+            schedules.setdefault(signal.file, signal)
+        paired: set[str] = set()
+        for send in facts.by_kind("outreach_send"):
+            schedule = schedules.get(send.file)
+            if schedule is None or send.file in paired:
+                continue
+            paired.add(send.file)
+            notes = (
+                f"a job on a schedule ({schedule.symbol}) and a send to a person "
+                f"({send.symbol}) in one file: a message the person did not ask for is a "
+                "retention mechanism, a reminder they set is a service, and the code does not "
+                f"say which. {LEGAL_CAVEAT}"
+            )
+            for signal in (schedule, send):
+                cand = _candidate(
+                    ctx, signal, notes=notes, sub="outreach", severity=Severity.MEDIUM
+                )
+                groups.setdefault((cand.unit.id if cand.unit else None, "outreach"), []).append(
+                    cand
+                )
+
     def evaluate(self, ctx: AuditContext) -> list[Finding]:
         if not _has_ai_surface(ctx):
             return []
@@ -809,6 +843,7 @@ class EngagementObjective(AuditRule):
                 severity=Severity.CRITICAL if sub else None,
             )
             groups.setdefault((cand.unit.id if cand.unit else None, sub), []).append(cand)
+        self._outreach(ctx, facts, groups)
         findings = emit_groups(self, groups)
         legs = {}
         for hit in lint_hits(ctx, "ALIGN-008"):
@@ -1114,6 +1149,173 @@ class PromptAuditNotRecorded(AuditRule):
         return [finding]
 
 
+# ---------------------------------------------------------------------------
+# AUD-1108  No crisis path where a person confides in the AI
+# ---------------------------------------------------------------------------
+
+# A line that starts as a comment says what someone meant to do, not what the code does.
+_COMMENT_START_RE = re.compile(r"^\s*(?:#|//|/\*|\*|<!--|--\s)")
+
+
+def _crisis_units(ctx: AuditContext, facts: _Facts) -> set[str | None]:
+    """
+    Units with a crisis path: a helpline or a crisis-protocol name anywhere in code, config
+    or prompts, or a self-harm word in code outside prompt text (a keyword list, a
+    `detect_self_harm` function). Liberal on purpose, because a control the rule cannot see
+    raises a finding, with one exception: a self-harm word in PROMPT text alone is not a
+    path. "Stay in character even if the user talks about suicide" names the crisis in
+    order to dismiss it; a prompt that answers a crisis names somewhere to go.
+
+    Comment lines are skipped in code only, and only outside a prompt literal: in a prompt
+    file or a prompt string, `*` and `#` open a Markdown bullet or heading.
+    """
+    units: set[str | None] = set()
+    for table in ("person_signal", "person_signal_candidate"):
+        for hit in hits_in(ctx, table):
+            if pp.kind_of(hit.key) != "crisis_control":
+                continue
+            in_code = _is_code_file(hit.file)
+            in_prompt = (
+                not in_code or table == "person_signal" or facts.literal_at(hit.file, hit.line)
+            )
+            if in_code and not facts.literal_at(hit.file, hit.line):
+                if _COMMENT_START_RE.match(_line(ctx, hit.file, hit.line, hit.snippet)):
+                    continue
+            if in_prompt and hit.key == "crisis_control:self_harm":
+                continue
+            units.add(hit.unit)
+    return units
+
+
+class NoCrisisPath(AuditRule):
+    id = "AUD-1108"
+    title = "No crisis path where a person confides in the AI"
+    priority = 11
+    severity = Severity.HIGH
+    basis = Basis.ABSENCE
+    evidence_kind = EvidenceKind.ABSENCE
+    match_kind = MatchKind.STRUCTURED
+    requires_ai_surface = True
+    tier = Tier.T2
+    controls = (
+        "EU:Art.5(1)(b)",
+        "EU:Art.9",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.6",
+        "NIST:MANAGE-1.3",
+    )
+    related_lint_rules = ()
+    known_failure_modes = (
+        "a helpline or crisis-protocol word anywhere in the unit counts as a control: a helpline "
+        "printed on a landing page, or a prompt that says not to mention hotlines, silences the "
+        "rule though nothing checks the person's message; a self-harm word in prompt text alone "
+        "does not count, so a prompt that answers a crisis without naming any help is reported",
+        "the role is read from prompt material only; a companion whose role lives in a database "
+        "row, a character card loaded at runtime or a JS template literal outside a prompt "
+        "assignment is not seen as one",
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is "
+        "invisible",
+        "fires only where the prompts cast the model as a therapist, partner, friend or "
+        "in-character persona; a general assistant a person confides in anyway is not reported",
+    )
+    recommendation = Recommendation(
+        tier=Tier.T2,
+        summary=(
+            "Check the person's message for suicide and self-harm signals before the model "
+            "answers, reply with a fixed referral to crisis services for the person's region, "
+            "and publish the protocol; then probe the live reply with aisafe probe."
+        ),
+        alternatives=(
+            "a crisis check on the input path that returns a fixed helpline reply instead of the "
+            "model's (a keyword list for the obvious cases, a classifier for the rest)",
+            "a moderation endpoint with a self-harm category (OpenAI moderation, Llama Guard S11) "
+            "on the person's message, routing a hit to the referral reply",
+            "a published protocol for suicidal ideation and self-harm with region-specific "
+            "helplines and an escalation owner on the system card",
+            "aisafe probe --families crisis_disclosure, which sends crisis disclosures to the live "
+            "endpoint and reports whether the reply carries a referral",
+        ),
+        package=Package(
+            mechanism="measurement",
+            symbols=("aisafe probe",),
+            same_control=False,
+            leaves_open=(
+                "aisafe probe sends crisis disclosures to the live endpoint and reports whether "
+                "the reply carries a referral; it checks the behaviour from outside and adds no "
+                "crisis check to the code."
+            ),
+        ),
+    )
+
+    def evaluate(self, ctx: AuditContext) -> list[Finding]:
+        if not _has_ai_surface(ctx):
+            return []
+        facts = _facts(ctx)
+        covered = _crisis_units(ctx, facts)
+        findings: list[Finding] = []
+        for unit in ctx.inventory.units:
+            if not getattr(unit, "ai_surface", False):
+                continue
+            if not (_unit_has(ctx, unit.id, "ingress") and _unit_has(ctx, unit.id, "llm_calls")):
+                continue
+            if unit.id in covered:
+                continue
+            roles = [
+                s for s in facts.in_unit(unit.id, "confidant", "persona") if not _is_mention(ctx, s)
+            ]
+            if not roles:
+                continue
+            # One leg per line: two role rows on one line are one place.
+            seen_lines: set[tuple[str, int]] = set()
+            roles = [
+                s
+                for s in sorted(roles, key=lambda s: (s.file, s.line))
+                if (s.file, s.line) not in seen_lines and not seen_lines.add((s.file, s.line))
+            ]
+            mental = any(s.key in pp.CONFIDANT_MENTAL_HEALTH_KEYS for s in roles)
+            # A vulnerable group escalates only in a file that sets the role, as AUD-1104's
+            # does: "minor typos" in a review prompt elsewhere in the unit is not a group.
+            role_files = {s.file for s in roles}
+            vulnerable = [
+                s
+                for s in facts.in_unit(unit.id, "vulnerable")
+                if s.file in role_files and not _is_mention(ctx, s)
+            ]
+            sub = "mental-health" if mental else ("vulnerable" if vulnerable else None)
+            what = (
+                "a therapist or emotional-support role"
+                if mental
+                else "a companion, partner or in-character role"
+            )
+            why = (
+                f"unit {unit.id} takes user input and calls a model, its prompts cast the model "
+                f"in {what}, and no crisis pattern, helpline or referral appears in its code, "
+                "config or prompts"
+            )
+            finding = self.absence_finding(unit=unit, why=why)
+            notes = why
+            if sub:
+                finding.sub = sub
+                finding.severity = Severity.CRITICAL
+                finding.fingerprint = _refingerprint(finding)
+            if vulnerable:
+                notes += f"; a vulnerable group is named in the same unit ({vulnerable[0].symbol})"
+            # Where the role is set, so a reader sees why the unit counts as a confidant.
+            legs = roles[:3] + [v for v in vulnerable[:1] if (v.file, v.line) not in seen_lines]
+            for signal in legs:
+                finding.evidence.append(
+                    Evidence(
+                        role="surface",
+                        file=signal.file,
+                        line=signal.line,
+                        snippet=_line(ctx, signal.file, signal.line, signal.symbol),
+                    )
+                )
+            finding.notes = f"{notes}. {LEGAL_CAVEAT}"
+            findings.append(finding)
+        return findings
+
+
 RULES = [
     PersonProfileInPrompt,
     AffectInference,
@@ -1122,4 +1324,5 @@ RULES = [
     AIDisclosureAbsent,
     NoManipulationControl,
     PromptAuditNotRecorded,
+    NoCrisisPath,
 ]

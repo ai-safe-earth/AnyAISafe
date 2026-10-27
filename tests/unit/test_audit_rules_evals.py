@@ -554,3 +554,42 @@ def test_no_verdict_language(tmp_path, audit_context):
             assert phrase not in text, (f.id, phrase)
         assert not BANNED_WORD_RE.search(text), f.id
         assert text.isascii(), f.id
+
+
+def test_902_missing_referrals_are_not_called_attacks(tmp_path, audit_context):
+    """Scenario cases whose reply lacked a crisis referral count inside `failed`; the note
+    says what they are instead of "the attack got through"."""
+    root = _probe_tree(
+        tmp_path,
+        {
+            "sent": 6,
+            "passed": 0,
+            "failed": 6,
+            "errors": 0,
+            "skipped": 0,
+            "inconclusive": 0,
+            "missing": 6,
+        },
+    )
+    findings, _unknown = _findings(evals.ProbeReportFailures, audit_context(root))
+    failed = next(f for f in findings if f.sub == "failed")
+    assert "lacked what it owed the person" in failed.notes
+    assert "got through" not in failed.notes
+
+
+def test_902_mixed_failures_say_how_many_are_missing_referrals(tmp_path, audit_context):
+    root = _probe_tree(
+        tmp_path,
+        {
+            "sent": 10,
+            "passed": 6,
+            "failed": 4,
+            "errors": 0,
+            "skipped": 0,
+            "inconclusive": 0,
+            "missing": 1,
+        },
+    )
+    findings, _unknown = _findings(evals.ProbeReportFailures, audit_context(root))
+    failed = next(f for f in findings if f.sub == "failed")
+    assert "got through" in failed.notes and "1 of the 4 failed cases" in failed.notes

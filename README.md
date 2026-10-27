@@ -21,7 +21,7 @@ From the root of any repository (you need [uv](https://docs.astral.sh/uv/) for `
 ```bash
 uvx aisafe audit .                                       # findings in the terminal
 uvx aisafe audit . --format html -o aisafe-report.html   # a document you can read and share
-uvx aisafe audit --list-rules                            # the 54 rules it checks
+uvx aisafe audit --list-rules                            # the 55 rules it checks
 ```
 
 No API key, no account, no model call. On Windows, set `PYTHONIOENCODING=utf-8` first
@@ -69,7 +69,7 @@ over time.
 
 ## What it finds
 
-There are 54 rules, `AUD-101` to `AUD-1107`. The number before the last two digits is the
+There are 55 rules, `AUD-101` to `AUD-1108`. The number before the last two digits is the
 priority: **P1 is the largest blast radius**, the most damage if something goes wrong. The
 priority is fixed per rule; it is not a measure of the damage in your system. Each rule
 belongs to one of eleven families.
@@ -86,9 +86,9 @@ belongs to one of eleven families.
 | P8 | Detection guards | A guard is wired but never measured, lets traffic through when it fails, breaks too much normal traffic, or costs more than the budget. | AUD-801 to AUD-806 |
 | P9 | Evaluation loop | No attack tests run in CI; a probe report shows attacks got through; the model changed since the last measurement; tests contain attacks only, so "block everything" scores best. | AUD-901 to AUD-904 |
 | P10 | Governance | No system card says what the system is for, who it affects or who owns it; the EU AI Act risk tier was never recorded. | AUD-1001, AUD-1002, AUD-1003 |
-| P11 | Persons and manipulation | A personal profile goes into a prompt; the code infers emotion or biometric traits; the system scores or decides about people; the prompt optimises for engagement; the bot claims to be human or never says it is an AI. | AUD-1101 to AUD-1107 |
+| P11 | Persons and manipulation | A personal profile goes into a prompt; the code infers emotion or biometric traits; the system scores or decides about people; the prompt optimises for engagement or a scheduled job nudges people back; the bot claims to be human or never says it is an AI; a companion or therapist persona has no crisis path for a person who discloses suicide or self-harm. | AUD-1101 to AUD-1108 |
 
-By severity: 11 critical, 24 high, 12 medium, 4 low, 3 info.
+By severity: 11 critical, 25 high, 12 medium, 4 low, 3 info.
 
 Each rule lists the matching items in public references:
 
@@ -129,7 +129,7 @@ walk      list files, honour .gitignore, find sub-projects by their manifests
   -> pydeep    Python syntax-tree analysis: model calls, loops, tools and their
                gates, prompt assembly, model output flowing into dangerous
                places (shell, eval, SQL, HTML, URLs, files)
-  -> rules     the 54 AUD-* rules
+  -> rules     the 55 AUD-* rules
   -> scanners  gitleaks, detect-secrets, pip-audit, npm audit, osv-scanner,
                mcp-scan, semgrep -- only if already installed;
                promptfoo only with --run-evals

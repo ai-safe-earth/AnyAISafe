@@ -3,7 +3,7 @@
 # misalignment-check: ignore-file
 """aisafe/devtools/audit/persons_patterns.py
 -----------------------------------------
-P11 "persons and manipulation" vocabulary: the regex tables behind AUD-1101..1107.
+P11 "persons and manipulation" vocabulary: the regex tables behind AUD-1101..1108.
 
 This module IS the vocabulary, so it carries all three ignore markers: the audit would
 otherwise report its own tables as person signals, and the EU AI Act linter and the
@@ -28,12 +28,17 @@ __all__ = [
     "AFFECT_INFERENCE",
     "BIOMETRIC_CATEGORISATION",
     "CODE_KINDS",
+    "CONFIDANT_MENTAL_HEALTH_KEYS",
+    "CONFIDANT_ROLE",
     "CONFIG_KINDS",
+    "CRISIS_CONTROL",
     "DISCLOSURE_SYMBOLS",
     "DOC_KINDS",
     "ENGAGEMENT_OBJECTIVE",
     "MANIPULATION_CONTROL_SYMBOLS",
     "OBJECTIVE_CODE",
+    "OUTREACH_SCHEDULE",
+    "OUTREACH_SEND",
     "PERSONA_CONCEALMENT",
     "PERSON_NOUN",
     "PERSON_SCORING",
@@ -200,6 +205,36 @@ ENGAGEMENT_OBJECTIVE: Table = _t(
             r"\bincrease\s+(?:(?:user|their)\s+)?(?:dependency|attachment|reliance|dwell\s+time"
             r"|session\s+(?:time|length))",
         ),
+        # The shapes the 2026-10-27 corpus sweep found in real prompts, none of which says
+        # "maximise engagement": proactive speech when the person has gone quiet, a
+        # conversation that must not end, an engaging experience as the goal, a bond.
+        (
+            "engagement:proactive",
+            r"\bsay\s+something\s+(?:that\s+would\s+be\s+)?(?:engaging|interesting|fun)\b"
+            r"|\bbe\s+proactive\s+in\s+(?:finding|starting|bringing\s+up|suggesting|raising)\s+"
+            r"(?:\w+\s+){0,3}?(?:topics?|conversations?|subjects?)\b"
+            r"|\bproactive(?:ly)?\s+(?:speak|message|reach\s+out|start|initiate|check\s+in)\w*",
+        ),
+        (
+            "engagement:keep_going",
+            r"\bkeep\s+(?:the\s+)?(?:conversation|chat|dialogue|talk)\s+(?:going|alive|flowing)\b"
+            r"|\bnever\s+(?:let|allow)\s+(?:the\s+)?(?:conversation|chat)\s+(?:end|die|stop)\b"
+            r"|\balways\s+(?:end|finish)\s+(?:with|on)\s+a\s+question\b",
+        ),
+        (
+            # The person as the object ("keep the user engaged") or an engaging experience
+            # as the product; engaging posts or a clear, engaging explanation are content.
+            "engagement:goal",
+            r"\bgoal\s+is\s+to\s+(?:keep|make|get)\s+(?:the\s+)?(?:users?|viewers?|people|them"
+            r"|players?|listeners?|audience)\b[^.\n]{0,30}\bengag\w*"
+            r"|\bgoal\s+is\s+to\s+create\s+an?\s+(?:[\w-]+,?\s+){0,3}?engaging\s+(?:live\s+)?"
+            r"(?:experience|stream|session|conversation)\b",
+        ),
+        (
+            "engagement:bond",
+            r"\b(?:create|build|form|deepen)\s+a\s+(?:deep\s+|strong\s+|lasting\s+)?"
+            r"(?:bond|emotional\s+connection|attachment)\b",
+        ),
         ("engagement:variable_reward", r"\bvariable[- ]reward\b"),
         ("engagement:infinite_scroll", r"\binfinite[- ]scroll\b"),
         ("engagement:fomo", r"\bfear\s+of\s+missing\s+out\b|\bfomo\b"),
@@ -223,6 +258,47 @@ OBJECTIVE_CODE: Table = _t(
         ),
     ],
     re.M | re.I,
+)
+
+# Outreach on a schedule (AUD-1104/outreach): a job that runs on a timer and a call that
+# sends a message to a person, in the same file. Code kinds, mention-filtered. Neither
+# alone says anything: a cron job cleans caches, a send answers a request. Together they
+# are a message the person may not have asked for; the rule says so and no more.
+OUTREACH_SCHEDULE: Table = _t(
+    [
+        (
+            "outreach_schedule:cron",
+            r"\bcron\.schedule\(|\bnew\s+CronJob\(|\bschedule\.every\(|\bcrontab\("
+            r"|\bparseCronItem\(|\bBackgroundScheduler\(|\bAsyncIOScheduler\(|\.add_job\("
+            r"|@(?:app\.)?(?:periodic_task|scheduled_job)\b|\bbeat_schedule\b",
+        ),
+        ("outreach_schedule:interval", r"\bsetInterval\("),
+    ],
+    re.M,
+)
+OUTREACH_SEND: Table = _t(
+    [
+        (
+            # Not a chat session with a model (Gemini's `chat.send_message`) and not browser
+            # extension messaging (`chrome.runtime.sendMessage`): neither reaches a person.
+            "outreach_send:message",
+            r"(?<!chat)(?<!Chat)(?<!session)(?<!Session)(?<!runtime)(?<!port)(?<!tabs)"
+            r"(?<!model)(?<!convo)\.sendMessage\("
+            r"|(?<!chat\.)(?<!session\.)(?<!convo\.)(?<!model\.)\bsend_message\("
+            r"|\.send_text\(|\bsendText\(",
+        ),
+        (
+            "outreach_send:email",
+            r"\bsend_?(?:task_)?e?mail\(|\bsendE?[Mm]ail\(|\.emails\.send\(|\bsgMail\.send\("
+            r"|\btransporter\.sendMail\(",
+        ),
+        (
+            "outreach_send:push",
+            r"\bsend_?[Pp]ush\w*\(|\bwebpush\.send\w*\(|\bmessaging\(\)\.send\w*\(|\bnotif\w*\.send\(",
+        ),
+        ("outreach_send:call", r"\bcalls\.create\("),
+    ],
+    re.M,
 )
 
 PERSONA_CONCEALMENT: Table = _t(
@@ -253,6 +329,109 @@ PERSONA_CONCEALMENT: Table = _t(
             "persona:body",
             r"\byou\s+have\s+(?:a\s+(?:real\s+)?body|real\s+feelings|a\s+family|a\s+childhood"
             r"|a\s+physical\s+form)\b",
+        ),
+    ],
+    re.M | re.I,
+)
+
+# A prompt that casts the model as someone a person confides in: a therapist, a partner,
+# a friend, a character who never leaves the role. These gate AUD-1108: where a person is
+# invited to confide, a crisis path is owed. Prompt material only (PROMPT_KINDS): the
+# nouns are everywhere in code and prose, and only an instruction to the model makes them
+# a role. The role rows read "you are [Name,] a/my <up to ten words> <noun>", so "You are
+# Natalia, a 25-year-old woman, the user's caring girlfriend" is a partner role, while a
+# relative clause or a preposition in between ends it: "You are an assistant that books
+# appointments with a therapist" is not a therapist role.
+_GAP_STOP = (
+    r"(?:that|who|which|whose|with|for|to|find|finds|finding|book|books|help|helps|helping"
+    r"|connect|connects|refer|refers|recommend|recommends|between|from|of|about|on|in|at|by"
+    r"|like|than|not|no|never|nor|but|instead|rather|assisting|serving|planning|working"
+    r"|managing|handling)"
+)
+
+
+def _role(noun: str) -> str:
+    return (
+        r"\b(?:you\s+are|you['’]re|act\s+as|acting\s+as|play(?:ing)?\s+(?:the\s+role\s+of|as))"
+        r"(?:\s+[A-Z][\w'’-]*(?:\s+[A-Z][\w'’-]*)?\s*,)?"
+        r"\s+(?:a|an|my|your|the|their|his|her)\b"
+        r"(?:\s+(?!" + _GAP_STOP + r"\b)[\w'’-]+,?){0,10}?"
+        r"\s+" + noun
+    )
+
+
+# An occupational counsellor (career, admissions, debt) is not a confidant; a practice,
+# business or programming partner is not a partner in this sense.
+_THERAPIST_NOUN = (
+    r"\b(?:therapist|psychotherapist|psychologist|psychiatrist|life\s+coach"
+    r"|(?<!career\s)(?<!admissions\s)(?<!guidance\s)(?<!academic\s)(?<!college\s)"
+    r"(?<!school\s)(?<!financial\s)(?<!debt\s)(?<!credit\s)(?<!legal\s)(?<!sales\s)"
+    r"(?<!camp\s)counsell?or"
+    r"|mental[- ]health\s+(?:assistant|companion|coach|counsell?or|professional|supporter|bot"
+    r"|chatbot))\b"
+)
+_PARTNER_NOUN = (
+    r"\b(?:best\s+friend|friend|girlfriend|boyfriend|lover|wife|husband|confidant"
+    r"|(?<!conversation\s)(?<!language\s)(?<!exchange\s)(?<!sparring\s)(?<!study\s)"
+    r"(?<!business\s)(?<!accountability\s)(?<!thought\s)(?<!programming\s)(?<!coding\s)"
+    r"(?<!reseller\s)(?<!channel\s)(?<!trading\s)(?<!chess\s)(?<!practice\s)(?<!writing\s)"
+    r"(?<!debate\s)(?<!brainstorming\s)partner(?!\s+(?:support|program|api|portal|account"
+    r"|manager|network|integration|compan(?:y|ies)|organi[sz]ation))"
+    r"|soul\s?mate|(?<!coding\s)(?<!code\s)(?<!travel\s)(?<!study\s)(?<!shopping\s)companion)\b"
+)
+CONFIDANT_ROLE: Table = _t(
+    [
+        ("confidant:therapist", _role(_THERAPIST_NOUN)),
+        # A support role ("you are an emotional support companion") or an imperative that
+        # opens a sentence ("Provide emotional support"); never the bare phrase, which a
+        # benefits list or a refusal ("You are not able to offer emotional support") holds.
+        (
+            "confidant:support",
+            _role(r"\b(?:emotional|mental[- ]health|psychological)[- ]support\w*\b")
+            + r"|(?:^|[.!?]\s+)\s*(?:provide|offer|give)\s+(?:\w+\s+){0,2}?"
+            r"(?:emotional|psychological)\s+support\b",
+        ),
+        ("confidant:partner", _role(_PARTNER_NOUN)),
+        (
+            "confidant:in_character",
+            r"\b(?:stay|remain|keep)(?:s|ing)?\s+(?:fully\s+|completely\s+|always\s+|strictly\s+)?"
+            r"in[- ]character\b|\b(?:never|do\s+not|don['’]?t)\s+break\s+(?:the\s+)?character\b",
+        ),
+    ],
+    re.M | re.I,
+)
+# Which confidant rows make the surface a mental-health one (AUD-1108/mental-health).
+CONFIDANT_MENTAL_HEALTH_KEYS: frozenset[str] = frozenset(
+    {"confidant:therapist", "confidant:support"}
+)
+
+# The negatives for AUD-1108: something on the unit's path that recognises a crisis or
+# points to help. Liberal on purpose: a control the rule fails to see raises a finding,
+# so any crisis word in code, config or prompts counts as present (comments excluded by
+# the rule). The word start is "no letter before, or a regex `\b` before", so a keyword
+# list written as regexes (`r"\bsuicide\b"`) is read too.
+_WORD_START = r"(?:(?<![a-z])|(?<=\\b))"
+CRISIS_CONTROL: Table = _t(
+    [
+        (
+            "crisis_control:self_harm",
+            _WORD_START + r"(?:suicid\w*|self[- _]?harm\w*|self[- _]?injur\w*"
+            r"|kill(?:ing)?\s+(?:myself|themselves|himself|herself|yourself)"
+            r"|end(?:ing)?\s+(?:my|their|his|her|your)\s+(?:own\s+)?life"
+            r"|want(?:s|ed)?\s+to\s+die)",
+        ),
+        (
+            "crisis_control:helpline",
+            _WORD_START + r"(?:help[- ]?lines?|hotlines?|crisis\s+(?:text\s+)?lines?"
+            r"|(?:suicide|crisis|prevention|988)[^.\n]{0,20}lifeline|lifeline\s+(?:australia|at|on|\d)"
+            r"|samaritans|befrienders|(?:call|text|dial)\s+(?:988|911|112|999|116\s?123)\b"
+            r"|emergency\s+services)",
+        ),
+        (
+            "crisis_control:protocol",
+            r"\bcrisis[_ -]?(?:detect\w*|protocol|check\w*|keywords?|patterns?|mode|response"
+            r"|escalat\w*|resources?|handl\w*|referr\w*)"
+            r"|\b(?:is|detect|check|handle|has)_?crisis\b",
         ),
     ],
     re.M | re.I,
@@ -312,10 +491,23 @@ REVIEW_RE = re.compile(
 # line or a pydeep prompt literal); a code hit of these kinds outside prompt material
 # is recorded as a candidate and promoted by the rule when a literal span covers it.
 PROMPT_KINDS: frozenset[str] = frozenset(
-    {"scoring", "engagement", "vulnerable", "persona", "profile_placeholder", "profile_name"}
+    {
+        "scoring",
+        "engagement",
+        "vulnerable",
+        "persona",
+        "profile_placeholder",
+        "profile_name",
+        # AUD-1108: the role and the crisis words both live in prompts; in code they are
+        # candidates (a triple-quoted prompt is one), and the rule reads them as such.
+        "confidant",
+        "crisis_control",
+    }
 )
 # Code-only kinds: an SDK call, an objective variable, a review symbol.
-CODE_KINDS: frozenset[str] = frozenset({"profile_sdk", "objective_code", "review"})
+CODE_KINDS: frozenset[str] = frozenset(
+    {"profile_sdk", "objective_code", "review", "outreach_schedule", "outreach_send"}
+)
 # Kinds scanned in any code or config file, mention-filtered.
 CONFIG_KINDS: frozenset[str] = frozenset(
     {
@@ -327,6 +519,8 @@ CONFIG_KINDS: frozenset[str] = frozenset(
         "engagement",
         "persona",
         "profile_placeholder",
+        "confidant",
+        "crisis_control",
     }
 )
 # The disclosure rows that are code symbols rather than prose: scanned directly in code
@@ -342,6 +536,8 @@ DOC_KINDS: frozenset[str] = frozenset(
         "profile_placeholder",
         "disclosure",
         "biometric_cat",
+        "confidant",
+        "crisis_control",
     }
 )
 
@@ -358,8 +554,12 @@ PERSON_SIGNAL_PATTERNS: Table = (
     + PERSON_SCORING
     + ENGAGEMENT_OBJECTIVE
     + OBJECTIVE_CODE
+    + OUTREACH_SCHEDULE
+    + OUTREACH_SEND
     + _VULNERABLE
     + PERSONA_CONCEALMENT
+    + CONFIDANT_ROLE
+    + CRISIS_CONTROL
     + DISCLOSURE_SYMBOLS
     + MANIPULATION_CONTROL_SYMBOLS
     + REVIEW_SYMBOLS

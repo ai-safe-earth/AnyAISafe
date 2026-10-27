@@ -87,7 +87,7 @@ EXPECTED_IDS = {
     *(f"AUD-{n}" for n in range(801, 807)),
     *(f"AUD-{n}" for n in range(901, 905)),
     *(f"AUD-{n}" for n in range(1001, 1004)),
-    *(f"AUD-{n}" for n in range(1101, 1108)),
+    *(f"AUD-{n}" for n in range(1101, 1109)),
 }
 
 

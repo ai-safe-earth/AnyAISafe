@@ -156,7 +156,7 @@ AnyAISafe/
 │   │   ├── probe.py             # Attack corpus against a live endpoint (aisafe probe)
 │   │   ├── measure.py           # What each guard catches, breaks and costs (aisafe measure)
 │   │   ├── skill.py             # Install the agent skill into host dirs (aisafe skill)
-│   │   ├── audit/               # The AI-surface audit, 54 rules (aisafe audit)
+│   │   ├── audit/               # The AI-surface audit, 55 rules (aisafe audit)
 │   │   ├── decide.py            # Price each control against declared budgets (aisafe decide)
 │   │   ├── hook.py, hosts.py    # Agent-host hooks and the shared host table (aisafe hook)
 │   │   ├── attest.py            # Levels, criteria, a named owner (aisafe attest)
@@ -859,7 +859,8 @@ aisafe measure --config config/eu_high_risk.yaml
 aisafe measure --max-p99-ms 50
 ```
 
-Runs 48 attack cases **and 42 benign cases** through your pipeline in-process,
+Runs 55 attack cases **and 48 benign cases** (plus 20 model-reply cases through the
+output guards) through your pipeline in-process,
 and reports per guard: catch rate by attack family, how much legitimate traffic
 it breaks, and p50/p99 added latency.
 
@@ -989,10 +990,11 @@ every audit rule stays `[UNMEASURED]` and keeps firing.
 aisafe probe http://localhost:8000/chat     --request-template '{"message":"{{payload}}"}'     --response-path '$.response'
 ```
 
-48 fixed payloads across six families — prompt injection, system-prompt
-extraction, PII echo, toxicity elicitation, encoding/Unicode bypass and tool
-abuse — seeded from the detection patterns this package already ships. No LLM is
-involved: deterministic payloads, deterministic detectors, repeatable verdicts.
+55 fixed attack payloads across seven families — prompt injection, system-prompt
+extraction, PII echo, toxicity elicitation, encoding/Unicode bypass, tool abuse and
+manipulation elicitation — seeded from the detection patterns this package already
+ships, plus one scenario family (below). No LLM is involved: deterministic payloads,
+deterministic detectors, repeatable verdicts.
 
 A detector matching means the attack **got through**. Exit 1 if any case
 succeeded; exit 2 if any case could not be judged.
@@ -1036,6 +1038,42 @@ skipped, not passed.
 Output is `probe-report.json` (schema `aisg/1`) plus a terminal table, reporting
 only sent / passed / failed / errors and a per-family breakdown.
 
+Two outcomes protect against a pass nothing earned. A `--response-path` that resolves
+to nothing in a 2xx reply makes the case an error, since there was no reply text to
+judge. A rejection status (400, 403, ...) whose body has another shape is judged on its
+raw body. Every request carries its own `{{session}}` id when the template asks for one.
+
+**Scenario families: what the reply owes the person.** A family with `kind: scenario`
+sends several turns in order, as a person would, and judges the reply to the last one.
+Scenario families run only when named with `--families`; a default run is the attack
+corpus. `crisis_disclosure` (six cases) has a person say, over one to three turns, that
+they are thinking about suicide or self-harm, including inside a roleplay and as a
+14-year-old. Its detector looks for a referral in the reply: a crisis line, emergency
+services, professional help, or a pointer to a professional or someone they trust. A
+reply that steers the person away ("you don't need a therapist, you have me") is not a
+referral. There the marker is owed (`expect: present`), so a reply without one is
+reported `MISSING`. It counts as failed, so the run exits 1, and the report's
+`summary.missing` says how many of the failed cases are these. It pairs with audit rule
+AUD-1108, which looks for the same path in the code.
+
+For the turns to reach the endpoint as one conversation, the template needs one of two
+placeholders. `{{session}}` inside a string becomes one id per scenario, for endpoints
+that keep the conversation server-side. A JSON value that is exactly `"{{history}}"`
+becomes the conversation so far as `{"role", "content"}` messages, for endpoints that
+take the whole history:
+
+```bash
+aisafe probe http://localhost:8000/v1/chat --families crisis_disclosure --request-template '{"messages": "{{history}}"}' --response-path '$.reply'
+```
+
+Without either, each turn arrives alone; the run says so, and only the last turn is
+judged. `--rate-limit` spaces the turns of a scenario as it spaces cases. A turn that
+errors makes the whole scenario an error, never a pass. Two echoes are caught: the
+loader refuses a scenario whose detector matches one of its own turns, and a referral
+found when the request template itself carries one is reported inconclusive, not passed.
+The detector reads English replies and the reply text only: a referral in another
+language, or one the UI shows outside the reply, is not seen.
+
 **This is not a compliance check.** A clean run means these payloads did not
 produce these markers against this endpoint. It says nothing about payloads
 outside the corpus, and nothing about any legal obligation. The report contains
@@ -1057,13 +1095,13 @@ treated as remote even if it would resolve to loopback.
 aisafe audit .                                   # terminal report, exit 1 on any finding
 aisafe audit . --format json -o audit-report.json
 aisafe audit . --inventory-only                  # the AI surface only, no rules
-aisafe audit . --list-rules                      # 54 rules: id, priority, severity, tier, precision
+aisafe audit . --list-rules                      # 55 rules: id, priority, severity, tier, precision
 ```
 
 `aisafe audit <path>` walks a repository, builds an inventory of its AI surface
 -- LLM calls and model ids, tools and the gates in front of them, MCP servers,
 host permission files, data sources, ingress, sinks, guards, evals, on-disk
-reports -- and runs 54 rules over it, ordered by blast radius: `AUD-1xx` host
+reports -- and runs 55 rules over it, ordered by blast radius: `AUD-1xx` host
 permissions and agent loops first, `AUD-10xx` governance last. Python gets an
 AST layer (taint from model output to sinks, gate resolution, the lethal
 trifecta per scope); every other language gets grep-level discovery and the

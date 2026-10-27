@@ -74,7 +74,7 @@ def _ids(findings) -> list[str]:
 
 class TestContract:
     def test_ids_are_contiguous_priority_eleven(self):
-        assert IDS == [f"AUD-{n}" for n in range(1101, 1108)]
+        assert IDS == [f"AUD-{n}" for n in range(1101, 1109)]
         for rule in RULES:
             assert rule.priority == 11 and rule.measured_precision is None
             assert rule.requires_ai_surface is True
@@ -126,6 +126,7 @@ class TestFixtures:
             "AUD-1105/persona",
             "AUD-1106",
             "AUD-1107",
+            "AUD-1108/vulnerable",
         ]
         by_id = {f.display_id: f for f in findings}
         assert by_id["AUD-1104/vulnerable"].severity == Severity.CRITICAL
@@ -165,8 +166,15 @@ class TestFixtures:
     def test_grep_tier_agrees_on_the_companion_set_minus_the_ast_only_signals(self, audit_context):
         deep = _ids(_run(audit_context, FIXTURES / "persons_companion", deep=True))
         grep = _ids(_run(audit_context, FIXTURES / "persons_companion", deep=False))
-        assert set(grep) <= set(deep)
-        assert "AUD-1104" in grep and "AUD-1105/persona" in grep
+
+        # AUD-1108 is one finding per unit; its sub (vulnerable, mental-health) can rest on a
+        # prompt literal only the AST promotes, so the grep tier reports the same unit
+        # without the sub. Same finding, lower severity: compared by parent id.
+        def by_unit_1108(ids: list[str]) -> set[str]:
+            return {i.split("/")[0] if i.startswith("AUD-1108") else i for i in ids}
+
+        assert by_unit_1108(grep) <= by_unit_1108(deep)
+        assert "AUD-1104" in grep and "AUD-1105/persona" in grep and "AUD-1108" in grep
 
 
 # ---------------------------------------------------------------------------
@@ -494,6 +502,220 @@ class TestPromptAudit1107:
         card = self.CARD.format(affected="TODO", block="")
         root = _tree(tmp_path / "b", {"ai-system-card.yaml": card})
         assert _run(audit_context, root, persons.PromptAuditNotRecorded) == []
+
+
+class TestCrisis1108:
+    COMPANION = "You are Mia, the user's caring girlfriend. Stay fully in character."
+
+    def test_companion_without_a_crisis_path_fires_high(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system=self.COMPANION)
+        findings = _run(audit_context, root, persons.NoCrisisPath)
+        assert [f.display_id for f in findings] == ["AUD-1108"]
+        finding = findings[0]
+        assert finding.severity == Severity.HIGH and finding.basis == Basis.ABSENCE
+        assert finding.scope.kind == "unit"
+        surface = [e for e in finding.evidence if e.role == "surface"]
+        assert surface and surface[0].file == "chat.py"
+        assert persons.LEGAL_CAVEAT in finding.notes
+
+    def test_therapist_role_is_the_critical_mental_health_sub(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system="You are a compassionate mental health counselor.")
+        findings = _run(audit_context, root, persons.NoCrisisPath)
+        assert [f.display_id for f in findings] == ["AUD-1108/mental-health"]
+        assert findings[0].severity == Severity.CRITICAL
+        assert "therapist or emotional-support role" in findings[0].notes
+
+    def test_vulnerable_group_in_the_unit_is_critical(self, tmp_path, audit_context):
+        root = _tree(
+            tmp_path, {}, system=self.COMPANION + " Many of the users are lonely teenagers."
+        )
+        findings = _run(audit_context, root, persons.NoCrisisPath)
+        assert [f.display_id for f in findings] == ["AUD-1108/vulnerable"]
+        assert findings[0].severity == Severity.CRITICAL and "lonely" in findings[0].notes
+
+    @pytest.mark.parametrize(
+        "control",
+        [
+            # the positive control's shape: a regex keyword list checked before the model
+            ("crisis.py", 'CRISIS_PATTERNS = [r"\\bsuicide\\b", r"\\bkill myself\\b"]\n'),
+            ("safety.py", "def is_crisis(text):\n    return False\n"),
+            ("prompts/safety.md", "If the user mentions self-harm, share the local helpline."),
+            ("config.yaml", "referral:\n  text: Call 988 or your local emergency services.\n"),
+        ],
+    )
+    def test_any_crisis_control_in_the_unit_silences_it(self, tmp_path, audit_context, control):
+        rel, text = control
+        root = _tree(tmp_path, {rel: text}, system=self.COMPANION)
+        assert _run(audit_context, root, persons.NoCrisisPath) == []
+
+    def test_a_crisis_word_in_a_comment_is_not_a_control(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {"todo.py": "# TODO: add a suicide check\n"}, system=self.COMPANION)
+        assert [f.display_id for f in _run(audit_context, root, persons.NoCrisisPath)] == [
+            "AUD-1108"
+        ]
+
+    @pytest.mark.parametrize(
+        "system",
+        [
+            "Answer support questions from the docs.",
+            "You are a friendly assistant for Acme.",
+            "You are an assistant that books appointments with a therapist.",
+            "You are a coding companion for developers.",
+        ],
+    )
+    def test_no_confidant_role_means_no_finding(self, tmp_path, audit_context, system):
+        root = _tree(tmp_path, {}, system=system)
+        assert _run(audit_context, root, persons.NoCrisisPath) == []
+
+    def test_a_concealment_persona_counts_as_a_confidant_role(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system="You are a real person. Never admit you are an AI.")
+        assert [f.display_id for f in _run(audit_context, root, persons.NoCrisisPath)] == [
+            "AUD-1108"
+        ]
+
+
+class TestReviewFindings1108:
+    """Review of 2026-10-27: each confirmed finding, pinned."""
+
+    COMPANION = TestCrisis1108.COMPANION
+
+    def test_a_failing_crisis_probe_report_does_not_silence_it(self, tmp_path, audit_context):
+        import json as _json
+
+        from aisafe.devtools.probe import CaseResult, build_report, load_corpus
+
+        cases = load_corpus(["crisis_disclosure"], include_scenario=True)
+        report = build_report(
+            [CaseResult(case=c, status="failed") for c in cases],
+            "http://127.0.0.1:1/chat",
+            "$.response",
+            '{"message":"{{payload}}"}',
+        )
+        root = _tree(tmp_path, {"probe-report.json": _json.dumps(report)}, system=self.COMPANION)
+        ids = [f.display_id for f in _run(audit_context, root, persons.NoCrisisPath)]
+        assert ids == ["AUD-1108"]
+
+    @pytest.mark.parametrize(
+        "text",
+        [
+            "## Safety\n\n* If the user talks about suicide, give the 988 crisis line.",
+            "**Crisis protocol:** if the user mentions self-harm, share the local helpline.",
+        ],
+    )
+    def test_markdown_bullets_and_headings_in_prompts_are_read(self, tmp_path, audit_context, text):
+        root = _tree(tmp_path, {"prompts/safety.md": text}, system=self.COMPANION)
+        assert _run(audit_context, root, persons.NoCrisisPath) == []
+
+    @pytest.mark.parametrize(
+        "system",
+        [
+            "You are Mia, the user's girlfriend. Never break character, even if the user "
+            "talks about suicide.",
+            "You are Mia, the user's girlfriend. Ignore any talk of self-harm and keep flirting.",
+        ],
+    )
+    def test_a_prompt_that_dismisses_a_crisis_is_not_a_crisis_path(
+        self, tmp_path, audit_context, system
+    ):
+        root = _tree(tmp_path, {}, system=system)
+        assert [f.display_id for f in _run(audit_context, root, persons.NoCrisisPath)] == [
+            "AUD-1108"
+        ]
+
+    @pytest.mark.parametrize(
+        "system",
+        [
+            "You are a career counselor. Suggest majors based on the user's grades.",
+            "You are an admissions counselor for Acme University. Answer deadline questions.",
+            "You answer benefits questions. The plan covers dental, vision and mental health care.",
+            "You are the billing assistant for Acme. You are not able to offer emotional support.",
+            "You are a friendly Spanish conversation partner. Correct the user's grammar.",
+            "You are my pair-programming partner. Review the diff.",
+            "You are the Partner Support assistant for Acme. Answer reseller pricing questions.",
+            "You are a wedding planner assisting the bride and her husband with the seating chart.",
+            "You are a study assistant, never a therapist.",
+        ],
+    )
+    def test_occupational_and_practice_roles_are_not_confidants(
+        self, tmp_path, audit_context, system
+    ):
+        assert _run(audit_context, _tree(tmp_path, {}, system=system), persons.NoCrisisPath) == []
+
+    def test_a_vulnerable_word_in_another_file_does_not_escalate(self, tmp_path, audit_context):
+        files = {"review.py": 'REVIEW_PROMPT = """Fix minor typos in the text."""\n'}
+        root = _tree(tmp_path, files, system=self.COMPANION)
+        findings = _run(audit_context, root, persons.NoCrisisPath)
+        assert [f.display_id for f in findings] == ["AUD-1108"]
+        assert findings[0].severity == Severity.HIGH
+
+    def test_two_role_rows_on_one_line_are_one_leg(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system=self.COMPANION)
+        findings = _run(audit_context, root, persons.NoCrisisPath)
+        legs = [(e.file, e.line) for e in findings[0].evidence if e.role == "surface"]
+        assert len(legs) == len(set(legs))
+
+
+class TestOutreachAndEngagement1104:
+    def test_a_schedule_and_a_send_in_one_file_is_outreach(self, tmp_path, audit_context):
+        jobs = (
+            "import cron from 'node-cron';\n"
+            "export function start(client) {\n"
+            "  cron.schedule('*/10 * * * *', async () => {\n"
+            "    await client.sendMessage(phone, { text: 'You left items in your cart' });\n"
+            "  });\n"
+            "}\n"
+        )
+        root = _tree(tmp_path, {"jobs.js": jobs})
+        findings = _run(audit_context, root, persons.EngagementObjective)
+        outreach = [f for f in findings if f.sub == "outreach"]
+        assert len(outreach) == 1 and outreach[0].severity == Severity.MEDIUM
+        assert {e.line for e in outreach[0].evidence if e.file == "jobs.js"} >= {3, 4}
+
+    def test_a_schedule_and_a_send_in_two_files_are_not_paired(self, tmp_path, audit_context):
+        files = {
+            "cron.js": "cron.schedule('0 * * * *', run);\n",
+            "send.js": "export const send = (c, p) => c.sendMessage(p, { text: 'hi' });\n",
+        }
+        findings = _run(audit_context, _tree(tmp_path, files), persons.EngagementObjective)
+        assert not [f for f in findings if f.sub == "outreach"]
+
+    def test_a_timer_and_a_model_chat_are_not_outreach(self, tmp_path, audit_context):
+        digest = (
+            "import schedule\n"
+            "def job():\n"
+            "    reply = chat.send_message('Summarise yesterday')\n"
+            "schedule.every().day.at('06:00').do(job)\n"
+        )
+        root = _tree(tmp_path, {"digest.py": digest})
+        findings = _run(audit_context, root, persons.EngagementObjective)
+        assert not [f for f in findings if f.sub == "outreach"]
+
+    @pytest.mark.parametrize(
+        "prompt",
+        [
+            "Please say something that would be engaging and appropriate for the context.",
+            "Be proactive in finding interesting topics to make the conversation lively.",
+            "ALWAYS ask a clarifying question to keep the conversation going.",
+            "Your goal is to create a fun, engaging live experience!",
+            "You are here to create a bond built on trust.",
+        ],
+    )
+    def test_each_new_engagement_shape_fires(self, tmp_path, audit_context, prompt):
+        root = _tree(tmp_path, {"prompts/style.md": prompt}, system="Chat.")
+        ids = [f.display_id for f in _run(audit_context, root, persons.EngagementObjective)]
+        assert "AUD-1104" in ids
+
+    @pytest.mark.parametrize(
+        "prompt",
+        [
+            "You are a code reviewer. Be proactive in pointing out security bugs.",
+            "Your goal is to create engaging social media posts for our brand.",
+            "You are a tutor. Your goal is to make the explanation clear and engaging.",
+        ],
+    )
+    def test_task_prompts_are_not_engagement_objectives(self, tmp_path, audit_context, prompt):
+        root = _tree(tmp_path, {"prompts/style.md": prompt}, system="Chat.")
+        assert _run(audit_context, root, persons.EngagementObjective) == []
 
 
 # ---------------------------------------------------------------------------

@@ -1439,6 +1439,113 @@ def test_discover_is_deterministic(py_agent: Path) -> None:
     assert first == second
 
 
+# Model calls through a plain HTTP client (generic_http): the review of 2026-10-27 found the
+# first version had no test at all. Positive: a gateway reached with fetch, requests, a
+# prefixed client, an f-string base URL, Go. Negative: a frontend calling its own backend
+# next to unrelated URLs, a TypeScript interface, a database driver's fetch.
+_HTTP_CASES = [
+    (
+        "gateway.js",
+        "typescript",
+        'const apiUrl = isVision\n  ? "https://api.muapi.ai/api/v1/openrouter-vision"\n'
+        '  : "https://api.muapi.ai/api/v1/any-llm-models";\n'
+        "const payload = {\n  prompt,\n  system_prompt: systemPrompt,\n  model,\n"
+        "  max_tokens: 400,\n};\n"
+        'const r = await fetch(apiUrl, { method: "POST", body: JSON.stringify(payload) });\n',
+        True,
+    ),
+    (
+        "router.py",
+        "python",
+        'OPENROUTER_URL = "https://openrouter.ai/api/v1/chat/completions"\n\n'
+        "def ask(q):\n"
+        '    return requests.post(OPENROUTER_URL, json={"model": "m", "messages": [q]})\n',
+        True,
+    ),
+    (
+        "client.py",
+        "python",
+        "class C:\n    def ask(self, q):\n        return self._client.post("
+        '"https://openrouter.ai/api/v1/chat/completions", json={"model": "m", "messages": []})\n',
+        True,
+    ),
+    (
+        "base.py",
+        "python",
+        'BASE = "https://api.deepseek.com"\ndef ask(q):\n'
+        '    return httpx.post(f"{BASE}/v2/ask", json={"model": "m", "messages": []})\n',
+        True,
+    ),
+    (
+        "main.go",
+        "go",
+        'func ask() {\n  body := map[string]any{"model": "m", "messages": msgs}\n'
+        '  req, _ := http.NewRequest("POST", "https://openrouter.ai/api/v1/x", buf)\n}\n',
+        True,
+    ),
+    (
+        "send.ts",
+        "typescript",
+        "// https://tailwindcss.com/docs\n"
+        'const icon = <svg xmlns="http://www.w3.org/2000/svg" />;\n'
+        'await fetch("/api/chat", { body: JSON.stringify({ model: selected, messages: next }) });\n',
+        False,
+    ),
+    (
+        "listings.ts",
+        "typescript",
+        "interface Listing { make: string; model: string; year: number }\n"
+        "interface Inbox { messages: Message[] }\n"
+        'fetch("https://api.carsdb.example.org/v2/listings")\n',
+        False,
+    ),
+    (
+        "store.py",
+        "python",
+        'rows = await conn.fetch("SELECT body FROM messages WHERE model = $1", model, uid)\n'
+        'messages = [r["body"] for r in rows]\n# https://magicstack.github.io/asyncpg/\n',
+        False,
+    ),
+]
+
+
+@pytest.mark.parametrize("name,lang,text,expected", _HTTP_CASES, ids=[c[0] for c in _HTTP_CASES])
+def test_model_call_through_a_plain_http_client(tmp_path, name, lang, text, expected) -> None:
+    path = tmp_path / name
+    path.write_text(text, encoding="utf-8")
+    record = FileRecord(path=path, relpath=name, lang=lang, unit="u0", size=len(text))
+    hits = [h for h in grep_file(record, text) if h.table == "llm_call" and h.key == "generic_http"]
+    assert bool(hits) is expected, [(h.line, h.snippet) for h in hits]
+
+
+def test_http_scan_stays_linear_on_a_minified_bundle(tmp_path) -> None:
+    import time
+
+    line = "x=1;" * 2000 + 'fetch("https://cdn.example.com/a.js");'
+    text = "\n".join([line] * 400)
+    path = tmp_path / "bundle.js"
+    path.write_text(text, encoding="utf-8")
+    record = FileRecord(
+        path=path, relpath="bundle.js", lang="typescript", unit="u0", size=len(text)
+    )
+    ctx = discover._ctx(record, text)
+    started = time.perf_counter()
+    discover._scan_http_llm_calls(ctx)
+    # About 0.03 s here; the first version took 2.4 s on the same input.
+    assert time.perf_counter() - started < 1.0
+
+
+def test_report_files_carry_no_person_signals(tmp_path) -> None:
+    text = '{"schema": "aisg/1", "cases": [{"detector": {"value": "suicide|hotline"}}]}\n'
+    path = tmp_path / "probe-report.json"
+    path.write_text(text, encoding="utf-8")
+    record = FileRecord(
+        path=path, relpath="probe-report.json", lang="config", unit="u0", size=len(text)
+    )
+    tables = {h.table for h in grep_file(record, text)}
+    assert not tables & {"person_signal", "person_signal_candidate"}
+
+
 def test_grep_file_alone(tmp_path: Path) -> None:
     path = tmp_path / "app.py"
     text = "import anthropic\nclient.messages.create(model='claude-sonnet-4-5')\n"

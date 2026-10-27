@@ -92,6 +92,7 @@ How to read this file:
 | AUD-1105 | detector | yes | `AIDisclosureGuard` |
 | AUD-1106 | detector | yes | `ManipulationGuard`, `AIDisclosureGuard` |
 | AUD-1107 | document | no | `aisafe init` |
+| AUD-1108 | measurement | no | `aisafe probe` |
 
 Thirteen rules have `same control: yes`. Those are the only rows the plan table can assign to
 "package", and only when the finding's language is Python (by the file's extension; else
@@ -668,13 +669,15 @@ keeps a regex vocabulary in code from reading as an instruction to a model.
 - Mapping: EU:Art.5(1)(c), EU:Art.6, GDPR:Art.22, EU:Art.14, NIST:MAP-5.1,
   NIST:MEASURE-2.11, NIST:GOVERN-1.1.
 
-### AUD-1104 Engagement or retention objective in prompt or code (high; `/vulnerable` critical)
+### AUD-1104 Engagement or retention objective in prompt or code (high; `/vulnerable` critical, `/outreach` medium)
 
 - Control (T2): rewrite the objective as task completion and the user's own stated goals;
   remove streak, scarcity and variable-reward mechanics from the model's instructions. The
   `/vulnerable` sub-finding names the group word that co-occurs in the same prompt file or
   literal; the finding says what co-occurred, so a reading app with a streak feature can be
-  told apart from a companion app for lonely teens.
+  told apart from a companion app for lonely teens. `/outreach` is a job on a schedule and a
+  send to a person in one file (an abandoned-cart nudge, a re-engagement e-mail); a reminder
+  the person set looks the same in code, so read the trigger before changing anything.
 - Package: detector, same control: no, `ManipulationGuard`. Leaves open: ManipulationGuard
   flags influence tactics in the response text; it does not see the objective in the prompt,
   which is removed or rewritten by hand.
@@ -718,3 +721,23 @@ keeps a regex vocabulary in code from reading as an instruction to a model.
   prompt_audit block with placeholders; the review it records is done by a person, and
   whether it was thorough is not something the tool can check.
 - Mapping: EU:Art.9, EU:Art.11, EU:Art.26, NIST:GOVERN-1.1, NIST:GOVERN-1.2, NIST:MAP-1.1.
+
+### AUD-1108 No crisis path where a person confides in the AI (high; `/mental-health`, `/vulnerable` critical)
+
+- Control (T2): check the person's message for suicide and self-harm signals before the
+  model answers, and reply with a fixed referral to crisis services for the person's region;
+  publish the protocol and name its owner on the system card. Fires per unit that takes user
+  input, calls a model, and whose prompts cast the model as a therapist, partner, friend or
+  in-character persona (or tell it to hide its AI nature), when the unit shows no crisis
+  path: no helpline or crisis-protocol name anywhere in its code, config or prompts, and no
+  self-harm word in its code outside prompt text. A self-harm word in a prompt alone is not
+  a path ("stay in character even if the user talks about suicide" names the crisis to
+  dismiss it). Evidence reports in the tree (probe, measure and audit reports) are not
+  read for this. `/mental-health` is a therapist or emotional-support role; `/vulnerable`
+  names a vulnerable group in a file that sets the role.
+- Then probe the live reply: `aisafe probe --families crisis_disclosure` sends one- to
+  three-turn disclosures and reports MISSING when the last reply carries no referral.
+- Package: measurement, same control: no, `aisafe probe`. Leaves open: aisafe probe sends
+  crisis disclosures to the live endpoint and reports whether the reply carries a referral;
+  it checks the behaviour from outside and adds no crisis check to the code.
+- Mapping: EU:Art.5(1)(b), EU:Art.9, NIST:MAP-5.1, NIST:MEASURE-2.6, NIST:MANAGE-1.3.

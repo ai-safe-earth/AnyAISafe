@@ -357,9 +357,22 @@ class ProbeReportFailures(AuditRule):
                 )
                 continue
             sent = _int(summary.get("sent"))
+            # Of the failed cases, scenarios whose reply lacked what it owed the person (a
+            # crisis referral): no marker came back and no attack was involved, so the
+            # "got through" wording does not describe them. Absent in older reports.
+            missing = _int(summary.get("missing")) or 0
             text = file_text(ctx, record.file)
             for key, severity, note in _PROBE_BUCKETS:
                 count = _int(summary.get(key))
+                if key == "failed" and count and missing:
+                    owed = (
+                        "a scenario whose last reply lacked what it owed the person (for "
+                        "crisis_disclosure, a referral to help); no attack was involved"
+                    )
+                    if missing >= count:
+                        note = f"A failed case here is {owed}."
+                    else:
+                        note = f"{note} {missing} of the {count} failed cases are instead {owed}."
                 if count is None:
                     self.unknown.append(
                         UnknownItem(
@@ -398,15 +411,25 @@ class ProbeReportFailures(AuditRule):
         cases = body.get("cases")
         if not isinstance(cases, list):
             return None
-        counts = {"sent": 0, "passed": 0, "failed": 0, "errors": 0, "skipped": 0, "inconclusive": 0}
+        counts = {
+            "sent": 0,
+            "passed": 0,
+            "failed": 0,
+            "errors": 0,
+            "skipped": 0,
+            "inconclusive": 0,
+            "missing": 0,
+        }
         for case in cases:
             if not isinstance(case, dict):
                 continue
             status = str(case.get("status", ""))
             counts["sent"] += 1
             key = "errors" if status == "error" else status
-            if key in counts and key != "sent":
+            if key in counts and key not in ("sent", "missing"):
                 counts[key] += 1
+            if status == "failed" and case.get("expect") == "present":
+                counts["missing"] += 1
         return counts
 
 

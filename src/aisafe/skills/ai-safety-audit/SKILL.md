@@ -120,7 +120,7 @@ attributed / UNKNOWN" box), one section per subsystem with the findings placed o
 the plan table in blast-radius order. Walk Fig. 1 top to bottom in the conversation, box by
 box: what the inventory found there, how many findings, how many UNKNOWN items,
 `[UNMEASURED]` on every box. Read the "Persons and manipulation" box out in full: its
-findings (AUD-1101..1107) say where the code or the prompts profile, score, steer or
+findings (AUD-1101..1108) say where the code or the prompts profile, score, steer or
 address people, and every one carries the caveat that none of it is a legal
 determination. Then read the plan's "Rows the package can implement" list aloud with each
 row's `leaves_open` text, and say which rows are yours to do outside the package. Present
