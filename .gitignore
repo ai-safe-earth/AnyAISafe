@@ -79,3 +79,7 @@ bench/results-audit/*.json
 
 # Bench and research clones (bench/run.py --keep-clones); never source of this repo
 /bench/.cache/
+
+# Working files of the research sweep (salvaged agent output, the queue skeptics read);
+# the consolidated record is research/results/sweep/corpus-sweep.json
+/research/results/sweep/_*

@@ -1,0 +1,2724 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/open-recommender",
+    "git_sha": null,
+    "dirty": false,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes",
+      "research/results",
+      "bench/findings-audit*.csv"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-26T22:05:19Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 1,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 10,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1105/no-disclosure",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "56bb56cd8551145f",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u1",
+        "name": "packages/cli"
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": "packages/cli",
+          "line": 0,
+          "snippet": "unit u1 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in it..."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u1 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in its code, config or prompt files. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "4 file(s) over the 2097152 byte limit not read: .yarn/releases/yarn-4.0.2.cjs, packages/cli/src/rag/rag.py, packages/cli/src/rag/rag_remote.py, +1 more",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "packages/cli"
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/open-recommender",
+      "git_sha": null,
+      "dirty": false,
+      "scanned_files": 260,
+      "skipped_files": 0,
+      "bytes": 4579244,
+      "duration_ms": 20104,
+      "oversize_files": 4
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "requirements.txt",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "packages/cli",
+        "manifest": "packages/cli/package.json",
+        "language": "typescript",
+        "ai_surface": true
+      },
+      {
+        "id": "u2",
+        "root": "packages/client",
+        "manifest": "packages/client/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u3",
+        "root": "packages/server",
+        "manifest": "packages/server/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      },
+      {
+        "id": "u4",
+        "root": "packages/shared",
+        "manifest": "packages/shared/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      }
+    ],
+    "languages": {
+      "python": 3,
+      "typescript": 184,
+      "go": 0,
+      "other": 73
+    },
+    "llm_calls": [
+      {
+        "file": "packages/cli/src/embed/embedText.ts",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from \"openai\"",
+        "unit": "u1",
+        "model_ref": "m1"
+      },
+      {
+        "file": "packages/cli/src/openpipe/openpipe.ts",
+        "line": 20,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from \"openai\"",
+        "unit": "u1",
+        "model_ref": "m1"
+      },
+      {
+        "file": "packages/cli/src/openpipe/openpipe.ts",
+        "line": 53,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u1",
+        "model_ref": "m1"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 32,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 34,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 48,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 50,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 1606,
+        "provider": "mistral",
+        "sdk": "mistral",
+        "api": "mistralai",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 1608,
+        "provider": "mistral",
+        "sdk": "mistral",
+        "api": "mistralai",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 5440,
+        "provider": "google",
+        "sdk": "google",
+        "api": "@google/generative-ai",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 5444,
+        "provider": "google",
+        "sdk": "google",
+        "api": "@google/generative-ai",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 10003,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 10005,
+        "provider": "mistral",
+        "sdk": "mistral",
+        "api": "mistralai",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 12336,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 12376,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m30"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "packages/cli/src/embed/embedText.ts",
+        "line": 9,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "packages/cli/src/embed/embedText.ts",
+        "line": 17,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "packages/cli/src/recommender/prompts/__archived__/createQueries/createQueries.ts",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "packages/cli/src/recommender/prompts/answersQuestion/answersQuestion.ts",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "packages/cli/src/recommender/prompts/appraiseTranscript/appraiseTranscript.ts",
+        "line": 40,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "packages/cli/src/recommender/prompts/brainstormSubQuestions/brainstormQuestions.ts",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "packages/cli/src/recommender/prompts/createQueriesFromProfile/createQueriesFromProfile.ts",
+        "line": 27,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "packages/cli/src/recommender/prompts/findStartOfAnswer/findStartOfAnswer.ts",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "packages/cli/src/recommender/prompts/findStartOfAnswerYouTube/findStartOfAnswerYouTube.ts",
+        "line": 23,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "packages/cli/src/recommender/prompts/getTopicFromQuestion/getTopicFromQuestion.ts",
+        "line": 25,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "packages/cli/src/recommender/prompts/recommendClips/datasets/eacc.ts",
+        "line": 36,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "packages/cli/src/recommender/prompts/recommendVideos/recommendVideos.ts",
+        "line": 36,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 12440,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 21349,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 23441,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 23988,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 28304,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 28304,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 28397,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 28397,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 30840,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 30840,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 30918,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 30918,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 31330,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 31330,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo-instruct",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/recursiveTwitterSummarizer.ts",
+        "line": 40,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "packages/cli/src/recommender/prompts/titleClip/titleClip.ts",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "packages/cli/src/twitter/experilearningExampleTweets.json",
+        "line": 766,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "config"
+      },
+      {
+        "id": "m30",
+        "file": "packages/rag-server/main.py",
+        "line": 43,
+        "provider": "hf",
+        "model": "colbert-ir/colbertv2.0",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "dspy",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 5791,
+        "unit": "u1"
+      },
+      {
+        "name": "llama_index",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 22158,
+        "unit": "u1"
+      },
+      {
+        "name": "langchain",
+        "file": "packages/cli/src/recommender/textSplitter.ts",
+        "line": 5,
+        "unit": "u1"
+      },
+      {
+        "name": "llama_index",
+        "file": "yarn.lock",
+        "line": 5622,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "packages/cli/src/embed/embedText.ts",
+        "line": 4,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/metaphor/search.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/metaphor/search.ts",
+        "line": 11,
+        "kind": "env",
+        "symbol": "process.env.METAPHOR_API_KEY",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/openpipe/openpipe.ts",
+        "line": 13,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/createQueriesFromProfile/createQueriesFromProfile.ts",
+        "line": 74,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/recursiveTwitterSummarizer.ts",
+        "line": 166,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/search.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 5,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 13,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 15,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 21,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 22,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 23,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 24,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 25,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/clearDB.ts",
+        "line": 32,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/downloadSecrets.ts",
+        "line": 5,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/downloadSecrets.ts",
+        "line": 8,
+        "kind": "env",
+        "symbol": "process.env.AWS_ACCESS_KEY",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/downloadSecrets.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "process.env.AWS_SECRET",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/inspectdb.ts",
+        "line": 4,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/inspectdb.ts",
+        "line": 6,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/inspectdb.ts",
+        "line": 6,
+        "kind": "env",
+        "symbol": "process.env.PROD_DATABASE_URL",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 7,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 9,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 546,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 552,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 583,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/db.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/db.ts",
+        "line": 4,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/db.ts",
+        "line": 5,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 27,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 36,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 45,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 55,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 83,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 114,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/getNumRunningPipelines.ts",
+        "line": 3,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/getNumRunningPipelines.ts",
+        "line": 13,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 8,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 17,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 40,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/jobsPrisma.ts",
+        "line": 48,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/sendEmail.tsx",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/sendEmail.tsx",
+        "line": 17,
+        "kind": "env",
+        "symbol": "process.env.RESEND_API_KEY",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/tweets.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/tweets.ts",
+        "line": 9,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/tweets.ts",
+        "line": 17,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 5,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 9,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 23,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 24,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 30,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_CONSUMER_KEY",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 31,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_CONSUMER_SECRET",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 37,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 43,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 77,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 90,
+        "kind": "env",
+        "symbol": "process.env.COOKIE_KEY",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 145,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 3,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 23,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 53,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 61,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 78,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 99,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 127,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 156,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 179,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 199,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 204,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/apiKeyRouter.ts",
+        "line": 3,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/apiKeyRouter.ts",
+        "line": 7,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/apiKeyRouter.ts",
+        "line": 15,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 19,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 27,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 35,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 43,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 52,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 68,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 76,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 92,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 100,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 107,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 115,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 133,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 141,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 150,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 168,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 176,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 184,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 202,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 210,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 243,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 251,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 271,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 279,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 287,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 294,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 301,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 313,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 322,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 334,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 353,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 371,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/publicRouter.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/publicRouter.ts",
+        "line": 16,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/publicRouter.ts",
+        "line": 24,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/publicRouter.ts",
+        "line": 73,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 3,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 70,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 79,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 87,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 96,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 107,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 113,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 126,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 144,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 220,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 247,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 280,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 10,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 11,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 20,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 28,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 68,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 101,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 105,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 115,
+        "kind": "env",
+        "symbol": "process.env.DATABASE_URL",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 119,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 126,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 141,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 148,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/workerUtils.ts",
+        "line": 8,
+        "kind": "env",
+        "symbol": "process.env.DATABASE_URL",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/trpc.ts",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/shared/src/schemas/follow.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u4"
+      },
+      {
+        "file": "packages/shared/src/schemas/pipelinerun.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u4"
+      },
+      {
+        "file": "packages/shared/src/schemas/pipelinetask.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u4"
+      },
+      {
+        "file": "packages/shared/src/schemas/recommendation.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u4"
+      },
+      {
+        "file": "packages/shared/src/schemas/recommendationsource.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u4"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "packages/cli/src/recommender/chunksToClips.ts",
+        "line": 29,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/twitter/index.ts",
+        "line": 10,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/client/src/lib/trpc.ts",
+        "line": 13,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/client/src/lib/useAuth.tsx",
+        "line": 7,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/client/src/lib/useUser.ts",
+        "line": 7,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 86,
+        "kind": "http",
+        "symbol": "express()",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 180,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 489,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u3"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 1991,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 1992,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 3929,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 3930,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 31825,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 31898,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/twitter/twitterAPI.py",
+        "line": 94,
+        "kind": "fs_write",
+        "symbol": "open(\"tweets.json\", \"w",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/search.ts",
+        "line": 1,
+        "kind": "shell",
+        "symbol": "child_process",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/transcript.ts",
+        "line": 2,
+        "kind": "shell",
+        "symbol": "child_process",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/client/src/components/Homepage.tsx",
+        "line": 48,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/server/scripts/inspectdb.ts",
+        "line": 1,
+        "kind": "shell",
+        "symbol": "child_process",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/scripts/seed.ts",
+        "line": 552,
+        "kind": "db_write",
+        "symbol": "prisma.user.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 27,
+        "kind": "db_write",
+        "symbol": "prisma.query.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 36,
+        "kind": "db_write",
+        "symbol": "prisma.subQuery.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 55,
+        "kind": "db_write",
+        "symbol": "prisma.recommendationSource.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 83,
+        "kind": "db_write",
+        "symbol": "prisma.recommendation.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/lib/addRecomendations.ts",
+        "line": 114,
+        "kind": "db_write",
+        "symbol": "prisma.userRecommendation.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/main.ts",
+        "line": 43,
+        "kind": "db_write",
+        "symbol": "prisma.user.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/adminRouter.ts",
+        "line": 199,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineRun.delete",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 43,
+        "kind": "db_write",
+        "symbol": "prisma.vote.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 52,
+        "kind": "db_write",
+        "symbol": "prisma.vote.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 107,
+        "kind": "db_write",
+        "symbol": "prisma.note.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 115,
+        "kind": "db_write",
+        "symbol": "prisma.note.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 150,
+        "kind": "db_write",
+        "symbol": "prisma.summary.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 294,
+        "kind": "db_write",
+        "symbol": "prisma.follow.delete",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 301,
+        "kind": "db_write",
+        "symbol": "prisma.follow.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/routers/authenticatedRouter.ts",
+        "line": 322,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 87,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineTask.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 96,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineTask.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 126,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineTask.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 280,
+        "kind": "db_write",
+        "symbol": "prisma.summary.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 68,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineRun.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 105,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineTaskLog.create",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 141,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineRun.update",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/worker.ts",
+        "line": 148,
+        "kind": "db_write",
+        "symbol": "prisma.pipelineTask.update",
+        "unit": "u3"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "packages/cli/src/recommender/chunksToClips.ts",
+        "line": 29,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/twitter/index.ts",
+        "line": 10,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/twitter/twitterAPI.py",
+        "line": 94,
+        "kind": "fs",
+        "symbol": "open(\"tweets.json\", \"w",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/search.ts",
+        "line": 95,
+        "kind": "shell",
+        "symbol": "execSync(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/transcript.ts",
+        "line": 40,
+        "kind": "shell",
+        "symbol": "execSync(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/youtube/transcript.ts",
+        "line": 63,
+        "kind": "shell",
+        "symbol": "execSync(",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/client/src/lib/trpc.ts",
+        "line": 13,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/client/src/lib/useAuth.tsx",
+        "line": 7,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/client/src/lib/useUser.ts",
+        "line": 7,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u2"
+      },
+      {
+        "file": "packages/server/scripts/inspectdb.ts",
+        "line": 6,
+        "kind": "shell",
+        "symbol": "exec(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 180,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u3"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 489,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u3"
+      }
+    ],
+    "guardrails": [],
+    "observability": [
+      {
+        "lib": "apm:prometheus",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25385
+      },
+      {
+        "lib": "helicone",
+        "file": "packages/cli/tsconfig.tsbuildinfo",
+        "line": 1
+      },
+      {
+        "lib": "apm:opentelemetry",
+        "file": "yarn.lock",
+        "line": 10931
+      }
+    ],
+    "evals": [
+      {
+        "tool": "promptfoo",
+        "file": "packages/cli/package.json",
+        "in_ci": false,
+        "has_benign": false
+      },
+      {
+        "tool": "promptfoo",
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "in_ci": false,
+        "has_benign": false
+      },
+      {
+        "tool": "promptfoo",
+        "file": "yarn.lock",
+        "in_ci": false,
+        "has_benign": false
+      }
+    ],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [],
+    "ci": [
+      {
+        "file": ".github/workflows/build.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "packages/cli/src/recommender/prompts/recommendClips/datasets/unrelated1.ts",
+        "line": 1048,
+        "kind": "vulnerable",
+        "symbol": "Addiction",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25385,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25467,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25600,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25682,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 25799,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 29185,
+        "kind": "vulnerable",
+        "symbol": "kids",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 29272,
+        "kind": "vulnerable",
+        "symbol": "kids",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 32098,
+        "kind": "vulnerable",
+        "symbol": "kids",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/recursiveTwitterSummarizer/datasets/experilearning.ts",
+        "line": 32170,
+        "kind": "vulnerable",
+        "symbol": "kids",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/shared/exampleData.ts",
+        "line": 1273,
+        "kind": "vulnerable",
+        "symbol": "kid",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/cli/src/recommender/prompts/shared/exampleData.ts",
+        "line": 2315,
+        "kind": "vulnerable",
+        "symbol": "kid",
+        "unit": "u1"
+      },
+      {
+        "file": "packages/server/src/tasks/twitterPipeline.saga.ts",
+        "line": 283,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u3"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "packages/cli"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

@@ -39,6 +39,11 @@ One behaviour at a time, in the order `catalogue.md` gives. For each:
    by hand as `tp`, `fp` or `unclear`, and score precision with `bench/score.py`. A
    number goes on the rule only when it comes from a labelled row. A rule below 0.80
    runs only behind `--experimental`.
+   For the other half, what a rule misses, compare it with the sweep's reference set:
+   lines where the behaviour is designed in, found without the rules by agents reading
+   each clone and kept only when skeptics could not refute them
+   (`results/sweep/corpus-sweep.json`). That comparison bounds the misses from below;
+   it is not a recall figure, because the sweep's own coverage is unknown.
 5. **Record.** Write what happened in `log.md`: the date, the numbers, the false
    positives that taught something, and the decision taken.
 
@@ -95,6 +100,8 @@ licences were not selection criteria; being public and facing a person were.
 | `corpus.yaml` | the pinned repositories |
 | `log.md` | dated journal of every step, number and decision |
 | `results/` | raw audit reports per repo and the two findings CSVs; `findings-audit.csv` is the file that gets labelled |
+| `results/notes-site.csv`, `notes-unit.csv` | what each matched line or unit is and whether it faces a person, written by reading the clone; a labelling aid with no verdicts |
+| `results/sweep/corpus-sweep.json` | the reference set: every line the sweep found, with its skeptics and its status (verified, refuted, unverified) |
 | `results/precision-audit.md` | written by `bench/score.py` once every sampled row is labelled |
 
 ## Reproduce

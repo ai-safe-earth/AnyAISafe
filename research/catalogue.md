@@ -102,14 +102,34 @@ Owner's order, 2026-10-26. Each step: define, rule, scenario, measure, log.
 
 ## Measurement record
 
-Run 1 (2026-10-26) covered 23 of the 33 repositories; see `log.md`.
+Runs 1 and 2 (2026-10-26) together cover all 33 repositories; see `log.md`. 168 findings,
+145 in the labelling sample, 0 labelled.
 
-| rule | rows | corpus commit set | run | findings | labelled | precision |
-|---|---|---|---|---|---|---|
-| AUD-1101 | 28 | 2026-10-26 | run 1, 23/33 repos | 39 | 0 | UNMEASURED |
-| AUD-1102 | 29 | 2026-10-26 | run 1, 23/33 repos | 5 | 0 | UNMEASURED |
-| AUD-1103 | 37 | 2026-10-26 | run 1, 23/33 repos | 5 | 0 | UNMEASURED |
-| AUD-1104 | 1, 4 | 2026-10-26 | run 1, 23/33 repos | 0 | 0 | UNMEASURED (never fired) |
-| AUD-1105 | 18 | 2026-10-26 | run 1, 23/33 repos | 20 | 0 | UNMEASURED |
-| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | run 1, 23/33 repos | 11 | 0 | UNMEASURED |
-| AUD-1107 | (process) | 2026-10-26 | run 1, 23/33 repos | 0 | 0 | UNMEASURED (never fired) |
+| rule | rows | corpus commit set | run | findings | sampled | labelled | precision |
+|---|---|---|---|---|---|---|---|
+| AUD-1101 | 28 | 2026-10-26 | runs 1+2, 33/33 | 46 | 40 | 0 | UNMEASURED |
+| AUD-1102 | 29 | 2026-10-26 | runs 1+2, 33/33 | 21 | 21 | 0 | UNMEASURED |
+| AUD-1103 | 37 | 2026-10-26 | runs 1+2, 33/33 | 11 | 11 | 0 | UNMEASURED |
+| AUD-1104 | 1, 4 | 2026-10-26 | runs 1+2, 33/33 | 4 | 4 | 0 | UNMEASURED |
+| AUD-1105 | 18 | 2026-10-26 | runs 1+2, 33/33 | 57 | 40 | 0 | UNMEASURED |
+| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | runs 1+2, 33/33 | 29 | 29 | 0 | UNMEASURED |
+| AUD-1107 | (process) | 2026-10-26 | runs 1+2, 33/33 | 0 | 0 | 0 | UNMEASURED (never fired) |
+
+## Reference set from the sweep (recall side)
+
+The sweep of 2026-10-27 (`log.md`, `results/sweep/corpus-sweep.json`) found, without the
+rules, lines where a behaviour is designed in or a control is present, each checked by
+skeptics. Verified lines only; 195 lines are still unverified and not counted.
+
+| row | behaviour | repos with the behaviour designed in | repos with a control | rule today | rule points at |
+|---|---|---|---|---|---|
+| 7 | no crisis protocol | 16 of 19 person-facing repos have no crisis handling | 3 (1 before the model) | none | (no rule) |
+| 1-4 | engagement design | 8 (khoj tagged, read as person-scheduled) | 5, all narrow | AUD-1104 | 0 of 29 files |
+| 13 | sycophancy instruction | 4 (2 are "validate feelings", which may not belong) | 6 | none | (no rule) |
+| 18, 21 | AI concealment, impersonation of real people | 9 | 18 | AUD-1105 persona | 3 of 25 files |
+| 32 | memory about the person | 19 | 18 | none | (no rule) |
+
+"Rule points at" counts files where the rule has an evidence leg, over files with a
+verified designed-in line. It is a lower bound on misses, not a recall figure: the
+sweep's own coverage is unknown, and the files a rule reports may hold the behaviour on a
+different line.
