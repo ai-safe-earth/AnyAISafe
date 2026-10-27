@@ -1,0 +1,1612 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-news-brief",
+    "git_sha": "3b3e182384b27461ebed8512c9e506c7a2fbb002",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes",
+      "research/results",
+      "bench/findings-audit*.csv"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:43:19Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 1,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 8,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1105/no-disclosure",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "7a271c53d42611b5",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in it..."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in its code, config or prompt files. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-news-brief",
+      "git_sha": "3b3e182384b27461ebed8512c9e506c7a2fbb002",
+      "dirty": true,
+      "scanned_files": 34,
+      "skipped_files": 0,
+      "bytes": 374439,
+      "duration_ms": 388,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "requirements.txt",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 22,
+      "typescript": 0,
+      "go": 0,
+      "other": 12
+    },
+    "llm_calls": [
+      {
+        "file": "src/ai_engine.py",
+        "line": 2,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_engine.py",
+        "line": 101,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_engine.py",
+        "line": 160,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_engine.py",
+        "line": 209,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "config.yaml",
+        "line": 4,
+        "provider": "other",
+        "model": "deepseek-v4-flash",
+        "pinned": null,
+        "source": "config"
+      }
+    ],
+    "frameworks": [],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "src/ai_engine.py",
+        "line": 10,
+        "kind": "env",
+        "symbol": "os.environ.get(\"DEEPSEEK_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/browser_utils.py",
+        "line": 150,
+        "kind": "fs",
+        "symbol": "open(cookie",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 21,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 49,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_LLM_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 51,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_LLM_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 58,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_JWT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 60,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_JWT_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 63,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_SUPABASE_DB_URL\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 65,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_SUPABASE_DB_URL\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 68,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_CREEM_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 70,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_CREEM_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 71,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_CREEM_WEBHOOK_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 73,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_CREEM_WEBHOOK_SECRET\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 76,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_EMAIL_PASSWORD\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 78,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_EMAIL_PASSWORD\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 81,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_YOUTUBE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 83,
+        "kind": "env",
+        "symbol": "os.environ.get(\"INBRIEF_YOUTUBE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 110,
+        "kind": "env",
+        "symbol": "os.environ.get('GITHUB_TOKEN'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/rss_fetcher.py",
+        "line": 69,
+        "kind": "env",
+        "symbol": "os.environ.get('YOUTUBE_API_KEY'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 10,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 11,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 94,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 201,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 318,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 393,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 401,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 443,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 470,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 478,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 581,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 590,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 728,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 755,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 792,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 817,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 867,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 893,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1041,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1103,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1317,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 2,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 3,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 20,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 49,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 50,
+        "kind": "db",
+        "symbol": "psycopg2",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 208,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/browser_utils.py",
+        "line": 69,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/browser_utils.py",
+        "line": 78,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 71,
+        "kind": "webhook",
+        "symbol": "WEBHOOK",
+        "unit": "u0"
+      },
+      {
+        "file": "src/config_loader.py",
+        "line": 73,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 28,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 30,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 121,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 204,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/hackernews_fetcher.py",
+        "line": 38,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/hackernews_fetcher.py",
+        "line": 65,
+        "kind": "fetch",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/hackernews_fetcher.py",
+        "line": 69,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/pipeline_runner.py",
+        "line": 313,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/pipeline_runner.py",
+        "line": 316,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/pipeline_runner.py",
+        "line": 860,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/reddit_fetcher.py",
+        "line": 36,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/reddit_fetcher.py",
+        "line": 87,
+        "kind": "scrape",
+        "symbol": "BeautifulSoup",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1132,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1173,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1220,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1237,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "tools/export_cookies.py",
+        "line": 5,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "main.py",
+        "line": 30,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 35,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 36,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 37,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 44,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 51,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/browser_utils.py",
+        "line": 29,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/browser_utils.py",
+        "line": 50,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 953,
+        "kind": "db_write",
+        "symbol": ".execute('DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 997,
+        "kind": "db_write",
+        "symbol": ".execute('DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1269,
+        "kind": "db_write",
+        "symbol": ".execute('DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 138,
+        "kind": "db_write",
+        "symbol": ".execute(f'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 158,
+        "kind": "db_write",
+        "symbol": ".execute(f'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 480,
+        "kind": "db_write",
+        "symbol": ".execute(f'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "tools/export_cookies.py",
+        "line": 64,
+        "kind": "fs_write",
+        "symbol": "open(output_file, 'w",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "main.py",
+        "line": 51,
+        "kind": "shell",
+        "symbol": "subprocess.Popen(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/browser_utils.py",
+        "line": 50,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 121,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/github_fetcher.py",
+        "line": 204,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/hackernews_fetcher.py",
+        "line": 65,
+        "kind": "url",
+        "symbol": "requests.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 319,
+        "kind": "sql",
+        "symbol": ".execute('SELECT * FROM user_profiles WHERE user_id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 394,
+        "kind": "sql",
+        "symbol": ".execute('SELECT push_email FROM user_profiles WHERE user_id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 451,
+        "kind": "sql",
+        "symbol": ".execute('SELECT id FROM rss_sources WHERE url = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 463,
+        "kind": "sql",
+        "symbol": ".execute('SELECT id FROM rss_sources WHERE url = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 471,
+        "kind": "sql",
+        "symbol": ".execute('SELECT * FROM rss_sources WHERE id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 949,
+        "kind": "sql",
+        "symbol": ".execute('SELECT id FROM articles WHERE category = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 953,
+        "kind": "sql",
+        "symbol": ".execute('DELETE FROM articles WHERE category = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 994,
+        "kind": "sql",
+        "symbol": ".execute('SELECT id FROM articles WHERE category = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 997,
+        "kind": "sql",
+        "symbol": ".execute('DELETE FROM articles WHERE id = ANY(%",
+        "unit": "u0"
+      },
+      {
+        "file": "src/user_db.py",
+        "line": 1269,
+        "kind": "sql",
+        "symbol": ".execute('DELETE FROM daily_archives WHERE archive_date = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 98,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 98,
+        "kind": "sql",
+        "symbol": ".execute(f'SELECT 1 FROM {self.TABLE_NAME} WHERE article_id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 113,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 138,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 138,
+        "kind": "sql",
+        "symbol": ".execute(f'DELETE FROM {self.TABLE_NAME} WHERE article_id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 158,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 158,
+        "kind": "sql",
+        "symbol": ".execute(f'DELETE FROM {self.TABLE_NAME} WHERE article_id = ANY(%",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 178,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 178,
+        "kind": "sql",
+        "symbol": ".execute(f'SELECT 1 FROM {self.TABLE_NAME} WHERE article_id = %",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 193,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 217,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 233,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 287,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 299,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 343,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 394,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 437,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 473,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 480,
+        "kind": "sql",
+        "symbol": ".execute(f'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/vector_store.py",
+        "line": 480,
+        "kind": "sql",
+        "symbol": ".execute(f'DELETE FROM {self.TABLE_NAME} WHERE article_id = ANY(%",
+        "unit": "u0"
+      },
+      {
+        "file": "tools/export_cookies.py",
+        "line": 64,
+        "kind": "fs",
+        "symbol": "open(output_file, 'w",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [],
+    "ci": [],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "src/scheduler.py",
+        "line": 81,
+        "kind": "outreach_schedule",
+        "symbol": "schedule.every(",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

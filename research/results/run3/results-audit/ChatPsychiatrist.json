@@ -1,0 +1,3088 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatPsychiatrist",
+    "git_sha": "7d131fae7f797e965ac19413a29722f236a29d5b",
+    "dirty": true,
+    "exclude": [],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:41:54Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 1,
+      "low": 0,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 2,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 2,
+    "fail_on": "never",
+    "unknown_items": 9,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1102",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1102",
+      "rule_id": "AUD-1102",
+      "sub": null,
+      "fingerprint": "445ad7fda6053d63",
+      "title": "Emotion or biometric inference on persons",
+      "severity": "high",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "fastchat/eval/table/answer/answer.jsonl",
+          "line": 38,
+          "snippet": "{\"question_id\": 38, \"text\": \"Observing the behavior of other people in a social situation can provide clues about cultural norms and expectations in several ..."
+        },
+        {
+          "role": "also",
+          "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+          "line": 10,
+          "snippet": "{\"question_id\": 110, \"answer_id\": \"KrP6js74X9TLbcaiRHUMmw\", \"model_id\": \"gpt-4\", \"choices\": [{\"index\": 0, \"turns\": [\"c) A group of four girls has surrounded ..."
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(f)",
+        "EU:Art.5(1)(g)",
+        "EU:Art.6",
+        "GDPR:Art.9",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T3",
+        "summary": "Remove the inference or restrict it to a documented, lawful use with a legal basis and an Annex III review; emotion recognition at work or in education and biometric categorisation of protected characteristics are listed practices under Art. 5.",
+        "alternatives": [
+          "remove the inference or restrict it to a medical or safety use with a documented legal basis",
+          "replace emotion inference with explicit, user-stated preferences",
+          "an Annex III conformity review before deployment",
+          "aisafe: nothing here applies; the control is removing or scoping the inference"
+        ],
+        "package": {
+          "mechanism": "none",
+          "symbols": [],
+          "same_control": false,
+          "leaves_open": ""
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-005b",
+        "EU-AIA-005c"
+      ],
+      "known_failure_modes": [
+        "text-only sentiment analysis is not counted: the EU definition of emotion recognition rests on biometric data",
+        "a library imported for a demo counts as use; DetectFaces without Emotions does not",
+        "whether the inference happens in a workplace or an education setting is read from the lint rule's words (employee, student), not from the deployment"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "emotion or affect inference signal (affect:signal). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1106",
+      "rule_id": "AUD-1106",
+      "sub": null,
+      "fingerprint": "20877862ed9eef6c",
+      "title": "No manipulation control on the response path",
+      "severity": "medium",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or co..."
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.15",
+        "LLM09",
+        "NIST:MEASURE-2.7",
+        "NIST:MANAGE-2.4"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Put a manipulation and disclosure control on the output stage and measure it: ManipulationGuard flags influence tactics, AIDisclosureGuard flags human claims.",
+        "alternatives": [
+          "aisafe ManipulationGuard and AIDisclosureGuard on output, then aisafe measure",
+          "LLM Guard output scanners for banned topics plus a judge",
+          "NeMo Guardrails output rails",
+          "a human-reviewed sample of transcripts per week"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "ManipulationGuard",
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "Both guards are regex tables with an optional judge and ship UNMEASURED; they lower the odds that a manipulative response reaches the user and do nothing about the prompt or the ranking logic that produced it."
+        }
+      },
+      "related_lint_rules": [],
+      "known_failure_modes": [
+        "a control outside the tree (a gateway, vendor moderation) is invisible",
+        "presence of the symbol is checked, not that it sits on the response path",
+        "fires only in a unit that also carries a profile, engagement or persona signal, so a neutral assistant without one is not reported here"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or config. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: assets/demo1.png",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatPsychiatrist",
+      "git_sha": "7d131fae7f797e965ac19413a29722f236a29d5b",
+      "dirty": true,
+      "scanned_files": 139,
+      "skipped_files": 0,
+      "bytes": 2438603,
+      "duration_ms": 3529,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 96,
+      "typescript": 0,
+      "go": 0,
+      "other": 43
+    },
+    "llm_calls": [
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 14,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 15,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "import anthropic",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 405,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m5"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 15,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "    import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 26,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 40,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "    import anthropic",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 116,
+        "provider": "google",
+        "sdk": "vertex",
+        "api": "vertexai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 120,
+        "provider": "google",
+        "sdk": "vertex",
+        "api": "vertexai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/monitor/tag_openai_moderation.py",
+        "line": 10,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 148,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "    import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m80"
+      },
+      {
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m81"
+      },
+      {
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m83"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 46,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 54,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 160,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 160,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 262,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 262,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 566,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 567,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 570,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 572,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 581,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 582,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 585,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 587,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "fastchat/llm_judge/compute_agreement.py",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 1,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 2,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 4,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 6,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 8,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 9,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 11,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 12,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 14,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 15,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 19,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 23,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 24,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 25,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 27,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 28,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 29,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 30,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 1,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 2,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 4,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 6,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 8,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m54",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 9,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m55",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m56",
+        "file": "fastchat/llm_judge/download_mt_bench_pregenerated.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m57",
+        "file": "fastchat/llm_judge/download_mt_bench_pregenerated.py",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m58",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m59",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m60",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 87,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m61",
+        "file": "fastchat/llm_judge/gen_judgment.py",
+        "line": 183,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m62",
+        "file": "fastchat/llm_judge/gen_judgment.py",
+        "line": 184,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m63",
+        "file": "fastchat/llm_judge/qa_browser.py",
+        "line": 225,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m64",
+        "file": "fastchat/llm_judge/show_result.py",
+        "line": 96,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m65",
+        "file": "fastchat/llm_judge/show_result.py",
+        "line": 97,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m66",
+        "file": "fastchat/model/model_adapter.py",
+        "line": 809,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m67",
+        "file": "fastchat/model/model_adapter.py",
+        "line": 809,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m68",
+        "file": "fastchat/model/model_registry.py",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m69",
+        "file": "fastchat/model/model_registry.py",
+        "line": 29,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m70",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 111,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m71",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 111,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m72",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 305,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m73",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 305,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m74",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 692,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m75",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 692,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m76",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m77",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m78",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 215,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m79",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 215,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m80",
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 16,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m81",
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 18,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m82",
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 57,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m83",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 10,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m84",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 58,
+        "provider": "other",
+        "model": "text-similarity-ada-001",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m85",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 64,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m86",
+        "file": "tests/test_openai_langchain.py",
+        "line": 16,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m87",
+        "file": "tests/test_openai_langchain.py",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "tests/test_openai_langchain.py",
+        "line": 5,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "fastchat/conversation.py",
+        "line": 785,
+        "kind": "crm",
+        "symbol": "Salesforce",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 425,
+        "kind": "env",
+        "symbol": "os.environ[\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_model_answer.py",
+        "line": 146,
+        "kind": "fs",
+        "symbol": "open(os.path.expanduser",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/model_adapter.py",
+        "line": 554,
+        "kind": "crm",
+        "symbol": "Salesforce",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/model_adapter.py",
+        "line": 1090,
+        "kind": "crm",
+        "symbol": "Salesforce",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/model_registry.py",
+        "line": 159,
+        "kind": "crm",
+        "symbol": "Salesforce",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/model_registry.py",
+        "line": 160,
+        "kind": "crm",
+        "symbol": "Salesforce",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/score_app.py",
+        "line": 19,
+        "kind": "fs",
+        "symbol": "open(os.path.expanduser",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 42,
+        "kind": "env",
+        "symbol": "os.environ[\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/bard_worker.py",
+        "line": 139,
+        "kind": "fs",
+        "symbol": "open(\"bard_cookie",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/conv_release_scripts/upload_hf_dataset.py",
+        "line": 7,
+        "kind": "fs",
+        "symbol": "open(\"clean_battle_conv_20230630_tagged_v3_pii",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_openai_langchain.py",
+        "line": 38,
+        "kind": "env",
+        "symbol": "os.environ[\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "fastchat/serve/bard_worker.py",
+        "line": 144,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 261,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 263,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 269,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 274,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 280,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 282,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 287,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 289,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 294,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 296,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 301,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_anony.py",
+        "line": 375,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_named.py",
+        "line": 307,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 495,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 351,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 353,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 360,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 362,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 369,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 371,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 378,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 383,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 385,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 389,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 394,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/hf_space_leaderboard_app.py",
+        "line": 20,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/monitor.py",
+        "line": 30,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 95,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 97,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 107,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 115,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 117,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 125,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 134,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 136,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 143,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 148,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 150,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 327,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 342,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 454,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 601,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 602,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 667,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 707,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 150,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 152,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 162,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 167,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 169,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 173,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 178,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "fastchat/data/clean_sharegpt.py",
+        "line": 206,
+        "kind": "fs_write",
+        "symbol": "open(args[\"out_file\"], \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/convert_alpaca.py",
+        "line": 38,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/extract_gpt4_only.py",
+        "line": 32,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/extract_single_round.py",
+        "line": 29,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/filter_wrong_format.py",
+        "line": 44,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/hardcoded_questions.py",
+        "line": 168,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/merge.py",
+        "line": 24,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/optional_clean.py",
+        "line": 90,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/optional_replace.py",
+        "line": 82,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/pretty_json.py",
+        "line": 19,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/sample.py",
+        "line": 40,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_long_conversation.py",
+        "line": 117,
+        "kind": "fs_write",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_train_test.py",
+        "line": 33,
+        "kind": "fs_write",
+        "symbol": "open(train_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_train_test.py",
+        "line": 34,
+        "kind": "fs_write",
+        "symbol": "open(test_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 91,
+        "kind": "fs_write",
+        "symbol": "open(outfile, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 223,
+        "kind": "fs_write",
+        "symbol": "open(output_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 394,
+        "kind": "fs_write",
+        "symbol": "open(output_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 74,
+        "kind": "fs_write",
+        "symbol": "open(answer_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_model_answer.py",
+        "line": 166,
+        "kind": "fs_write",
+        "symbol": "open(answer_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/apply_delta.py",
+        "line": 66,
+        "kind": "fs_write",
+        "symbol": "shutil.rmtree",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/apply_delta.py",
+        "line": 75,
+        "kind": "fs_write",
+        "symbol": "shutil.rmtree",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 87,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 99,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 245,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 104,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 106,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 278,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 321,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 107,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 122,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/clean_battle_data.py",
+        "line": 252,
+        "kind": "fs_write",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/conv_release_scripts/filter_bad_conv.py",
+        "line": 154,
+        "kind": "fs_write",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/conv_release_scripts/merge_field.py",
+        "line": 24,
+        "kind": "fs_write",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/elo_analysis.py",
+        "line": 289,
+        "kind": "fs_write",
+        "symbol": "open(f\"elo_results_{cutoff_date}.pkl\", \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/tag_openai_moderation.py",
+        "line": 61,
+        "kind": "fs_write",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 238,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/register_worker.py",
+        "line": 25,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 17,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 18,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 23,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 48,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 17,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 18,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 23,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 51,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 58,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/train/train_flant5.py",
+        "line": 305,
+        "kind": "fs_write",
+        "symbol": "open(self.preprocessed_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 268,
+        "kind": "shell",
+        "symbol": "os.system(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 29,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 31,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 23,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "fastchat/data/clean_sharegpt.py",
+        "line": 206,
+        "kind": "fs",
+        "symbol": "open(args[\"out_file\"], \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/convert_alpaca.py",
+        "line": 38,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/extract_gpt4_only.py",
+        "line": 32,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/extract_single_round.py",
+        "line": 29,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/filter_wrong_format.py",
+        "line": 44,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/hardcoded_questions.py",
+        "line": 168,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/merge.py",
+        "line": 24,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/optional_clean.py",
+        "line": 90,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/optional_replace.py",
+        "line": 82,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/pretty_json.py",
+        "line": 19,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/sample.py",
+        "line": 40,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_long_conversation.py",
+        "line": 117,
+        "kind": "fs",
+        "symbol": "open(args.out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_train_test.py",
+        "line": 33,
+        "kind": "fs",
+        "symbol": "open(train_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/data/split_train_test.py",
+        "line": 34,
+        "kind": "fs",
+        "symbol": "open(test_name, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 91,
+        "kind": "fs",
+        "symbol": "open(outfile, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 223,
+        "kind": "fs",
+        "symbol": "open(output_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 394,
+        "kind": "fs",
+        "symbol": "open(output_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 74,
+        "kind": "fs",
+        "symbol": "open(answer_file, \"a",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_model_answer.py",
+        "line": 166,
+        "kind": "fs",
+        "symbol": "open(answer_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/apply_delta.py",
+        "line": 66,
+        "kind": "fs",
+        "symbol": "shutil.rmtree(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/model/apply_delta.py",
+        "line": 75,
+        "kind": "fs",
+        "symbol": "shutil.rmtree(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 87,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 99,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 245,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 104,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 106,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 278,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 321,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 107,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 122,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/clean_battle_data.py",
+        "line": 252,
+        "kind": "fs",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/conv_release_scripts/filter_bad_conv.py",
+        "line": 154,
+        "kind": "fs",
+        "symbol": "open(out_file, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/conv_release_scripts/merge_field.py",
+        "line": 24,
+        "kind": "fs",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/elo_analysis.py",
+        "line": 289,
+        "kind": "fs",
+        "symbol": "open(f\"elo_results_{cutoff_date}.pkl\", \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/tag_openai_moderation.py",
+        "line": 61,
+        "kind": "fs",
+        "symbol": "open(output, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 238,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/register_worker.py",
+        "line": 25,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 17,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 18,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 23,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 48,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 17,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 18,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 23,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 51,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 58,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/train/train_flant5.py",
+        "line": 305,
+        "kind": "fs",
+        "symbol": "open(self.preprocessed_path, \"w",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 268,
+        "kind": "shell",
+        "symbol": "os.system(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 29,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 31,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 23,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/launch_openai_api_test_server.py",
+        "line": 8,
+        "kind": "shell",
+        "symbol": "os.popen(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "fastchat/serve/cli.py",
+        "line": 41,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/cli.py",
+        "line": 143,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 57,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 148,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_anony.py",
+        "line": 353,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_named.py",
+        "line": 275,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/inference.py",
+        "line": 327,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 56,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 120,
+        "capped": true,
+        "cap_symbol": "timeout",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/hf_space_leaderboard_app.py",
+        "line": 80,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/monitor.py",
+        "line": 90,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 221,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/launch_openai_api_test_server.py",
+        "line": 28,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "fastchat/conversation.py",
+        "line": 485,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/eval/table/answer/answer.jsonl",
+        "line": 38,
+        "kind": "affect",
+        "symbol": "facial expression",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 459,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 88,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 149,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 208,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/vicuna-7b-v1.3-unlimited.jsonl",
+        "line": 165,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/vicuna-7b-v1.3.jsonl",
+        "line": 165,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "kind": "affect",
+        "symbol": "facial expression",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

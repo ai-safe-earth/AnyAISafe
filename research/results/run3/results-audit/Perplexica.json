@@ -1,0 +1,1985 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/Perplexica",
+    "git_sha": "348feca3e378fb4157b217724ed508dc707f853f",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes",
+      "research/results",
+      "bench/findings-audit*.csv"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:43:44Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 0,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 0,
+    "fail_on": "never",
+    "unknown_items": 11,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 2
+    },
+    "exit_code": 0,
+    "top": null,
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "gitignored directories skipped",
+      "why": "1 gitignored director(ies) not walked: searxng",
+      "how_to_resolve": "Re-run with --include-ignored to audit them; logs/, evals/ and data directories are where PII and eval corpora accumulate."
+    },
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: .assets/demo.gif",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/Perplexica",
+      "git_sha": "348feca3e378fb4157b217724ed508dc707f853f",
+      "dirty": true,
+      "scanned_files": 223,
+      "skipped_files": 0,
+      "bytes": 1218221,
+      "duration_ms": 1284,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 164,
+      "go": 0,
+      "other": 59
+    },
+    "llm_calls": [
+      {
+        "file": "src/lib/agents/search/api.ts",
+        "line": 77,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/agents/search/index.ts",
+        "line": 128,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/agents/search/researcher/index.ts",
+        "line": 68,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/base/llm.ts",
+        "line": 12,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "generateText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/base/llm.ts",
+        "line": 13,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/anthropic/index.ts",
+        "line": 32,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.anthropic.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/anthropic/index.ts",
+        "line": 84,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.anthropic.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/groq/index.ts",
+        "line": 32,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/groq/index.ts",
+        "line": 82,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/index.ts",
+        "line": 23,
+        "provider": "ollama",
+        "sdk": "ollama",
+        "api": "localhost:11434",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/ollamaEmbedding.ts",
+        "line": 17,
+        "provider": "ollama",
+        "sdk": "ollama",
+        "api": "localhost:11434",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/ollamaLLM.ts",
+        "line": 40,
+        "provider": "ollama",
+        "sdk": "ollama",
+        "api": "localhost:11434",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/ollamaLLM.ts",
+        "line": 71,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "generateText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/ollamaLLM.ts",
+        "line": 123,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 127,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.openai.",
+        "unit": "u0",
+        "model_ref": "m25"
+      },
+      {
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 139,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.openai.",
+        "unit": "u0",
+        "model_ref": "m25"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiEmbedding.ts",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from 'openai'",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from 'openai'",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 38,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.openai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 72,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "generateText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 86,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 127,
+        "provider": "multi",
+        "sdk": "vercel_ai",
+        "api": "streamText(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 143,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "src/components/Settings/Sections/Models/AddModelDialog.tsx",
+        "line": 132,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 30,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4o-2024-05-13",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 38,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 42,
+        "provider": "openai",
+        "model": "gpt-4.1-nano",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-4.1-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 50,
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 54,
+        "provider": "openai",
+        "model": "gpt-5-nano",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 58,
+        "provider": "openai",
+        "model": "gpt-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 62,
+        "provider": "openai",
+        "model": "gpt-5-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 66,
+        "provider": "openai",
+        "model": "gpt-5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 70,
+        "provider": "openai",
+        "model": "gpt-5.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 74,
+        "provider": "openai",
+        "model": "gpt-5.2",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 78,
+        "provider": "openai",
+        "model": "gpt-5.2-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 81,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 82,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 85,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 86,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 89,
+        "provider": "openai",
+        "model": "o3",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 90,
+        "provider": "openai",
+        "model": "o3-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 93,
+        "provider": "openai",
+        "model": "o4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/lib/models/providers/openai/index.ts",
+        "line": 94,
+        "provider": "openai",
+        "model": "o4-mini",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/agents/search/api.ts",
+        "line": 77,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/agents/search/index.ts",
+        "line": 128,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/agents/search/researcher/index.ts",
+        "line": 68,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/models/base/llm.ts",
+        "line": 12,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/models/providers/ollama/ollamaLLM.ts",
+        "line": 71,
+        "unit": "u0"
+      },
+      {
+        "name": "vercel_ai",
+        "file": "src/lib/models/providers/openai/openaiLLM.ts",
+        "line": 72,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "src/lib/models/providers/gemini/index.ts",
+        "line": 34,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/gemini/index.ts",
+        "line": 100,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/gemini/index.ts",
+        "line": 117,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "next.config.mjs",
+        "line": 16,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/config/route.ts",
+        "line": 3,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/config/setup-complete/route.ts",
+        "line": 2,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/providers/[id]/models/route.ts",
+        "line": 3,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/providers/[id]/route.ts",
+        "line": 2,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/providers/route.ts",
+        "line": 2,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/uploads/route.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/uploads/route.ts",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/weather/route.ts",
+        "line": 18,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/discover/page.tsx",
+        "line": 48,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/library/page.tsx",
+        "line": 25,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/DeleteChat.tsx",
+        "line": 32,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/Attach.tsx",
+        "line": 57,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/AttachSmall.tsx",
+        "line": 48,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/ChatModelSelector.tsx",
+        "line": 22,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/NewsArticleWidget.tsx",
+        "line": 16,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/SearchImages.tsx",
+        "line": 41,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/SearchVideos.tsx",
+        "line": 56,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/AddModelDialog.tsx",
+        "line": 26,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/AddProviderDialog.tsx",
+        "line": 65,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/DeleteProviderDialog.tsx",
+        "line": 22,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/ModelProvider.tsx",
+        "line": 27,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/UpdateProviderDialog.tsx",
+        "line": 43,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsDialogue.tsx",
+        "line": 77,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 46,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 118,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 195,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 272,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Setup/SetupConfig.tsx",
+        "line": 31,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Setup/SetupConfig.tsx",
+        "line": 52,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/WeatherWidget.tsx",
+        "line": 35,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/WeatherWidget.tsx",
+        "line": 66,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/actions.ts",
+        "line": 5,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/actions.ts",
+        "line": 25,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 91,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 108,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 142,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 151,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 94,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 184,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 424,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 745,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/anthropic/index.ts",
+        "line": 32,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/gemini/index.ts",
+        "line": 33,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/groq/index.ts",
+        "line": 32,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/lemonade/index.ts",
+        "line": 45,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/lmstudio/index.ts",
+        "line": 41,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/index.ts",
+        "line": 36,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/scraper.ts",
+        "line": 16,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/searxng.ts",
+        "line": 45,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 129,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 138,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 156,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 49,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 63,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 112,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 143,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 169,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 193,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "src/app/api/weather/route.ts",
+        "line": 18,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/discover/page.tsx",
+        "line": 48,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/library/page.tsx",
+        "line": 25,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/DeleteChat.tsx",
+        "line": 32,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/Attach.tsx",
+        "line": 57,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/AttachSmall.tsx",
+        "line": 48,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/MessageInputActions/ChatModelSelector.tsx",
+        "line": 22,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/NewsArticleWidget.tsx",
+        "line": 16,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/SearchImages.tsx",
+        "line": 41,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/SearchVideos.tsx",
+        "line": 56,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/AddModelDialog.tsx",
+        "line": 26,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/AddProviderDialog.tsx",
+        "line": 65,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/DeleteProviderDialog.tsx",
+        "line": 22,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/ModelProvider.tsx",
+        "line": 27,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/Sections/Models/UpdateProviderDialog.tsx",
+        "line": 43,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsDialogue.tsx",
+        "line": 77,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 46,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 118,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 195,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Settings/SettingsField.tsx",
+        "line": 272,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Setup/SetupConfig.tsx",
+        "line": 31,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Setup/SetupConfig.tsx",
+        "line": 52,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/WeatherWidget.tsx",
+        "line": 35,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/WeatherWidget.tsx",
+        "line": 66,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/actions.ts",
+        "line": 5,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/actions.ts",
+        "line": 25,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 91,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 108,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 142,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/agents/search/widgets/weatherWidget.ts",
+        "line": 151,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 129,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 138,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config/index.ts",
+        "line": 156,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 94,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 184,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 424,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 745,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/anthropic/index.ts",
+        "line": 32,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/gemini/index.ts",
+        "line": 33,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/groq/index.ts",
+        "line": 32,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/lemonade/index.ts",
+        "line": 45,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/lmstudio/index.ts",
+        "line": 41,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/models/providers/ollama/index.ts",
+        "line": 36,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/searxng.ts",
+        "line": 45,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 49,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 63,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 112,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 143,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 169,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/uploads/manager.ts",
+        "line": 193,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 438,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/hooks/useChat.tsx",
+        "line": 788,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [
+      {
+        "file": ".github/workflows/docker-build.yaml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "src/components/MessageBox.tsx",
+        "line": 38,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.tsx",
+        "line": 222,
+        "kind": "outreach_schedule",
+        "symbol": "setInterval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/WeatherWidget.tsx",
+        "line": 99,
+        "kind": "outreach_schedule",
+        "symbol": "setInterval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prompts/search/classifier.ts",
+        "line": 3,
+        "kind": "disclosure",
+        "symbol": "AI system",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

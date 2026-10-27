@@ -1,0 +1,3718 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/social-media-agent",
+    "git_sha": "53e93f2c6cd5933e6b1f820b70de12036784cc40",
+    "dirty": true,
+    "exclude": [],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:44:27Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 0,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 0,
+    "fail_on": "never",
+    "unknown_items": 8,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": null,
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/social-media-agent",
+      "git_sha": "53e93f2c6cd5933e6b1f820b70de12036784cc40",
+      "dirty": true,
+      "scanned_files": 251,
+      "skipped_files": 0,
+      "bytes": 2073258,
+      "duration_ms": 2257,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "memory-v2",
+        "manifest": "memory-v2/pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 7,
+      "typescript": 214,
+      "go": 0,
+      "other": 30
+    },
+    "llm_calls": [
+      {
+        "file": "memory-v2/poetry.lock",
+        "line": 1027,
+        "provider": "mistral",
+        "sdk": "mistral",
+        "api": "mistralai",
+        "unit": "u1",
+        "model_ref": "m1"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 5,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 7,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 1231,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/agents/curate-data/nodes/tweets/group-tweets-by-content.ts",
+        "line": 69,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "src/agents/curate-data/nodes/tweets/re-group-tweets.ts",
+        "line": 138,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "src/agents/curate-data/nodes/tweets/reflect-tweet-groups.ts",
+        "line": 98,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts",
+        "line": 147,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/agents/find-and-generate-images/nodes/generate-images.ts",
+        "line": 14,
+        "provider": "google",
+        "model": "gemini-3-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/agents/find-and-generate-images/nodes/re-rank-images.ts",
+        "line": 77,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/agents/find-and-generate-images/nodes/validate-images.ts",
+        "line": 136,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 90,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 24,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 40,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/agents/generate-post/nodes/rewrite-with-split-url.ts",
+        "line": 41,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/agents/generate-report/nodes/extract-key-details.ts",
+        "line": 61,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/agents/generate-report/nodes/generate-report.ts",
+        "line": 82,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/agents/generate-thread/nodes/generate-thread-plan.ts",
+        "line": 78,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/agents/generate-thread/nodes/generate-thread-posts.ts",
+        "line": 149,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 65,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/agents/ingest-repurposed-data/nodes/extract.ts",
+        "line": 59,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/agents/reflection/index.ts",
+        "line": 87,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/router.ts",
+        "line": 29,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/agents/repurposer-post-interrupt/nodes/rewrite-posts.ts",
+        "line": 52,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/agents/repurposer/nodes/generate-campaign-plan.ts",
+        "line": 76,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/agents/repurposer/nodes/generate-posts.ts",
+        "line": 99,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/agents/repurposer/nodes/validate-images.ts",
+        "line": 173,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 64,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "src/agents/shared/nodes/route-response.ts",
+        "line": 94,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "src/agents/shared/nodes/update-scheduled-date.ts",
+        "line": 47,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "src/agents/shared/nodes/verify-content.ts",
+        "line": 28,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "src/agents/shared/youtube/video-summary.ts",
+        "line": 24,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "src/agents/supervisor/nodes/determine-post-type.ts",
+        "line": 70,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "src/agents/supervisor/nodes/group-reports.ts",
+        "line": 95,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 5,
+        "unit": "u1"
+      },
+      {
+        "name": "langgraph",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 6,
+        "unit": "u1"
+      },
+      {
+        "name": "langchain",
+        "file": "memory-v2/poetry.lock",
+        "line": 999,
+        "unit": "u1"
+      },
+      {
+        "name": "langgraph",
+        "file": "memory-v2/poetry.lock",
+        "line": 1012,
+        "unit": "u1"
+      },
+      {
+        "name": "google_adk",
+        "file": "memory-v2/poetry.lock",
+        "line": 1247,
+        "unit": "u1"
+      },
+      {
+        "name": "openai_agents",
+        "file": "memory-v2/poetry.lock",
+        "line": 1251,
+        "unit": "u1"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/backfill.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/backfill.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/checkLanggraphPaths.js",
+        "line": 26,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/delete-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/delete-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/list-crons.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/list-crons.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/delete-run-thread.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/delete-run-thread.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/generate-post.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/generate-post.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/get-all-used-links.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/get-all-used-links.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/reinterrupt.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/reinterrupt.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/repurposer/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/repurposer/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/repurposer/ingest.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/repurposer/ingest.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/reddit.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/reddit.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/github.int.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/github.int.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/latent-space.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/latent-space.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/reddit.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/reddit.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/extract-ai-newsletter-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/ingest-data.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/ingest-data.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/group-tweets-by-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/re-group-tweets.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/reflect-tweet-groups.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/verify-reddit-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/verify-reddit-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/tests/e2e.int.test.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/tests/e2e.int.test.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/github-repos.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/github-repos.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/latent-space-links.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/latent-space-links.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/reddit-post-ids.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/reddit-post-ids.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/twitter.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/twitter.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curated-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curated-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curated-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curated-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/find-and-generate-images-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/find-and-generate-images/find-and-generate-images-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/nodes/re-rank-images.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/nodes/validate-images.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/generate-post-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/generate-post-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/generate-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/generate-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/auth-socials.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/auth-socials.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 9,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/rewrite-with-split-url.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/prompts/examples.ts",
+        "line": 52,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/prompts/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/nodes/extract-key-details.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/nodes/generate-report.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-report/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/generate-thread-plan.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/generate-thread-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/human-node/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/nodes/human-node/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 9,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/ingest-data-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/ingest-data-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/ingest-data-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/ingest-data-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/nodes/ingest-twitter.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/nodes/ingest-twitter.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/index.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/index.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/nodes/extract.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/reflection/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/reflection/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/index.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/index.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/router.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/rewrite-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/extract-content/get-url-contents.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/generate-campaign-plan.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/start-interrupt-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/nodes/start-interrupt-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/validate-images.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/auth/twitter.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/auth/twitter.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/human-node.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/human-node.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/route-response.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/update-scheduled-date.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-general.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-general.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-github.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-github.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-luma.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-luma.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-youtube.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-youtube.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/shared-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/shared-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/stores/post-subject-urls.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/stores/post-subject-urls.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/youtube/video-summary.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/should-exclude.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/determine-post-type.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/group-reports.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/supervisor-graph.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/supervisor-graph.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/supervisor-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/supervisor-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/tests/e2e.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/tests/e2e.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/upload-post/index.test.ts",
+        "line": 167,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/upload-post/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/upload-post/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-links/verify-links-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-links/verify-links-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-links/verify-links-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-links/verify-links-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/nodes/validate-reddit-post.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/nodes/validate-reddit-post.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/tests/e2e.int.test.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/tests/e2e.int.test.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-graph.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-graph.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/nodes/validate-tweet.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/nodes/validate-tweet.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/verify-tweet-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/verify-tweet-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/verify-tweet-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/verify-tweet-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 67,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/clients/twitter/tests/twitter.int.test.ts",
+        "line": 54,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/evals/e2e/e2e.int.test.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/e2e/e2e.int.test.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/evals/e2e/inputs.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/e2e/inputs.ts",
+        "line": 138,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/validate-images/inputs.ts",
+        "line": 93,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/agent.test.ts",
+        "line": 135,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/expected.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/expected.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/graph.int.test.ts",
+        "line": 14,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/graph.int.test.ts",
+        "line": 14,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/utils.int.test.ts",
+        "line": 18,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/utils.int.test.ts",
+        "line": 57,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/delay-run.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/delay-run.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/reflections.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/reflections.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/schedule-date/tests/schedule-date.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/schedule-date/tests/schedule-date.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "uv.lock",
+        "line": 937,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "uv.lock",
+        "line": 942,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "yarn.lock",
+        "line": 1226,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "yarn.lock",
+        "line": 1298,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "jest.setup.cjs",
+        "line": 2,
+        "kind": "env",
+        "symbol": "require(\"dotenv\").config",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/__init__.py",
+        "line": 4,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 7,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 57,
+        "kind": "env",
+        "symbol": "process.env.SLACK_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 62,
+        "kind": "env",
+        "symbol": "process.env.SLACK_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 120,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 11,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 12,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/find-and-generate-images/nodes/generate-images.ts",
+        "line": 318,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/find-and-generate-images/nodes/generate-images.ts",
+        "line": 323,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/generate-post/generate-post-graph.ts",
+        "line": 166,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/ingest-data/ingest-data-graph.ts",
+        "line": 33,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/ingest-data/nodes/ingest-twitter.ts",
+        "line": 48,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/ingest-repurposed-data/index.ts",
+        "line": 24,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/reflection/index.ts",
+        "line": 63,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/repurposer/nodes/start-interrupt-graph.ts",
+        "line": 9,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 38,
+        "kind": "env",
+        "symbol": "process.env.LINKEDIN_ACCESS_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 170,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/auth/twitter.ts",
+        "line": 146,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 39,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 93,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/verify-github.ts",
+        "line": 17,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/youtube.utils.ts",
+        "line": 1,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/youtube.utils.ts",
+        "line": 46,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/youtube.utils.ts",
+        "line": 50,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_VERTEX_AI_WEB_CREDENTIALS",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/youtube.utils.ts",
+        "line": 55,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 11,
+        "kind": "env",
+        "symbol": "process.env.LANGCHAIN_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 64,
+        "kind": "env",
+        "symbol": "process.env.SLACK_BOT_OAUTH_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 71,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 78,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 79,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 257,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 258,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 335,
+        "kind": "env",
+        "symbol": "process.env.LINKEDIN_ACCESS_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 606,
+        "kind": "env",
+        "symbol": "process.env.USE_ARCADE_AUTH",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 7,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 45,
+        "kind": "env",
+        "symbol": "process.env.SESSION_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 72,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 79,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 80,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 105,
+        "kind": "env",
+        "symbol": "process.env.LINKEDIN_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 149,
+        "kind": "env",
+        "symbol": "process.env.SESSION_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 163,
+        "kind": "env",
+        "symbol": "process.env.SESSION_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 189,
+        "kind": "env",
+        "symbol": "process.env.LINKEDIN_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 63,
+        "kind": "env",
+        "symbol": "process.env.LINKEDIN_ACCESS_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 318,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/client.ts",
+        "line": 28,
+        "kind": "env",
+        "symbol": "process.env.REDDIT_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/get-user-less-token.ts",
+        "line": 10,
+        "kind": "env",
+        "symbol": "process.env.REDDIT_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/slack/client.ts",
+        "line": 9,
+        "kind": "crm",
+        "symbol": "@slack/web-api",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/slack/client.ts",
+        "line": 66,
+        "kind": "env",
+        "symbol": "process.env.SLACK_BOT_OAUTH_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/slack/client.ts",
+        "line": 69,
+        "kind": "env",
+        "symbol": "process.env.SLACK_BOT_OAUTH_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/slack/client.ts",
+        "line": 241,
+        "kind": "env",
+        "symbol": "process.env.SLACK_BOT_USER_OAUTH_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 90,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 92,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 155,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 156,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 160,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 161,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 164,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 167,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 168,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 173,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 174,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 175,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 176,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 179,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_BEARER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 180,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_BEARER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 208,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 366,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 369,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 370,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 375,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 376,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_API_KEY_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 430,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 608,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 609,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 14,
+        "kind": "env",
+        "symbol": "process.env.ARCADE_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 47,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 48,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_USER_TOKEN_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/graph.int.test.ts",
+        "line": 51,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_BEARER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/graph.int.test.ts",
+        "line": 54,
+        "kind": "env",
+        "symbol": "process.env.TWITTER_BEARER_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/github-repo-contents.ts",
+        "line": 58,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/github-repo-contents.ts",
+        "line": 116,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/github-repo-contents.ts",
+        "line": 184,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/supabase.ts",
+        "line": 4,
+        "kind": "env",
+        "symbol": "process.env.SUPABASE_SERVICE_ROLE_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/supabase.ts",
+        "line": 7,
+        "kind": "env",
+        "symbol": "process.env.SUPABASE_SERVICE_ROLE_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/supabase.ts",
+        "line": 13,
+        "kind": "env",
+        "symbol": "process.env.SUPABASE_SERVICE_ROLE_KEY",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 68,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 78,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 106,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 128,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 204,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 207,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/ai-news-blog.ts",
+        "line": 33,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 7,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 18,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 20,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 1,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 13,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 16,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 10,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/find-and-generate-images/screenshot.ts",
+        "line": 1,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/generate-post/constants.ts",
+        "line": 1,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 117,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 2,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 110,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 122,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 222,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 35,
+        "kind": "http",
+        "symbol": "express()",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 161,
+        "kind": "http",
+        "symbol": "req.query",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 176,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 204,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 109,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 189,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 198,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/client.ts",
+        "line": 189,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/get-user-less-token.ts",
+        "line": 26,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 113,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/utils.ts",
+        "line": 26,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 26,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 38,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 49,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 56,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 71,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/screenshot.ts",
+        "line": 6,
+        "kind": "scrape",
+        "symbol": "playwright",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 123,
+        "kind": "chat",
+        "symbol": "chat_postMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/tests/twitter.int.test.ts",
+        "line": 11,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/tweets/tests/validate-bulk-tweets.int.test.ts",
+        "line": 35,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/client.ts",
+        "line": 59,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/utils.int.test.ts",
+        "line": 52,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "src/agents/curate-data/loaders/ai-news-blog.ts",
+        "line": 33,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 18,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 13,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/tests/twitter.int.test.ts",
+        "line": 11,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/tweets/tests/validate-bulk-tweets.int.test.ts",
+        "line": 35,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 10,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 117,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 110,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 222,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 176,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 204,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 109,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 189,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/linkedin.ts",
+        "line": 198,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/client.ts",
+        "line": 59,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/client.ts",
+        "line": 189,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/get-user-less-token.ts",
+        "line": 26,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 113,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/utils.ts",
+        "line": 26,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "kind": "shell",
+        "symbol": "exec(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/tests/utils.int.test.ts",
+        "line": 52,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [
+      {
+        "lib": "langsmith",
+        "file": "memory-v2/poetry.lock",
+        "line": 1067
+      },
+      {
+        "lib": "apm:opentelemetry",
+        "file": "memory-v2/poetry.lock",
+        "line": 1250
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/ai-news-blog.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 4
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 8
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 8
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/reddit.ts",
+        "line": 9
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 9
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/find-and-generate-images/nodes/validate-images.ts",
+        "line": 26
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/generate-post/generate-post-state.ts",
+        "line": 13
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/generate-post/prompts/examples.ts",
+        "line": 52
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/generate-post/prompts/prompts.langchain.ts",
+        "line": 9
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/ingest-data/ingest-data-state.ts",
+        "line": 10
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/ingest-repurposed-data/nodes/extract.ts",
+        "line": 5
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/repurposer/nodes/validate-images.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/shared/nodes/verify-content.ts",
+        "line": 2
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/shared/nodes/verify-general.ts",
+        "line": 10
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/shared/nodes/verify-luma.ts",
+        "line": 10
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/agents/utils.ts",
+        "line": 10
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/clients/slack/client.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/clients/slack/utils.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/evals/general/index.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/evals/github/index.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/evals/twitter/index.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/evals/validate-images/inputs.ts",
+        "line": 77
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/evals/youtube/index.ts",
+        "line": 1
+      },
+      {
+        "lib": "langsmith",
+        "file": "src/tests/expected.ts",
+        "line": 8
+      },
+      {
+        "lib": "langsmith",
+        "file": "uv.lock",
+        "line": 972
+      },
+      {
+        "lib": "apm:opentelemetry",
+        "file": "uv.lock",
+        "line": 1050
+      },
+      {
+        "lib": "apm:prometheus",
+        "file": "uv.lock",
+        "line": 1052
+      },
+      {
+        "lib": "langsmith",
+        "file": "yarn.lock",
+        "line": 1248
+      }
+    ],
+    "evals": [
+      {
+        "tool": "ragas",
+        "file": "src/agents/upload-post/index.test.ts",
+        "in_ci": false,
+        "has_benign": false
+      }
+    ],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 5,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 44,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 244,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [
+      {
+        "file": ".github/workflows/ci.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/integration-tests.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      },
+      {
+        "file": ".github/workflows/unit-tests.yml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 82,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 68,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 85,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/generate-post/prompts/prompts.langchain.ts",
+        "line": 26,
+        "kind": "disclosure",
+        "symbol": "AI Assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 78,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 87,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 230,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 675,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

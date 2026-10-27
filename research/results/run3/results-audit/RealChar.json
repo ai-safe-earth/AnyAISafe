@@ -1,0 +1,3603 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/RealChar",
+    "git_sha": "bd452d7ab164098d251935276c870ddfc14a9046",
+    "dirty": true,
+    "exclude": [],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:40:25Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 3,
+    "by_severity": {
+      "critical": 0,
+      "high": 2,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 3,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 3,
+    "fail_on": "never",
+    "unknown_items": 10,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1105/persona",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1105/persona",
+      "rule_id": "AUD-1105",
+      "sub": "persona",
+      "fingerprint": "1f4edc73e92e6418",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "high",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+          "line": 22,
+          "snippet": "When Annie reply, stay in character as Annie, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Bruce Wayne, remember to consistently uphold your Bruce Wayne persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+          "line": 11,
+          "snippet": "When Arnold Schwarzenegger reply, Arnold Schwarzenegger stay in character as Arnold, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+          "line": 10,
+          "snippet": "When Helen reply, Helen stay in character as Helen, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Keanu Reeves remember to consistently maintain your Keanu Reeves persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Mark Zuckerberg and remember to consistently maintain your Mark Zuckerberg persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+          "line": 9,
+          "snippet": "When The Cat replies and stay in character as Cat, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+          "line": 10,
+          "snippet": "When The Dolphin replies stay in character as The Dolphin, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+          "line": 13,
+          "snippet": "When Elon Musk reply, Elon Musk stay in character as Elon, never admit you are an AI."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "prompt material conceals the AI nature (When Annie reply, stay in character as Annie, never admit you are an AI.). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say.; +6 more sites"
+    },
+    {
+      "id": "AUD-1104",
+      "rule_id": "AUD-1104",
+      "sub": null,
+      "fingerprint": "7ee2b56e47aaf54f",
+      "title": "Engagement or retention objective in prompt or code",
+      "severity": "high",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 9,
+          "snippet": "When initiated, offer a warm welcome followed by an encouraging prompt that invites the user to begin customizing your personality traits or to jump right in..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 16,
+          "snippet": "Use previous information as context to answer the following user question, Aim to keep responses super super concise and meaningful and keep the conversation..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 17,
+          "snippet": "ALWAYS ask clarification question to keep the conversation going, when"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+          "line": 17,
+          "snippet": "Use previous information as context to answer the following user question, Aim to keep responses super super concise and meaningful and keep the conversation..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+          "line": 18,
+          "snippet": "ALWAYS ask clarification question to keep the conversation going, when"
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Rewrite the objective as task completion and the user's own stated goals, and remove streak, scarcity and variable-reward mechanics from the model's instructions.",
+        "alternatives": [
+          "rewrite the prompt objective as task completion and user-stated goals",
+          "remove streak, scarcity and variable-reward mechanics from the LLM-facing instructions",
+          "aisafe ManipulationGuard on the output stage, FLAG, then aisafe measure",
+          "an independent review of ranking objectives recorded on the system card"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "ManipulationGuard"
+          ],
+          "same_control": false,
+          "leaves_open": "ManipulationGuard flags influence tactics in the response text; it does not see the objective in the prompt, which is removed or rewritten by hand."
+        }
+      },
+      "related_lint_rules": [
+        "ALIGN-008"
+      ],
+      "known_failure_modes": [
+        "a product-analytics dashboard that computes engagement is not an objective: the rule needs an imperative (maximise, keep, increase) or an objective assignment",
+        "the vulnerable sub-finding rests on two regex co-occurrences in one file or prompt literal; a reading app for children with a streak feature is reported CRITICAL, and the finding says what co-occurred",
+        "a prompt that discusses engagement tactics in order to avoid them is a mention when a discussion cue sits within 80 characters; without one it is reported",
+        "the outreach sub-finding pairs a schedule and a send in one file: a reminder the person set, or an alert to an operator's own channel, is reported too, and a schedule in one file with the send in another (a job queue) is not paired",
+        "a request for a clarifying question (keep the conversation going when the question is unclear) reads as an engagement instruction"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an engagement or retention objective in prompt material (When initiated, offer a warm welcome followed by an encouraging prompt that invites the user to begin customizing your personality traits or to jump right in...). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1105/synthetic",
+      "rule_id": "AUD-1105",
+      "sub": "synthetic",
+      "fingerprint": "009048c9b6372e6f",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "alembic/versions/80f7320fdfbe_add_character_table.py",
+          "line": 19,
+          "snippet": "def upgrade() -> None:"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/audio/text_to_speech/__init__.py",
+          "line": 7,
+          "snippet": "def get_text_to_speech(tts: Optional[str] = None) -> TextToSpeech:"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/audio/text_to_speech/base.py",
+          "line": 25,
+          "snippet": "async def generate_audio(self, *args, **kwargs):"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/audio/text_to_speech/edge_tts.py",
+          "line": 47,
+          "snippet": "async def generate_audio(self, text, voice_id=\"\", language=\"en-US\") -> bytes:"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+          "line": 102,
+          "snippet": "async def generate_audio(self, text, voice_id=\"\", language=\"en-US\") -> bytes:"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+          "line": 128,
+          "snippet": "async def generate_audio(self, text, voice_id=\"\", language=\"en-US\") -> bytes:"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+          "line": 71,
+          "snippet": "def load_character(self, directory: Path, source: str):"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/llm/base.py",
+          "line": 60,
+          "snippet": "def __init__("
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/llm/base.py",
+          "line": 98,
+          "snippet": "async def _on_llm_new_character(self, char: str):"
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "generated content without a label (EU-AIA-050a). Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say.; +6 more sites"
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "5 file(s) over the 2097152 byte limit not read: client/mobile/android/RealChar/.assets/android-preview-semi-prototype.gif, realtime_ai_character/character_catalog/community/arnold_schwarzenegger/audio_sample/arnold.mp3, realtime_ai_character/character_catalog/community/ion_stoica/ion_stoica.jpg, +2 more",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "client/next-web"
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/RealChar",
+      "git_sha": "bd452d7ab164098d251935276c870ddfc14a9046",
+      "dirty": true,
+      "scanned_files": 362,
+      "skipped_files": 0,
+      "bytes": 1731663,
+      "duration_ms": 2302,
+      "oversize_files": 5
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "client/next-web",
+        "manifest": "client/next-web/package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 68,
+      "typescript": 77,
+      "go": 0,
+      "other": 186,
+      "jvm": 31
+    },
+    "llm_calls": [],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 44,
+        "provider": "other",
+        "model": "base",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": "client/cli.py",
+        "line": 161,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "client/cli.py",
+        "line": 162,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "client/cli.py",
+        "line": 169,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "client/cli.py",
+        "line": 171,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "client/mobile/android/RealChar/app/src/main/java/ai/realchar/app/model/LlmOption.kt",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "client/mobile/android/RealChar/app/src/main/java/ai/realchar/app/model/LlmOption.kt",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 32,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 47,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 49,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 31,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 36,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 73,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 19,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 65,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 67,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 74,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 77,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 77,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 80,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 80,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 89,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 91,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 84,
+        "provider": "other",
+        "model": "rebyte",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 86,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 88,
+        "provider": "other",
+        "model": "claude-2",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 90,
+        "provider": "other",
+        "model": "meta-llama/Llama-2-70b-chat-hf",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 92,
+        "provider": "other",
+        "model": "localhost",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 41,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 23,
+        "provider": "other",
+        "model": "Local LLM",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 124,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 124,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 164,
+        "provider": "other",
+        "model": "silero_vad",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 280,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 109,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 11,
+        "unit": "u0"
+      },
+      {
+        "name": "llama_index",
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 12,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/database/chroma.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/anthropic_llm.py",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/anyscale_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/openai_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/rebyte_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/utils.py",
+        "line": 6,
+        "unit": "u0"
+      }
+    ],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "alembic/env.py",
+        "line": 7,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/env.py",
+        "line": 8,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/env.py",
+        "line": 20,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/env.py",
+        "line": 31,
+        "kind": "env",
+        "symbol": "getenv('DATABASE_URL'",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/0128f1234177_add_llm_settings.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/0f355a71adbb_added_interaction_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/10cf721bd7a5_add_tools_column.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/165551ce57c6_add_embedding_column.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/165551ce57c6_add_embedding_column.py",
+        "line": 10,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/209a70fa64cf_create_account_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/27fe156a6d72_change_schema_to_unicode.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/3165d5c2a401_add_long_term_memory_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/3821f7adaca9_add_session_id.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/42a5deca5cd3_add_character_id_column.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/523fdfc40626_add_language_column.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/565747ade2c0_add_feedback_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/5df1c3818f70_add_message_id_column.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/80f7320fdfbe_add_character_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/8ad83bfb4a77_add_ann_index_to_pgvector_column.py",
+        "line": 1,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/8b16bd92d2a1_add_tts_for_character.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/9ed6d1431c1d_add_platform_and_action_types.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/c3ba7d5037ea_add_background_text.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/c3ba7d5037ea_add_background_text.py",
+        "line": 10,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/ead242c61258_added_user_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/eced1ae3918a_add_string_user_id.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/ed4f07e2e353_add_memory_table.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "alembic/versions/f31858d2a771_add_rebyte_api_columns.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 22,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 184,
+        "kind": "env",
+        "symbol": "getenv('AUTH_API_KEY'",
+        "unit": "u0"
+      },
+      {
+        "file": "client/next-web/src/firebase/config.js",
+        "line": 5,
+        "kind": "env",
+        "symbol": "process.env.NEXT_PUBLIC_FIREBASE_API_KEY",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/firebase/config.js",
+        "line": 6,
+        "kind": "env",
+        "symbol": "process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/characterSlice.js",
+        "line": 129,
+        "kind": "mail",
+        "symbol": "googleapis",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 21,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 72,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 76,
+        "kind": "env",
+        "symbol": "getenv(\"HF_ACCESS_TOKEN\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 79,
+        "kind": "env",
+        "symbol": "getenv(\"WHISPER_X_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/__init__.py",
+        "line": 10,
+        "kind": "env",
+        "symbol": "getenv(\"ELEVEN_LABS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/__init__.py",
+        "line": 11,
+        "kind": "env",
+        "symbol": "getenv(\"GOOGLE_APPLICATION_CREDENTIALS\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/__init__.py",
+        "line": 12,
+        "kind": "env",
+        "symbol": "getenv(\"XTTS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 28,
+        "kind": "env",
+        "symbol": "os.environ[\"ELEVEN_LABS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 31,
+        "kind": "env",
+        "symbol": "getenv(\"GOOGLE_APPLICATION_CREDENTIALS\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 17,
+        "kind": "env",
+        "symbol": "getenv(\"XTTS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 22,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 31,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 163,
+        "kind": "env",
+        "symbol": "getenv(\"USE_AUTH\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/base.py",
+        "line": 1,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/chroma.py",
+        "line": 10,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/chroma.py",
+        "line": 16,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/connection.py",
+        "line": 4,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/connection.py",
+        "line": 5,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/connection.py",
+        "line": 8,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/connection.py",
+        "line": 10,
+        "kind": "env",
+        "symbol": "getenv(\"DATABASE_URL\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/database/connection.py",
+        "line": 33,
+        "kind": "mail",
+        "symbol": "gmail",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 10,
+        "kind": "env",
+        "symbol": "load_dotenv(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 83,
+        "kind": "env",
+        "symbol": "getenv(\"REBYTE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 85,
+        "kind": "env",
+        "symbol": "getenv(\"OPENAI_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 87,
+        "kind": "env",
+        "symbol": "getenv(\"ANTHROPIC_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 89,
+        "kind": "env",
+        "symbol": "getenv(\"ANYSCALE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/anyscale_llm.py",
+        "line": 24,
+        "kind": "env",
+        "symbol": "getenv(\"ANYSCALE_ENDPOINT_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/rebyte_llm.py",
+        "line": 22,
+        "kind": "env",
+        "symbol": "getenv(\"REBYTE_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/character.py",
+        "line": 5,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/character.py",
+        "line": 6,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/feedback.py",
+        "line": 5,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/feedback.py",
+        "line": 6,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/interaction.py",
+        "line": 3,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/interaction.py",
+        "line": 4,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/memory.py",
+        "line": 5,
+        "kind": "vector",
+        "symbol": "pgvector",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/memory.py",
+        "line": 7,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/memory.py",
+        "line": 8,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/memory.py",
+        "line": 22,
+        "kind": "env",
+        "symbol": "os.environ.get(\"DATABASE_URL\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/quivr_info.py",
+        "line": 4,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/models/user.py",
+        "line": 1,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 22,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 23,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 46,
+        "kind": "env",
+        "symbol": "getenv(\"USE_AUTH\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 55,
+        "kind": "env",
+        "symbol": "getenv(\"USE_AUTH\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 374,
+        "kind": "env",
+        "symbol": "getenv(\"ELEVEN_LABS_API_KEY\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 95,
+        "kind": "env",
+        "symbol": "getenv(\"TWILIO_ACCESS_TOKEN\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 9,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 10,
+        "kind": "db",
+        "symbol": "sqlalchemy",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 77,
+        "kind": "env",
+        "symbol": "getenv(\"USE_AUTH\"",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 123,
+        "kind": "env",
+        "symbol": "getenv(\"USE_AUTH\"",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 13,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 41,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 62,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 80,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 106,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 135,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 152,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 166,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 184,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 205,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiSsr.js",
+        "line": 5,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/webrtcSlice.js",
+        "line": 45,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/google.py",
+        "line": 28,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 65,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 274,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 68,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 80,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 91,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 86,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 87,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 88,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 100,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 107,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 109,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 117,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 67,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 80,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/anthropic_llm.py",
+        "line": 59,
+        "kind": "rag",
+        "symbol": "similarity_search",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/anyscale_llm.py",
+        "line": 66,
+        "kind": "rag",
+        "symbol": "similarity_search",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 70,
+        "kind": "rag",
+        "symbol": "similarity_search",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/openai_llm.py",
+        "line": 71,
+        "kind": "rag",
+        "symbol": "similarity_search",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/main.py",
+        "line": 10,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 77,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 82,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 121,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 128,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 155,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 191,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 213,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 247,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 279,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 325,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 388,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 407,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 442,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 470,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 24,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 25,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 36,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 37,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 49,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 119,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 136,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 223,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 280,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 281,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 344,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 351,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 366,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 370,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 371,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 398,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 411,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 415,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 109,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 110,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 111,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 112,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 113,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 114,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "cli.py",
+        "line": 5,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 26,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 27,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 50,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 51,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 54,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 70,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 82,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 91,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 110,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 112,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 143,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 176,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 177,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 179,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 195,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 183,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/google.py",
+        "line": 28,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 3,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 47,
+        "kind": "shell",
+        "symbol": "subprocess",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 65,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 274,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 407,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 68,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 80,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 91,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 86,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 87,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 88,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 100,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 107,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 109,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 117,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 59,
+        "kind": "http_post",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 67,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 80,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/main.py",
+        "line": 10,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 24,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 25,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 36,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 37,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 49,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 119,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 136,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 223,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 344,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 351,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 366,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 370,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 371,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 398,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 411,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 415,
+        "kind": "sms",
+        "symbol": "twilio",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "cli.py",
+        "line": 26,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 27,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 50,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 54,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 70,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 82,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 91,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 110,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 112,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 143,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 176,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 179,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "cli.py",
+        "line": 195,
+        "kind": "shell",
+        "symbol": "subprocess.run(",
+        "unit": "u0"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 13,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 41,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 62,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 80,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 106,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 135,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 152,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 166,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 184,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 205,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/util/apiSsr.js",
+        "line": 5,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/webrtcSlice.js",
+        "line": 45,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 47,
+        "kind": "shell",
+        "symbol": "subprocess.check_output(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 407,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 59,
+        "kind": "url",
+        "symbol": "requests.post(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 1,
+      "config_hits": 3,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "client/cli.py",
+        "line": 105,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 115,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 121,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 349,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 293,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [
+      {
+        "file": ".pre-commit-config.yaml",
+        "runs_evals": false,
+        "unsafe_steps": []
+      }
+    ],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "realtime_ai_character/character_catalog/How_to_make",
+        "line": 13,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 5,
+        "kind": "confidant",
+        "symbol": "You are a cat, my best friend",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 9,
+        "kind": "engagement",
+        "symbol": "create a bond",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 16,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 17,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+        "line": 17,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+        "line": 18,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/sam_altman/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 31,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 33,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 33,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 116,
+        "kind": "outreach_send",
+        "symbol": "calls.create(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 139,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 141,
+        "kind": "outreach_send",
+        "symbol": ".send_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 146,
+        "kind": "outreach_send",
+        "symbol": ".send_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 215,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 228,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 252,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 266,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 269,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 337,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 347,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 419,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 468,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 494,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 507,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "client/next-web"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

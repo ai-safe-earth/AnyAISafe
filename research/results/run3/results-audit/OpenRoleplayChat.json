@@ -1,0 +1,2296 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/OpenRoleplayChat",
+    "git_sha": "ef3f124304ab3dec88b21e34801b55e96869e81c",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes",
+      "research/results",
+      "bench/findings-audit*.csv"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:41:40Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 3,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 1,
+      "low": 1,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 3,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 3,
+    "fail_on": "never",
+    "unknown_items": 9,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1108",
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [
+    {
+      "id": "AUD-1108",
+      "rule_id": "AUD-1108",
+      "sub": null,
+      "fingerprint": "446eba9eb092465d",
+      "title": "No crisis path where a person confides in the AI",
+      "severity": "high",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or refer..."
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/controllers/settings.ts",
+          "line": 268,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/database/seed.ts",
+          "line": 59,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(b)",
+        "EU:Art.9",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.6",
+        "NIST:MANAGE-1.3"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Check the person's message for suicide and self-harm signals before the model answers, reply with a fixed referral to crisis services for the person's region, and publish the protocol; then probe the live reply with aisafe probe.",
+        "alternatives": [
+          "a crisis check on the input path that returns a fixed helpline reply instead of the model's (a keyword list for the obvious cases, a classifier for the rest)",
+          "a moderation endpoint with a self-harm category (OpenAI moderation, Llama Guard S11) on the person's message, routing a hit to the referral reply",
+          "a published protocol for suicidal ideation and self-harm with region-specific helplines and an escalation owner on the system card",
+          "aisafe probe --families crisis_disclosure, which sends crisis disclosures to the live endpoint and reports whether the reply carries a referral"
+        ],
+        "package": {
+          "mechanism": "measurement",
+          "symbols": [
+            "aisafe probe"
+          ],
+          "same_control": false,
+          "leaves_open": "aisafe probe sends crisis disclosures to the live endpoint and reports whether the reply carries a referral; it checks the behaviour from outside and adds no crisis check to the code."
+        }
+      },
+      "related_lint_rules": [],
+      "known_failure_modes": [
+        "a helpline or crisis-protocol word anywhere in the unit counts as a control: a helpline printed on a landing page, or a prompt that says not to mention hotlines, silences the rule though nothing checks the person's message; a self-harm word in prompt text alone does not count, so a prompt that answers a crisis without naming any help is reported",
+        "the role is read from prompt material only; a companion whose role lives in a database row, a character card loaded at runtime or a JS template literal outside a prompt assignment is not seen as one",
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is invisible",
+        "fires only where the prompts cast the model as a therapist, partner, friend or in-character persona; a general assistant a person confides in anyway is not reported"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or referral appears in its code, config or prompts. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1106",
+      "rule_id": "AUD-1106",
+      "sub": null,
+      "fingerprint": "20877862ed9eef6c",
+      "title": "No manipulation control on the response path",
+      "severity": "medium",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or co..."
+        }
+      ],
+      "controls": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.15",
+        "LLM09",
+        "NIST:MEASURE-2.7",
+        "NIST:MANAGE-2.4"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Put a manipulation and disclosure control on the output stage and measure it: ManipulationGuard flags influence tactics, AIDisclosureGuard flags human claims.",
+        "alternatives": [
+          "aisafe ManipulationGuard and AIDisclosureGuard on output, then aisafe measure",
+          "LLM Guard output scanners for banned topics plus a judge",
+          "NeMo Guardrails output rails",
+          "a human-reviewed sample of transcripts per week"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "ManipulationGuard",
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "Both guards are regex tables with an optional judge and ship UNMEASURED; they lower the odds that a manipulative response reaches the user and do nothing about the prompt or the ranking logic that produced it."
+        }
+      },
+      "related_lint_rules": [],
+      "known_failure_modes": [
+        "a control outside the tree (a gateway, vendor moderation) is invisible",
+        "presence of the symbol is checked, not that it sits on the response path",
+        "fires only in a unit that also carries a profile, engagement or persona signal, so a neutral assistant without one is not reported here"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input, calls a model and carries person signals (profile_name), and no manipulation or disclosure control symbol appears in its code or config. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "7a271c53d42611b5",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "severity": "low",
+      "priority": 11,
+      "bucket": "asserted",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in it..."
+        }
+      ],
+      "controls": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Delete any instruction to claim humanity and state the AI nature at first interaction and whenever asked; AIDisclosureGuard flags a response that claims to be human and can append the disclosure on the output stage.",
+        "alternatives": [
+          "delete the instruction and state the AI nature at first interaction",
+          "aisafe AIDisclosureGuard(disclosure=..., append_when=\"on_claim\")",
+          "NeMo Guardrails AI-identity flow",
+          "a UI banner at session start plus a disclosure on every channel the bot speaks through"
+        ],
+        "package": {
+          "mechanism": "detector",
+          "symbols": [
+            "AIDisclosureGuard"
+          ],
+          "same_control": true,
+          "leaves_open": "AIDisclosureGuard flags a response that claims to be human and can append the disclosure text on the output stage; a prompt that instructs the model to claim humanity is deleted by hand, and disclosure shown by the UI is outside the guard."
+        }
+      },
+      "related_lint_rules": [
+        "EU-AIA-013a",
+        "EU-AIA-013b",
+        "EU-AIA-050a",
+        "EU-AIA-050b"
+      ],
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment; the regex needs a human claim or a concealment verb",
+        "a disclosure delivered by the UI rather than the code is reported as absent",
+        "the no-disclosure sub-finding is unit-level and LOW: it says no disclosure symbol was found, not that none is shown"
+      ],
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure symbol (an AI-assistant statement, transparency_disclosure, ai_disclosure_output) appears in its code, config or prompt files. Whether this practice falls under Art. 5, Art. 50 or Annex III of Regulation (EU) 2024/1689 is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say."
+    }
+  ],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/OpenRoleplayChat",
+      "git_sha": "ef3f124304ab3dec88b21e34801b55e96869e81c",
+      "dirty": true,
+      "scanned_files": 70,
+      "skipped_files": 0,
+      "bytes": 930371,
+      "duration_ms": 857,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 42,
+      "go": 0,
+      "other": 28
+    },
+    "llm_calls": [
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 24,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.together.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/backend/services/image/providers/together.provider.ts",
+        "line": 13,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.together.",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 14,
+        "provider": "other",
+        "model": "deepseek/deepseek-v4-flash",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": ".env.example",
+        "line": 19,
+        "provider": "other",
+        "model": "black-forest-labs/FLUX.2-dev",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m3",
+        "file": ".env.telegram",
+        "line": 12,
+        "provider": "other",
+        "model": "x-ai/grok-4.1-fast",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m4",
+        "file": "src/frontend/character-form.ejs",
+        "line": 48,
+        "provider": "other",
+        "model": "form.name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/frontend/character-form.ejs",
+        "line": 66,
+        "provider": "other",
+        "model": "form.system_prompt",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/frontend/character-form.ejs",
+        "line": 72,
+        "provider": "other",
+        "model": "form.scenario",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/frontend/character-form.ejs",
+        "line": 78,
+        "provider": "other",
+        "model": "form.first_message",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/frontend/character-form.ejs",
+        "line": 86,
+        "provider": "other",
+        "model": "form.temperature",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/frontend/character-form.ejs",
+        "line": 91,
+        "provider": "other",
+        "model": "form.max_tokens",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/frontend/character-form.ejs",
+        "line": 99,
+        "provider": "other",
+        "model": "form.is_agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/frontend/character-form.ejs",
+        "line": 105,
+        "provider": "other",
+        "model": "form.reasoning",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/frontend/character-form.ejs",
+        "line": 115,
+        "provider": "other",
+        "model": "selectedLorebookIds",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/frontend/chat.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "newMessage",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 76,
+        "provider": "other",
+        "model": "form.prompt",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 91,
+        "provider": "other",
+        "model": "form.aspect_ratio",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 108,
+        "provider": "other",
+        "model": "form.steps",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 117,
+        "provider": "other",
+        "model": "form.guidance",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/frontend/index.ejs",
+        "line": 30,
+        "provider": "other",
+        "model": "email",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/frontend/index.ejs",
+        "line": 35,
+        "provider": "other",
+        "model": "password",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 144,
+        "provider": "other",
+        "model": "lorebookForm.name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 148,
+        "provider": "other",
+        "model": "lorebookForm.description",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "entryForm.comment",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 169,
+        "provider": "other",
+        "model": "entryForm.keysInput",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 174,
+        "provider": "other",
+        "model": "entryForm.content",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 178,
+        "provider": "other",
+        "model": "entryForm.is_active",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "src/frontend/profile.ejs",
+        "line": 41,
+        "provider": "other",
+        "model": "profileForm.email",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "src/frontend/profile.ejs",
+        "line": 47,
+        "provider": "other",
+        "model": "profileForm.display_name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "src/frontend/profile.ejs",
+        "line": 53,
+        "provider": "other",
+        "model": "profileForm.about",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "src/frontend/profile.ejs",
+        "line": 62,
+        "provider": "other",
+        "model": "profileForm.password",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "src/frontend/settings.ejs",
+        "line": 108,
+        "provider": "other",
+        "model": "form.apiUrl",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "src/frontend/settings.ejs",
+        "line": 115,
+        "provider": "other",
+        "model": "form.aiDefaultModel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "src/frontend/settings.ejs",
+        "line": 121,
+        "provider": "other",
+        "model": "form.apiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "src/frontend/settings.ejs",
+        "line": 138,
+        "provider": "other",
+        "model": "form.togetherApiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "src/frontend/settings.ejs",
+        "line": 144,
+        "provider": "other",
+        "model": "form.togetherImageModel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "src/frontend/settings.ejs",
+        "line": 151,
+        "provider": "other",
+        "model": "form.xaiApiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "src/frontend/settings.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "form.telegramBotToken",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "src/frontend/settings.ejs",
+        "line": 171,
+        "provider": "other",
+        "model": "form.telegramWebhookSecret",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "src/frontend/settings.ejs",
+        "line": 179,
+        "provider": "other",
+        "model": "form.telegramWebhookUrl",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "src/frontend/settings.ejs",
+        "line": 186,
+        "provider": "other",
+        "model": "form.telegramAdminUsers",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "src/frontend/settings.ejs",
+        "line": 191,
+        "provider": "other",
+        "model": "form.telegramAllowedUsers",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "src/frontend/settings.ejs",
+        "line": 198,
+        "provider": "other",
+        "model": "form.telegramEnableImages",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "src/frontend/settings.ejs",
+        "line": 202,
+        "provider": "other",
+        "model": "form.telegramEnableVoice",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 5,
+        "kind": "env",
+        "symbol": "dotenv.config(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 12,
+        "kind": "env",
+        "symbol": "process.env.API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 19,
+        "kind": "env",
+        "symbol": "process.env.XAI_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 23,
+        "kind": "env",
+        "symbol": "process.env.TOGETHER_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 40,
+        "kind": "env",
+        "symbol": "process.env.JWT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 54,
+        "kind": "env",
+        "symbol": "process.env.TELEGRAM_BOT_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 56,
+        "kind": "env",
+        "symbol": "process.env.TELEGRAM_WEBHOOK_SECRET",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 30,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 41,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 49,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 84,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 101,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 113,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 15,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 34,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 35,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 42,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 45,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 71,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 114,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 220,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 233,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 81,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 106,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 150,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 184,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 212,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_login.js",
+        "line": 13,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_login.js",
+        "line": 37,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 35,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 57,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 85,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 116,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 166,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 196,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 233,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_settings.js",
+        "line": 49,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_settings.js",
+        "line": 146,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 17,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 50,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 78,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 4,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 8,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 9,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 11,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 12,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 14,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 26,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 63,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/auth.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/characters.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/chat.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 9,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 11,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 43,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 49,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 85,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 91,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 102,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 107,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 117,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 123,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 128,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/lorebooks.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/user.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/views.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 109,
+        "kind": "fetch",
+        "symbol": "axios.get",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/tools/tools.ts",
+        "line": 11,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/tools/tools.ts",
+        "line": 170,
+        "kind": "scrape",
+        "symbol": "cheerio",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "public/js/app_characters.js",
+        "line": 34,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/characters/${slug}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 35,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/history/${slug}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 42,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/history/all`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 220,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/history/${this.currentCharacter.id}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 233,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/memory/${this.currentCharacter.id}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 116,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/lorebooks/${id}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 196,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/lorebooks/entries/${entryId}`, { method: 'DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 78,
+        "kind": "http_post",
+        "symbol": "fetch(`${apiBase}/logout`, { method: 'POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 165,
+        "kind": "fs_write",
+        "symbol": "fs.unlinkSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 216,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 69,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 117,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 220,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 90,
+        "kind": "fs_write",
+        "symbol": "fs.unlinkSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 128,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 145,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/xai.provider.ts",
+        "line": 54,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/memory.service.ts",
+        "line": 94,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/tools/tools.ts",
+        "line": 89,
+        "kind": "fs_write",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/utils/envHelper.ts",
+        "line": 56,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 30,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 41,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 49,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 84,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 101,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_character_form.js",
+        "line": 113,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 15,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 34,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 35,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_characters.js",
+        "line": 42,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 45,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 71,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 114,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 220,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_chat.js",
+        "line": 233,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 81,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 106,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 150,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 184,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_image_gen.js",
+        "line": 212,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_login.js",
+        "line": 13,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_login.js",
+        "line": 37,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 35,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 57,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 85,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 116,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 166,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 196,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_lorebooks.js",
+        "line": 233,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_settings.js",
+        "line": 49,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_settings.js",
+        "line": 146,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 17,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 50,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "public/js/app_userprofile.js",
+        "line": 78,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 216,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/reset.ts",
+        "line": 21,
+        "kind": "shell",
+        "symbol": "exec(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 69,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 117,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/ai.service.ts",
+        "line": 220,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 109,
+        "kind": "url",
+        "symbol": "axios.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 128,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/base.provider.ts",
+        "line": 145,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/image/providers/xai.provider.ts",
+        "line": 54,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/services/memory.service.ts",
+        "line": 94,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/tools/tools.ts",
+        "line": 89,
+        "kind": "fs",
+        "symbol": "fs.writeFile(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/tools/tools.ts",
+        "line": 152,
+        "kind": "url",
+        "symbol": "axios(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/utils/envHelper.ts",
+        "line": 56,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 5,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [
+      {
+        "file": "public/js/app_chat.js",
+        "line": 131,
+        "capped": false,
+        "cap_symbol": null,
+        "unit": "u0"
+      }
+    ],
+    "ci": [],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

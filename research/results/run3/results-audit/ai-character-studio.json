@@ -1,0 +1,2241 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "0.1.0"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-character-studio",
+    "git_sha": "b876f804617e3ad903df19e61636e9f15f397f56",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "src/aisafe/probes",
+      "research/results",
+      "bench/findings-audit*.csv"
+    ],
+    "only": []
+  },
+  "generated_at": "2026-10-27T21:41:44Z",
+  "disclaimer": "This report lists observations about a codebase. Not an assessment of compliance with any regulation. Risk classification under the EU AI Act is a legal determination made by the operator, not a tool output. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "summary": {
+    "findings": 0,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 0,
+      "info": 0
+    },
+    "by_bucket": {
+      "measured": 0,
+      "asserted": 0,
+      "unknown": 0
+    },
+    "reported": 0,
+    "below_threshold": 0,
+    "fail_on": "never",
+    "unknown_items": 10,
+    "unknown_by_category": {
+      "tools": 8,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": null,
+    "suppressed": 0,
+    "baseline_new": null
+  },
+  "findings": [],
+  "measured": [],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: 614580195-df3b847f-4258-45a8-83bf-c220ba01e2e3.mp4",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; grep-level findings only",
+      "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+      "file": "."
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "gitleaks skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with gitleaks on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "secrets: regex-only",
+      "why": "detect-secrets skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with detect-secrets on PATH)",
+      "rule_ids": [
+        "AUD-501",
+        "AUD-502"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "pip-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with pip-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "npm-audit skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with npm-audit on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "dependency vulnerabilities",
+      "why": "osv-scanner skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with osv-scanner on PATH)",
+      "rule_ids": [
+        "AUD-606"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "MCP descriptions: regex-only",
+      "why": "mcp-scan skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with mcp-scan on PATH)",
+      "rule_ids": [
+        "AUD-604",
+        "AUD-603"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "non-Python sink taint",
+      "why": "semgrep skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with semgrep on PATH)",
+      "rule_ids": [
+        "AUD-401",
+        "AUD-402",
+        "AUD-403",
+        "AUD-404",
+        "AUD-405",
+        "AUD-406"
+      ]
+    },
+    {
+      "category": "tools",
+      "what": "eval results",
+      "why": "promptfoo skipped by --no-external",
+      "how_to_resolve": "run without --no-external (and with promptfoo on PATH)",
+      "rule_ids": [
+        "AUD-902",
+        "AUD-904"
+      ]
+    }
+  ],
+  "external_tools": [
+    {
+      "name": "gitleaks",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "detect-secrets",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "pip-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "npm-audit",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "osv-scanner",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "mcp-scan",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "semgrep",
+      "status": "skipped_by_flag",
+      "network": false,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    },
+    {
+      "name": "promptfoo",
+      "status": "skipped_by_flag",
+      "network": true,
+      "findings": 0,
+      "argv": [],
+      "flag": "--no-external"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-character-studio",
+      "git_sha": "b876f804617e3ad903df19e61636e9f15f397f56",
+      "dirty": true,
+      "scanned_files": 60,
+      "skipped_files": 0,
+      "bytes": 555559,
+      "duration_ms": 673,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 44,
+      "go": 0,
+      "other": 16
+    },
+    "llm_calls": [
+      {
+        "file": "src/app/api/chat/route.js",
+        "line": 40,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "fetch(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 120,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "fetch(",
+        "unit": "u0",
+        "model_ref": "m10"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "src/app/api/chat/route.js",
+        "line": 49,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/components/templates/ChatTemplate.js",
+        "line": 63,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "src/lib/registry.js",
+        "line": 16,
+        "provider": "other",
+        "model": "nano-banana-2",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "src/lib/registry.js",
+        "line": 33,
+        "provider": "other",
+        "model": "wan2.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/lib/registry.js",
+        "line": 49,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/lib/registry.js",
+        "line": 53,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/lib/registry.js",
+        "line": 53,
+        "provider": "google",
+        "model": "gemini-1.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/lib/registry.js",
+        "line": 53,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/lib/registry.js",
+        "line": 64,
+        "provider": "other",
+        "model": "openai-whisper",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/lib/services/ai.js",
+        "line": 98,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "tools": [],
+    "mcp": {
+      "configs": [],
+      "servers": []
+    },
+    "hosts": [],
+    "data_sources": [
+      {
+        "file": "prisma.config.ts",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "prisma.config.ts",
+        "line": 5,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "prisma.config.ts",
+        "line": 7,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "prisma.config.ts",
+        "line": 10,
+        "kind": "env",
+        "symbol": "process.env[\"DATABASE_URL\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 113,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 308,
+        "kind": "env",
+        "symbol": "process.env.GITHUB_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 309,
+        "kind": "env",
+        "symbol": "process.env.VERCEL_TOKEN",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 484,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 831,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 856,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 17,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 26,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 51,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 82,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 87,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/creations/route.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/creations/route.js",
+        "line": 25,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/generation/route.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/generation/route.js",
+        "line": 38,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 16,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 39,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/muapi/route.js",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/muapi/route.js",
+        "line": 19,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 7,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 14,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 32,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 42,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 51,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 85,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 107,
+        "kind": "env",
+        "symbol": "process.env.NEXTAUTH_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 6,
+        "kind": "env",
+        "symbol": "process.env.GOOGLE_CLIENT_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 8,
+        "kind": "env",
+        "symbol": "process.env.NEXTAUTH_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 13,
+        "kind": "env",
+        "symbol": "process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 14,
+        "kind": "env",
+        "symbol": "process.env.STRIPE_SECRET_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 15,
+        "kind": "env",
+        "symbol": "process.env.STRIPE_WEBHOOK_SECRET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 24,
+        "kind": "env",
+        "symbol": "process.env.MUAPIAPP_API_KEY",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 2,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 3,
+        "kind": "db",
+        "symbol": "from \"pg\"",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 7,
+        "kind": "env",
+        "symbol": "process.env.DATABASE_URL",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 10,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 11,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prisma.js",
+        "line": 17,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 26,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 50,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 131,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 146,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 192,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 202,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 224,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 227,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 235,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/creation-transition.js",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/creation-transition.js",
+        "line": 4,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 1,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 5,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 14,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 33,
+        "kind": "db",
+        "symbol": "prisma",
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 94,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 174,
+        "kind": "fetch",
+        "symbol": "axios.get",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 336,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 347,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 369,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 399,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 539,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 577,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 596,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 616,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 636,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 673,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 693,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 711,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 38,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 67,
+        "kind": "http",
+        "symbol": "export async function DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/billing/checkout/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/billing/checkout/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/billing/webhook/route.js",
+        "line": 3,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/billing/webhook/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chat/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chat/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chat/route.js",
+        "line": 40,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/checkout/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/checkout/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/creations/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/creations/route.js",
+        "line": 7,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/download/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/download/route.js",
+        "line": 3,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/download/route.js",
+        "line": 12,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/generation/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/generation/route.js",
+        "line": 8,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 4,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 25,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 32,
+        "kind": "http",
+        "symbol": "export async function DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/muapi/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/muapi/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/page.js",
+        "line": 26,
+        "kind": "fetch",
+        "symbol": "axios.get",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/page.js",
+        "line": 72,
+        "kind": "fetch",
+        "symbol": "axios.get",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.js",
+        "line": 58,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.js",
+        "line": 92,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 120,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 162,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 212,
+        "kind": "fetch",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "external_actions": [
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 50,
+        "kind": "fs_write",
+        "symbol": "fs.unlinkSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 53,
+        "kind": "fs_write",
+        "symbol": "fs.rmdirSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 767,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 771,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 781,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 806,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 827,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 849,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 856,
+        "kind": "db_write",
+        "symbol": "prisma.creation.create",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 864,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 879,
+        "kind": "fs_write",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 51,
+        "kind": "db_write",
+        "symbol": "prisma.appInstance.create",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/route.js",
+        "line": 87,
+        "kind": "db_write",
+        "symbol": "prisma.appInstance.delete",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/billing/webhook/route.js",
+        "line": 9,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 16,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 39,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 9,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 12,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/pricing/page.js",
+        "line": 30,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.js",
+        "line": 92,
+        "kind": "http_post",
+        "symbol": "fetch(\"/api/user/apikey\", { method: \"DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 112,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 131,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 205,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ChatTemplate.js",
+        "line": 30,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 125,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 144,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 223,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 122,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 141,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 219,
+        "kind": "http_post",
+        "symbol": "axios.post",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 42,
+        "kind": "db_write",
+        "symbol": "prisma.user.create",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/auth.js",
+        "line": 51,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/config.js",
+        "line": 12,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 26,
+        "kind": "db_write",
+        "symbol": "prisma.creation.create",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 50,
+        "kind": "db_write",
+        "symbol": "prisma.creation.create",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 146,
+        "kind": "db_write",
+        "symbol": "prisma.creation.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/billing.js",
+        "line": 1,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/billing.js",
+        "line": 7,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/billing.js",
+        "line": 10,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/billing.js",
+        "line": 17,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/billing.js",
+        "line": 35,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 14,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/user.js",
+        "line": 33,
+        "kind": "db_write",
+        "symbol": "prisma.user.update",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/stripe.js",
+        "line": 1,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/stripe.js",
+        "line": 4,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/stripe.js",
+        "line": 5,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/stripe.js",
+        "line": 8,
+        "kind": "payment",
+        "symbol": "stripe",
+        "unit": "u0"
+      }
+    ],
+    "sinks": [
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 174,
+        "kind": "url",
+        "symbol": "axios.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 336,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 347,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 369,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 399,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 539,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 577,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 596,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 616,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 636,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 673,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 693,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 711,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 767,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 771,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 781,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 806,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 827,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 849,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 864,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 879,
+        "kind": "fs",
+        "symbol": "fs.writeFileSync(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chat/route.js",
+        "line": 40,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/download/route.js",
+        "line": 12,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 25,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/page.js",
+        "line": 26,
+        "kind": "url",
+        "symbol": "axios.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/page.js",
+        "line": 72,
+        "kind": "url",
+        "symbol": "axios.get(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/pricing/page.js",
+        "line": 30,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.js",
+        "line": 58,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/Navbar.js",
+        "line": 92,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 112,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 131,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/AudioTemplate.js",
+        "line": 205,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ChatTemplate.js",
+        "line": 30,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 125,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 144,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ImageTemplate.js",
+        "line": 223,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 122,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 141,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/VideoTemplate.js",
+        "line": 219,
+        "kind": "url",
+        "symbol": "axios.post(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 120,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 162,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 212,
+        "kind": "url",
+        "symbol": "fetch(",
+        "unit": "u0"
+      }
+    ],
+    "guardrails": [],
+    "observability": [],
+    "evals": [],
+    "reports": [],
+    "system_card": null,
+    "secrets": {
+      "literal_hits": 0,
+      "config_hits": 0,
+      "scanner": "regex-only"
+    },
+    "loops": [],
+    "ci": [],
+    "incident_path": [],
+    "person_signals": [
+      {
+        "file": "src/app/api/app-instances/export/route.js",
+        "line": 197,
+        "kind": "outreach_schedule",
+        "symbol": "setInterval(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/components/templates/ChatTemplate.js",
+        "line": 32,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/services/ai.js",
+        "line": 82,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      }
+    ],
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; grep-level findings only",
+        "how_to_resolve": "Review the grep-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-101",
+      "title": "Host permission over-grant",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-102",
+      "title": "Agent loop without an iteration cap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-103",
+      "title": "Fetch/browse tool without a URL allowlist",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-104",
+      "title": "Exec tool without a sandbox",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-105",
+      "title": "No per-session tool budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-106",
+      "title": "Broad credentials in agent scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-107",
+      "title": "No kill switch",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-108",
+      "title": "Unsafe hook or CI step",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-201",
+      "title": "Irreversible tool with no approval gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-202",
+      "title": "Inert or bypassed gate",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-203",
+      "title": "Irreversible tool without a dry-run or idempotency affordance",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-301",
+      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-302",
+      "title": "Untrusted content concatenated into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-303",
+      "title": "System prompt built from request data",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-401",
+      "title": "Model output -> shell",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-402",
+      "title": "Model output -> eval/exec",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-403",
+      "title": "Model output -> SQL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-404",
+      "title": "Model output -> HTML without escaping",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-405",
+      "title": "Model output -> outbound URL",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-406",
+      "title": "Model output -> filesystem write",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-501",
+      "title": "Secret literal in source",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-502",
+      "title": "Secret in MCP / host config",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-503",
+      "title": "Secret or PII bound into a prompt",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-504",
+      "title": "Verbatim prompt/response logging",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-505",
+      "title": "Literal PII in prompts / fixtures / logs",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-601",
+      "title": "Unpinned model id",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-602",
+      "title": "Unpinned MCP server / bootstrap",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-603",
+      "title": "Remote or plaintext MCP transport",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-604",
+      "title": "MCP tool-description poisoning",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-605",
+      "title": "Unpinned weights / trust_remote_code",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-606",
+      "title": "Dependency vulnerabilities",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-701",
+      "title": "No observability on LLM calls",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-702",
+      "title": "No tool-call audit log",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-703",
+      "title": "No incident path",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-801",
+      "title": "Guard present but unmeasured",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-802",
+      "title": "Guard configured fail-open",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-803",
+      "title": "Reported guard below threshold",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-804",
+      "title": "LLM judge without credentials or timeout",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-805",
+      "title": "Keyword-only content filter",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-806",
+      "title": "Reported guard over the declared budget",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-901",
+      "title": "No evals in CI",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-902",
+      "title": "Probe report shows failed, inconclusive, errored or skipped cases",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-903",
+      "title": "Model changed since last report",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-904",
+      "title": "Eval config without benign traffic",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1001",
+      "title": "No system card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1002",
+      "title": "Risk tier undetermined",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1003",
+      "title": "Annex III keywords in prompt material, no category on the card",
+      "measured_precision": null,
+      "ran": false,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into a prompt",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion or biometric inference on persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring, ranking or automated decision about persons",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement or retention objective in prompt or code",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "AI nature concealed or no disclosure on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "No manipulation control on the response path",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Prompt and algorithm audit not recorded",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

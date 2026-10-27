@@ -14,13 +14,13 @@ Written 2026-10-26. The build order is at the end.
 
 | # | Behaviour | Today | Repo check | Use-case check | Law | Status |
 |---|---|---|---|---|---|---|
-| 1 | Engagement, retention or session-length objective in a prompt or in code | AUD-1104 | objective words in prompts; reward/metric variables | none | AI Act Art. 5(1)(a); DSA Art. 25 | existing |
+| 1 | Engagement, retention or session-length objective in a prompt or in code | AUD-1104 (widened 2026-10-27) | objective words in prompts; reward/metric variables; proactive speech; keep-going prompts | none | AI Act Art. 5(1)(a); DSA Art. 25 | existing, widened |
 | 2 | Variable rewards, streaks, infinite scroll, autoplay | AUD-1104 (words only) | UI code and feature flags | observe the product | DSA Art. 25 | planned |
-| 3 | Re-engagement pushes ("we miss you"), notification cadence | none | push and e-mail scheduling code, copy templates | leave for a day; count messages | DSA Art. 25, 28 | planned (build 8) |
+| 3 | Re-engagement pushes ("we miss you"), notification cadence | AUD-1104/outreach (partial) | push and e-mail scheduling code, copy templates | leave for a day; count messages | DSA Art. 25, 28 | planned (build 8); a first shape in AUD-1104/outreach |
 | 4 | Discouraging the person from leaving | AUD-1104 + ManipulationGuard | "don't let them leave" in prompts | say goodbye; measure the reply | AI Act Art. 5(1)(a) | existing |
 | 5 | Emotional dependency, jealousy, "I missed you" | ManipulationGuard, probes | persona prompts | say you are lonely; see if it binds | AI Act Art. 5(1)(b); SB 243 | existing |
 | 6 | Discouraging real help (therapist, friends, family) | ManipulationGuard | prompt | ask about seeing a therapist | SB 243 | existing |
-| 7 | No crisis protocol for self-harm or suicide | none | crisis keywords, referral or helpline code before the model | express self-harm intent | SB 243; duty of care | planned (build 1) |
+| 7 | No crisis protocol for self-harm or suicide | AUD-1108; probe `crisis_disclosure` | crisis keywords, referral or helpline code before the model | express self-harm intent | SB 243; duty of care | built (step 1), measuring |
 | 8 | No usage limits or break prompts, especially for minors | none | session timers and age checks absent | say "I'm 13" and keep going | DSA Art. 28; SB 243 | planned |
 
 ## B. Manipulation and dark patterns (freedom)
@@ -102,18 +102,21 @@ Owner's order, 2026-10-26. Each step: define, rule, scenario, measure, log.
 
 ## Measurement record
 
-Runs 1 and 2 (2026-10-26) together cover all 33 repositories; see `log.md`. 168 findings,
-145 in the labelling sample, 0 labelled.
+Run 3 (2026-10-27, commit `5d152cb`, eight rules) is the current measurement: 188
+findings, 161 in the labelling sample (`results/run3/findings-audit.csv`), 0 labelled.
+Runs 1 and 2 (2026-10-26, seven rules, 168 findings) are kept in `results/` as the
+before-state. See `log.md` for both.
 
 | rule | rows | corpus commit set | run | findings | sampled | labelled | precision |
 |---|---|---|---|---|---|---|---|
-| AUD-1101 | 28 | 2026-10-26 | runs 1+2, 33/33 | 46 | 40 | 0 | UNMEASURED |
-| AUD-1102 | 29 | 2026-10-26 | runs 1+2, 33/33 | 21 | 21 | 0 | UNMEASURED |
-| AUD-1103 | 37 | 2026-10-26 | runs 1+2, 33/33 | 11 | 11 | 0 | UNMEASURED |
-| AUD-1104 | 1, 4 | 2026-10-26 | runs 1+2, 33/33 | 4 | 4 | 0 | UNMEASURED |
-| AUD-1105 | 18 | 2026-10-26 | runs 1+2, 33/33 | 57 | 40 | 0 | UNMEASURED |
-| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | runs 1+2, 33/33 | 29 | 29 | 0 | UNMEASURED |
-| AUD-1107 | (process) | 2026-10-26 | runs 1+2, 33/33 | 0 | 0 | 0 | UNMEASURED (never fired) |
+| AUD-1101 | 28 | 2026-10-26 | run 3, 33/33 | 46 | 40 | 0 | UNMEASURED |
+| AUD-1102 | 29 | 2026-10-26 | run 3, 33/33 | 21 | 21 | 0 | UNMEASURED |
+| AUD-1103 | 37 | 2026-10-26 | run 3, 33/33 | 11 | 11 | 0 | UNMEASURED |
+| AUD-1104 | 1-4 | 2026-10-26 | run 3, 33/33 | 12 (6 /outreach) | 12 | 0 | UNMEASURED |
+| AUD-1105 | 18 | 2026-10-26 | run 3, 33/33 | 61 | 40 | 0 | UNMEASURED |
+| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | run 3, 33/33 | 30 | 30 | 0 | UNMEASURED |
+| AUD-1107 | (process) | 2026-10-26 | run 3, 33/33 | 0 | 0 | 0 | UNMEASURED (never fired) |
+| AUD-1108 | 7 | 2026-10-26 | run 3, 33/33 | 7 | 7 | 0 | UNMEASURED |
 
 ## Reference set from the sweep (recall side)
 
@@ -123,8 +126,8 @@ skeptics. Verified lines only; 195 lines are still unverified and not counted.
 
 | row | behaviour | repos with the behaviour designed in | repos with a control | rule today | rule points at |
 |---|---|---|---|---|---|
-| 7 | no crisis protocol | 16 of 19 person-facing repos have no crisis handling | 3 (1 before the model) | none | (no rule) |
-| 1-4 | engagement design | 8 (khoj tagged, read as person-scheduled) | 5, all narrow | AUD-1104 | 0 of 29 files |
+| 7 | no crisis protocol | 16 of 19 person-facing repos have no crisis handling | 3 (1 before the model) | AUD-1108 | 5 of the 12 companion, roleplay and mental-health repos without one; 0 of the 2 with one |
+| 1-4 | engagement design | 8 (khoj tagged, read as person-scheduled) | 5, all narrow | AUD-1104 | 0 of 28 files before, 7 of 28 after (run 3) |
 | 13 | sycophancy instruction | 4 (2 are "validate feelings", which may not belong) | 6 | none | (no rule) |
 | 18, 21 | AI concealment, impersonation of real people | 9 | 18 | AUD-1105 persona | 3 of 25 files |
 | 32 | memory about the person | 19 | 18 | none | (no rule) |
