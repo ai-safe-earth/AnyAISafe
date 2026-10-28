@@ -83,3 +83,7 @@ bench/results-audit/*.json
 # Working files of the research sweep (salvaged agent output, the queue skeptics read);
 # the consolidated record is research/results/sweep/corpus-sweep.json
 /research/results/sweep/_*
+
+# Review console data, rebuilt by research/console/console.py build; it quotes other
+# repositories' code, so it is published with the console and never committed
+/research/console/build/

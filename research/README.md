@@ -103,6 +103,8 @@ licences were not selection criteria; being public and facing a person were.
 | `results/notes-site.csv`, `notes-unit.csv` | what each matched line or unit is and whether it faces a person, written by reading the clone; a labelling aid with no verdicts |
 | `results/sweep/corpus-sweep.json` | the reference set: every line the sweep found, with its skeptics and its status (verified, refuted, unverified) |
 | `results/precision-audit.md` | written by `bench/score.py` once every sampled row is labelled |
+| `console/index.html` | the review console: a private claude.ai page where the owner labels findings, answers open decisions and reads these documents, from a phone or any browser |
+| `console/console.py` | `build` turns a labelling CSV into the console's review set (each finding with its code lines, reading note and the question to judge); `import` copies the owner's labels back into the CSV and writes `review-notes.csv` beside it |
 
 ## Reproduce
 
@@ -112,6 +114,11 @@ python bench/run.py --tool audit --corpus research/corpus.yaml --out-dir researc
     --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107 --keep-clones
 
 # 2. label research/results/findings-audit.csv by hand: tp / fp / unclear
+#    (or in the review console: build the set, label there, then import)
+python research/console/console.py build --set run3 \
+    --csv research/results/run3/findings-audit.csv --results research/results/run3/results-audit
+python research/console/console.py import --set run3 \
+    --csv research/results/run3/findings-audit.csv --labels <exported label documents>
 
 # 3. score
 python bench/score.py --tool audit --csv research/results/findings-audit.csv \

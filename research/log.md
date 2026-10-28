@@ -419,3 +419,51 @@ change, not made: drop `setInterval` from the schedule shapes. Waiting for the l
 
 **Labelling.** `results/run3/findings-audit.csv` (the current code) replaces the run 1+2
 CSV as the file to label; no row of either was labelled, so nothing is lost.
+
+## 2026-10-28 — a review console for the human steps
+
+**Decision (owner).** The labelling, the open decisions and the reading of these
+documents happen in a console the owner can open from any browser, a phone included,
+and the results come back to the repository.
+
+**What it is.** `console/index.html` is published as a private claude.ai page; only the
+owner's claude.ai account opens it, so that sign-in is the console's login. It reads a
+review set built by `console/console.py build` from the labelling CSV, the audit
+reports, the clones and the reading notes, and keeps the owner's labels, answers and
+notes in the page's own database. Claude reads them back, and `console.py import` writes
+the labels into the CSV's `verdict` column, so `bench/score.py` scores them unchanged.
+
+**What the owner sees for each finding.** The rule, the repository and its category,
+the matched line with six lines either side (redacted with the audit's own `redact()`),
+the other evidence legs, a link to the line on GitHub at the pinned commit, the reading
+note where one exists (marked as an agent's, not a label), the rule's known failure
+modes, and one question per rule with what counts as real and as a false alarm. The
+question is about the finding's claim, never about the app as a whole. Where the rule's
+own definition leaves a case open (AUD-1101: is a persona the person typed about
+themselves a profile?), the guide says so and does not settle it.
+
+**One shortcut, kept visible.** 30 of SillyTavern's 31 AUD-1101 rows carry the same
+evidence: one template line, byte for byte, and nothing else. After a label on one of
+them, the console offers the same label for the others still unlabelled; each such row
+records `bulk_from` and goes into `review-notes.csv` as `same_line_as`, so the paper can
+report how many labels were given one by one. Rows group only within one repository and
+one rule and sub, when the matched line and every other evidence leg are identical; two
+eliza AUD-1102 rows that share a first line but differ in their other legs do not
+group. Unit-level findings never group.
+
+**Review before use.** Three reviewers (data safety, import correctness, platform and
+phone) and two skeptics per claim: 24 claims, 23 kept, all fixed. The ones that mattered
+for the measurement: a change kept on one device could overwrite a newer label made on
+another (now checked against the stored time before it is written); a note typed just
+before a tap could be lost; `import` did not filter by set and accepted a partial export
+silently (it now reads one set, and refuses an export that lacks labels the CSV already
+has unless `--partial` is given); context lines were masked with `redact()` only (now
+also the audit's secret and PII tables, and private-key blocks).
+
+**A false positive on our own code.** The repository's self-audit reported the
+labelling guide in `console/console.py` as AUD-1105/persona (high): the guide quoted a
+concealment instruction as an example of what counts as real. A quoted example in a
+description string reads the same as an instruction to the rule. The guide now
+describes the instruction without quoting it. The same shape (a prompt-writing guide,
+a moderation rubric, a test fixture describing what to reject) is worth checking for
+when the AUD-1105 rows are labelled.

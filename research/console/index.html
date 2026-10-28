@@ -1,0 +1,1357 @@
+<title>AnyAISafe Review Console</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,700&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:ital,wght@0,400;0,500;0,600;1,400&display=swap">
+<style>
+/* Layout: one finding per screen on a phone with the verdict bar under the thumb;
+   from 1000px a finding list sits beside the card. Lab-paper neutrals, marking-ink accent,
+   three verdict hues kept apart from the accent. */
+:root {
+  --paper: #f2f5f3;
+  --sheet: #ffffff;
+  --ink: #17201d;
+  --ink-2: #4b5753;
+  --ink-3: #6f7b77;
+  --line: #d3dbd7;
+  --accent: #2446a6;
+  --accent-ink: #ffffff;
+  --accent-soft: #e3e8f6;
+  --real: #b2351e;
+  --real-soft: #f7e2dc;
+  --false: #2f6a48;
+  --false-soft: #ddece3;
+  --unclear: #855f0c;
+  --unclear-soft: #f3e9cf;
+  --code: #edf1ef;
+  --hit: #fff1bd;
+  --shadow: 0 1px 2px rgba(23, 32, 29, .06), 0 4px 16px rgba(23, 32, 29, .06);
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "IBM Plex Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "SFMono-Regular", Menlo, Consolas, monospace;
+  --radius: 10px;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --paper: #111614; --sheet: #191f1d; --ink: #e5ece9; --ink-2: #a7b3af; --ink-3: #85918d;
+    --line: #2d3633; --accent: #93a9f2; --accent-ink: #0f1730; --accent-soft: #222b47;
+    --real: #f18b71; --real-soft: #3a221c; --false: #80c79c; --false-soft: #1b2d23;
+    --unclear: #e3b85c; --unclear-soft: #342a16; --code: #141a18; --hit: #3b3418;
+    --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --paper: #111614; --sheet: #191f1d; --ink: #e5ece9; --ink-2: #a7b3af; --ink-3: #85918d;
+  --line: #2d3633; --accent: #93a9f2; --accent-ink: #0f1730; --accent-soft: #222b47;
+  --real: #f18b71; --real-soft: #3a221c; --false: #80c79c; --false-soft: #1b2d23;
+  --unclear: #e3b85c; --unclear-soft: #342a16; --code: #141a18; --hit: #3b3418;
+  --shadow: 0 1px 2px rgba(0, 0, 0, .3), 0 4px 16px rgba(0, 0, 0, .25);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background: var(--paper);
+  color: var(--ink);
+  font: 400 16px/1.55 var(--font-body);
+  -webkit-text-size-adjust: 100%;
+}
+body::before {
+  content: ""; position: fixed; inset: 0 0 auto; height: env(safe-area-inset-top, 0px);
+  z-index: 10; background: var(--sheet);
+}
+button, input, select, textarea { font: inherit; color: inherit; }
+button { cursor: pointer; }
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+a { color: var(--accent); }
+h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
+.wrap {
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  max-width: 1280px; margin: 0 auto;
+}
+
+/* ---------- header ---------- */
+.top {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--sheet); border-bottom: 1px solid var(--line);
+}
+.top .wrap { display: flex; flex-direction: column; gap: 8px; padding-block: 10px 0; }
+.brand-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-width: 0; }
+.brand { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.brand-mark {
+  width: 28px; height: 28px; border-radius: 7px; flex: none;
+  background:
+    linear-gradient(135deg, transparent 0 46%, var(--accent-ink) 46% 54%, transparent 54%),
+    var(--accent);
+}
+.brand b { font-family: var(--font-display); font-weight: 700; font-size: 17px; letter-spacing: -.01em; display: block; line-height: 1.1; }
+.brand small { color: var(--ink-3); font-size: 12px; letter-spacing: .02em; display: block; }
+.who { display: flex; align-items: center; gap: 8px; min-width: 0; color: var(--ink-2); font-size: 13px; }
+.who img { width: 26px; height: 26px; border-radius: 50%; flex: none; }
+@media (max-width: 400px) { .brand small { display: none; } }
+.who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38vw; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.tab {
+  background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 4px 9px;
+  font-weight: 500; font-size: 15px; color: var(--ink-2); display: flex; justify-content: center; align-items: center; gap: 6px;
+}
+.tab[aria-selected="true"] { color: var(--ink); border-bottom-color: var(--accent); }
+.tab .n {
+  font: 500 11px/1 var(--font-mono); background: var(--accent-soft); color: var(--accent);
+  padding: 3px 6px; border-radius: 99px; font-variant-numeric: tabular-nums;
+}
+.tab .n:empty { display: none; }
+
+.banner { background: var(--unclear-soft); color: var(--ink); border-bottom: 1px solid var(--line); font-size: 14px; }
+.banner .wrap { padding-block: 10px; }
+.sync { background: var(--real-soft); color: var(--ink); border-bottom: 1px solid var(--line); font-size: 14px; }
+.sync .wrap { padding-block: 8px; display: flex; flex-wrap: wrap; gap: 6px 12px; align-items: center; justify-content: space-between; }
+.sync.paused { background: var(--accent-soft); }
+.sync .btn { min-height: 34px; padding: 0 12px; font-size: 13px; }
+.warn-line { margin: 0; font-size: 14px; color: var(--unclear); font-weight: 500; }
+
+main { padding-block: 18px 40px; }
+.view[hidden] { display: none !important; }
+.eyebrow { font: 500 12px/1.2 var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); }
+.muted { color: var(--ink-2); }
+.small { font-size: 13px; }
+.mono { font-family: var(--font-mono); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 6px; min-height: 44px;
+  padding: 0 16px; border-radius: 8px; border: 1px solid var(--line); background: var(--sheet);
+  font-weight: 500; text-decoration: none; color: var(--ink);
+}
+.btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.quiet { border-color: transparent; background: transparent; color: var(--accent); padding: 0 8px; }
+.btn:disabled { opacity: .45; cursor: not-allowed; }
+.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+
+.panel { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 12px; min-width: 0; }
+.panel h2 { font-size: 20px; font-weight: 700; letter-spacing: -.01em; }
+
+/* ---------- inbox ---------- */
+.inbox { display: grid; gap: 16px; }
+.inbox-head { display: grid; gap: 4px; }
+.inbox-head h1 { font-size: clamp(26px, 6vw, 34px); font-weight: 700; letter-spacing: -.02em; }
+.from-claude { border-left: 3px solid var(--accent); padding: 4px 0 4px 12px; color: var(--ink-2); font-size: 15px; }
+.inbox-grid { display: grid; gap: 16px; grid-template-columns: 1fr; }
+@media (min-width: 900px) { .inbox-grid { grid-template-columns: 1.4fr 1fr; align-items: start; } }
+.stack { display: grid; gap: 16px; min-width: 0; }
+.progress { display: flex; height: 12px; border-radius: 99px; overflow: hidden; background: var(--code); }
+.progress i { display: block; height: 100%; }
+.progress .p-tp { background: var(--real); }
+.progress .p-fp { background: var(--false); }
+.progress .p-unclear { background: var(--unclear); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 14px; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.legend b { color: var(--ink); font-weight: 600; }
+.dot { width: 9px; height: 9px; border-radius: 50%; display: inline-block; margin-right: 6px; vertical-align: 1px; background: var(--line); }
+.dot.tp { background: var(--real); } .dot.fp { background: var(--false); } .dot.unclear { background: var(--unclear); }
+.rules { display: grid; gap: 2px; }
+.rule-row {
+  display: grid; grid-template-columns: 5.6em 1fr auto; gap: 10px; align-items: center; text-align: left;
+  background: none; border: 0; border-top: 1px solid var(--line); padding: 10px 2px; min-width: 0;
+}
+.rule-row .rid { font: 500 13px var(--font-mono); }
+.rule-row .rt { font-size: 14px; line-height: 1.35; color: var(--ink-2); min-width: 0; }
+.rule-row .rc { font: 500 13px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--ink-2); }
+.rule-row .rc.done { color: var(--false); }
+.doc-links { display: grid; gap: 8px; }
+.doc-link { display: flex; justify-content: space-between; align-items: center; gap: 10px; text-align: left; background: var(--paper); border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-weight: 500; }
+.decision-mini { display: grid; gap: 6px; padding: 0; margin: 0; list-style: none; }
+.decision-mini li { display: flex; gap: 8px; align-items: baseline; font-size: 15px; }
+.copybox { display: flex; gap: 8px; align-items: stretch; flex-wrap: wrap; }
+.copybox code { flex: 1 1 14em; min-width: 0; background: var(--code); border-radius: 8px; padding: 11px 12px; font: 14px/1.4 var(--font-mono); overflow-wrap: anywhere; }
+textarea { width: 100%; min-height: 88px; resize: vertical; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); line-height: 1.45; }
+label.lbl { font-weight: 600; font-size: 14px; display: block; margin-bottom: 6px; }
+.sent { display: grid; gap: 8px; }
+.sent p { margin: 0; font-size: 14px; background: var(--paper); border-radius: 8px; padding: 8px 10px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.sent time { display: block; color: var(--ink-3); font-size: 12px; }
+
+/* ---------- label ---------- */
+/* Phone: filters, then the list when opened, then the card. Desktop: list on the left. */
+.label-layout { display: grid; gap: 12px; grid-template-columns: minmax(0, 1fr); align-items: start; }
+.filters-box { display: grid; gap: 10px; min-width: 0; }
+.list-col { display: flex; }
+@media (min-width: 1000px) {
+  .label-layout { grid-template-columns: 340px minmax(0, 1fr); grid-template-areas: "list filters" "list card"; column-gap: 16px; }
+  .filters-box { grid-area: filters; }
+  .card-col { grid-area: card; }
+  .label-layout .list-col { grid-area: list; position: sticky; top: 120px; max-height: calc(100vh - 140px); display: flex !important; }
+  .list-toggle { display: none !important; }
+}
+.filters { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+.filters select { width: 100%; min-height: 42px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); font-size: 14px; }
+.filter-meta { display: flex; justify-content: space-between; align-items: center; gap: 8px; flex-wrap: wrap; font-size: 14px; color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.list-col { flex-direction: column; gap: 8px; min-width: 0; }
+.list { overflow: auto; border: 1px solid var(--line); border-radius: var(--radius); background: var(--sheet); max-height: 70vh; }
+@media (min-width: 1000px) { .list { max-height: none; flex: 1; } }
+.li {
+  display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 2px 10px; width: 100%; text-align: left;
+  background: none; border: 0; border-bottom: 1px solid var(--line); padding: 10px 12px; align-items: baseline;
+}
+.li[aria-current="true"] { background: var(--accent-soft); }
+.li .dot { grid-row: span 2; margin: 0; align-self: center; }
+.li .l1 { font: 500 13px var(--font-mono); }
+.li .l2 { font-size: 13px; color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.card-col { display: grid; gap: 0; min-width: 0; }
+
+.finding { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius) var(--radius) 0 0; padding: 18px; display: grid; gap: 16px; min-width: 0; }
+.f-head { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.chip { display: inline-flex; align-items: center; gap: 4px; font: 500 13px/1 var(--font-mono); padding: 6px 8px; border-radius: 6px; background: var(--code); }
+.chip.rule { background: var(--accent-soft); color: var(--accent); }
+.chip.sev { background: transparent; border: 1px solid var(--line); color: var(--ink-2); text-transform: lowercase; }
+.chip.sev.critical, .chip.sev.high { border-color: var(--real); color: var(--real); }
+.state { margin-left: auto; font-size: 13px; font-weight: 600; padding: 5px 10px; border-radius: 99px; background: var(--code); color: var(--ink-2); }
+.state.tp { background: var(--real-soft); color: var(--real); }
+.state.fp { background: var(--false-soft); color: var(--false); }
+.state.unclear { background: var(--unclear-soft); color: var(--unclear); }
+.f-title { font-size: clamp(20px, 4.8vw, 25px); font-weight: 700; letter-spacing: -.015em; line-height: 1.2; }
+.where { display: grid; gap: 4px; font-size: 15px; }
+.where .repo b { font-weight: 600; }
+.where .path { font: 13px/1.45 var(--font-mono); color: var(--ink-2); overflow-wrap: anywhere; }
+.where .rnote { font-size: 13px; color: var(--ink-3); }
+.pc { font-size: 13px; background: var(--false-soft); color: var(--false); border-radius: 8px; padding: 8px 10px; }
+.ask { background: var(--paper); border-radius: 8px; padding: 14px; display: grid; gap: 10px; }
+.ask .q { font: 600 17px/1.4 var(--font-body); margin: 0; }
+.ask dl { margin: 0; display: grid; gap: 8px; }
+.ask dt { font-size: 12px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; }
+.ask dt.r { color: var(--real); } .ask dt.f { color: var(--false); } .ask dt.o { color: var(--unclear); }
+.ask dd { margin: 2px 0 0; font-size: 15px; color: var(--ink-2); }
+.section-h { font: 600 12px/1.2 var(--font-body); letter-spacing: .08em; text-transform: uppercase; color: var(--ink-3); margin: 0 0 8px; }
+.legs { display: grid; gap: 14px; min-width: 0; }
+.leg { display: grid; gap: 6px; min-width: 0; }
+.leg-head { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 10px; align-items: baseline; font-size: 13px; }
+.leg-head .role { font-weight: 600; color: var(--ink); }
+.leg-head .lp { font-family: var(--font-mono); color: var(--ink-2); overflow-wrap: anywhere; min-width: 0; }
+.absence { margin: 0; background: var(--unclear-soft); border-radius: 8px; padding: 10px 12px; font-size: 15px; }
+.code { background: var(--code); border-radius: 8px; padding: 8px 0; font: 12.5px/1.55 var(--font-mono); overflow-x: auto; min-width: 0; }
+.code .cl { display: grid; grid-template-columns: 3.6em minmax(0, 1fr); }
+.code .cn { text-align: right; padding-right: 10px; color: var(--ink-3); user-select: none; font-variant-numeric: tabular-nums; }
+.code .ct { white-space: pre-wrap; overflow-wrap: anywhere; padding-right: 10px; }
+.code .cl.hit { background: var(--hit); box-shadow: inset 3px 0 0 var(--accent); }
+.code .cl.hit .ct { color: var(--ink); }
+.snippet { margin: 0; background: var(--code); border-radius: 8px; padding: 10px 12px; font: 12.5px/1.55 var(--font-mono); white-space: pre-wrap; overflow-wrap: anywhere; }
+details.more { border-top: 1px solid var(--line); padding-top: 10px; min-width: 0; }
+details.more .body p, details.more li, .kv p, .decision .context, .opt span.d, .decision .question, .where .rnote { overflow-wrap: anywhere; }
+.decision > *, .options, .opt > span { min-width: 0; }
+details.more > summary { cursor: pointer; font-weight: 600; font-size: 15px; list-style: none; display: flex; justify-content: space-between; gap: 8px; align-items: center; min-height: 32px; }
+details.more > summary::-webkit-details-marker { display: none; }
+details.more > summary::after { content: "+"; font: 500 18px var(--font-mono); color: var(--ink-3); }
+details.more[open] > summary::after { content: "–"; }
+details.more .body { padding-top: 8px; display: grid; gap: 10px; font-size: 15px; color: var(--ink-2); }
+details.more .body p { margin: 0; }
+details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
+.kv { display: grid; gap: 2px; }
+.kv b { font-size: 12px; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); font-weight: 600; }
+.mynote { display: grid; gap: 6px; }
+.group-ask { border: 1px solid var(--accent); background: var(--accent-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 8px; font-size: 14.5px; line-height: 1.4; }
+.group-ask .btn { min-height: 40px; }
+.done-state { text-align: left; }
+
+.vbar {
+  position: sticky; bottom: 0; z-index: 4; background: var(--sheet);
+  border: 1px solid var(--line); border-top: 0; border-radius: 0 0 var(--radius) var(--radius);
+  padding: 10px 10px calc(10px + env(safe-area-inset-bottom, 0px)); display: grid; gap: 6px;
+  box-shadow: 0 -8px 16px -12px rgba(0, 0, 0, .25);
+}
+.vbar-in { display: grid; grid-template-columns: 44px minmax(0, 1fr) 44px; gap: 8px; align-items: stretch; }
+.verdicts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; }
+.v {
+  min-height: 54px; border-radius: 9px; border: 1.5px solid var(--line); background: var(--sheet);
+  display: grid; place-content: center; text-align: center; gap: 1px; padding: 4px;
+}
+.v b { font-size: 15px; font-weight: 600; line-height: 1.15; }
+.v small { font: 11px var(--font-mono); color: var(--ink-3); }
+.v.tp b { color: var(--real); } .v.fp b { color: var(--false); } .v.unclear b { color: var(--unclear); }
+.v.tp[aria-pressed="true"] { background: var(--real); border-color: var(--real); }
+.v.fp[aria-pressed="true"] { background: var(--false); border-color: var(--false); }
+.v.unclear[aria-pressed="true"] { background: var(--unclear); border-color: var(--unclear); }
+.v[aria-pressed="true"] b, .v[aria-pressed="true"] small { color: var(--sheet); }
+.nav { border: 1px solid var(--line); background: var(--paper); border-radius: 9px; font: 500 22px/1 var(--font-mono); color: var(--ink-2); }
+.savestate { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 12.5px; color: var(--ink-3); min-height: 22px; flex-wrap: wrap; }
+.savestate.bad { color: var(--real); }
+.savestate .btn { min-height: 30px; padding: 0 10px; font-size: 13px; }
+.kbd { font-family: var(--font-mono); font-size: 11.5px; }
+@media (max-width: 999px) { .kbd { display: none; } }
+
+/* ---------- decide ---------- */
+.decide { display: grid; gap: 16px; max-width: 760px; }
+.decision { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
+.decision h2 { font-size: 21px; font-weight: 700; letter-spacing: -.01em; }
+.decision .question { font-weight: 600; font-size: 17px; margin: 0; }
+.decision .context { margin: 0; color: var(--ink-2); font-size: 15px; white-space: pre-wrap; }
+.options { display: grid; gap: 8px; border: 0; padding: 0; margin: 0; min-width: 0; }
+.opt { display: grid; grid-template-columns: 22px minmax(0, 1fr); gap: 10px; align-items: start; border: 1.5px solid var(--line); border-radius: 9px; padding: 12px; cursor: pointer; }
+.opt:has(input:checked) { border-color: var(--accent); background: var(--accent-soft); }
+.opt input { margin: 3px 0 0; width: 18px; height: 18px; accent-color: var(--accent); }
+.opt b { font-weight: 600; }
+.opt .rec { display: inline-block; margin-left: 6px; font: 500 11px/1 var(--font-mono); padding: 3px 6px; border-radius: 99px; background: var(--false-soft); color: var(--false); vertical-align: 2px; }
+.opt span.d { display: block; color: var(--ink-2); font-size: 14px; margin-top: 2px; }
+.answered { font-size: 14px; color: var(--false); font-weight: 500; }
+
+/* ---------- read ---------- */
+.read { display: grid; gap: 14px; }
+.doc-tabs { display: flex; gap: 6px; flex-wrap: wrap; }
+.doc-tabs button { border: 1px solid var(--line); background: var(--sheet); border-radius: 99px; padding: 8px 14px; font-weight: 500; font-size: 14px; min-height: 40px; }
+.doc-tabs button[aria-pressed="true"] { background: var(--ink); color: var(--sheet); border-color: var(--ink); }
+.prose { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: 20px 18px; min-width: 0; font-size: 16px; line-height: 1.65; }
+.prose > * { max-width: 68ch; }
+.prose h1 { font-size: clamp(24px, 6vw, 32px); font-weight: 700; letter-spacing: -.02em; margin: 0 0 14px; }
+.prose h2 { font-size: 21px; font-weight: 700; margin: 30px 0 10px; padding-top: 14px; border-top: 1px solid var(--line); }
+.prose h3 { font-size: 17px; font-weight: 700; margin: 22px 0 8px; }
+.prose p, .prose ul, .prose ol { margin: 0 0 12px; }
+.prose li { margin: 4px 0; }
+.prose code { font: .86em var(--font-mono); background: var(--code); padding: 1px 5px; border-radius: 4px; overflow-wrap: anywhere; }
+.prose pre { background: var(--code); border-radius: 8px; padding: 12px; overflow-x: auto; max-width: 100%; }
+.prose pre code { background: none; padding: 0; overflow-wrap: normal; }
+.prose blockquote { margin: 0 0 12px; padding-left: 12px; border-left: 3px solid var(--line); color: var(--ink-2); }
+.prose .table-wrap { overflow-x: auto; max-width: 100%; margin: 0 0 14px; border: 1px solid var(--line); border-radius: 8px; }
+.prose table { border-collapse: collapse; font-size: 14px; line-height: 1.45; min-width: 100%; }
+.prose th, .prose td { text-align: left; vertical-align: top; padding: 8px 10px; border-bottom: 1px solid var(--line); }
+.prose th { background: var(--paper); font-weight: 600; white-space: nowrap; }
+.prose td { min-width: 7em; }
+.prose hr { border: 0; border-top: 1px solid var(--line); margin: 20px 0; }
+/* On a phone each table row becomes a small card of "column: value" lines. */
+@media (max-width: 699px) {
+  .prose .table-wrap { border: 0; overflow: visible; }
+  .prose table, .prose tbody, .prose tr, .prose td { display: block; min-width: 0; }
+  .prose thead { display: none; }
+  .prose tr { border: 1px solid var(--line); border-radius: 8px; padding: 6px 0; margin: 0 0 10px; }
+  .prose td { border: 0; padding: 4px 12px; min-width: 0; overflow-wrap: anywhere; }
+  .prose td::before { content: attr(data-label); display: block; font-size: 11.5px; font-weight: 600; letter-spacing: .06em; text-transform: uppercase; color: var(--ink-3); }
+  .prose td:empty, .prose td[data-label=""]::before { display: none; }
+}
+
+.toast {
+  position: fixed; left: 50%; transform: translateX(-50%); z-index: 20;
+  top: calc(env(safe-area-inset-top, 0px) + 104px); background: var(--ink); color: var(--sheet);
+  padding: 10px 16px; border-radius: 99px; font-size: 14px; font-weight: 500; box-shadow: var(--shadow);
+  max-width: calc(100vw - 32px);
+}
+@media (prefers-reduced-motion: no-preference) {
+  .toast { transition: opacity .2s; }
+  .finding { animation: rise .18s ease-out; }
+  @keyframes rise { from { transform: translateY(4px); } to { transform: none; } }
+}
+</style>
+
+<header class="top">
+  <div class="wrap">
+    <div class="brand-row">
+      <div class="brand"><span class="brand-mark" aria-hidden="true"></span>
+        <div><b>Review Console</b><small>AnyAISafe · persons study</small></div></div>
+      <div class="who" id="who"><span>Connecting…</span></div>
+    </div>
+    <nav class="tabs" role="tablist" aria-label="Sections">
+      <button class="tab" role="tab" id="tab-inbox" data-view="inbox" aria-selected="true">Inbox</button>
+      <button class="tab" role="tab" id="tab-label" data-view="label" aria-selected="false">Label <span class="n" id="n-label"></span></button>
+      <button class="tab" role="tab" id="tab-decide" data-view="decide" aria-selected="false">Decide <span class="n" id="n-decide"></span></button>
+      <button class="tab" role="tab" id="tab-read" data-view="read" aria-selected="false">Read</button>
+    </nav>
+  </div>
+</header>
+<div class="banner" id="banner" hidden><div class="wrap" id="banner-text"></div></div>
+<div class="sync" id="sync" role="status" aria-live="polite" hidden><div class="wrap"><span id="sync-text"></span><span id="sync-act"></span></div></div>
+
+<main class="wrap">
+  <section class="view inbox" id="view-inbox" aria-labelledby="tab-inbox">
+    <div class="inbox-head">
+      <span class="eyebrow" id="today"></span>
+      <h1 id="inbox-title">Loading your review work</h1>
+      <p class="from-claude" id="from-claude" hidden></p>
+    </div>
+    <div class="inbox-grid">
+      <div class="stack" id="inbox-sets">
+        <div class="panel"><h2>Label findings</h2><p class="muted" style="margin:0">The findings load from the console's data. If this stays empty, ask Claude to republish the console.</p></div>
+      </div>
+      <div class="stack">
+        <div class="panel" id="inbox-decide"><h2>Decisions</h2><p class="muted" style="margin:0">Choices that are yours appear here.</p></div>
+        <div class="panel">
+          <h2>Back in Claude Code</h2>
+          <p class="muted" style="margin:0">Everything you do here saves as you go. When you want it in the repository, say this to Claude Code:</p>
+          <div class="copybox"><code id="handback">Import my review from the console</code><button class="btn" id="copy-handback" type="button">Copy</button></div>
+          <p class="muted small" style="margin:0" id="imports">Claude copies your labels into the labelling CSV, scores them, and records your answers and notes.</p>
+        </div>
+        <div class="panel" id="inbox-read"><h2>Read</h2><div class="doc-links" id="doc-links"></div></div>
+        <div class="panel">
+          <h2>Note to Claude</h2>
+          <label class="lbl" for="general-note">Anything else Claude should know next time</label>
+          <textarea id="general-note" placeholder="For example: relabel the outreach rows after the setInterval change."></textarea>
+          <div class="row"><button class="btn primary" id="send-general" type="button">Send note</button></div>
+          <div class="sent" id="general-sent"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view" id="view-label" aria-labelledby="tab-label" hidden>
+    <div class="label-layout">
+        <div class="filters-box">
+          <div class="filters">
+            <select id="f-status" aria-label="Which findings">
+              <option value="todo">To do</option>
+              <option value="all">All</option>
+              <option value="tp">Real</option>
+              <option value="fp">False alarm</option>
+              <option value="unclear">Unclear</option>
+              <option value="note">With a note</option>
+            </select>
+            <select id="f-rule" aria-label="Rule"><option value="">All rules</option></select>
+            <select id="f-repo" aria-label="Repository"><option value="">All repos</option></select>
+          </div>
+          <div class="filter-meta"><span id="pos">–</span>
+            <span class="row"><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="auto" checked> Next after labelling</label>
+            <button class="btn quiet list-toggle" id="list-toggle" type="button" aria-expanded="false" aria-controls="list-col">List</button></span></div>
+        </div>
+      <aside class="list-col" id="list-col" hidden>
+        <div class="list" id="list" aria-label="Findings in this filter"></div>
+      </aside>
+      <div class="card-col">
+        <div id="card"></div>
+        <div class="vbar" id="vbar">
+          <div id="group-ask" role="region" aria-live="polite" aria-label="Same line elsewhere"></div>
+          <div class="vbar-in">
+            <button class="nav" id="prev" type="button" aria-label="Previous finding">‹</button>
+            <div class="verdicts" role="group" aria-label="Your label">
+              <button class="v tp" data-v="tp" type="button" aria-pressed="false"><b>Real</b><small>tp <span class="kbd">· 1</span></small></button>
+              <button class="v fp" data-v="fp" type="button" aria-pressed="false"><b>False alarm</b><small>fp <span class="kbd">· 2</span></small></button>
+              <button class="v unclear" data-v="unclear" type="button" aria-pressed="false"><b>Unclear</b><small><span class="kbd">3</span></small></button>
+            </div>
+            <button class="nav" id="next" type="button" aria-label="Next finding">›</button>
+          </div>
+          <div class="savestate" id="savestate"><span id="save-text">Not connected yet</span><span class="kbd">← → move · 1 2 3 label · n note</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="view decide" id="view-decide" aria-labelledby="tab-decide" hidden></section>
+
+  <section class="view read" id="view-read" aria-labelledby="tab-read" hidden>
+    <div class="doc-tabs" id="doc-tabs" role="group" aria-label="Documents"></div>
+    <article class="prose" id="prose"><p class="muted">Pick a document.</p></article>
+    <div class="panel">
+      <h2 id="doc-note-title">Note about this document</h2>
+      <label class="lbl" for="doc-note">What should change, or what is unclear?</label>
+      <textarea id="doc-note"></textarea>
+      <div class="row"><button class="btn primary" id="send-doc-note" type="button">Send note</button></div>
+      <div class="sent" id="doc-sent"></div>
+    </div>
+  </section>
+</main>
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.1.6/purify.min.js"></script>
+<script>
+(() => {
+  "use strict";
+  const VIEWS = ["inbox", "label", "decide", "read"];
+  const VLABEL = { tp: "Real", fp: "False alarm", unclear: "Unclear" };
+  const ROLE = { match: "Matched line", absence: "What the audit found missing", surface: "Where it applies", also: "Same signal elsewhere" };
+  const REPO_URL = "https://github.com/ai-safe-earth/AnyAISafe/blob/main/research/";
+  const SHOWN_LEGS = 4;
+  const WRITE_TIMEOUT = 15000;
+
+  const S = {
+    view: "inbox", setId: null, cur: null, doc: null, auto: true, listOpen: false,
+    filter: { status: "todo", rule: "", repo: "" },
+    manifest: null, sets: {}, labels: {}, decisions: [], answers: {}, notes: [], status: null, imports: {},
+    server: { labels: {}, answers: {}, notes: [] },
+    db: null, user: null, uid: null, readOnly: false, connecting: true,
+    subscribed: new Set(), exists: new Set(), paused: new Set(), ready: new Set(),
+    pending: new Map(), failed: new Map(), lastSaved: null,
+    groupAsk: null, docCache: {}, drafts: {}, decideStale: false,
+  };
+
+  /* ---------- small helpers ---------- */
+  const $ = (id) => document.getElementById(id);
+  function h(tag, props, ...kids) {
+    const el = document.createElement(tag);
+    if (props) for (const [k, v] of Object.entries(props)) {
+      if (v == null || v === false) continue;
+      if (k === "class") el.className = v;
+      else if (k === "text") el.textContent = v;
+      else if (k.startsWith("on")) el.addEventListener(k.slice(2), v);
+      else el.setAttribute(k, v === true ? "" : v);
+    }
+    for (const kid of kids.flat()) {
+      if (kid == null || kid === false) continue;
+      el.append(kid.nodeType ? kid : document.createTextNode(String(kid)));
+    }
+    return el;
+  }
+  // Browser storage is a convenience and a safety net, never the record: every call may fail.
+  const store = {
+    get(k, d) { try { const v = localStorage.getItem("rc:" + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
+    set(k, v) { try { localStorage.setItem("rc:" + k, JSON.stringify(v)); } catch { /* full or blocked */ } },
+    del(k) { try { localStorage.removeItem("rc:" + k); } catch { /* blocked */ } },
+    keys(prefix) {
+      try {
+        const out = [];
+        for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); if (k && k.startsWith("rc:" + prefix)) out.push(k.slice(3)); }
+        return out;
+      } catch { return []; }
+    },
+  };
+  const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+  const unitName = (u) => (u.startsWith(". (") ? "repository root " + u.slice(2) : u);
+  const fmtTime = (iso) => {
+    if (!iso) return "";
+    const d = new Date(iso);
+    if (isNaN(d)) return "";
+    return d.toLocaleString(undefined, { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  };
+  let toastTimer = null;
+  function toast(msg) {
+    const t = $("toast");
+    t.textContent = msg; t.hidden = false;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { t.hidden = true; }, 2400);
+  }
+  function banner(msg) {
+    $("banner-text").textContent = msg || "";
+    $("banner").hidden = !msg;
+  }
+  function savePrefs() {
+    store.set("prefs", { view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter });
+  }
+
+  /* ---------- data: manifest, sets, docs ---------- */
+  async function loadManifest() {
+    try {
+      const r = await fetch("manifest.json", { cache: "no-cache" });
+      if (!r.ok) throw new Error(r.status);
+      S.manifest = await r.json();
+    } catch {
+      $("inbox-title").textContent = "The review data did not load";
+      $("inbox-sets").replaceChildren(h("div", { class: "panel" },
+        h("h2", { text: "Nothing to show yet" }),
+        h("p", { class: "muted", style: "margin:0", text: "manifest.json could not be read. Reload the page; if it stays empty, ask Claude Code to republish the console." })));
+      return;
+    }
+    const sets = S.manifest.sets || [];
+    if (!S.setId || !sets.some((s) => s.id === S.setId)) S.setId = sets.length ? sets[sets.length - 1].id : null;
+    await Promise.all(sets.map((s) => loadSet(s)));
+    for (const s of sets) rebuildLabels(s.id);
+    renderDocTabs();
+    subscribeSets();
+    renderAll();
+    if (S.view === "read") openDoc(S.doc);
+  }
+  async function loadSet(s) {
+    try {
+      const r = await fetch(s.file, { cache: "no-cache" });
+      if (!r.ok) throw new Error(r.status);
+      S.sets[s.id] = await r.json();
+    } catch {
+      S.sets[s.id] = { id: s.id, title: s.title, items: [], error: true };
+    }
+  }
+
+  /* ---------- connection to claude.ai ---------- */
+  async function connect() {
+    const c = window.claude;
+    if (!c || typeof c.use !== "function") {
+      S.connecting = false;
+      renderWho(null);
+      banner("Saving is off: this copy of the page is not running inside claude.ai. Open the console's claude.ai link to label.");
+      setSave();
+      return;
+    }
+    const [db, user] = await Promise.all([c.use("db").catch(() => null), c.use("user").catch(() => null)]);
+    S.user = user;
+    let canWrite = null;
+    if (user) {
+      const me = await user.me();
+      S.uid = me.id;
+      renderWho(me);
+      canWrite = await user.can("data.write");
+    } else renderWho(null);
+    S.connecting = false;
+    if (!db) {
+      banner("Saving is off in this view. Check that you are signed in to claude.ai, then reload the page to try again.");
+      setSave(); renderVerdictBar();
+      return;
+    }
+    S.db = db;
+    if (canWrite === false) setReadOnly();
+    subscribeShared();
+    subscribeSets();
+    if (S.view === "label") renderCard();
+    renderDecide();
+    setSave();
+    restoreKept();
+  }
+  function setReadOnly() {
+    S.readOnly = true;
+    banner("You can read this console but not change it. Labels and answers need the owner's account.");
+    renderVerdictBar();
+  }
+
+  // One listener per query, reopened with a back-off when the platform ends it.
+  function listen(name, open) {
+    let tries = 0;
+    const start = () => {
+      open(() => { tries = 0; if (S.paused.delete(name)) setSave(); }, (e) => {
+        const code = e && e.code;
+        if (code === "revoked") { banner("This view lost access to the console's data. Reload the page."); return; }
+        if (code === "invalid_argument") return;
+        S.paused.add(name); setSave();
+        tries++;
+        const wait = Math.min(30000, 1500 * 2 ** Math.min(tries, 4)) * (0.6 + Math.random() * 0.8);
+        setTimeout(start, wait);
+      });
+    };
+    start();
+  }
+  function subscribeShared() {
+    const db = S.db;
+    listen("decisions", (ok, err) => db.collection("decisions").onSnapshot((snap) => {
+      ok();
+      S.decisions = snap.docs.map((d) => ({ id: d.id, ...d.data() })).sort((a, b) => (a.order ?? 99) - (b.order ?? 99));
+      renderDecide(); renderInbox(); renderCounts();
+    }, err));
+    listen("answers", (ok, err) => db.collection("answers").onSnapshot((snap) => {
+      ok();
+      const m = {};
+      for (const d of snap.docs) { m[d.id] = d.data(); S.exists.add("answers/" + d.id); }
+      S.ready.add("answers");
+      S.server.answers = m;
+      rebuildAnswers();
+      renderDecide(); renderInbox(); renderCounts();
+    }, err));
+    listen("notes", (ok, err) => db.collection("notes").onSnapshot((snap) => {
+      ok();
+      S.server.notes = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+      rebuildNotes();
+      renderSent();
+    }, err));
+    listen("status", (ok, err) => db.doc("meta/status").onSnapshot((snap) => {
+      ok();
+      S.status = snap.exists ? snap.data() : null;
+      renderInbox();
+    }, err));
+    listen("imports", (ok, err) => db.collection("imports").onSnapshot((snap) => {
+      ok();
+      S.imports = {};
+      for (const d of snap.docs) S.imports[d.id] = d.data();
+      renderInbox();
+    }, err));
+  }
+  function subscribeSets() {
+    if (!S.db || !S.manifest) return;
+    for (const s of S.manifest.sets || []) {
+      if (S.subscribed.has(s.id)) continue;
+      S.subscribed.add(s.id);
+      listen("labels:" + s.id, (ok, err) => S.db.collection(`sets/${s.id}/labels`).onSnapshot((snap) => {
+        ok();
+        const m = {};
+        for (const d of snap.docs) { m[d.id] = d.data(); S.exists.add(`sets/${s.id}/labels/${d.id}`); }
+        S.ready.add(`sets/${s.id}/labels`);
+        S.server.labels[s.id] = m;
+        rebuildLabels(s.id);
+        renderCounts(); renderInbox();
+        if (S.view === "label" && s.id === S.setId) { syncCard(); renderList(); renderPos(); }
+      }, err));
+    }
+  }
+  // What the page shows: the stored documents with this device's unsaved changes on top.
+  function rebuildLabels(sid) {
+    const m = { ...(S.server.labels[sid] || {}) };
+    const prefix = `sets/${sid}/labels/`;
+    for (const [path, e] of S.pending) if (path.startsWith(prefix)) { const id = path.slice(prefix.length); m[id] = { ...(m[id] || {}), ...e.data }; }
+    S.labels[sid] = m;
+  }
+  function rebuildAnswers() {
+    const m = { ...S.server.answers };
+    for (const [path, e] of S.pending) if (path.startsWith("answers/")) m[path.slice(8)] = e.data;
+    S.answers = m;
+  }
+  function rebuildNotes() {
+    const seen = new Set(S.server.notes.map((n) => n.id));
+    const local = [];
+    for (const [path, e] of S.pending) if (path.startsWith("notes/") && !seen.has(path.slice(6))) local.push({ id: path.slice(6), ...e.data, unsent: true });
+    S.notes = [...local, ...S.server.notes].sort((a, b) => String(b.at).localeCompare(String(a.at)));
+  }
+  function rebuildFor(path) {
+    if (path.startsWith("sets/")) rebuildLabels(path.split("/")[1]);
+    else if (path.startsWith("answers/")) rebuildAnswers();
+    else if (path.startsWith("notes/")) rebuildNotes();
+  }
+
+  /* ---------- writes ----------
+     Every change is kept on this device (rc:p:<path>) from the moment it is made until
+     the store confirms it. Writes go out one at a time. A label edit merges into the
+     stored document, so a change made on another device to another field survives. */
+  let chain = Promise.resolve();
+  function queueWrite(path, op, data) {
+    const prev = S.pending.get(path);
+    const entry = prev ? { path, op: prev.op === "replace" ? "replace" : op, data: { ...prev.data, ...data } }
+      : { path, op, data: { ...data } };
+    if (op === "replace") entry.data = { ...data };
+    entry.at = entry.data.at || new Date().toISOString();
+    S.pending.set(path, entry);
+    S.failed.delete(path);
+    store.set("p:" + path, entry);
+    rebuildFor(path);
+    setSave();
+    const done = chain.then(() => flushOne(path));
+    chain = done.then(() => undefined, () => undefined);
+    return done;
+  }
+  const withTimeout = (p) => Promise.race([p, new Promise((_, rej) => setTimeout(() => rej({ code: "timeout" }), WRITE_TIMEOUT))]);
+  const collectionOf = (path) => path.split("/").slice(0, -1).join("/");
+  async function write(entry) {
+    const ref = S.db.doc(entry.path);
+    // Merge when the document exists, or when this page has not yet heard what exists.
+    const unknown = !S.ready.has(collectionOf(entry.path));
+    if (entry.op === "merge" && (S.exists.has(entry.path) || unknown)) {
+      try { return await withTimeout(ref.update(entry.data)); }
+      catch (e) { if (!(e && e.code === "invalid_argument")) throw e; }
+      // The document is gone (deleted elsewhere): write it whole from what this page shows.
+    }
+    const base = entry.op === "merge" && entry.path.startsWith("sets/") ? { verdict: "", note: "" } : {};
+    return withTimeout(ref.set({ ...base, ...entry.data }));
+  }
+  async function flushOne(path) {
+    const entry = S.pending.get(path);
+    if (!entry) return true;
+    if (!S.db) return false;
+    try {
+      try { await write(entry); }
+      catch (e) {
+        if (e && e.code === "unavailable") { await sleep(400 + Math.random() * 900); await write(entry); }
+        else throw e;
+      }
+    } catch (e) {
+      S.failed.set(path, (e && e.code) || "error");
+      if (e && e.code === "invalid_argument" && !S.readOnly) setReadOnly();
+      setSave();
+      return false;
+    }
+    S.exists.add(path);
+    S.lastSaved = new Date().toISOString();
+    if (S.pending.get(path) === entry) {
+      S.pending.delete(path);
+      store.del("p:" + path);
+      if (path.startsWith("sets/")) {
+        const [, sid, , id] = path.split("/");
+        S.server.labels[sid] = { ...(S.server.labels[sid] || {}), [id]: { ...((S.server.labels[sid] || {})[id] || {}), ...entry.data } };
+      } else if (path.startsWith("answers/")) S.server.answers = { ...S.server.answers, [path.slice(8)]: entry.data };
+      else if (path.startsWith("notes/") && !S.server.notes.some((n) => n.id === path.slice(6))) S.server.notes = [{ id: path.slice(6), ...entry.data }, ...S.server.notes];
+      rebuildFor(path);
+    }
+    setSave();
+    return true;
+  }
+  function retryFailed() {
+    for (const p of [...S.failed.keys()]) { const e = S.pending.get(p); if (e) queueWrite(p, e.op, e.data); }
+  }
+  // Changes kept on this device from an earlier visit: write each one only if nothing
+  // newer was stored for it since, from this device or another.
+  async function restoreKept() {
+    const keys = store.keys("p:");
+    if (!keys.length || S.readOnly) return;
+    let saved = 0, dropped = 0;
+    for (const k of keys) {
+      const entry = store.get(k, null);
+      if (!entry || !entry.path) { store.del(k); continue; }
+      let snap = null;
+      try { snap = await S.db.doc(entry.path).get(); } catch { continue; }
+      const stored = snap && snap.exists ? snap.data() : null;
+      if (stored) S.exists.add(entry.path);
+      if (stored && String(stored.at || "") >= String(entry.at || "")) {
+        store.del(k);
+        if (S.pending.get(entry.path) && S.pending.get(entry.path).at === entry.at) S.pending.delete(entry.path);
+        rebuildFor(entry.path);
+        if (!entry.path.startsWith("notes/")) dropped++;
+        continue;
+      }
+      if (await queueWrite(entry.path, entry.op, entry.data)) saved++;
+    }
+    renderAll();
+    if (saved || dropped) toast(`${saved ? `Saved ${saved} change${saved === 1 ? "" : "s"} kept on this device` : ""}${saved && dropped ? ". " : ""}${dropped ? `${dropped} older kept change${dropped === 1 ? " was" : "s were"} dropped: a newer one exists` : ""}`);
+  }
+  function setSave() {
+    const el = $("savestate"), txt = $("save-text");
+    el.classList.remove("bad");
+    const failed = S.failed.size;
+    const inflight = [...S.pending.keys()].filter((p) => !S.failed.has(p)).length;
+    if (S.connecting) txt.textContent = "Connecting…";
+    else if (!S.db) txt.textContent = "Saving is off in this view";
+    else if (failed) { el.classList.add("bad"); txt.textContent = `${failed} not saved, kept on this device`; }
+    else if (inflight) txt.textContent = inflight > 1 ? `Saving ${inflight}…` : "Saving…";
+    else txt.textContent = S.lastSaved ? `All saved · ${fmtTime(S.lastSaved)}` : "All saved";
+    // The strip under the header shows trouble on every tab.
+    const sync = $("sync"), act = $("sync-act");
+    act.replaceChildren();
+    sync.classList.remove("paused");
+    if (failed && S.db) {
+      const code = [...S.failed.values()][0];
+      const why = code === "quota_exceeded" ? "the console's storage is full"
+        : code === "resource_exhausted" ? "too many saves at once"
+        : code === "invalid_argument" ? "this account cannot write here"
+        : code === "timeout" ? "the save took too long" : "the connection dropped";
+      $("sync-text").textContent = `${failed} change${failed === 1 ? "" : "s"} not saved: ${why}. ${failed === 1 ? "It is" : "They are"} kept on this device.`;
+      if (!S.readOnly) act.append(h("button", { class: "btn", type: "button", onclick: retryFailed, text: "Retry" }));
+      sync.hidden = false;
+    } else if (S.paused.size) {
+      sync.classList.add("paused");
+      $("sync-text").textContent = "Live updates paused, reconnecting. Your changes still save.";
+      sync.hidden = false;
+    } else sync.hidden = true;
+  }
+
+  /* ---------- labels ---------- */
+  const set = () => S.sets[S.setId];
+  const items = () => (set() && set().items) || [];
+  const labelOf = (it, sid = S.setId) => (S.labels[sid] || {})[it.id];
+  const verdictOf = (it, sid) => (labelOf(it, sid) || {}).verdict || "";
+  function matches(it) {
+    const f = S.filter, v = verdictOf(it);
+    if (f.rule && it.rule !== f.rule) return false;
+    if (f.repo && it.repo !== f.repo) return false;
+    if (f.status === "todo") return !v;
+    if (f.status === "all") return true;
+    if (f.status === "note") return !!(labelOf(it) || {}).note;
+    return v === f.status;
+  }
+  function writeLabel(sid, itemId, patch) {
+    return queueWrite(`sets/${sid}/labels/${itemId}`, "merge", { ...patch, at: new Date().toISOString(), by: S.uid || "", set: sid });
+  }
+  // The note box belongs to one finding; whatever happens next, its text goes to that one.
+  let openNote = null, noteTimer = null;
+  function flushNote() {
+    clearTimeout(noteTimer);
+    if (!openNote || !S.db || S.readOnly) return;
+    const { sid, id, el } = openNote;
+    const val = el.value;
+    const cur = (S.labels[sid] || {})[id];
+    if ((cur ? cur.note || "" : "") === val) return;
+    writeLabel(sid, id, { note: val });
+  }
+  function choose(v) {
+    if (S.readOnly || !S.db) return;
+    const it = current();
+    if (!it) return;
+    flushNote();
+    // Tapping the label already chosen keeps it: a double tap must never undo a label.
+    const lab = labelOf(it) || {};
+    if (lab.verdict !== v || lab.bulk_from) writeLabel(S.setId, it.id, { verdict: v, bulk_from: "" });
+    toast(`Labelled ${VLABEL[v]}`);
+    renderVerdictBar(); syncCard(); renderList(); renderPos(); renderCounts();
+    if (it.group) {
+      const others = items().filter((o) => o.group === it.group && o.id !== it.id);
+      const open = others.filter((o) => !verdictOf(o));
+      const differ = others.filter((o) => verdictOf(o) && verdictOf(o) !== v);
+      if (open.length) { S.groupAsk = { from: it.id, v, ids: open.map((o) => o.id), differ: differ.length }; renderGroupAsk(); return; }
+    }
+    if (S.auto) setTimeout(() => { if (current() && current().id === it.id) step(1); }, 280);
+  }
+  function applyGroup() {
+    const g = S.groupAsk;
+    if (!g) return;
+    // Rows labelled since the question appeared, here or elsewhere, keep their own label.
+    const ids = g.ids.filter((id) => !verdictOf({ id }));
+    for (const id of ids) writeLabel(S.setId, id, { verdict: g.v, bulk_from: g.from });
+    toast(`Labelled ${ids.length} more row${ids.length === 1 ? "" : "s"} ${VLABEL[g.v]}`);
+    S.groupAsk = null;
+    renderGroupAsk(); renderList(); renderPos(); renderCounts();
+    if (S.auto) step(1);
+  }
+  function current() { return items().find((x) => x.id === S.cur) || null; }
+  function go(id) {
+    flushNote();
+    S.cur = id; S.groupAsk = null; savePrefs();
+    renderCard(); renderList(); renderPos();
+    window.scrollTo(0, 0);
+  }
+  function step(dir) {
+    const all = items(), n = all.length;
+    if (!n) return;
+    const i = all.findIndex((x) => x.id === S.cur);
+    for (let k = 1; k <= n; k++) {
+      const j = (((i < 0 ? -1 : i) + dir * k) % n + n) % n;
+      if (j === i) break;
+      if (matches(all[j])) return go(all[j].id);
+    }
+    if (!current() || !matches(current())) { flushNote(); S.cur = null; S.groupAsk = null; renderCard(); renderList(); renderPos(); }
+  }
+  function ensureCurrent() {
+    if (!items().length) return; // the set has not loaded yet: keep the remembered place
+    const it = current();
+    if (it && matches(it)) return;
+    const first = items().find(matches);
+    S.cur = first ? first.id : null;
+  }
+
+  /* ---------- render: chrome ---------- */
+  function show(view) {
+    if (!VIEWS.includes(view)) view = "inbox";
+    if (S.view === "label" && view !== "label") flushNote();
+    S.view = view;
+    for (const v of VIEWS) {
+      $("view-" + v).hidden = v !== view;
+      $("tab-" + v).setAttribute("aria-selected", String(v === view));
+    }
+    if (view === "label") { ensureCurrent(); renderFilters(); renderCard(); renderList(); renderPos(); }
+    if (view === "read") openDoc(S.doc);
+    if (view === "decide") renderDecide();
+    if (S.manifest) savePrefs();
+  }
+  function renderWho(me) {
+    const el = $("who");
+    el.replaceChildren();
+    if (!me || !me.id) { el.append(h("span", { text: "Not signed in" })); return; }
+    if (me.avatarUrl) el.append(h("img", { src: me.avatarUrl, alt: "" }));
+    el.append(h("span", { text: me.email || me.name || "Signed in", title: "Signed in to claude.ai" }));
+  }
+  function renderCounts() {
+    const todo = items().filter((it) => !verdictOf(it)).length;
+    $("n-label").textContent = items().length ? String(todo) : "";
+    const open = S.decisions.filter((d) => !(S.answers[d.id] || {}).choice).length;
+    $("n-decide").textContent = open ? String(open) : "";
+  }
+  function renderAll() {
+    renderCounts(); renderInbox(); renderDecide(); renderSent();
+    if (S.view === "label") { ensureCurrent(); renderFilters(); renderCard(); renderList(); renderPos(); }
+  }
+
+  /* ---------- render: inbox ---------- */
+  function tally(sid) {
+    const its = (S.sets[sid] && S.sets[sid].items) || [];
+    const t = { tp: 0, fp: 0, unclear: 0, todo: 0, total: its.length };
+    for (const it of its) { const v = verdictOf(it, sid); if (v) t[v]++; else t.todo++; }
+    return t;
+  }
+  function openSet(sid, filter) {
+    flushNote();
+    S.setId = sid; S.filter = filter; S.cur = null;
+    show("label");
+  }
+  function renderInbox() {
+    $("today").textContent = new Date().toLocaleDateString(undefined, { weekday: "long", day: "numeric", month: "long" });
+    const fc = $("from-claude");
+    if (S.status && S.status.message) { fc.hidden = false; fc.textContent = `From Claude${S.status.at ? " · " + fmtTime(S.status.at) : ""}: ${S.status.message}`; }
+    else fc.hidden = true;
+    if (!S.manifest) return;
+    const sets = S.manifest.sets || [];
+    let todo = 0;
+    const panels = sets.map((s) => {
+      const t = tally(s.id); todo += t.todo;
+      const pct = (n) => t.total ? (100 * n / t.total).toFixed(2) + "%" : "0";
+      const byRule = {};
+      for (const it of (S.sets[s.id] || {}).items || []) {
+        const r = byRule[it.rule] || (byRule[it.rule] = { title: it.title, done: 0, total: 0 });
+        r.total++; if (verdictOf(it, s.id)) r.done++;
+      }
+      return h("div", { class: "panel" },
+        h("span", { class: "eyebrow", text: `Label set · ${t.total} findings` }),
+        h("h2", { text: s.title }),
+        h("p", { class: "muted", style: "margin:0", text: s.about || "" }),
+        h("div", { class: "progress", role: "img", "aria-label": `${t.total - t.todo} of ${t.total} labelled` },
+          h("i", { class: "p-tp", style: `width:${pct(t.tp)}` }), h("i", { class: "p-fp", style: `width:${pct(t.fp)}` }),
+          h("i", { class: "p-unclear", style: `width:${pct(t.unclear)}` })),
+        h("div", { class: "legend" },
+          h("span", null, h("b", { text: `${t.total - t.todo} of ${t.total}` }), " labelled"),
+          h("span", null, h("i", { class: "dot tp" }), `Real ${t.tp}`),
+          h("span", null, h("i", { class: "dot fp" }), `False alarm ${t.fp}`),
+          h("span", null, h("i", { class: "dot unclear" }), `Unclear ${t.unclear}`)),
+        h("div", { class: "rules" }, Object.entries(byRule).sort().map(([rid, r]) =>
+          h("button", { class: "rule-row", type: "button", onclick: () => openSet(s.id, { status: r.done < r.total ? "todo" : "all", rule: rid, repo: "" }) },
+            h("span", { class: "rid", text: rid }), h("span", { class: "rt", text: r.title }),
+            h("span", { class: "rc" + (r.done === r.total ? " done" : ""), text: `${r.done}/${r.total}` })))),
+        h("div", { class: "row" },
+          h("button", { class: "btn primary", type: "button", onclick: () => openSet(s.id, { status: "todo", rule: "", repo: "" }),
+            text: t.todo ? (t.todo === t.total ? "Start labelling" : "Continue labelling") : "Review labels" })));
+    });
+    if (panels.length) $("inbox-sets").replaceChildren(...panels);
+    const open = S.decisions.filter((d) => !(S.answers[d.id] || {}).choice);
+    const parts = [];
+    if (todo) parts.push(`${todo} ${todo === 1 ? "finding" : "findings"}`);
+    if (open.length) parts.push(`${open.length} ${open.length === 1 ? "decision" : "decisions"}`);
+    $("inbox-title").textContent = parts.length
+      ? `${parts.join(" and ")} ${todo + open.length === 1 ? "waits" : "wait"} for you`
+      : "Nothing waits for you";
+    const dp = $("inbox-decide");
+    dp.replaceChildren(h("h2", { text: "Decisions" }));
+    if (!S.decisions.length) dp.append(h("p", { class: "muted", style: "margin:0", text: S.db ? "No decisions waiting. Claude adds them here when a choice is yours." : "Decisions load when the console is open in claude.ai." }));
+    else {
+      dp.append(h("ul", { class: "decision-mini" }, S.decisions.map((d) => {
+        const a = S.answers[d.id];
+        return h("li", null, h("i", { class: "dot " + (a && a.choice ? "fp" : "") }), h("span", { text: d.title + (a && a.choice ? " · answered" : "") }));
+      })));
+      dp.append(h("div", { class: "row" }, h("button", { class: "btn" + (open.length ? " primary" : ""), type: "button", onclick: () => show("decide"), text: open.length ? `Answer ${open.length}` : "See answers" })));
+    }
+    const imp = Object.entries(S.imports);
+    if (imp.length) $("imports").textContent = imp.map(([sid, x]) => `Claude imported ${x.count ?? "the"} labels of ${sid} on ${fmtTime(x.at)}.`).join(" ");
+  }
+
+  /* ---------- render: label ---------- */
+  function renderFilters() {
+    const its = items();
+    const rules = [...new Set(its.map((it) => it.rule))].sort();
+    const repos = [...new Set(its.map((it) => it.repo))].sort((a, b) => a.localeCompare(b));
+    const fill = (sel, vals, all, cur) => {
+      sel.replaceChildren(h("option", { value: "", text: all }), ...vals.map((v) => h("option", { value: v, text: v })));
+      sel.value = vals.includes(cur) ? cur : "";
+    };
+    fill($("f-rule"), rules, "All rules", S.filter.rule);
+    fill($("f-repo"), repos, "All repos", S.filter.repo);
+    $("f-status").value = S.filter.status;
+    $("auto").checked = S.auto;
+  }
+  function renderPos() {
+    const its = items(), shown = its.filter(matches), it = current();
+    const i = it ? shown.findIndex((x) => x.id === it.id) : -1;
+    const done = its.filter((x) => verdictOf(x)).length;
+    $("pos").textContent = !S.manifest ? "Loading findings…" : !its.length ? "No findings loaded"
+      : `${i >= 0 ? `${i + 1} of ${shown.length}` : `${shown.length} match`} · ${done}/${its.length} labelled`;
+  }
+  function renderList() {
+    const list = $("list");
+    const its = items().filter(matches);
+    list.replaceChildren(...its.map((it) => h("button", {
+      class: "li", type: "button", "aria-current": String(it.id === S.cur),
+      onclick: () => { go(it.id); if (window.innerWidth < 1000) toggleList(false); },
+    },
+      h("i", { class: "dot " + verdictOf(it) }),
+      h("span", { class: "l1", text: `${it.rule}${it.sub ? "/" + it.sub : ""} · ${it.repo}` }),
+      h("span", { class: "l2", text: it.unit ? unitName(it.unit) : `${it.file}:${it.line}` }))));
+    if (!its.length) list.append(h("p", { class: "muted small", style: "padding:12px;margin:0", text: "No findings match these filters." }));
+  }
+  function toggleList(open) {
+    S.listOpen = open ?? !S.listOpen;
+    $("list-col").hidden = !S.listOpen;
+    $("list-toggle").setAttribute("aria-expanded", String(S.listOpen));
+    $("list-toggle").textContent = S.listOpen ? "Hide list" : "List";
+    if (S.listOpen) { renderList(); const c = $("list").querySelector('[aria-current="true"]'); if (c) c.scrollIntoView({ block: "nearest" }); }
+  }
+  function codeBlock(ctx) {
+    return h("div", { class: "code" }, ctx.lines.map((text, k) => {
+      const n = ctx.start + k;
+      return h("div", { class: "cl" + (n === ctx.hit ? " hit" : "") }, h("span", { class: "cn", text: String(n) }), h("span", { class: "ct", text: text || " " }));
+    }));
+  }
+  function legView(leg) {
+    const where = leg.line > 0 ? `${leg.file}:${leg.line}` : (leg.file && leg.file !== "." ? leg.file + "/" : "whole unit");
+    const head = h("div", { class: "leg-head" },
+      h("span", { class: "role", text: ROLE[leg.role] || leg.role }),
+      h("span", { class: "lp", text: where }));
+    if (leg.link) head.append(h("a", { href: leg.link, target: "_blank", rel: "noopener", class: "small", text: "GitHub ↗" }));
+    const body = leg.role === "absence" ? h("p", { class: "absence", text: leg.snippet })
+      : leg.context ? codeBlock(leg.context) : h("pre", { class: "snippet", text: leg.snippet || "(no snippet)" });
+    return h("div", { class: "leg" }, head, body);
+  }
+  function guideFor(it) {
+    const g = (set().guides || {})[it.rule] || {};
+    const sub = (g.subs || {})[it.sub] || {};
+    return { ...g, ...sub };
+  }
+  function renderCard() {
+    flushNote();
+    openNote = null;
+    const card = $("card");
+    const it = current();
+    renderVerdictBar();
+    if (!it) {
+      const its = items();
+      const left = its.filter((x) => !verdictOf(x)).length;
+      if (!S.manifest) { card.replaceChildren(h("div", { class: "finding" }, h("p", { class: "muted", style: "margin:0", text: "Loading findings…" }))); renderGroupAsk(); return; }
+      card.replaceChildren(h("div", { class: "finding done-state" },
+        h("span", { class: "eyebrow", text: its.length ? "Nothing in this filter" : "No findings" }),
+        h("h2", { class: "f-title", text: its.length && !left ? "Every finding in this set is labelled" : "No finding matches these filters" }),
+        h("p", { class: "muted", style: "margin:0", text: its.length && !left ? "Go back to Claude Code and say: Import my review from the console." : `${left} findings are still to do in the whole set. Change the filters above to see them.` }),
+        h("div", { class: "row" }, h("button", { class: "btn", type: "button", onclick: () => { S.filter = { status: "todo", rule: "", repo: "" }; renderFilters(); ensureCurrent(); renderCard(); renderList(); renderPos(); savePrefs(); }, text: "Show everything to do" }))));
+      renderGroupAsk();
+      return;
+    }
+    const repo = (set().repos || {})[it.repo] || {};
+    const g = guideFor(it);
+    const lab = labelOf(it) || {};
+    const legs = it.legs || [];
+    const shown = legs.slice(0, SHOWN_LEGS), rest = legs.slice(SHOWN_LEGS);
+    const els = [
+      h("div", { class: "f-head" },
+        h("span", { class: "chip rule", text: it.rule + (it.sub ? "/" + it.sub : "") }),
+        h("span", { class: "chip sev " + it.severity, text: it.severity }),
+        h("span", { class: "chip", text: "#" + it.n }),
+        h("span", { class: "state " + (lab.verdict || ""), id: "card-state", text: stateText(lab) })),
+      h("h2", { class: "f-title", text: it.title }),
+      h("div", { class: "where" },
+        h("div", { class: "repo" }, h("b", { text: it.repo }), repo.category ? ` · ${repo.category}` : ""),
+        h("div", { class: "path", text: it.unit ? `Unit: ${unitName(it.unit)}` : `${it.file}:${it.line}` }),
+        repo.note ? h("div", { class: "rnote", text: repo.note }) : null,
+        it.link ? h("a", { href: it.link, target: "_blank", rel: "noopener", class: "small", text: "Open on GitHub at the pinned commit ↗" }) : null),
+      repo.positive_control ? h("div", { class: "pc", text: "Positive control: this repository was picked because it visibly carries a control the study looks for. A finding here that says the control is missing is probably wrong." }) : null,
+      h("section", { class: "ask", "aria-label": "What to decide" },
+        h("span", { class: "eyebrow", text: "Your question" }),
+        h("p", { class: "q", text: g.question || "Does the evidence show what the finding says?" }),
+        h("dl", null,
+          g.real ? [h("dt", { class: "r", text: "Real if" }), h("dd", { text: g.real })] : null,
+          g.false ? [h("dt", { class: "f", text: "False alarm if" }), h("dd", { text: g.false })] : null,
+          g.open ? [h("dt", { class: "o", text: "Your call" }), h("dd", { text: g.open })] : null),
+        h("p", { class: "small muted", style: "margin:0", text: "You judge the finding, not the app." })),
+      h("section", null, h("h3", { class: "section-h", text: "The evidence" }),
+        h("div", { class: "legs" }, shown.map((l) => legView(l)),
+          rest.length ? h("details", { class: "more" }, h("summary", { text: `${rest.length} more places` }),
+            h("div", { class: "body" }, rest.map((l) => legView(l)))) : null)),
+      it.note && (it.note.what || it.note.reading) ? h("details", { class: "more" },
+        h("summary", { text: "Reading note (written by an agent, not a label)" }),
+        h("div", { class: "body" },
+          it.note.what ? h("div", { class: "kv" }, h("b", { text: "What it is" }), h("p", { text: it.note.what })) : null,
+          it.note.faces_person ? h("div", { class: "kv" }, h("b", { text: "Faces a person" }), h("p", { text: it.note.faces_person })) : null,
+          it.note.reading ? h("div", { class: "kv" }, h("b", { text: "What the agent read" }), h("p", { text: it.note.reading })) : null)) : null,
+      (it.failure_modes || []).length ? h("details", { class: "more" },
+        h("summary", { text: "Where this rule is known to go wrong" }),
+        h("div", { class: "body" }, h("ul", null, it.failure_modes.map((m) => h("li", { text: m }))))) : null,
+      it.fix ? h("details", { class: "more" }, h("summary", { text: "The fix the audit suggests" }), h("div", { class: "body" }, h("p", { text: it.fix }))) : null,
+      h("div", { class: "mynote" },
+        h("label", { class: "lbl", for: "note", text: "Your note (optional)" }),
+        h("textarea", { id: "note", placeholder: "Why you chose this label, or what you could not tell.", disabled: S.readOnly || !S.db ? true : null })),
+    ];
+    card.replaceChildren(h("article", { class: "finding", "aria-label": `Finding ${it.n}` }, els));
+    const ta = $("note");
+    ta.value = lab.note || "";
+    openNote = { sid: S.setId, id: it.id, el: ta };
+    ta.addEventListener("input", () => { clearTimeout(noteTimer); noteTimer = setTimeout(flushNote, 900); });
+    ta.addEventListener("blur", flushNote);
+    renderGroupAsk();
+  }
+  const stateText = (lab) => (lab.verdict ? VLABEL[lab.verdict] + (lab.bulk_from ? " · same line" : "") : "Not labelled");
+  function syncCard() {
+    const it = current();
+    if (!it || !$("card-state")) return;
+    const lab = labelOf(it) || {};
+    const st = $("card-state");
+    st.className = "state " + (lab.verdict || "");
+    st.textContent = stateText(lab);
+    const ta = $("note");
+    if (ta && document.activeElement !== ta && ta.value !== (lab.note || "")) ta.value = lab.note || "";
+    renderVerdictBar();
+  }
+  function renderVerdictBar() {
+    const it = current();
+    const v = it ? verdictOf(it) : "";
+    for (const b of document.querySelectorAll(".v")) {
+      b.setAttribute("aria-pressed", String(b.dataset.v === v));
+      b.disabled = !it || S.readOnly || !S.db;
+    }
+    $("prev").disabled = $("next").disabled = !items().length;
+  }
+  function renderGroupAsk() {
+    const box = $("group-ask");
+    const g = S.groupAsk;
+    if (!g || !current() || current().id !== g.from) { box.replaceChildren(); box.className = ""; return; }
+    box.className = "group-ask";
+    const it = current();
+    box.replaceChildren(
+      h("div", null, h("b", { text: `${g.ids.length} other ${g.ids.length === 1 ? "row" : "rows"} in ${it.repo} show this exact evidence.` }),
+        ` Label ${g.ids.length === 1 ? "it" : "them all"} ${VLABEL[g.v]} too?`,
+        g.differ ? ` ${g.differ} already labelled differently stay as they are.` : ""),
+      h("div", { class: "row" },
+        h("button", { class: "btn primary", type: "button", onclick: applyGroup, text: `Label ${g.ids.length} more` }),
+        h("button", { class: "btn", type: "button", onclick: () => { S.groupAsk = null; renderGroupAsk(); if (S.auto) step(1); }, text: "Only this one" })));
+  }
+
+  /* ---------- render: decide ----------
+     What the owner has picked or typed and not saved lives in S.drafts, so a snapshot that
+     arrives mid-answer never undoes it; the view is not rebuilt while a field has focus. */
+  function renderDecide() {
+    const root = $("view-decide");
+    if (root.contains(document.activeElement) && document.activeElement.tagName === "TEXTAREA") { S.decideStale = true; return; }
+    S.decideStale = false;
+    const head = h("div", { class: "inbox-head" }, h("span", { class: "eyebrow", text: "Choices only you can make" }),
+      h("h1", { style: "font-size:clamp(24px,6vw,32px);font-weight:700;letter-spacing:-.02em", text: "Decisions" }));
+    if (!S.decisions.length) {
+      root.replaceChildren(head, h("div", { class: "panel" }, h("p", { class: "muted", style: "margin:0", text: S.db ? "No decisions waiting. Claude adds them here when a choice is yours." : S.connecting ? "Connecting…" : "Decisions load when the console is open in claude.ai while signed in." })));
+      return;
+    }
+    root.replaceChildren(head, ...S.decisions.map((d) => {
+      const a = S.answers[d.id] || {};
+      const draft = S.drafts[d.id];
+      const name = "opt-" + d.id;
+      const picked = draft && draft.choice != null ? draft.choice : a.choice || "";
+      const noteId = "dn-" + d.id;
+      const pendingHere = S.pending.has("answers/" + d.id);
+      const btn = h("button", { class: "btn primary", type: "button", text: a.choice ? "Update answer" : "Save answer", disabled: S.readOnly || !S.db ? true : null });
+      const changedElsewhere = draft && (a.at || "") !== draft.base;
+      const form = h("div", { class: "decision" },
+        h("span", { class: "eyebrow", text: d.kind || "Decision" }),
+        h("h2", { text: d.title }),
+        d.question ? h("p", { class: "question", text: d.question }) : null,
+        d.context ? h("p", { class: "context", text: d.context }) : null,
+        h("fieldset", { class: "options" }, h("legend", { class: "section-h", text: "Your answer" }),
+          (d.options || []).map((o) => h("label", { class: "opt" },
+            h("input", { type: "radio", name, value: o.id, checked: picked === o.id ? true : null }),
+            h("span", null, h("b", { text: o.label }), d.recommended === o.id ? h("span", { class: "rec", text: "Claude recommends" }) : null,
+              o.detail ? h("span", { class: "d", text: o.detail }) : null)))),
+        h("div", null, h("label", { class: "lbl", for: noteId, text: "Note (optional)" }), h("textarea", { id: noteId })),
+        changedElsewhere ? h("p", { class: "warn-line", text: `A newer answer was saved elsewhere${a.at ? " at " + fmtTime(a.at) : ""}. Saving now replaces it.` }) : null,
+        h("div", { class: "row" }, btn,
+          pendingHere ? h("span", { class: "muted small", text: S.failed.has("answers/" + d.id) ? "Not saved yet, kept on this device" : "Saving…" })
+            : a.choice ? h("span", { class: "answered", text: `Answered ${fmtTime(a.at)}` }) : null));
+      const ta = form.querySelector("textarea");
+      ta.value = draft && draft.note != null ? draft.note : a.note || "";
+      const touch = () => (S.drafts[d.id] = S.drafts[d.id] || { base: a.at || "" });
+      ta.addEventListener("input", () => { touch().note = ta.value; });
+      for (const r of form.querySelectorAll("input[type=radio]")) r.addEventListener("change", () => { touch().choice = r.value; });
+      btn.addEventListener("click", async () => {
+        const sel = form.querySelector("input[type=radio]:checked");
+        if (!sel) { toast("Pick one option first"); return; }
+        const body = { choice: sel.value, note: ta.value, at: new Date().toISOString(), by: S.uid || "" };
+        delete S.drafts[d.id];
+        btn.disabled = true;
+        const p = queueWrite("answers/" + d.id, "replace", body);
+        renderDecide(); renderInbox(); renderCounts();
+        toast((await p) ? "Answer saved" : "Answer not saved yet. It is kept on this device; tap Retry at the top.");
+        renderDecide();
+      });
+      return form;
+    }));
+  }
+
+  /* ---------- render: read ---------- */
+  function renderDocTabs() {
+    const docs = (S.manifest && S.manifest.docs) || [];
+    if (!S.doc || !docs.some((d) => d.id === S.doc)) S.doc = docs.length ? docs[0].id : null;
+    $("doc-tabs").replaceChildren(...docs.map((d) => h("button", { type: "button", "aria-pressed": String(d.id === S.doc), "data-doc": d.id, onclick: () => openDoc(d.id), text: d.title })));
+    $("doc-links").replaceChildren(...docs.map((d) => h("button", { class: "doc-link", type: "button", onclick: () => { S.doc = d.id; show("read"); } },
+      h("span", { text: d.title }), h("span", { class: "muted small mono", text: d.source || "" }))));
+  }
+  async function openDoc(id) {
+    const docs = (S.manifest && S.manifest.docs) || [];
+    const d = docs.find((x) => x.id === id) || docs[0];
+    if (!d) return;
+    S.doc = d.id; savePrefs();
+    for (const b of $("doc-tabs").children) b.setAttribute("aria-pressed", String(b.dataset.doc === d.id));
+    $("doc-note-title").textContent = `Note about ${d.title.toLowerCase()}`;
+    renderSent();
+    const prose = $("prose");
+    if (!S.docCache[d.id]) {
+      prose.replaceChildren(h("p", { class: "muted", text: "Loading…" }));
+      try {
+        const r = await fetch(d.file, { cache: "no-cache" });
+        if (!r.ok) throw new Error(r.status);
+        S.docCache[d.id] = await r.text();
+      } catch {
+        prose.replaceChildren(h("p", { class: "muted", text: `${d.title} could not be loaded.` }));
+        return;
+      }
+    }
+    if (S.doc !== d.id) return;
+    const md = S.docCache[d.id];
+    if (window.marked && window.DOMPurify) {
+      prose.innerHTML = DOMPurify.sanitize(marked.parse(md, { gfm: true }));
+      for (const t of prose.querySelectorAll("table")) {
+        const heads = [...t.querySelectorAll("thead th")].map((th) => th.textContent.trim());
+        for (const tr of t.querySelectorAll("tbody tr")) [...tr.children].forEach((td, k) => td.setAttribute("data-label", heads[k] || ""));
+        const w = h("div", { class: "table-wrap" }); t.replaceWith(w); w.append(t);
+      }
+      for (const a of prose.querySelectorAll("a[href]")) {
+        const href = a.getAttribute("href");
+        const local = docs.find((x) => x.source && (href === x.source.split("/").pop() || href === x.source));
+        if (local) { a.href = "#read"; a.addEventListener("click", (e) => { e.preventDefault(); openDoc(local.id); window.scrollTo(0, 0); }); continue; }
+        if (!/^[a-z]+:/i.test(href) && !href.startsWith("#")) a.href = REPO_URL + href;
+        if (!href.startsWith("#")) { a.target = "_blank"; a.rel = "noopener"; }
+      }
+    } else {
+      prose.replaceChildren(h("pre", { style: "white-space:pre-wrap;margin:0;font:14px/1.6 var(--font-mono)", text: md }));
+    }
+  }
+  function renderSent() {
+    const fill = (el, docId) => {
+      const mine = S.notes.filter((n) => n.doc === docId).slice(0, 5);
+      el.replaceChildren(...mine.map((n) => h("p", null,
+        h("time", { text: n.unsent ? (S.failed.has("notes/" + n.id) ? "Not sent yet, kept on this device" : "Sending…") : `Sent ${fmtTime(n.at)}${n.read ? " · read by Claude" : ""}` }), n.text)));
+    };
+    fill($("general-sent"), "general");
+    if (S.doc) fill($("doc-sent"), S.doc);
+  }
+  async function sendNote(docId, ta, btn) {
+    const text = ta.value.trim();
+    if (!text) { toast("Write the note first"); return; }
+    if (!S.db || S.readOnly) { toast("Saving is off in this view"); return; }
+    const id = "n-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+    const body = { doc: docId, text, at: new Date().toISOString(), by: S.uid || "" };
+    btn.disabled = true;
+    ta.value = "";
+    const p = queueWrite("notes/" + id, "replace", body);
+    renderSent();
+    const ok = await p;
+    btn.disabled = false;
+    renderSent();
+    toast(ok ? "Note sent to Claude" : "Note not sent yet. It is kept on this device; tap Retry at the top.");
+  }
+
+  /* ---------- events ---------- */
+  function bind() {
+    for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => show(b.dataset.view));
+    for (const b of document.querySelectorAll(".v")) b.addEventListener("click", () => choose(b.dataset.v));
+    $("prev").addEventListener("click", () => step(-1));
+    $("next").addEventListener("click", () => step(1));
+    $("list-toggle").addEventListener("click", () => toggleList());
+    $("auto").addEventListener("change", (e) => { S.auto = e.target.checked; savePrefs(); });
+    const onFilter = () => {
+      flushNote();
+      S.filter = { status: $("f-status").value, rule: $("f-rule").value, repo: $("f-repo").value };
+      ensureCurrent(); renderCard(); renderList(); renderPos(); savePrefs();
+    };
+    for (const id of ["f-status", "f-rule", "f-repo"]) $(id).addEventListener("change", onFilter);
+    $("send-general").addEventListener("click", () => sendNote("general", $("general-note"), $("send-general")));
+    $("send-doc-note").addEventListener("click", () => sendNote(S.doc, $("doc-note"), $("send-doc-note")));
+    $("view-decide").addEventListener("focusout", () => setTimeout(() => { if (S.decideStale) renderDecide(); }, 0));
+    $("copy-handback").addEventListener("click", async () => {
+      const text = $("handback").textContent;
+      try { await navigator.clipboard.writeText(text); toast("Copied"); }
+      catch {
+        const r = document.createRange(); r.selectNodeContents($("handback"));
+        const s = getSelection(); s.removeAllRanges(); s.addRange(r);
+        toast("Selected: copy it with your device");
+      }
+    });
+    document.addEventListener("keydown", (e) => {
+      if (S.view !== "label" || e.metaKey || e.ctrlKey || e.altKey) return;
+      const tag = (e.target && e.target.tagName) || "";
+      if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") { if (e.key === "Escape") e.target.blur(); return; }
+      if (e.key === "1") choose("tp");
+      else if (e.key === "2") choose("fp");
+      else if (e.key === "3") choose("unclear");
+      else if (e.key === "ArrowRight" || e.key === "j") step(1);
+      else if (e.key === "ArrowLeft" || e.key === "k") step(-1);
+      else if (e.key === "n" && $("note")) { e.preventDefault(); $("note").focus(); }
+    });
+    // A phone may freeze or drop the page when it goes to the background: save the note first.
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushNote(); });
+    window.addEventListener("pagehide", flushNote);
+    window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS.includes(v)) show(v); });
+  }
+
+  function start(data) {
+    const prefs = store.get("prefs", {});
+    const st = { ...prefs, ...(data || {}) };
+    if (st.setId) S.setId = st.setId;
+    if (st.cur) S.cur = st.cur;
+    if (st.doc) S.doc = st.doc;
+    if (typeof st.auto === "boolean") S.auto = st.auto;
+    if (st.filter && typeof st.filter === "object") S.filter = { ...S.filter, ...st.filter };
+    // Changes kept from an earlier visit show at once; restoreKept() saves them once it
+    // has checked that nothing newer was stored meanwhile.
+    for (const k of store.keys("p:")) { const e = store.get(k, null); if (e && e.path) S.pending.set(e.path, e); }
+    const hv = location.hash.slice(1);
+    bind();
+    show(VIEWS.includes(hv) ? hv : (VIEWS.includes(st.view) ? st.view : "inbox"));
+    renderInbox();
+    setSave();
+    loadManifest();
+    connect();
+  }
+  const hot = window.claude && window.claude.hot;
+  if (hot && typeof hot.snapshot === "function") hot.snapshot(() => ({ view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter }));
+  if (hot && typeof hot.ready === "function") hot.ready(start); else start((hot && hot.data) || {});
+})();
+</script>
