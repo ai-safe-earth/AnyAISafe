@@ -33,8 +33,9 @@ One behaviour at a time, in the order `catalogue.md` gives. For each:
    reports a verdict.
 3. **Use-case mode.** Write the scenario file for `aisafe probe`: the turns a person
    would send, the deterministic detector that reads the reply, and what the detector
-   firing means. (Scenario files are the planned extension of `probe`; today it sends
-   one request per case.)
+   firing means. A scenario family (`kind: scenario` in `src/aisafe/probes/`) sends
+   several turns as one conversation and judges the reply to the last;
+   `crisis_disclosure` is the first.
 4. **Measure.** Run the rule over the corpus (`corpus.yaml`), label every sampled finding
    by hand as `tp`, `fp` or `unclear`, and score precision with `bench/score.py`. A
    number goes on the rule only when it comes from a labelled row. A rule below 0.80
@@ -96,24 +97,26 @@ licences were not selection criteria; being public and facing a person were.
 | path | what |
 |---|---|
 | `README.md` | this file: questions, method, corpus, how to reproduce |
+| `background.md` | why the study matters: the evidence on attention, persuasion and bonds, and the law as of 2026-10-29, each source with its strength |
 | `catalogue.md` | the 40 behaviours, their checks, the build order and the status of each |
 | `corpus.yaml` | the pinned repositories |
 | `log.md` | dated journal of every step, number and decision |
-| `results/` | raw audit reports per repo and the two findings CSVs; `findings-audit.csv` is the file that gets labelled |
+| `results/` | runs 1 and 2: raw audit reports per repo and the two findings CSVs (the before-state, not labelled) |
+| `results/run3/` | run 3, the current code: reports and CSVs; `run3/findings-audit.csv` is the file that gets labelled |
 | `results/notes-site.csv`, `notes-unit.csv` | what each matched line or unit is and whether it faces a person, written by reading the clone; a labelling aid with no verdicts |
 | `results/sweep/corpus-sweep.json` | the reference set: every line the sweep found, with its skeptics and its status (verified, refuted, unverified) |
-| `results/precision-audit.md` | written by `bench/score.py` once every sampled row is labelled |
+| `results/run3/precision-audit.md` | written by `bench/score.py` once every sampled row is labelled |
 | `console/index.html` | the review console: a private claude.ai page where the owner labels findings, answers open decisions and reads these documents, from a phone or any browser |
 | `console/console.py` | `build` turns a labelling CSV into the console's review set (each finding with its code lines, reading note and the question to judge); `import` copies the owner's labels back into the CSV and writes `review-notes.csv` beside it |
 
 ## Reproduce
 
 ```bash
-# 1. audit the corpus with the persons rules only (clones cached in bench/.cache)
-python bench/run.py --tool audit --corpus research/corpus.yaml --out-dir research/results \
-    --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107 --keep-clones
+# 1. audit the corpus with the eight persons rules (clones cached in bench/.cache)
+python bench/run.py --tool audit --corpus research/corpus.yaml --out-dir research/results/run3 \
+    --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107,AUD-1108 --keep-clones
 
-# 2. label research/results/findings-audit.csv by hand: tp / fp / unclear
+# 2. label research/results/run3/findings-audit.csv by hand: tp / fp / unclear
 #    (or in the review console: build the set, label there, then import)
 python research/console/console.py build --set run3 \
     --csv research/results/run3/findings-audit.csv --results research/results/run3/results-audit
@@ -121,18 +124,23 @@ python research/console/console.py import --set run3 \
     --csv research/results/run3/findings-audit.csv --labels <exported label documents>
 
 # 3. score
-python bench/score.py --tool audit --csv research/results/findings-audit.csv \
-    --results research/results/results-audit --out research/results/precision-audit.md
+python bench/score.py --tool audit --csv research/results/run3/findings-audit.csv \
+    --results research/results/run3/results-audit --out research/results/run3/precision-audit.md
 ```
 
 Re-running step 1 keeps the verdicts already entered (matched on repo, file, line, rule).
+Runs 1 and 2 (seven rules, before build step 1) used `--out-dir research/results` and stay
+there, unlabelled, as the before-state.
 
 ## Paper outline (to fill as the study runs)
 
 1. Problem: safety tooling defends the model from the user; nothing checks the product
-   against the user.
+   against the user. The attention economy showed the harm with simple machine learning;
+   language models add profiling from conversation, persuasion and bonds
+   (`background.md`, sections 1 to 3).
 2. Catalogue of behaviours and their legal hooks (EU AI Act Art. 5 and 50, DSA Art. 25
-   and 28, GDPR Art. 9 and 22, California SB 243).
+   and 28, GDPR Art. 9 and 22, California SB 243 and SB 1119, New York GBL Art. 47;
+   `background.md`, section 4).
 3. Two detection modes: static evidence in code and prompts; scripted conversations.
 4. Corpus and measurement protocol.
 5. Results per behaviour: precision, what the false positives were, what cannot be seen.

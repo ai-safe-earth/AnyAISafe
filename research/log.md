@@ -467,3 +467,40 @@ description string reads the same as an instruction to the rule. The guide now
 describes the instruction without quoting it. The same shape (a prompt-writing guide,
 a moderation rubric, a test fixture describing what to reject) is worth checking for
 when the AUD-1105 rows are labelled.
+
+## 2026-10-29 — the background, and a README that says what the tool is for
+
+**Decision (owner).** The README must say plainly that the package specialises in
+auditing prompts and algorithms; that the aim is ethical and respectful behaviour toward
+the person, not only compliance with the EU AI Act and other laws; and why: the attention
+economy showed the harm with simple machine learning, and language models add profiling,
+persuasion and emotional bonds. The laws were to be checked.
+
+**What was checked.** Two agents searched the evidence and the law. The newest legal
+items (the AI Act Digital Omnibus dates, California SB 1119, the EU KIDS Act proposal) and
+the three 2026 court and regulator events were searched again by hand, and every DOI was
+resolved on Crossref. `background.md` holds the result, with a strength label on each
+claim and a note wherever a source was seen only in press coverage or an official site
+would not load.
+
+**What the evidence does not say, kept in on purpose.** A chronological feed changed no
+political attitudes over three months (Guess 2023, Nyhan 2023); the effect of social media
+on teenagers is contested; the moral-contagion result is disputed; De Freitas 2025 is not
+peer reviewed; the OpenAI figures are the company's own. The claim that holds is
+narrower than the public debate: a system tuned for engagement learns what moves each
+person and acts on it.
+
+**What the study's legal hooks were missing.** The catalogue's law column names EU law
+and California SB 243; newer law adds to it. Art. 50 of the AI Act
+(tell people it is an AI) has applied since 2 August 2026, and the Digital Omnibus moved
+the high-risk rules but not Art. 50. California SB 1119 (signed 10 September 2026) bans,
+for children, bots that encourage emotional reliance or flatter excessively, and requires
+independent audits. Washington HB 2225 writes catalogue rows 4, 5, 6, 13 and 19 into law
+for minors. The rules' own references still list only AI Act and GDPR articles; adding
+SB 243 and New York GBL Art. 47 to AUD-1105 and AUD-1108 is a candidate change, not made.
+
+**README.** It now opens with what the tool is for, gives the case with its sources,
+lists the eight persons rules in plain words before the agent-safety table, and reports
+the study's status. Numbers that had drifted were corrected from tool output: the
+self-audit reports 27 findings (the README said 33), and this repository is 152 files,
+audited in about 19 seconds.

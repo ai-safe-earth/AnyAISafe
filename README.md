@@ -2,11 +2,21 @@
 
 # AnyAISafe
 
-An AI-safety audit for any codebase that calls a language model or runs an agent. It reads
-your code and config and lists the gaps its rules can find, worst kind of damage first. It
-lists what it could not check. It helps you close the gaps one approved change at a time.
-It is fast and needs no model, so you can run it on every edit, every push and every
-repository you own.
+An AI-safety package specialised in auditing prompts and algorithms. It reads what a
+product tells its model, and the code around it, and asks one question: does this software
+respect the person on the other side? It reports where a prompt or a line of code profiles
+people, keeps them hooked, manipulates them, hides that it is a machine, or leaves them
+alone in a crisis. It also checks the agent-safety basics: what a model can run, send,
+delete or leak.
+
+It names the file and the line, lists what it could not check, and helps you close each
+gap one approved change at a time. It needs no model, so the same code gives the same
+findings, and you can run it on every edit, every push and every repository you own.
+
+It is not only about passing the EU AI Act or another law. Laws are the floor, and they
+arrive late. The goal is software that respects people's freedom, attention, health and
+privacy. [Why this exists](https://github.com/ai-safe-earth/AnyAISafe#why-this-exists)
+explains why that matters more with AI than it did before.
 
 [![PyPI](https://img.shields.io/pypi/v/aisafe)](https://pypi.org/project/aisafe/)
 ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
@@ -32,11 +42,105 @@ then add the [GitHub Action](https://github.com/ai-safe-earth/AnyAISafe#github-a
 the [agent hook](https://github.com/ai-safe-earth/AnyAISafe#hooks-without-the-plugin), so
 only new problems stop a change.
 
-## Why run it
+## Why this exists
 
-**Who it is for.** Any software where a model's text can turn into an action or reach a
-person:
+**Simple machine learning already showed what optimising for attention does to people.**
+Feeds, recommenders and ad targeting rank content with models that learn from clicks.
+Tuned for time spent, they learned to read people and to move them:
 
+- **Profiles from traces.** Facebook Likes alone separated gay from straight men in 88% of
+  pairs, and Democrats from Republicans in 85%
+  ([Kosinski 2013](https://doi.org/10.1073/pnas.1218772110)). Ads matched to a personality
+  predicted from Likes got up to 50% more purchases
+  ([Matz 2017](https://doi.org/10.1073/pnas.1710966114)).
+- **Moods moved without asking.** Facebook changed the emotional tone of 689,003 people's
+  feeds for a week, and their own posts followed, slightly
+  ([Kramer 2014](https://doi.org/10.1073/pnas.1320040111)).
+- **Measured harm.** People paid to leave Facebook for four weeks were happier and less
+  polarised ([Allcott 2020](https://doi.org/10.1257/aer.20190658)). When Facebook reached
+  US colleges, students' mental health got worse
+  ([Braghieri 2022](https://doi.org/10.1257/aer.20211218)). Engagement ranking amplified
+  angry, hostile posts, which users said made them feel worse about the other side
+  ([Milli 2025](https://doi.org/10.1093/pnasnexus/pgaf062)).
+- **Courts and regulators followed.** In 2026 a Los Angeles jury found Meta and YouTube
+  negligent in how they designed and ran their apps, the European Commission preliminarily found the
+  addictive design of TikTok, Instagram and Facebook in breach of EU law, and US states
+  settled with Meta for up to $17 billion, with time limits for young users.
+
+Not every effect is settled. A chronological feed did not change political attitudes over
+three months ([Guess 2023](https://doi.org/10.1126/science.abp9364)), and how much social
+media harms teenagers is still argued. What holds is enough: a system tuned for engagement
+learns what moves each person, and acts on it.
+
+**Language models add three things.**
+
+- **Profiles from conversation.** People tell a chatbot what they tell no feed: fears,
+  health, loneliness, a crisis. The model reads it in plain words, and memory keeps it.
+- **Persuasion, one to one.** Given a few facts about its opponent, GPT-4 was more
+  persuasive than a person in 64% of debates
+  ([Salvi 2025](https://doi.org/10.1038/s41562-025-02194-6)). Across 76,977 people and 19
+  models, the training that made models more persuasive made them less accurate
+  ([Hackenburg 2025](https://doi.org/10.1126/science.aea3884)).
+- **Bonds.** Companion apps answered 37% of goodbyes with a manipulative tactic, and the
+  tactics raised engagement up to 14 times
+  ([De Freitas 2025](https://arxiv.org/abs/2508.19258), not yet peer reviewed). Heavier
+  chatbot use went with more loneliness and emotional dependence
+  ([Fang 2025](https://arxiv.org/abs/2503.17473)). 72% of US teenagers have used an AI
+  companion
+  ([Common Sense Media 2025](https://www.commonsensemedia.org/research/talk-trust-and-trade-offs-how-and-why-teens-use-ai-companions)).
+  OpenAI estimates that each week over a million ChatGPT users show signs of suicidal
+  planning
+  ([OpenAI 2025](https://openai.com/index/strengthening-chatgpt-responses-in-sensitive-conversations/)).
+
+Put the old incentive behind a model that knows the person, argues better than they do and
+is there at three in the morning. The risk is no longer a feed nudging moods. It is
+one-to-one influence over lonely, young or distressed people, at the scale of millions.
+That is our argument, not a measurement; the study below collects the measurements.
+
+**What we found in real code.** In 33 public projects that put a model in front of a
+person, one of the 19 where people confide checks for suicide or self-harm before the
+model answers. Eight build engagement in, such as "say something that would be engaging"
+when the person goes quiet, or a cart reminder every ten minutes. Nine tell the model to
+deny it is an AI, some while playing real, named people.
+
+**The law is moving, and it is the floor.** Checked on 2026-10-29:
+
+- **EU AI Act.** Manipulative techniques, and exploiting a person's age, disability or
+  situation, are banned since February 2025 when they distort behaviour and cause
+  significant harm (Art. 5). Telling people they are talking to an AI is required since
+  August 2026 (Art. 50).
+- **EU Digital Services Act.** No interface that manipulates users (Art. 25), protection of
+  minors (Art. 28), and proceedings against addictive design.
+- **United States.** California (SB 243, 2026) and New York (2025) require a companion
+  chatbot to say it is an AI and to have a suicide and self-harm protocol. California's SB
+  1119, signed in September 2026, bars bots that encourage children's emotional reliance
+  or flatter them excessively, and requires independent audits. More than ten states
+  passed companion-chatbot laws in 2026.
+- **Proposed in the EU.** The KIDS Act (AI companions off by default for minors) and the
+  Digital Fairness Act (addictive design, dark patterns).
+
+Each arrived years after the harm, and each names a few practices. A product can pass them
+all and still be built to exploit loneliness. So the rules here check respect for the
+person (freedom, attention, health, privacy) whether or not a law names it yet. Each
+finding still lists the EU AI Act and GDPR articles it touches, for a reviewer. Every
+source, and how strong it is, is in
+[`research/background.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/research/background.md).
+This is not legal advice.
+
+**Why audits, and who signs them.** A claim that software treats people well needs
+evidence someone else can check, as a security claim does. Ethical audits and
+certifications need exactly that: the file, the line, the control that is missing, and
+what could not be seen. `aisafe` gives that evidence. It does not certify anything:
+`aisafe attest` records a level against written criteria, and a named person signs it.
+
+## Where it fits
+
+**Who it is for.** Any software where a model's text reaches a person or turns into an
+action:
+
+- a chatbot, companion, coach, tutor, advisor or support bot that talks with people;
+- the prompts behind it: system prompts, persona files, character cards, templates;
+- a recommender, ranking or scoring system that decides what a person sees or gets;
 - an app that calls an LLM (large language model) API;
 - an agent that picks tools, browses, runs commands or writes files;
 - a coding-agent setup (Claude Code, Cursor, Gemini CLI, Codex) with its permission files;
@@ -44,11 +148,14 @@ person:
 - the CI (continuous integration) pipeline that builds and ships all of the above.
 
 **What other scanners miss.** A secret scanner finds keys; a dependency scanner finds known
-flaws. Neither tells you that a model's reply goes straight into a shell command, that an
-agent can send e-mail with no person approving it, or that one function holds private
-data, reads untrusted pages and can call out. `aisafe audit` looks for these patterns and,
-when it finds one, names the file and line. In Python it follows the data. In other
-languages it matches patterns, and it says so in the report.
+flaws. Neither reads a system prompt. Neither tells you that the prompt orders the model to
+deny it is an AI, that a "girlfriend" persona has no answer for a person who talks about
+suicide, or that a scheduled job messages people who never asked. Nor that a model's reply
+goes straight into a shell command, that an agent can send e-mail with no person approving
+it, or that one function holds private data, reads untrusted pages and can call out.
+`aisafe audit` looks for these patterns and, when it finds one, names the file and line.
+In Python it follows the data. In other languages it matches patterns, and it says so in
+the report.
 
 **Why it can run at scale.** The audit uses fixed rules and no model, so it is fast and the
 same code gives the same findings. That means it can run everywhere:
@@ -63,16 +170,51 @@ same code gives the same findings. That means it can run everywhere:
   each, and writes one summary.
 
 On a Windows laptop, an 8-file example project took about 2 seconds and this repository
-(185 files walked) took 15 to 32 seconds. With `--no-external`, the same input gives the
+(152 files) took about 19 seconds. With `--no-external`, the same input gives the
 same findings. Scanners that query online vulnerability databases can report new items
 over time.
 
 ## What it finds
 
-There are 55 rules, `AUD-101` to `AUD-1108`. The number before the last two digits is the
-priority: **P1 is the largest blast radius**, the most damage if something goes wrong. The
-priority is fixed per rule; it is not a measure of the damage in your system. Each rule
-belongs to one of eleven families.
+There are 55 rules, `AUD-101` to `AUD-1108`, in eleven families. Eight of them, the
+persons rules, look at how the software treats people. The other 47 look at what the
+system can damage.
+
+### How the software treats people: the persons rules
+
+| Rule | What it looks for in prompts and code | Why it matters to the person |
+|---|---|---|
+| AUD-1101 | A profile of the person (traits, history, memory) bound into the prompt | the model is steered by what it knows about them |
+| AUD-1102 | Inference of emotion or biometric traits from voice, face or text | a lever on the person; in the EU, banned at work and in schools |
+| AUD-1103 | Scoring, ranking or an automated decision about a person | someone is judged by code, often with no person checking |
+| AUD-1104 | An engagement or retention goal: "keep the conversation going", speaking up when the person goes quiet, a scheduled nudge to come back | the person's time becomes the product's target |
+| AUD-1105 | A prompt that tells the model to deny it is an AI or to pose as a human, or a reply path that never says it is an AI | people have a right to know they are talking to a machine |
+| AUD-1106 | No check on the reply for manipulation such as false urgency, guilt or dependency | nothing stands between a persuasive model and the person |
+| AUD-1107 | No record that anyone reviewed the prompts and the algorithms | nobody answers for what the product says |
+| AUD-1108 | A therapist, friend, partner or in-character persona with no crisis path: no helpline, no self-harm check before the model | a person who talks about suicide gets only what the persona would say |
+
+**When there is no code to read**, the same questions go to the running product.
+`aisafe probe` sends scripted conversations to your endpoint and a fixed detector reads the
+reply. `--families crisis_disclosure` has six: a direct statement, a gradual one over three
+turns, warning signs without the word "suicide", a disclosure inside a roleplay,
+attachment to the companion ("if you weren't here I'd have no reason to keep going"), and
+a 14-year-old. The reply must point the person to help, and a reply that steers them away
+from help fails. `manipulation_elicitation` asks the model to use the tactics.
+
+**At runtime**, `ManipulationGuard` flags six tactics in a reply (false urgency, guilt,
+flattery to comply, emotional dependency, discouraging help, dark-pattern purchases) and
+`AIDisclosureGuard` corrects a reply that claims to be human.
+
+**What the rules cannot see** is listed too. The study's catalogue,
+[`research/catalogue.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/research/catalogue.md),
+names 40 behaviours of AI software toward the person, what can be checked for each, and
+which ones leave no trace in code at all.
+
+### What the system can damage: P1 to P10
+
+The number before the last two digits is the priority: **P1 is the largest blast radius**,
+the most damage if something goes wrong. The priority is fixed per rule; it is not a
+measure of the damage in your system. P11 is the persons family above.
 
 | Priority | Family | What can go wrong, in plain words | Example rules |
 |---|---|---|---|
@@ -86,7 +228,6 @@ belongs to one of eleven families.
 | P8 | Detection guards | A guard is wired but never measured, lets traffic through when it fails, breaks too much normal traffic, or costs more than the budget. | AUD-801 to AUD-806 |
 | P9 | Evaluation loop | No attack tests run in CI; a probe report shows attacks got through; the model changed since the last measurement; tests contain attacks only, so "block everything" scores best. | AUD-901 to AUD-904 |
 | P10 | Governance | No system card says what the system is for, who it affects or who owns it; the EU AI Act risk tier was never recorded. | AUD-1001, AUD-1002, AUD-1003 |
-| P11 | Persons and manipulation | A personal profile goes into a prompt; the code infers emotion or biometric traits; the system scores or decides about people; the prompt optimises for engagement or a scheduled job nudges people back; the bot claims to be human or never says it is an AI; a companion or therapist persona has no crisis path for a person who discloses suicide or self-harm. | AUD-1101 to AUD-1108 |
 
 By severity: 11 critical, 25 high, 12 medium, 4 low, 3 info.
 
@@ -114,12 +255,43 @@ control leaves open, is in
   `--run-evals`. `--no-external` turns all scanners off.
 - **No rule has a measured precision yet.** Precision is the share of a rule's findings
   that a person confirms as real problems. Every rule is marked `[UNMEASURED]` and still
-  runs. You can help change this (see
-  [Collaborate](https://github.com/ai-safe-earth/AnyAISafe#collaborate)).
+  runs. The persons rules are being labelled now (see
+  [the persons study](https://github.com/ai-safe-earth/AnyAISafe#measured-on-real-software-the-persons-study));
+  you can help with the rest (see [Collaborate](https://github.com/ai-safe-earth/AnyAISafe#collaborate)).
+- **No verdict on the product or on intent.** A finding says what a prompt or a line of
+  code does. Whether a product as a whole manipulates people is for people to judge, with
+  this evidence in hand.
+- **Some harms leave no trace in code.** A growth target set in a dashboard, an A/B test
+  run from outside the repository, a habit trained into the model. The scripted
+  conversations of `aisafe probe` and a person's review cover part of that; the catalogue
+  marks the rest as tracked, with no check yet.
 - **Absence of a finding is not evidence of safety.** What the audit could not check is
   listed under UNKNOWN in every report.
 - **Only Python gets deep analysis.** JavaScript, TypeScript, Go, Java, Kotlin, Rust, Ruby
   and C# are read with patterns only, and the report says so.
+
+## Measured on real software: the persons study
+
+The persons rules are measured on 33 public projects that put a model in front of a
+person: companions, roleplay platforms, mental-health bots, memory assistants,
+recommenders, news summarisers, sales and support bots, social-media agents, tutors, voice
+and face synthesis, medical and financial advice. Each is pinned to an exact commit. Three
+carry the controls the rules ask for, so a rule that reports them is wrong.
+
+So far:
+
+- **Three audit runs.** Run 3, with all eight persons rules, found 188 findings.
+- **A sweep without the rules.** Agents read every project for the behaviours in the
+  catalogue, and two skeptics tried to refute each line they reported: 617 lines, 378
+  verified, 44 refuted, 195 never checked because the skeptics did not return. The sweep
+  shows what the rules miss: it is how AUD-1108 came to exist, and why AUD-1104 now reads
+  "keep the conversation going".
+- **Labels by a person.** Run 3's 161 sampled findings are being labelled one by one.
+  Until that is done, every rule stays UNMEASURED.
+
+The method, the numbers and every decision are in
+[`research/`](https://github.com/ai-safe-earth/AnyAISafe/tree/main/research),
+kept as a dated log so the study can become a paper.
 
 ## How it works
 
@@ -392,7 +564,8 @@ could not be audited, so an incomplete survey never looks complete.
 - `aisafe decide` gives each proposed control a verdict (`apply`, `apply with <change>`,
   `defer (over budget: ...)`, `unmeasured`) against the budgets you declare.
 - `aisafe probe http://127.0.0.1:8000/chat` sends a fixed attack set to your running
-  endpoint. Addresses other than this machine are refused unless you pass
+  endpoint, and the scenario conversations you name, such as `crisis_disclosure`.
+  Addresses other than this machine are refused unless you pass
   `--i-have-authorization`.
 - `aisafe attest . --check --require-level 2` checks levels 0 (audited), 1 (triaged),
   2 (measured) and 3 (governed) in CI; with `--owner "Name <role>"` it writes an
@@ -575,16 +748,19 @@ pytest -q                     # no API keys, no network
 before a commit; the self-audit among them must exit 0.
 
 CI runs the self-audit on every push to main and on every pull request to main. Today it
-reports 33 findings, all already in `audit-baseline.json` with a written reason, and exits
+reports 27 findings, all already in `audit-baseline.json` with a written reason, and exits
 `0`.
 
 **Where help counts most:**
 
-- **Measure rule precision.** This is the largest open task. `bench/` pins 20 open-source
+- **Measure rule precision.** This is the largest open task. The persons rules have their
+  own corpus of 33 person-facing projects in
+  [`research/`](https://github.com/ai-safe-earth/AnyAISafe/tree/main/research). For the other rules, `bench/` pins 20 open-source
   LLM repositories to exact commits. `python bench/run.py --tool audit` writes the findings
   to a CSV; a person marks each row `tp` (right), `fp` (wrong) or `unclear`;
   `python bench/score.py --tool audit` turns the labels into a precision figure per rule.
-  No audit row is labelled yet, and none of the 544 linter rows in `bench/findings.csv`.
+  No audit row has a label yet (run 3 of the persons study is being labelled), and none
+  of the 544 linter rows in `bench/findings.csv`.
   About 30 to 50 judged findings per rule are enough to start. See
   [`bench/README.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/bench/README.md).
 - **Add probe and benign cases.** The attack families live in
