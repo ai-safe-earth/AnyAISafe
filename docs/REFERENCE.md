@@ -4,8 +4,9 @@
 
 # AnyAISafe
 
-> Audit, measure, price, apply and attest AI-safety controls for any software that
-> calls a model or runs an agent. Runtime guardrails are one part of it, not the whole.
+> Audit the prompts and algorithms of AI software for how they treat the person using
+> it, and for agent-safety gaps; measure, price, apply and attest the controls. Runtime
+> guardrails are one part of it, not the whole.
 
 ![Pillar](https://img.shields.io/badge/BUILD-EARLY_STAGE-2E7D74?style=flat-square&labelColor=131A21)
 [![Python](https://img.shields.io/badge/PYTHON-3.10+-1F5D7A?style=flat-square&labelColor=131A21)](https://www.python.org/downloads/)
@@ -29,7 +30,7 @@
 
 AnyAISafe has two parts.
 
-The developer tools are the `aisafe` command and the `ai-safety-audit` agent skill. They audit a repository that calls a model or runs an agent, and list its AI-safety gaps in order of blast radius. They measure what each runtime guard catches, breaks and costs, and price each proposed control in latency, tokens and dollars against the budgets you declare. The skill applies the plan one change at a time, each with a person's approval. `aisafe attest` checks the documents the other commands wrote against a level's criteria, and a named owner signs the result. The same audit runs from coding-agent hooks, in CI and over a fleet of repositories. See [Audit](#audit) and [System card & live probing](#system-card--live-probing).
+The developer tools are the `aisafe` command and the `ai-safety-audit` agent skill. They audit a repository that calls a model or runs an agent: how its prompts and code treat the person using it (profiling, engagement design, manipulation, a hidden AI nature, no crisis path), and its AI-safety gaps in order of blast radius. They measure what each runtime guard catches, breaks and costs, and price each proposed control in latency, tokens and dollars against the budgets you declare. The skill applies the plan one change at a time, each with a person's approval. `aisafe attest` checks the documents the other commands wrote against a level's criteria, and a named owner signs the result. The same audit runs from coding-agent hooks, in CI and over a fleet of repositories. See [Audit](#audit) and [System card & live probing](#system-card--live-probing).
 
 The runtime library is the other part: a layered, async-first set of guards that slots into any LLM pipeline. Every check runs at the right moment:
 
@@ -942,8 +943,8 @@ criteria:
 | level | name | criteria |
 |---|---|---|
 | 0 | audited | a fresh audit report that names HEAD and lists what it could not establish |
-| 1 | triaged | no open finding at or above high, external scanners attempted, every baseline fingerprint carries a reason |
-| 2 | measured | fresh measure and decision documents, no guard over a declared threshold or unavailable, a probe report (if any) with nothing through, AUD-901/903 closed |
+| 1 | triaged | no open finding at or above high, no open finding of the persons rules (AUD-1101 to 1106, 1108) at any severity, external scanners attempted, every baseline fingerprint carries a reason |
+| 2 | measured | fresh measure and decision documents, no guard over a declared threshold or unavailable, a probe report (if any) with nothing through, every `crisis_disclosure` case passed where the audit shows a confidant role or an AUD-1108 finding, AUD-901/903 closed |
 | 3 | governed | the card's purpose, affected persons, incident contact, risk tier and deployment set, a prompt review dated within 180 days, AUD-107/701/702/703/1107 closed, every accepted risk owned, no uncommitted changes |
 
 The level reached is the highest one with every criterion of it and of every level below

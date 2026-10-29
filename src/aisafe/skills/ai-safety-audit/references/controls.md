@@ -16,8 +16,11 @@ How to read this file:
   LLM03 supply chain, LLM04 data and model poisoning, LLM05 improper output handling, LLM06
   excessive agency, LLM07 system prompt leakage, LLM08 vector and embedding weaknesses,
   LLM09 misinformation, LLM10 unbounded consumption); `EU` = EU AI Act article (with the
-  paragraph and letter where one applies, `EU:Art.5(1)(a)`); `GDPR` = GDPR article; `NIST`
-  = AI RMF function and subcategory. The `controls` field in the report is the authoritative
+  paragraph and letter where one applies, `EU:Art.5(1)(a)`); `GDPR` = GDPR article;
+  `US-XX` = a law of that US state, by bill (`US-CA:SB243` and `US-CA:SB1119`, California's
+  companion-chatbot laws; `US-WA:HB2225`, Washington's) or by code article
+  (`US-NY:GBL-Art.47`, New York's AI companion law); `NIST` = AI RMF function and
+  subcategory. The `controls` field in the report is the authoritative
   tuple for the installed version; the tuples below were recorded when this file was
   written. They are evidence for a human reviewer. Never state or imply compliance with any
   of them, and never present a mapping as a verdict.
@@ -681,8 +684,8 @@ keeps a regex vocabulary in code from reading as an instruction to a model.
 - Package: detector, same control: no, `ManipulationGuard`. Leaves open: ManipulationGuard
   flags influence tactics in the response text; it does not see the objective in the prompt,
   which is removed or rewritten by hand.
-- Mapping: EU:Art.5(1)(a), EU:Art.5(1)(b), LLM09, NIST:GOVERN-1.1, NIST:MAP-5.1,
-  NIST:MEASURE-2.11.
+- Mapping: EU:Art.5(1)(a), EU:Art.5(1)(b), US-CA:SB1119, US-WA:HB2225, LLM09,
+  NIST:GOVERN-1.1, NIST:MAP-5.1, NIST:MEASURE-2.11.
 
 ### AUD-1105 AI nature concealed or no disclosure on the response path (high; `/no-disclosure`, `/synthetic` low)
 
@@ -695,8 +698,8 @@ keeps a regex vocabulary in code from reading as an instruction to a model.
   flags a response that claims to be human and can append the disclosure text on the output
   stage; a prompt that instructs the model to claim humanity is deleted by hand, and
   disclosure shown by the UI is outside the guard.
-- Mapping: EU:Art.50(1), EU:Art.50(2), EU:Art.5(1)(a), LLM09, NIST:GOVERN-1.1,
-  NIST:GOVERN-1.7.
+- Mapping: EU:Art.50(1), EU:Art.50(2), EU:Art.5(1)(a), US-CA:SB243, US-NY:GBL-Art.47, LLM09,
+  NIST:GOVERN-1.1, NIST:GOVERN-1.7.
 
 ### AUD-1106 No manipulation control on the response path (medium)
 
@@ -740,4 +743,5 @@ keeps a regex vocabulary in code from reading as an instruction to a model.
 - Package: measurement, same control: no, `aisafe probe`. Leaves open: aisafe probe sends
   crisis disclosures to the live endpoint and reports whether the reply carries a referral;
   it checks the behaviour from outside and adds no crisis check to the code.
-- Mapping: EU:Art.5(1)(b), EU:Art.9, NIST:MAP-5.1, NIST:MEASURE-2.6, NIST:MANAGE-1.3.
+- Mapping: EU:Art.5(1)(b), EU:Art.9, US-CA:SB243, US-CA:SB1119, US-NY:GBL-Art.47,
+  NIST:MAP-5.1, NIST:MEASURE-2.6, NIST:MANAGE-1.3.

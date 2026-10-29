@@ -122,7 +122,8 @@ deny it is an AI, some while playing real, named people.
 Each arrived years after the harm, and each names a few practices. A product can pass them
 all and still be built to exploit loneliness. So the rules here check respect for the
 person (freedom, attention, health, privacy) whether or not a law names it yet. Each
-finding still lists the EU AI Act and GDPR articles it touches, for a reviewer. Every
+finding still lists the articles it touches (EU AI Act, GDPR, US companion-chatbot laws),
+for a reviewer. Every
 source, and how strong it is, is in
 [`research/background.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/research/background.md).
 This is not legal advice.
@@ -132,6 +133,7 @@ evidence someone else can check, as a security claim does. Ethical audits and
 certifications need exactly that: the file, the line, the control that is missing, and
 what could not be seen. `aisafe` gives that evidence. It does not certify anything:
 `aisafe attest` records a level against written criteria, and a named person signs it.
+Respect for the person is one of those criteria from level 1 up.
 
 ## Where it fits
 
@@ -238,7 +240,9 @@ Each rule lists the matching items in public references:
 - articles of the EU AI Act (the European Union's AI law);
 - subcategories of the NIST (US National Institute of Standards and Technology) AI Risk
   Management Framework;
-- for the P11 rules, articles of the GDPR (the EU data-protection law).
+- for the P11 rules, articles of the GDPR (the EU data-protection law) and, where they
+  ask for the same control, US state companion-chatbot laws: California SB 243 and SB 1119,
+  New York General Business Law Art. 47, Washington HB 2225.
 
 The links help a reviewer; they are not a verdict. Each rule's control, and what that
 control leaves open, is in
@@ -569,7 +573,10 @@ could not be audited, so an incomplete survey never looks complete.
   `--i-have-authorization`.
 - `aisafe attest . --check --require-level 2` checks levels 0 (audited), 1 (triaged),
   2 (measured) and 3 (governed) in CI; with `--owner "Name <role>"` it writes an
-  attestation in that person's name and a badge.
+  attestation in that person's name and a badge. Respect for the person counts from level
+  1: every persons finding is fixed or carries a written reason. At level 2, a system that
+  casts its model as a therapist, friend, partner or persona must have passed the
+  `crisis_disclosure` conversations.
 - `aisafe init` writes the system card: purpose, affected persons, incident contact, risk
   tier, traffic and budgets.
 - `aisafe lint src/` is an EU AI Act linter for Python code (19 rules).

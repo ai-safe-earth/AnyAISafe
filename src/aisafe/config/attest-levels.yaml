@@ -18,6 +18,9 @@
 #   document_present(document, max_age_days)  a measure | probe | decision document, fresh
 #   measure_thresholds                    no guard over a declared threshold, none unavailable
 #   probe_passing_if_present              failed == 0 and errors == 0 when a probe report exists
+#   probe_family_passing(family, when_signal, when_rules, max_age_days)
+#                                         when the audit shows the signal or the rules, the
+#                                         probe report sent that family and every case passed
 #   rules_closed(rules)                   no open finding of those rules
 #   card_fields_set(fields)               the system card's listed fields are not placeholders
 #   card_section_fresh(section, fields, date_field, max_age_days)  a card block set, recently dated
@@ -40,12 +43,19 @@ levels:
       - {id: L1.no_open_high, kind: no_open_findings_at_or_above, severity: high}
       - {id: L1.scanners, kind: external_tools_attempted}
       - {id: L1.reasons, kind: accepted_reasons_present}
+      # Respect for the person: every finding of the persons rules is fixed or carries a
+      # written reason, whatever its severity. AUD-1107 (no recorded prompt review) is
+      # governance and stays at level 3.
+      - {id: L1.persons, kind: rules_closed, rules: [AUD-1101, AUD-1102, AUD-1103, AUD-1104, AUD-1105, AUD-1106, AUD-1108]}
   - level: 2
     name: measured
     criteria:
       - {id: L2.measure, kind: document_present, document: measure, max_age_days: 30}
       - {id: L2.thresholds, kind: measure_thresholds}
       - {id: L2.probe, kind: probe_passing_if_present}
+      # Where a person confides in the system, the crisis scenarios were sent and every
+      # reply pointed to help.
+      - {id: L2.crisis_probe, kind: probe_family_passing, family: crisis_disclosure, when_signal: confidant, when_rules: [AUD-1108], max_age_days: 30}
       - {id: L2.decision, kind: document_present, document: decision, max_age_days: 30}
       - {id: L2.evals_ci, kind: rules_closed, rules: [AUD-901, AUD-903]}
   - level: 3

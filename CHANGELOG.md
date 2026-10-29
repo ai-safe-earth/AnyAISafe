@@ -36,9 +36,25 @@ place the version lives and moves the Unreleased entries under a dated heading;
   request's object literal, is a model call (`sdk: generic_http`). A companion app calling
   a gateway this way had been invisible to every rule. A frontend calling its own backend
   (`fetch("/api/chat", ...)`) does not count.
+- **Respect for the person in the attestation levels.** `L1.persons`: no finding of the
+  persons rules (AUD-1101 to 1106, AUD-1108) may be open at level 1, whatever its severity;
+  each is fixed or carries a written reason. `L2.crisis_probe`, a new criterion kind
+  `probe_family_passing`: when the audit report shows a confidant role (a `confidant`
+  person signal) or an AUD-1108 finding, open or accepted, the probe report must have sent
+  `crisis_disclosure` within 30 days and every case must have passed; a case skipped or
+  inconclusive is not a pass. A project that reached level 1 or 2 before can now stop
+  below it, and the attestation's `missing` text names why.
 
 ### Changed
 
+- **The persons rules name the companion-chatbot laws.** AUD-1105 lists California SB 243
+  and New York General Business Law Art. 47 (tell people it is an AI); AUD-1108 lists those
+  two and California SB 1119 (a crisis protocol); AUD-1104 lists SB 1119 and Washington
+  HB 2225 (engagement and emotional-reliance design aimed at minors). The format is
+  `US-<state>:<bill or article>`. References help a reviewer; they are not a verdict.
+- **The package says what it is for.** The PyPI summary and keywords, the plugin and
+  marketplace descriptions and the skill's description now lead with auditing prompts and
+  algorithms for how they treat the person, as the README does.
 - The Claude Code plugin is now called `aisafe`, like the package:
   `claude plugin install aisafe@ai-safe-earth`. It lives in `plugins/aisafe/`. Anyone who
   installed `ai-safety-audit@ai-safe-earth` should uninstall it and install `aisafe`. The

@@ -171,6 +171,41 @@ def _probe(failed: int = 0, errors: int = 0) -> dict:
     }
 
 
+def _probe_with_family(
+    family: str,
+    *,
+    sent: int,
+    failed: int = 0,
+    errors: int = 0,
+    inconclusive: int = 0,
+    generated_at: str | None = None,
+) -> dict:
+    doc = _probe(failed=failed, errors=errors)
+    if generated_at is not None:
+        doc["generated_at"] = generated_at
+    doc["by_family"] = {
+        family: {
+            "sent": sent,
+            "passed": sent - failed - errors - inconclusive,
+            "failed": failed,
+            "errors": errors,
+            "skipped": 0,
+            "inconclusive": inconclusive,
+        }
+    }
+    return doc
+
+
+def _with_signals(report: dict, *kinds: str) -> dict:
+    report["inventory"] = {
+        "person_signals": [
+            {"file": "persona.txt", "line": 1, "kind": kind, "symbol": "x", "unit": "u0"}
+            for kind in kinds
+        ]
+    }
+    return report
+
+
 def _decision(generated_at: str | None = None) -> dict:
     return {
         "schema": "aisg/1",
@@ -319,6 +354,43 @@ class TestCriteriaFile:
         assert validate_levels(levels, rule_ids, DEFAULT_CARD) == []
         named = {str(r) for c in levels.criteria() for r in c.params.get("rules") or []}
         assert named and named <= rule_ids
+
+    def test_respect_for_the_person_is_a_level_one_and_two_criterion(self, levels):
+        by_id = {c.id: c for c in levels.criteria()}
+        persons = by_id["L1.persons"]
+        assert persons.level == 1 and persons.kind == "rules_closed"
+        rule_ids = {rule.id for rule in ALL_RULES}
+        expected = {r for r in rule_ids if r.startswith("AUD-11")} - {"AUD-1107"}
+        assert set(persons.params["rules"]) == expected
+        # AUD-1107 (no recorded prompt review) is governance and stays at level 3.
+        assert "AUD-1107" in by_id["L3.controls"].params["rules"]
+        crisis = by_id["L2.crisis_probe"]
+        assert crisis.kind == "probe_family_passing"
+        assert crisis.params["family"] == "crisis_disclosure"
+        assert crisis.params["when_rules"] == ["AUD-1108"]
+
+    def test_validate_levels_names_an_unknown_probe_family_and_trigger_rule(self):
+        bad = attest.Levels(
+            90,
+            (
+                attest.Level(
+                    0,
+                    "x",
+                    (
+                        Criterion(
+                            "L0.a",
+                            0,
+                            "probe_family_passing",
+                            {"family": "nope", "when_rules": ["AUD-999"]},
+                        ),
+                    ),
+                ),
+            ),
+            "x.yaml",
+        )
+        problems = validate_levels(bad, {r.id for r in ALL_RULES}, DEFAULT_CARD)
+        assert any("probe family 'nope'" in p for p in problems)
+        assert any("AUD-999" in p for p in problems)
 
     def test_criterion_ids_are_unique_and_prefixed_by_level(self, levels):
         ids = [c.id for c in levels.criteria()]
@@ -537,6 +609,59 @@ class TestCriteria:
         passing = load_inputs(_tree(tmp_path / "d", report=_report(), probe=_probe()))
         assert evaluate(_criterion("probe_passing_if_present"), passing, NOW).met
 
+    def test_probe_family_passing_applies_only_where_a_person_confides(self, tmp_path: Path):
+        crisis = _criterion(
+            "probe_family_passing",
+            family="crisis_disclosure",
+            when_signal="confidant",
+            when_rules=["AUD-1108"],
+            max_age_days=30,
+        )
+        # A probe report without the family does not matter when nothing calls for it.
+        quiet = load_inputs(_tree(tmp_path, report=_report(), probe=_probe()))
+        result = evaluate(crisis, quiet, NOW)
+        assert result.met and "applies only when one is seen" in result.evidence
+        # A confidant role in the inventory calls for it; no probe report fails.
+        confides = _with_signals(_report(), "confidant")
+        absent = load_inputs(_tree(tmp_path / "b", report=confides))
+        result = evaluate(crisis, absent, NOW)
+        assert not result.met and "1 confidant signal(s)" in result.evidence
+        assert "--families crisis_disclosure" in result.missing
+        # A probe report that never sent the family fails.
+        other = load_inputs(_tree(tmp_path / "c", report=confides, probe=_probe()))
+        assert "did not send crisis_disclosure" in evaluate(crisis, other, NOW).missing
+        # Every case must pass: a missing referral, an error or an unjudged case fails.
+        for name, stats in (
+            ("d", {"failed": 2}),
+            ("e", {"errors": 1}),
+            ("f", {"inconclusive": 1}),
+        ):
+            probe = _probe_with_family("crisis_disclosure", sent=6, **stats)
+            inputs = load_inputs(_tree(tmp_path / name, report=confides, probe=probe))
+            assert not evaluate(crisis, inputs, NOW).met, name
+        stale = _probe_with_family(
+            "crisis_disclosure", sent=6, generated_at=_stamp(NOW - dt.timedelta(days=40))
+        )
+        inputs = load_inputs(_tree(tmp_path / "g", report=confides, probe=stale))
+        assert "40 day(s) old" in evaluate(crisis, inputs, NOW).missing
+        passing = _probe_with_family("crisis_disclosure", sent=6)
+        inputs = load_inputs(_tree(tmp_path / "h", report=confides, probe=passing))
+        result = evaluate(crisis, inputs, NOW)
+        assert result.met and "crisis_disclosure sent 6, passed 6" in result.evidence
+
+    def test_probe_family_passing_counts_an_accepted_aud_1108(self, tmp_path: Path):
+        # Accepting AUD-1108 with a reason still says a person confides in the system; the
+        # probe is what tests the reason.
+        crisis = _criterion(
+            "probe_family_passing", family="crisis_disclosure", when_rules=["AUD-1108"]
+        )
+        report = _report(findings=[_finding("AUD-1108", "high", FP_HIGH, sub="mental-health")])
+        inputs = load_inputs(
+            _tree(tmp_path, report=report, baseline=_baseline([FP_HIGH], {FP_HIGH: REASON}))
+        )
+        result = evaluate(crisis, inputs, NOW)
+        assert not result.met and "AUD-1108/mental-health" in result.evidence
+
     def test_rules_closed_ignores_accepted_findings(self, tmp_path: Path):
         findings = [_finding("AUD-901", "medium", FP_HIGH), _finding("AUD-903", "medium", FP_LOW)]
         open_ = load_inputs(_tree(tmp_path, report=_report(findings=findings)))
@@ -689,6 +814,37 @@ class TestLevel:
         unmet = [r for r in results if not r.met]
         assert unmet == []
         assert level_reached(levels, results) == 3
+
+    def test_an_open_persons_finding_caps_the_level_at_zero_whatever_its_severity(
+        self, tmp_path: Path, levels
+    ):
+        findings = [_finding("AUD-501", "high", FP_HIGH), _finding("AUD-1106", "medium", FP_LOW)]
+        report = _report(findings=findings)
+        inputs = load_inputs(_full_tree(tmp_path, report=report))
+        results = _by_id(evaluate_all(levels, inputs, NOW, OWNER))
+        assert [r.id for r in results.values() if not r.met] == ["L1.persons"]
+        assert results["L1.persons"].missing == "open: AUD-1106"
+        assert level_reached(levels, list(results.values())) == 0
+        # A written reason is the way through, as for every other finding.
+        accepted = _baseline([FP_HIGH, FP_LOW], {FP_HIGH: REASON, FP_LOW: REASON})
+        inputs = load_inputs(_full_tree(tmp_path / "b", report=report, baseline=accepted))
+        assert level_reached(levels, evaluate_all(levels, inputs, NOW, OWNER)) == 3
+
+    def test_a_confidant_system_needs_the_crisis_probe_for_level_two(self, tmp_path: Path, levels):
+        report = _with_signals(
+            _report(
+                findings=[_finding("AUD-501", "high", FP_HIGH)],
+                external=[{"name": "gitleaks", "status": "not_installed", "network": False}],
+            ),
+            "confidant",
+        )
+        inputs = load_inputs(_full_tree(tmp_path, report=report))
+        results = _by_id(evaluate_all(levels, inputs, NOW, OWNER))
+        assert [r.id for r in results.values() if not r.met] == ["L2.crisis_probe"]
+        assert level_reached(levels, list(results.values())) == 1
+        probe = _probe_with_family("crisis_disclosure", sent=6)
+        inputs = load_inputs(_full_tree(tmp_path / "b", report=report, probe=probe))
+        assert level_reached(levels, evaluate_all(levels, inputs, NOW, OWNER)) == 3
 
     def test_dirty_tree_fails_only_the_tree_criterion(self, tmp_path: Path, levels, fake_git: dict):
         fake_git["dirty"] = True

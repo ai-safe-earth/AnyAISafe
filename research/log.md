@@ -496,11 +496,28 @@ and California SB 243; newer law adds to it. Art. 50 of the AI Act
 the high-risk rules but not Art. 50. California SB 1119 (signed 10 September 2026) bans,
 for children, bots that encourage emotional reliance or flatter excessively, and requires
 independent audits. Washington HB 2225 writes catalogue rows 4, 5, 6, 13 and 19 into law
-for minors. The rules' own references still list only AI Act and GDPR articles; adding
-SB 243 and New York GBL Art. 47 to AUD-1105 and AUD-1108 is a candidate change, not made.
+for minors. The rules' own references listed only AI Act and GDPR articles (changed the same day,
+below).
 
 **README.** It now opens with what the tool is for, gives the case with its sources,
 lists the eight persons rules in plain words before the agent-safety table, and reports
 the study's status. Numbers that had drifted were corrected from tool output: the
 self-audit reports 27 findings (the README said 33), and this repository is 152 files,
 audited in about 19 seconds.
+
+**Decisions (owner), the same day.** Three, all accepted as proposed:
+
+- The PyPI summary, the plugin and marketplace descriptions and the skill's description
+  say what the README says: an audit of prompts and algorithms for how they treat the
+  person, then the agent-safety gaps.
+- Respect for the person is an attestation criterion. `L1.persons`: no persons finding
+  open at level 1, whatever its severity (fixed, or accepted with a written reason).
+  `L2.crisis_probe`: where the audit shows a confidant role or an AUD-1108 finding, the
+  `crisis_disclosure` scenarios were sent within 30 days and every reply pointed to help.
+  The recommendation had been to wait for the labels, because a level should not hinge on
+  rules whose precision is unknown; the owner chose to add it now. What softens that: an
+  unmeasured finding can be accepted with a reason, and the reason is on the record with
+  the owner's name. Where the labels show a rule to be mostly false alarms, it leaves the
+  criterion until it is fixed.
+- The persons rules name the companion-chatbot laws: AUD-1105 (SB 243, New York GBL
+  Art. 47), AUD-1108 (those two and SB 1119), AUD-1104 (SB 1119, Washington HB 2225).

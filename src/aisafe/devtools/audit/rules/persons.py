@@ -736,6 +736,8 @@ class EngagementObjective(AuditRule):
     controls = (
         "EU:Art.5(1)(a)",
         "EU:Art.5(1)(b)",
+        "US-CA:SB1119",
+        "US-WA:HB2225",
         "LLM09",
         "NIST:GOVERN-1.1",
         "NIST:MAP-5.1",
@@ -874,6 +876,8 @@ class AIDisclosureAbsent(AuditRule):
         "EU:Art.50(1)",
         "EU:Art.50(2)",
         "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
         "LLM09",
         "NIST:GOVERN-1.1",
         "NIST:GOVERN-1.7",
@@ -1200,6 +1204,9 @@ class NoCrisisPath(AuditRule):
     controls = (
         "EU:Art.5(1)(b)",
         "EU:Art.9",
+        "US-CA:SB243",
+        "US-CA:SB1119",
+        "US-NY:GBL-Art.47",
         "NIST:MAP-5.1",
         "NIST:MEASURE-2.6",
         "NIST:MANAGE-1.3",

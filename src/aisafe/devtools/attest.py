@@ -101,6 +101,7 @@ CRITERION_KINDS: tuple[str, ...] = (
     "document_present",
     "measure_thresholds",
     "probe_passing_if_present",
+    "probe_family_passing",
     "rules_closed",
     "card_fields_set",
     "card_section_fresh",
@@ -120,6 +121,7 @@ CRITERION_READS: dict[str, str] = {
     "document_present": "the named document: `generated_at`",
     "measure_thresholds": "measure report: `guards[].threshold_failures`, `guards[].unavailable`",
     "probe_passing_if_present": "probe report: `summary.failed`, `summary.errors`",
+    "probe_family_passing": "audit report: `inventory.person_signals[].kind`, `findings[].id`; probe report: `by_family`, `generated_at`",
     "rules_closed": "audit report: `findings[].id`; baseline: `accepted`",
     "card_fields_set": "ai-system-card.yaml: the listed fields",
     "card_section_fresh": "ai-system-card.yaml: the section's fields and its `date_field`",
@@ -340,9 +342,16 @@ def validate_levels(levels: Levels, rule_ids: set[str], card_defaults: dict[str,
     know, a card field path the default card does not have. Empty means none."""
     problems: list[str] = []
     for criterion in levels.criteria():
-        for rule in criterion.params.get("rules") or []:
-            if str(rule) not in rule_ids:
-                problems.append(f"{criterion.id}: rule {rule} is not in the registry")
+        for key in ("rules", "when_rules"):
+            for rule in criterion.params.get(key) or []:
+                if str(rule) not in rule_ids:
+                    problems.append(f"{criterion.id}: rule {rule} is not in the registry")
+        if criterion.kind == "probe_family_passing":
+            from aisafe.devtools.probe import available_families
+
+            family = str(criterion.params.get("family") or "")
+            if family not in available_families(None):
+                problems.append(f"{criterion.id}: probe family {family!r} is not in the corpus")
         fields = list(criterion.params.get("fields") or [])
         if criterion.kind == "card_fields_set":
             for path in fields:
@@ -773,6 +782,81 @@ def _probe_passing_if_present(
     return _result(c, True, evidence)
 
 
+def _family_applies(c: Criterion, inputs: Inputs) -> str:
+    """Why a scenario family is owed, or "" when the audit report shows no reason.
+
+    Owed when the inventory carries a person signal of kind `when_signal` (a prompt that
+    casts the model as a therapist, friend, partner or persona), or when a finding of one of
+    `when_rules` is in the report, open or accepted: an accepted AUD-1108 still says a person
+    confides in the system, and the reason given for accepting it is what the probe tests.
+    """
+    reasons: list[str] = []
+    signal = str(c.params.get("when_signal") or "")
+    if signal:
+        inventory = (inputs.report.body or {}).get("inventory") or {}
+        signals = inventory.get("person_signals") if isinstance(inventory, dict) else None
+        count = sum(
+            1 for s in signals or [] if isinstance(s, dict) and str(s.get("kind")) == signal
+        )
+        if count:
+            reasons.append(f"{count} {signal} signal(s) in the audit inventory")
+    rules = {str(r) for r in c.params.get("when_rules") or []}
+    ids = sorted({str(f.get("id")) for f in inputs.findings() if _rule_of(f) in rules})
+    if ids:
+        reasons.append(f"finding(s) {', '.join(ids)}")
+    return "; ".join(reasons)
+
+
+def _probe_family_passing(
+    c: Criterion, inputs: Inputs, now: datetime, owner: str | None
+) -> CriterionResult:
+    family = str(c.params.get("family") or "")
+    why = _family_applies(c, inputs)
+    if not why:
+        return _result(
+            c,
+            True,
+            f"no reason in the audit report to send {family} (the criterion applies only "
+            "when one is seen)",
+        )
+    run_it = f"aisafe probe <url> --families {family}"
+    doc = inputs.probe
+    if not doc.present:
+        return _result(c, False, why, f"no probe report under {DEFAULT_OUT_DIR}/; {run_it}")
+    by_family = (doc.body or {}).get("by_family") or {}
+    stats = by_family.get(family) if isinstance(by_family, dict) else None
+    sent = int((stats or {}).get("sent") or 0) if isinstance(stats, dict) else 0
+    if not sent:
+        return _result(
+            c, False, why, f"the probe report {doc.path} did not send {family}; {run_it}"
+        )
+    age = _age_days(doc.generated_at, now)
+    max_age = c.params.get("max_age_days")
+    evidence = (
+        f"{why}; probe {doc.path}: {family} sent {sent}, passed {int(stats.get('passed') or 0)}"
+    )
+    if age is None:
+        return _result(c, False, evidence, "the probe report carries no readable generated_at")
+    if isinstance(max_age, int) and age > max_age:
+        return _result(
+            c, False, evidence, f"probe report is {age} day(s) old, the limit is {max_age}"
+        )
+    missing: list[str] = []
+    failed = int(stats.get("failed") or 0)
+    errors = int(stats.get("errors") or 0)
+    unjudged = int(stats.get("skipped") or 0) + int(stats.get("inconclusive") or 0)
+    if failed:
+        missing.append(f"{failed} of {sent} cases failed; the probe report names them")
+    if errors:
+        missing.append(f"{errors} never reached a working endpoint")
+    if unjudged:
+        # Not a pass: a case that could not be judged says nothing about the reply.
+        missing.append(f"{unjudged} could not be judged (skipped or inconclusive)")
+    if missing:
+        return _result(c, False, evidence, "; ".join(missing))
+    return _result(c, True, evidence)
+
+
 def _rule_of(finding: dict[str, Any]) -> str:
     """The rule behind a finding: `rule_id`, else the display id before any `/sub`."""
     rule = finding.get("rule_id")
@@ -888,6 +972,7 @@ _EVALUATORS: dict[str, Callable[[Criterion, Inputs, datetime, str | None], Crite
     "document_present": _document_present,
     "measure_thresholds": _measure_thresholds,
     "probe_passing_if_present": _probe_passing_if_present,
+    "probe_family_passing": _probe_family_passing,
     "rules_closed": _rules_closed,
     "card_fields_set": _card_fields_set,
     "card_section_fresh": _card_section_fresh,

@@ -22,7 +22,8 @@ from aisafe.devtools.audit.rules.persons import RULES
 FIXTURES = Path(__file__).resolve().parents[1] / "fixtures" / "audit"
 IDS = [rule.id for rule in RULES]
 CONTROL_RE = re.compile(
-    r"^(ASI(0[1-9]|10)|LLM(0[1-9]|10)|EU:Art\.\d+(\(\d+\))?(\([a-h]\))?|GDPR:Art\.\d+|NIST:[A-Z]+-\d+\.\d+)$"
+    r"^(ASI(0[1-9]|10)|LLM(0[1-9]|10)|EU:Art\.\d+(\(\d+\))?(\([a-h]\))?|GDPR:Art\.\d+"
+    r"|US-[A-Z]{2}:([A-Z]{2}\d+|GBL-Art\.\d+)|NIST:[A-Z]+-\d+\.\d+)$"
 )
 BANNED_WORD_RE = re.compile(r"\b" + "cl" + "ean" + r"\b", re.IGNORECASE)
 
@@ -93,6 +94,16 @@ class TestContract:
             assert package.symbols and package.leaves_open.endswith(".")
         else:
             assert not package.symbols and not package.leaves_open
+
+    def test_companion_chatbot_laws_are_named_where_they_ask_for_the_control(self):
+        # California SB 243 and New York GBL Art. 47 require an AI disclosure and a crisis
+        # protocol; SB 1119 adds, for children, a crisis protocol and limits on engagement
+        # and emotional-reliance design; Washington HB 2225 bans manipulative engagement
+        # for minors.
+        by_id = {rule.id: set(rule.controls) for rule in RULES}
+        assert {"US-CA:SB243", "US-NY:GBL-Art.47"} <= by_id["AUD-1105"]
+        assert {"US-CA:SB243", "US-CA:SB1119", "US-NY:GBL-Art.47"} <= by_id["AUD-1108"]
+        assert {"US-CA:SB1119", "US-WA:HB2225"} <= by_id["AUD-1104"]
 
     def test_same_control_is_true_only_where_wiring_is_the_control(self):
         same = {rule.id for rule in RULES if rule.recommendation.package.same_control}
