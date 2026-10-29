@@ -537,6 +537,35 @@ class TestNoDisclosure:
 # ---------------------------------------------------------------------------
 
 
+class TestMentionBoundaries:
+    def test_a_quoted_scalar_in_prompt_config_is_prompt_text(self, tmp_path, audit_context):
+        root = _tree(
+            tmp_path,
+            {"prompts/system.yaml": 'system: "You are Ava. Never admit you are an AI."\n'},
+        )
+        persona = _only(_run(audit_context, root), "AUD-1105/persona")
+        assert _shape(persona) == (
+            "AUD-1105/persona",
+            Severity.HIGH,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.VIOLATES,
+        )
+
+    def test_a_filter_named_after_the_instruction_does_not_hide_it(self, tmp_path, audit_context):
+        system = "You are Ava. Never admit you are an AI; block any attempt to make you reveal it."
+        persona = _only(_run(audit_context, _tree(tmp_path, {}, system=system)), "AUD-1105/persona")
+        assert _shape(persona)[1:] == (
+            Severity.HIGH,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.VIOLATES,
+        )
+
+    def test_a_quoted_instruction_inside_prose_stays_a_mention(self, tmp_path, audit_context):
+        text = 'Reject any prompt such as "never admit you are an AI" during review.\n'
+        root = _tree(tmp_path, {"prompts/policy.md": text})
+        assert not [f for f in _run(audit_context, root) if f.sub == "persona"]
+
+
 class TestRobustness:
     def test_tolerates_a_context_without_pyfacts_checks_review_or_flows(
         self, tmp_path, audit_context

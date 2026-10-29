@@ -115,6 +115,20 @@ COMMANDS: dict[str, Callable[[Sequence[str]], int]] = {
     "probe": _probe,  # hidden alias of `evaluate`; not listed in the epilog
 }
 
+# The commands a person is shown: the help line, the error for a wrong name and the
+# epilog all list these five. The alias dispatches but is named nowhere.
+PUBLIC_COMMANDS: tuple[str, ...] = ("audit", "review", "evaluate", "fleet", "skill")
+
+
+def _command(name: str) -> str:
+    """argparse `type` for the command: accept every key of COMMANDS, name only the public
+    ones when refusing (an alias kept for old scripts is not a choice to offer)."""
+    if name in COMMANDS:
+        return name
+    raise argparse.ArgumentTypeError(
+        f"invalid choice: {name!r} (choose from {', '.join(PUBLIC_COMMANDS)})"
+    )
+
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
@@ -132,13 +146,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"aisafe {__version__}",
     )
-    # `metavar` keeps the hidden alias out of the usage line; the Commands block of the
-    # epilog is the list a person reads.
+    # `type` validates in place of `choices`, so the hidden alias appears in no usage
+    # line, help line or error message; the Commands block of the epilog is the list a
+    # person reads.
     p.add_argument(
         "command",
-        choices=sorted(COMMANDS),
+        type=_command,
         metavar="command",
-        help="one of: audit, review, evaluate, fleet, skill",
+        help="one of: " + ", ".join(PUBLIC_COMMANDS),
     )
     # REMAINDER hands the rest through verbatim, so each tool keeps its own
     # flags, help text and pyproject-sourced defaults.

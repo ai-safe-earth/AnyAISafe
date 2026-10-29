@@ -564,10 +564,6 @@ class TestScoreCases:
         assert score.main(["--cases", str(root), "--out", str(out)]) == 2
         assert not out.exists()
 
-    @pytest.mark.xfail(
-        reason="bench/cases bug: political-covert-steering-mirror and prompt-only-project "
-        "have an unquoted ': ' in `description`, so their expected.yaml is not YAML",
-    )
     def test_the_committed_corpus_is_well_formed(self):
         """Every bench/cases/<id>/expected.yaml loads under the scorer's validation."""
         cases_dir = BENCH / "cases"

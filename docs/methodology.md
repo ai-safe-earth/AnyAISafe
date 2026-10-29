@@ -72,6 +72,11 @@ Three separate statements, never one score.
 | `no_violation_identified_in_scope` | the mechanism's rules ran on the surfaces the audit could read and found nothing; shown in the mechanism coverage table with the scope |
 | `not_assessed` | the mechanism's rules did not run, or there was no surface |
 
+Prose in a configuration file that is not a prompt file (a `description:`, a label, a
+comment) is a detected signal: recorded for review, never read as an instruction to the
+model. The same words under a prompt key (`system:`, `prompt:`, `instructions:`) or in a
+prompt file are prompt material.
+
 A keyword match alone never yields `violates_policy`. Disclosure, consent, adult status,
 fictional framing and human approval are recorded on the finding and weighed in the
 review; none closes a finding by itself.
@@ -160,6 +165,18 @@ against real users.
   C# are read with patterns; the report says so for every such unit.
 - Prompts fetched at runtime, prompts behind a gateway, and models whose behaviour is not
   in the tree. Each is a coverage item, not a pass.
+- Following a prompt file into the call that reads it. A prompt loaded with `open()` or
+  `Path.read_text()` is scanned as a document in the same tree, but the syntax tree does
+  not connect it to the model call: its chain stays `co-located`, and a disclosure written
+  only in such a file does not count as wired on the response path.
+- Conversation history passed as a list. `messages = [{"role": "system", "content":
+  SYSTEM_PROMPT}] + history`, or `messages=history` straight into the call, is not read as
+  a prompt assembly, so a profile or an inference fed only that way is not chained to the
+  call (the prompt literal itself is still read).
+- Sentences broken across lines are matched within one paragraph. In a prompt document a
+  sentence hard-wrapped over several lines is joined and matched, anchored on the line
+  the match starts on; a heading, a list item, a quote, a fence or a blank line ends the
+  paragraph, so a sentence split by a blank line or spread over two bullets is not seen.
 - Any claim about intent or about clinical or population-level harm. The audit reports
   encoded objectives and observable mechanisms.
 

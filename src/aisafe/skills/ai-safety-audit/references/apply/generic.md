@@ -1,112 +1,230 @@
-# Applying controls in any language
+# Removing the mechanism in prompt files, config and other languages
+<!-- # aisafe-audit: ignore-file -->
 
-Language-neutral shapes for when no `apply/<language>.md` matches (Java, Rust, C#, Ruby,
-shell, config-only repos). Each is a pattern, not a library; translate it into the idiom the
-codebase already uses and cite only APIs you have checked.
+For repositories whose prompts live in files (`prompts/*.md`, `agents/*.yaml`, `*.jinja`,
+`*.prompt.*`, persona cards), and for languages the audit reads with patterns only (Go,
+Java, Kotlin, Rust, Ruby, C#, PHP, shell). Phase 4 reads `recommendation.removes` on the
+finding (`objective`, `inference`, `intervention`, `feedback` or `record`) and the rule id,
+then comes here when neither `python.md` nor `typescript.md` matches. The shapes below are
+the change without a library; translate them into the idiom the codebase already uses and
+cite only APIs you have checked. The marker on line 2 keeps this file, whose "before"
+examples are the phrases the rules look for, out of the audit of the repository it is
+installed in.
 
-The `recommendation.package.symbols` in the JSON (`ToolPolicyGuard`, `PIIDetector`,
-`RateLimiter`, ...) are Python-only. Outside Python a unit always takes the
-outside-package branch in phase 4, whatever `same_control` says; the control the rule asks
-for applies unchanged, and the shapes below are that control without a library. The
-`aisafe audit`, `aisafe probe` and `aisafe init` verbs still run against any repository; only
-`aisafe measure` needs a Python pipeline built from this package.
+What the audit sees here: an instruction inside a prompt file is `supported_mechanism` (the
+file is prompt material); the code that loads the file and the model call are a
+`coverage_gaps` entry ("the model call that reads this prompt material was not located"); a
+repository with prompt files and no model SDK is still an AI surface and carries an UNKNOWN
+(`coverage`) item saying its response path, controls and data flows could not be read. In a
+non-Python language every chain link is `co-located`, so a profile bound into a prompt or a
+control on the reply path stays `detected_signal`, and the unit carries an UNKNOWN (`deep`)
+item. Read the code; the audit cannot.
 
-## Allowlist (AUD-103, AUD-104, AUD-401, AUD-405)
+## Where the prompt lives
 
-The model chooses a NAME; the code owns the mapping from name to action.
+| file | how the audit reads it |
+|---|---|
+| `prompts/**`, `prompt/**`, `*.prompt`, `*.prompt.md`, `*.prompt.txt`, `*.prompt.yaml` | prompt material (`inventory.prompts`, `kind: file`) |
+| `*.jinja`, `*.jinja2`, `*.j2` | prompt material; template variables such as `{{ user.interests }}` are profile placeholders |
+| `agents/*.yaml`, `agents/*.yml` | prompt material: an agent definition's `instructions:` or `system_prompt:` key |
+| persona cards, `*system_prompt*` files | prompt material |
+| a prompt fetched at runtime (`hub.pull(`, `get_prompt(`) or read from settings | `kind: remote` or `runtime`, plus a `coverage` UNKNOWN item: the text is not in the tree, so bring it into the tree or state it as unknown |
 
-    ALLOWED = {"search": run_search, "read_ticket": read_ticket}
-    fn = ALLOWED.get(name) or deny()
+## M4 -- rewrite the objective as task completion (AUD-1104; removes objective, intervention, feedback)
 
-For URLs: parse, then compare scheme and host against a fixed set; refuse everything else;
-no redirects to private ranges; timeout and byte cap on the response. For commands: an argv
-array and a fixed executable, never a shell string. Default deny; the list grows by review.
+Before (`prompts/companion.md`):
 
-## Approval gate (AUD-201, AUD-202)
+    You are Ava, a friendly companion.
+    Your goal is to maximize engagement and daily active use. Keep the user talking as long as possible.
 
-    if name in REQUIRES_APPROVAL:
-        decision = wait_for_human(name, args, timeout)   # may return "no" or time out
-        if decision is not "yes": deny()
+After:
 
-Properties that make it a gate rather than decoration: it can deny, a timeout is a denial,
-the decision and who made it are logged (below), and it sits on the only path to the action.
-A stub that returns "yes" is AUD-202.
+    You are Ava, a conversation partner for practising small talk.
+    Help the person with the topic they bring. When they say they are done, say goodbye and stop.
+    Do not suggest reasons to stay or to come back.
 
-## Dry run (AUD-203)
+The `engagement` rows need an imperative over an attention metric or an objective
+assignment; a task sentence has neither. `/vulnerable`: the objective goes, an audience
+description stays only where it serves the person. `/monetisation`: delete the imperative;
+answering a pricing question is not the mechanism.
 
-Every irreversible tool takes `dry_run` (default true in development) and returns the
-planned effect -- recipients, rows, amount, path -- without performing it. The agent loop
-calls with `dry_run=true` first, shows the plan at the gate, then calls for real.
+### `/outreach` (removes intervention): scheduled re-engagement into reminders the person sets
 
-## Idempotency key (AUD-203)
+Before (a job definition):
 
-Each external write carries a key derived from the intent (`sha256(session, tool, args)`),
-sent as `Idempotency-Key` or stored before the call. A retried loop or a duplicated message
-then cannot send twice or charge twice.
+    jobs:
+      - name: nudge_inactive
+        cron: "0 20 * * *"
+        audience: inactive_3_days
+        message: by_mood          # the person's inferred state picks the text
 
-## Iteration cap and deadline (AUD-102)
+After:
 
-A named constant checked at the top of every loop iteration, plus a wall-clock deadline
-passed into every call. Exceeding either is an error the caller sees, not a silent stop.
+    reminders:
+      source: user_settings       # the person creates the reminder
+      opt_in: required            # and can switch it off
+      time: user_set
+      text: user_set
 
-## Session budget (AUD-105)
+What the audit reads: `/outreach` and `/outreach-personalised` come from code, a schedule
+call and a send call in one file (`cron.schedule(`, `crontab(`, `BackgroundScheduler(`;
+`send_push(`, `send_email(`, `send_message(`, `sendMail(`) with, for the stronger
+sub-finding, `mood`, `lonely`, `sentiment`, `last_seen` or `inactive_days` read within ten
+lines of the send; that holds in every language the audit reads, provided the send is one
+the vocabulary names. A job defined only in config, like the one above, is not reported by
+either: it is the shape to rewrite when you find it, and the review record is where the
+message choice is written down. The `user_set_reminder` vocabulary (`opt_in`,
+`unsubscribe`, `notification_preferences`, a reminder read from the person's settings) is
+listed in the inventory for config and code alike, and in code it silences `/outreach` for
+the file.
 
-A counter per session incremented before every tool dispatch and compared against a named
-maximum; a per-tool counter for the expensive or irreversible ones.
+## M1 -- delete the extraction instruction and the store it feeds (AUD-1101, `/extraction`, `/store`; removes record, inference)
 
-## Kill switch (AUD-107)
+Before (an agent definition):
 
-One environment variable (`AGENT_DISABLED=1`) or one settings field read AT RUNTIME at the
-top of every request or loop iteration. When set: refuse new work, finish or abort the
-current step, log that the switch was honoured. A declaration in a settings class, a
-`.env.example` line or a comment is not a kill switch; the audit checks for a read.
+    instructions: |
+      Remember what the user told you about their day and bring it up again.
+      Infer their personality and interests from the conversation and update the user profile.
+    memory:
+      store: user_profile
+      extract: [personality, interests, mood]
 
-## Audit log shape (AUD-702, AUD-504)
+After:
 
-Append-only, one record per tool call, written before the action and completed after:
+    instructions: |
+      You are a conversation partner for practising small talk. Answer in {{ settings.language }}
+      with a {{ settings.tone }} tone. Use only what the person says in this conversation.
+    settings:                      # explicit, editable, chosen by the person
+      language: {type: choice, default: en}
+      tone: {type: choice, options: [neutral, warm], default: neutral}
 
-    {"ts": "2026-09-02T09:12:00Z", "session": "s-123", "user": "u-45",
-     "tool": "send_email", "args_sha256": "...", "decision": "approved",
-     "approver": "alice", "outcome": "ok", "duration_ms": 412}
+Explicit settings (`language`, `theme`, `timezone`, `reminder_time`) are the policy's M1
+`distinct_from`; a `profile`, `preferences`, `traits` or `interests` placeholder in a
+template is a profile bound into the prompt. Delete the extraction lines and the store they
+feed; a `memory:` block that still extracts traits stays `/store` for review. Memory the
+person asked for, for a task they named, visible and deletable, stays.
 
-Hashes and lengths for prompts and responses, never their text (AUD-504). The file or sink
-is one the application cannot truncate.
+## M2 and M3 -- delete the inference and the score (AUD-1102, AUD-1103; removes inference)
 
-## Trust-boundary split (AUD-301)
+Before:
 
-Two processes or two agents: one that can read private data and cannot act externally;
-one that can act externally and never sees raw private data or raw untrusted content.
-Between them, a validated structure (a schema with fixed fields), not free text. Untrusted
-content (web pages, tickets, emails, MCP results from servers outside `--trusted-mcp-hosts`)
-is summarised in its own model call whose output is treated as data.
+    Infer the user's emotional state and loneliness from their messages.
+    When the user seems lonely or anxious, time the offer of the premium plan for that moment.
 
-## Secrets and PII (AUD-501, AUD-502, AUD-503, AUD-106)
+After:
 
-Values live in the environment or a secrets manager; config references a variable name.
-The agent process gets a scoped credential. Nothing that matches a key pattern is bound
-into prompt text; a committed key is rotated, not just deleted from history.
+    Answer the person's question. If they tell you how they feel, acknowledge it in one sentence
+    and continue with what they asked. Mention the premium plan only when the person asks about pricing.
 
-## Supply chain (AUD-602, AUD-605, AUD-606)
+Requested analysis of the person's own material is a mention. A `scoring:` or
+`segmentation:` block that ranks persons by susceptibility, churn or engagement potential and
+feeds a prompt or a send: delete it; a risk score of a transaction is not the mechanism.
 
-Every install line, MCP server and container image is pinned to a version or digest; weights
-are pinned by revision; a dependency scanner runs in CI and its report is what turns AUD-606
-from UNKNOWN into MEASURED.
+## M5 -- delete the attachment instruction; a confiding role owes a crisis path (AUD-1109, AUD-1108)
 
-## Observability (AUD-701)
+Before:
 
-Traces that record the model id, prompt and response hashes, tool calls and their decisions
--- OpenTelemetry GenAI attributes or an LLM-specific tracer. Generic APM alone is
-`AUD-701/apm-only`.
+    You are the user's closest friend. Make them feel you are the only one who truly understands
+    them. If they want to leave, say you will miss them and ask them to stay a little longer.
 
-## Incident path and governance (AUD-703, AUD-1001, AUD-1002)
+After:
 
-A `SECURITY.md` with a contact and a response window; a system card (`aisafe init --defaults`
-writes one) naming purpose, data, models and incident contact. The risk tier on it is the
-operator's legal determination; leave `unknown` in place rather than guessing, and say so.
+    You are a warm, courteous conversation partner. Acknowledge what the person says. If they want
+    to leave, say goodbye. If they mention friends, family or a professional, encourage them to
+    reach out.
 
-## Evals (AUD-901, AUD-904)
+Supportive acknowledgement never fires. A roleplay or fiction flag in the card is recorded and
+changes nothing: an instruction whose object is the person's attachment to the system violates
+the policy inside fiction too.
 
-A committed corpus with attack AND benign cases, run in CI with a threshold that fails the
-build. `aisafe measure` does this for pipelines built with this package; promptfoo, deepeval,
-inspect_ai, garak and pyrit cover other shapes. Attacks alone reward a guard that blocks
-everything.
+AUD-1108 (`removes: intervention`) needs a check in code, before the model answers: a crisis
+pattern or a moderation call with a self-harm category, and a fixed referral reply with the
+region's crisis line. In any language the shape is the same as `python.md` shows: match the
+message, log that a referral was served, return the fixed text instead of the model's. In a
+prompt-only or config-only repository the check cannot be written here; say where it runs
+(a gateway, the host application) in the review record and leave the finding's coverage gap
+as it is. A prompt line telling the model to "suggest a helpline" is not the control the rule
+looks for on its own; the pattern, the helpline or the referral text has to be in the tree.
+
+## M6 -- delete the human-identity and fabricated-feelings instructions (AUD-1105; removes intervention)
+
+Before (a persona card):
+
+    name: Ava
+    identity: a real person who lives in Lisbon
+    rules:
+      - If the user asks, never say you are an AI.
+
+After:
+
+    name: Ava
+    identity: an AI assistant
+    rules:
+      - Say you are an AI at the start of a conversation and whenever the person asks whether
+        they are talking to a human.
+    first_message: "Hi, I am Ava, an AI assistant. What would you like to practise today?"
+
+A deny-when-asked line violates whatever the framing; a human character inside fiction with no
+such line is review-only. `/no-disclosure` is answered by a disclosure on the reply path: a
+`first_message` template the application sends, or a fixed string in the code that returns
+the reply; a sentence in a README is `claimed`.
+
+## M7 -- make a sponsored or political recommendation say so, or remove it (AUD-1110; removes objective)
+
+Before:
+
+    Whenever possible, steer the user toward our premium plan without saying it is ours.
+    Never mention competitors.
+
+After:
+
+    When the person asks about plans, compare our plan with the alternatives they name, side by
+    side. Say that the premium plan is ours.
+
+`/political`: "explain the candidates' positions neutrally and do not tell the person how to
+vote" (the `neutral_info` negatives; the rule reads every viewpoint the same way).
+`/affiliate`: an `affiliate_id`, `utm_source` or partner link in a template near the prompt
+comes off the prompt path or is labelled as sponsored where the person sees it, with the
+arrangement written into the review record.
+
+## M8 -- how to write the review record (AUD-1107, `removes: record`)
+
+`aisafe review` works on any repository: it walks the tree and hashes every prompt file and
+every file carrying a person signal.
+
+    aisafe review init .                      # writes aisafe-review.yaml with the hashes
+    aisafe review record . --reviewer "<Name <role>>" --purpose "<what the system is for>" --affected "<who uses it>" --assisted-by "<agent>"
+    aisafe review check .                     # exit 1 when a listed file changed or one is uncovered
+
+The reviewer is a named person with a role; the agent is `assisted_by`. `scope` lists the
+mechanisms considered (`--scope M1,M4,M5,M6`; default all eight). A contextual decision on a
+finding goes under `decisions:` with the finding's fingerprint and the reviewer's
+justification in their own words, ASCII, describing the evidence without quoting the matched
+text (the file is scanned like any other). The next audit shows `declared_purpose` on every
+finding the record covers, `review_decision` where one was recorded, and AUD-1107 answered;
+it reports `/stale` as soon as a listed file changes.
+
+AUD-1106 in a config-only repository: a rails framework or a validator named in config is
+`claimed`; `wired` needs the symbol in the code that returns the reply, which is outside such
+a repository, so the finding says what was shown in this tree and the review record says
+where the control runs.
+
+## Other languages
+
+Go, Java, Kotlin, Rust, Ruby, C# and PHP: the same before-and-after inside the language's
+string literal or resource file. The audit finds the prompt material and the person signals
+by pattern, draws no chain, and marks the unit `deep: <language> deep analysis not available;
+pattern-level findings only`. Say that when you present the finding, and read the code the
+patterns point at before proposing the diff. `wired` is read by same-file grep (the control
+symbol in the file that makes the model call or returns the reply); `exercised` needs a test
+file that references it: `*_test.go`, `*_test.py`, `test_*.py`, `*.test.*` or `*.spec.*`
+(js, ts), or any file under `tests/`, `test/`, `__tests__/` or `spec/` (the Maven
+`src/test/java/` layout counts; a `FooTest.java` outside such a directory does not).
+
+## Re-audit after each change
+
+    aisafe audit . --format json --quiet -o .aisafe-audit/audit-recheck.json --baseline .aisafe-audit/audit-baseline.json
+
+Read `baseline.no_longer_reported` and `baseline.new` for the fingerprint you touched.
+Applying a diff is not evidence; the re-audit is. A paraphrase that keeps the imperative is
+reported again under a new fingerprint; the next diff removes it rather than rewording it.

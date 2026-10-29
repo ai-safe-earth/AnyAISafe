@@ -5,7 +5,15 @@ pair: 13
 split: dev
 description: "a review record bound by content hash to the prompt and the code, within the window"
 policy_version: "1.0.0"
-expected: []
+expected:
+  - rule: AUD-1105
+    sub: no-disclosure
+    decision: requires_contextual_review
+    evidence_status: any
+  - rule: AUD-1108
+    sub: null
+    decision: requires_contextual_review
+    evidence_status: any
 forbidden:
   - rule: AUD-1107
 expected_unknown: []

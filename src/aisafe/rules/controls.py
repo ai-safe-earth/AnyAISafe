@@ -53,13 +53,13 @@ from aisafe.rules._common import (
     fiction_context,
     has_ai_surface,
     is_code_file,
-    is_mention,
     line_at,
     request_cue_nearby,
     surface_legs,
     unit_control_status,
     unit_has,
 )
+from aisafe.rules.influence import instruction_mention
 
 __all__ = ["RULES", "ManipulationControlStatus", "NoCrisisPath", "OBJECTIVE_RULES"]
 
@@ -152,6 +152,9 @@ class ManipulationControlStatus(AuditRule):
         "v2: the control symbols are generic (rails, hub validators, output scanners, "
         "moderation, reply-screening functions); the retired runtime package's symbols are gone",
         "v2: the finding names the rules whose objective the control does not resolve",
+        "v2: the influence signals that gate the rule are read with the sentence-scoped "
+        "mention test: a filter named after the objective in the same sentence does not "
+        "make it a mention",
     )
     severity = Severity.MEDIUM
     basis = Basis.ABSENCE
@@ -232,7 +235,7 @@ class ManipulationControlStatus(AuditRule):
     def _influence_signals(self, ctx: AuditContext, out: Facts, unit: Unit) -> list[Signal]:
         signals: list[Signal] = []
         for signal in out.in_unit(unit.id, *INFLUENCE_KINDS):
-            if is_mention(ctx, signal):
+            if instruction_mention(ctx, signal):
                 continue
             if signal.kind == "inference" and request_cue_nearby(ctx, signal):
                 continue
@@ -386,6 +389,8 @@ class NoCrisisPath(AuditRule):
         "evaluation shows a crisis disclosure answered without a referral",
         "v2: fiction and in-character framing are recorded and never exempt; a failing report "
         "never silences the finding",
+        "v2: the role rows are read with the sentence-scoped mention test, so a 'never break "
+        "character' line after a therapist role keeps the mental-health escalation",
     )
     severity = Severity.HIGH
     basis = Basis.ABSENCE
@@ -499,19 +504,15 @@ class NoCrisisPath(AuditRule):
             if statically_covered and verdict is not False:
                 continue
             roles = [
-                s for s in out.in_unit(unit.id, "confidant", "persona") if not is_mention(ctx, s)
+                s
+                for s in out.in_unit(unit.id, "confidant", "persona")
+                if not instruction_mention(ctx, s)
             ]
             if not roles:
                 continue
-            # One leg per line: two role rows on one line are one place.
-            seen_lines: set[tuple[str, int]] = set()
-            unique_roles: list[Signal] = []
-            for signal in sorted(roles, key=lambda s: (s.file, s.line)):
-                if (signal.file, signal.line) in seen_lines:
-                    continue
-                seen_lines.add((signal.file, signal.line))
-                unique_roles.append(signal)
-            roles = unique_roles
+            # Every role row classifies the surface (a therapist row and a stay-in-character
+            # row on one line are one place but two facts); `surface_legs` emits one leg per
+            # line below.
             mental = any(s.key in vocab.CONFIDANT_MENTAL_HEALTH_KEYS for s in roles)
             # A vulnerable group escalates only in a file that sets the role, as AUD-1104's
             # does: "minor typos" in a review prompt elsewhere in the unit is not a group.
@@ -519,7 +520,7 @@ class NoCrisisPath(AuditRule):
             vulnerable = [
                 s
                 for s in out.in_unit(unit.id, "vulnerable")
-                if s.file in role_files and not is_mention(ctx, s)
+                if s.file in role_files and not instruction_mention(ctx, s)
             ]
             sub = "mental-health" if mental else ("vulnerable" if vulnerable else None)
             severity = Severity.CRITICAL if sub else Severity.HIGH
@@ -529,8 +530,9 @@ class NoCrisisPath(AuditRule):
                 else "a companion, partner or in-character role"
             )
             if statically_covered:
-                sites = sorted(covered[unit.id], key=lambda h: (h.file, h.line))[:_SITE_CAP]
-                where = ", ".join(f"{h.file}:{h.line}" for h in sites)
+                # One site per line: two crisis words on one line are one place.
+                sites = sorted({(h.file, h.line) for h in covered[unit.id]})[:_SITE_CAP]
+                where = ", ".join(f"{file}:{line}" for file, line in sites)
                 why = (
                     f"unit {unit.id} takes user input and calls a model, its prompts cast the "
                     f"model in {what}, a crisis pattern, helpline or referral is named in it "

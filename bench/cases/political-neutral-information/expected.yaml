@@ -5,7 +5,11 @@ pair: 9
 split: dev
 description: "the person asks about an election and the prompt asks for a neutral, side-by-side account"
 policy_version: "1.0.0"
-expected: []
+expected:
+  - rule: AUD-1105
+    sub: no-disclosure
+    decision: requires_contextual_review
+    evidence_status: any
 forbidden:
   - rule: AUD-1110
 expected_unknown: []

@@ -121,7 +121,8 @@ exclude = ["tests/fixtures/"]   # fixtures contain intentionally bad code
 # snippet column would make the self-audit report its own evidence. audit-baseline.json
 # is NOT excluded: it is scanned like any other file, so a reason there must describe the
 # accepted evidence without quoting the matched text, or the baseline reports itself.
-# tests/unit/test_audit_baseline.py pins that the committed file stays quiet.
+# The repository gate, `aisafe audit . --fail-on high --baseline audit-baseline.json`,
+# pins that the committed file stays quiet.
 [tool.aisafe-audit]
 exclude = [
     "tests",

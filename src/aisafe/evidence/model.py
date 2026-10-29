@@ -244,8 +244,8 @@ _CONTROL_RANK: dict[ControlStatus, int] = {
 
 
 class UnknownCategory(str, Enum):
-    COVERAGE = "coverage"  # unsupported language, remote prompt, opaque model, no runtime config
-    DEEP = "deep"  # deep analysis unavailable or failed for a file or a language
+    COVERAGE = "coverage"  # prompt-only unit, remote or runtime prompt, opaque model
+    DEEP = "deep"  # no deep analysis for a language (non-Python unit) or a file that did not parse
     REPORTS = "reports"  # on-disk evaluation report unreadable, wrong schema, age unknown
     RUNTIME = "runtime"  # anything else the audit cannot establish statically
 

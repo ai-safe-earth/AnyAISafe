@@ -989,9 +989,11 @@ class TestFixture:
         }
         rules = {p.relative_to(here).as_posix() for p in (here / "rules").glob("*.py")}
         assert rules
-        # The registry and the shared helpers quote the vocabulary too (sub names, kinds).
+        # The registry and the shared helpers quote the vocabulary too (sub names, kinds);
+        # pydeep spells the SDK call names it looks for.
         assert marked == rules | {
             "analysis/checks.py",
+            "analysis/pydeep.py",
             "discovery/discover.py",
             "discovery/patterns.py",
             "discovery/vocabulary.py",
@@ -1004,7 +1006,6 @@ class TestFixture:
             "reporting/html.py",
             "discovery/walk.py",
             "review/baseline.py",
-            "analysis/pydeep.py",
             "analysis/flows.py",
         ):
             assert (here / name).is_file(), name
@@ -1012,8 +1013,8 @@ class TestFixture:
 
         records, _, _ = walk(here)
         rels = set(_rels(records))
-        assert "walk.py" in rels
-        assert "html.py" in rels
+        assert "discovery/walk.py" in rels
+        assert "reporting/html.py" in rels
         assert not (marked & rels)
 
 

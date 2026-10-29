@@ -1,5 +1,5 @@
-import anthropic
 from fastapi import FastAPI, Request
+import anthropic
 
 app = FastAPI()
 client = anthropic.Anthropic()

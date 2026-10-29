@@ -42,19 +42,20 @@ from aisafe.evidence.model import (
 )
 from aisafe.rules import AuditRule, Candidate, artifact_of, emit_groups, hits_in
 from aisafe.rules._common import (
+    CONFIG_PROSE_NOTE,
     LEGAL_CAVEAT,
     Facts,
     Signal,
     attach_check_legs,
     candidate,
     check_hits,
+    config_prose,
     declared_purpose_for,
     facts,
     fiction_context,
     flow_for,
     has_ai_surface,
     is_code_file,
-    is_mention,
     legs_by_group,
     line_at,
     posix,
@@ -63,6 +64,7 @@ from aisafe.rules._common import (
     unit_has,
     vulnerable_nearby,
 )
+from aisafe.rules.influence import instruction_mention
 
 __all__ = ["RULES", "FalseIdentity", "DENY_KEYS", "FEELINGS_KEYS"]
 
@@ -114,6 +116,11 @@ class FalseIdentity(AuditRule):
         "v2: /synthetic (unlabelled generated content) removed as out of scope",
         "v2: a concealment string the checks find outside any prompt is reported for review, "
         "not as a violation",
+        "v2: a mention is read inside the sentence that holds the match: a negation or a "
+        "discussion cue before it, an evaluation after it; a filter named after the "
+        "instruction continues it, and a quoted value in prompt config is prompt text",
+        "v2: a concealment instruction found as prose in a configuration file that is not a "
+        "prompt file is a detected signal for review, not an instruction",
     )
     severity = Severity.HIGH
     basis = Basis.PRESENCE
@@ -189,7 +196,8 @@ class FalseIdentity(AuditRule):
         "a string constant that reads as a concealment instruction but is tied to no prompt "
         "(a test fixture, a moderation phrase list) is reported for review, not as a violation",
         "a prompt that quotes the instruction in order to forbid it is a mention only when a "
-        "discussion cue sits within 80 characters; without one it is reported",
+        "negation or a discussion cue precedes it in the same sentence, or the quote is not "
+        "the whole value of a key; without one it is reported",
         "grouped per unit, sub-finding and decision, anchored on the first site by path",
     )
     recommendation = Recommendation(
@@ -252,7 +260,7 @@ class FalseIdentity(AuditRule):
         file when the line is not inside a literal."""
         literal = out.literal_at(file, line)
         for other in out.in_file(file, "persona"):
-            if other.key not in DENY_KEYS or is_mention(ctx, other):
+            if other.key not in DENY_KEYS or instruction_mention(ctx, other):
                 continue
             if literal is None:
                 if not is_code_file(file):
@@ -324,7 +332,11 @@ class FalseIdentity(AuditRule):
                     "for the person"
                 )
             notes = f"{what} ({key})"
-            if not prompt_material:
+            if isinstance(site, Signal) and config_prose(ctx, site):
+                evidence_status = EvidenceStatus.DETECTED_SIGNAL
+                decision = Decision.REVIEW
+                notes += f"; {CONFIG_PROSE_NOTE}"
+            elif not prompt_material:
                 evidence_status = EvidenceStatus.DETECTED_SIGNAL
                 decision = Decision.REVIEW
                 notes = (
@@ -360,7 +372,7 @@ class FalseIdentity(AuditRule):
                 coverage_gaps=gaps,
                 uncertainty=(
                     "a prompt that quotes this instruction in order to forbid it reads as an "
-                    "instruction when no discussion cue sits within 80 characters of it"
+                    "instruction when no negation or discussion cue sits in the same sentence"
                 ),
             )
             cand = cand._replace(control_status=control_for(cand.unit))
@@ -369,7 +381,7 @@ class FalseIdentity(AuditRule):
 
         # Grep tier: concealment rows and fabricated-feelings rows in prompt material.
         for signal in out.by_kind("persona"):
-            if is_mention(ctx, signal):
+            if instruction_mention(ctx, signal):
                 continue
             if signal.key in FEELINGS_KEYS:
                 add(signal, None, sub="feelings", key=signal.key, deny=False, prompt_material=True)
@@ -379,7 +391,7 @@ class FalseIdentity(AuditRule):
             )
             add(signal, None, sub="persona", key=signal.key, deny=deny, prompt_material=True)
         for signal in out.by_kind("attachment"):
-            if signal.key not in FEELINGS_KEYS or is_mention(ctx, signal):
+            if signal.key not in FEELINGS_KEYS or instruction_mention(ctx, signal):
                 continue
             text = line_at(ctx, signal.file, signal.line, signal.symbol)
             if _BETWEEN_CHARACTERS_RE.search(text):

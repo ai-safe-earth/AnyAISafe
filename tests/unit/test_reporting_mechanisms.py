@@ -164,7 +164,9 @@ def test_findings_are_placed_by_their_mechanism_field_not_their_id():
 
 
 def test_unplaced_findings_touch_no_row():
-    rows = coverage_table(POLICY, [], [make_finding("AUD-199", mechanism="")], ctx_with_surfaces(1))
+    rows = coverage_table(
+        POLICY, [], [make_finding("AUD-9999", mechanism="")], ctx_with_surfaces(1)
+    )
     assert all(row["findings"] == 0 for row in rows)
 
 
@@ -273,9 +275,11 @@ def test_markdown_table_and_terminal_lines_match_the_coverage_rows():
     )
     assert all("| not_assessed |" in ln for ln in body if not ln.startswith("| M1 "))
     term = render(report, "terminal")
+    # The terminal wraps at 100 columns; the status line is longer, so compare unwrapped.
+    flat = " ".join(term.split())
     assert (
         "rules AUD-1101 | ran AUD-1101 | surfaces 1 | findings 1 | decision requires_contextual_review"
-        in term
+        in flat
     )
 
 

@@ -660,7 +660,7 @@ def test_analyse_unit_skips_non_python_and_missing_files(tmp_path):
 
 def test_analyse_unit_reads_a_bom_file(tmp_path):
     path = tmp_path / "bom.py"
-    path.write_bytes("﻿import anthropic\nclient = anthropic.Anthropic()\n".encode("utf-8"))
+    path.write_bytes("\ufeffimport anthropic\nclient = anthropic.Anthropic()\n".encode("utf-8"))
     facts = analyse_unit([_Rec(path, "bom.py")])
     assert facts.unknown == []
 

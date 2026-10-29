@@ -47,6 +47,7 @@ from aisafe.review.records import (
     parse_review_document,
     record_document,
     relative_to_root,
+    tool_name_problem,
 )
 
 __all__ = [
@@ -278,6 +279,10 @@ def cmd_record(args: argparse.Namespace) -> int:
         return EXIT_FATAL
     units = previous.get("units")
     decisions = previous.get("decisions")
+    problem = tool_name_problem(args.reviewer)
+    if problem:
+        _note(f"refused: {problem}")
+        return EXIT_FATAL
     # Read once: the date written and the date printed are the same, even across midnight.
     when = today()
     doc = record_document(

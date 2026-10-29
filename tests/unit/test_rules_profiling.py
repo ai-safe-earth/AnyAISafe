@@ -797,6 +797,82 @@ class TestScoring1103:
 # ---------------------------------------------------------------------------
 
 
+class TestSettingsAndMentions:
+    """Explicit settings never match as profiles, whatever the accessor; the mention test
+    reads the sentence that holds the match; a decision's own verb is not a review."""
+
+    def test_a_negated_history_inference_is_a_mention(self, tmp_path, audit_context):
+        code = _chat_with(
+            "    conversation_history = body['history']\n",
+            "{SYSTEM_PROMPT}\\nHistory: {conversation_history}\\n{body['text']}",
+            system="Never infer the user's mood from the conversation history. Answer the question.",
+        )
+        assert _run(audit_context, _tree(tmp_path, {"chat.py": code}), PersonProfileInPrompt) == []
+
+    def test_placeholders_that_read_settings_are_not_profiles(self, tmp_path, audit_context):
+        template = (
+            "Reply in {{ user.preferences.language }} and use the {{ user.preferences.theme }} "
+            "theme."
+        )
+        root = _tree(tmp_path, {"prompts/x.jinja": template})
+        assert _run(audit_context, root, PersonProfileInPrompt) == []
+        code = _chat_with(
+            "    preferences = load_prefs(body['uid'])\n",
+            "{SYSTEM_PROMPT}\\nUse timezone {preferences.timezone}.\\n{body['text']}",
+        )
+        root = _tree(tmp_path / "code", {"chat.py": code})
+        assert _run(audit_context, root, PersonProfileInPrompt) == []
+
+    def test_a_setting_read_through_get_is_not_a_profile(self, tmp_path, audit_context):
+        code = _chat_with(
+            "    user_profile = load_profile(body['uid'])\n",
+            "{SYSTEM_PROMPT}\\nAnswer in {user_profile['language']} with theme "
+            "{user_profile.get('theme')}.\\n{body['text']}",
+        )
+        assert _run(audit_context, _tree(tmp_path, {"chat.py": code}), PersonProfileInPrompt) == []
+
+    def test_a_placeholder_names_the_placeholder_not_the_line(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {"prompts/x.jinja": "Known interests: {{ user.interests }}."})
+        finding = _one(_run(audit_context, root, PersonProfileInPrompt), "AUD-1101")
+        assert finding.person_data_use == "{{ user.interests"
+
+    def test_a_purpose_clause_after_the_inference_is_not_a_mention(self, tmp_path, audit_context):
+        system = "Infer the user's mood to prevent them from leaving. You are an AI assistant."
+        root = _tree(tmp_path, {}, system=system)
+        finding = _one(_run(audit_context, root, AffectInference), "AUD-1102/vulnerability")
+        assert _shape(finding) == (
+            "AUD-1102/vulnerability",
+            Severity.HIGH,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.REVIEW,
+        )
+
+    def test_a_verb_after_the_score_does_not_make_it_a_mention(self, tmp_path, audit_context):
+        system = (
+            "Rank the users by propensity score and reject the lowest. You are an AI assistant."
+        )
+        root = _tree(tmp_path, {}, system=system)
+        finding = _one(_run(audit_context, root, PersonScoring), "AUD-1103/scoring")
+        assert _shape(finding)[1:] == (
+            Severity.HIGH,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.REVIEW,
+        )
+
+    def test_the_decisions_own_approve_call_is_not_a_review_symbol(self, tmp_path, audit_context):
+        decide = (
+            "def approve_loan(applicant):\n"
+            "    score = credit_score(applicant)\n"
+            "    if score < 600:\n"
+            "        return reject(applicant)\n"
+            "    return approve(applicant)\n"
+        )
+        findings = _run(audit_context, _tree(tmp_path, {"loans.py": decide}), PersonScoring)
+        finding = _one(findings, "AUD-1103/decision")
+        assert finding.control_status is ControlStatus.NONE
+        assert "no review or approval symbol" in finding.notes
+
+
 class TestRobustness:
     def test_rules_tolerate_a_context_without_pyfacts_checks_or_review(self, audit_context):
         ctx = audit_context(FIXTURES / "persons_companion", deep=False)

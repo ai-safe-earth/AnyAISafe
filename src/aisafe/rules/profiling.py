@@ -28,9 +28,9 @@ import re
 from typing import Any
 
 from aisafe.analysis.flows import flow_summary
-from aisafe.discovery import patterns
 from aisafe.discovery import vocabulary as vocab
 from aisafe.evidence.model import (
+    ArtifactRef,
     AuditContext,
     Basis,
     ControlStatus,
@@ -45,7 +45,7 @@ from aisafe.evidence.model import (
     Severity,
     Tier,
 )
-from aisafe.rules import AuditRule, Candidate, emit_groups, file_text, hits_in
+from aisafe.rules import AuditRule, Candidate, artifact_of, emit_groups, file_text, hits_in
 from aisafe.rules._common import (
     CHECK_ROLE,
     FUNCTION_WINDOW,
@@ -61,7 +61,6 @@ from aisafe.rules._common import (
     flow_for,
     has_ai_surface,
     is_code_file,
-    is_mention,
     line_at,
     literal_text,
     owning_unit,
@@ -72,6 +71,7 @@ from aisafe.rules._common import (
     vulnerable_nearby,
     window_text,
 )
+from aisafe.rules.influence import instruction_mention, mention_in_line, strip_instruction_verb
 
 __all__ = [
     "RULES",
@@ -191,6 +191,12 @@ _PROFILE_PREFIX_RE = re.compile(
 _IMPORT_LINE_RE = re.compile(r"^\s*(?:from\s+\S+\s+import\b|import\s+\S+)")
 _SENTENCE_END_RE = re.compile(r"[.;!?\n]")
 _IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
+# The vocabulary's accessor test reads `.get` as the accessor of `profile.get("theme")`;
+# this one reads the key inside the call, so a setting fetched that way is a setting too.
+_GET_ACCESSOR_RE = re.compile(r"""\s*\.get\(\s*["']([A-Za-z_][A-Za-z0-9_.]*)""")
+# The decision function's own verb (`approve(applicant)` in `approve_loan`) is the
+# decision, not a review of it.
+_OWN_APPROVE_RE = re.compile(r"\bapprove\(")
 
 _GREP_ONLY_GAP = "grep tier only: the flow from the profile to the model call was not established"
 _PROMPT_FILE_GAP = (
@@ -331,32 +337,37 @@ def _sentence_around(text: str, match: re.Match[str]) -> str:
     return text[start : stop.start() if stop else len(text)]
 
 
-# The verbs of the inference and extraction rows that the shared discussion cues also list
-# ("detect"): right before the match they are the instruction, not a discussion of it.
-_INSTRUCTION_VERB_TAIL_RE = re.compile(
-    r"(?:detect|identify|assess|monitor|track|notice|sense|read|record|log|note)(?:\s+and\s+\w+)?"
-    r"\s*[,:]?\s*$",
-    re.I,
-)
-_MENTION_WINDOW = 80
-
-
 def _instruction_mention(ctx: AuditContext, signal: Signal) -> bool:
-    """The mention test for an inference or extraction row. Like `is_mention`, but a verb of
-    the row's own vocabulary immediately before the match ("Detect when the user feels
-    lonely") is part of the instruction; a quoted span (prompt files) or a cue such as
-    "never", "do not" or "explain" around it still makes it a mention."""
-    line, match = _row_match(ctx, signal)
-    if match is None:
-        return False
-    start, end = match.start(), match.end()
-    if not is_code_file(signal.file):
-        for span in patterns.QUOTED_SPAN_RE.finditer(line):
-            if span.start() <= start and end <= span.end():
-                return True
-    before = _INSTRUCTION_VERB_TAIL_RE.sub("", line[max(0, start - _MENTION_WINDOW) : start])
-    after = line[end : end + _MENTION_WINDOW]
-    return bool(patterns.DISCUSSION_CUES.search(before) or patterns.DISCUSSION_CUES.search(after))
+    """The mention test for an inference or extraction row: the shared sentence-scoped test,
+    which keeps a verb of the row's own vocabulary right before the match ("Detect when the
+    user feels lonely") as part of the instruction; a quoted span in a prompt file (not the
+    whole value of a key) or a cue such as "never", "do not" or "explain" before the match
+    in the same sentence still makes it a mention."""
+    return instruction_mention(ctx, signal)
+
+
+def _text_mention(text: str, match: re.Match[str], file: str) -> bool:
+    """`mention_in_line` for a match found in a multi-line window, read on the physical
+    line that holds the match."""
+    start = text.rfind("\n", 0, match.start()) + 1
+    stop = text.find("\n", match.end())
+    line = text[start : len(text) if stop < 0 else stop]
+    return mention_in_line(
+        line,
+        match.start() - start,
+        match.end() - start,
+        code_file=is_code_file(file),
+        strip_before=strip_instruction_verb,
+    )
+
+
+def _is_setting(text: str, start: int, end: int) -> bool:
+    """The profile name at `text[start:end]` reads an explicit setting the person chose
+    (`preferences.language`, `profile["timezone"]`, `profile.get("theme")`)."""
+    if vocab.is_settings_name(text, start, end):
+        return True
+    accessor = _GET_ACCESSOR_RE.match(text, end)
+    return accessor is not None and vocab.SETTINGS_EXCLUDE.search(accessor.group(1)) is not None
 
 
 def _prompt_material(out: Facts, signal: Signal) -> bool:
@@ -448,6 +459,22 @@ def _attach_legs(
         )
 
 
+def _bind_artifacts(ctx: AuditContext, findings: list[Finding]) -> None:
+    """Name the exact version of every file a leg points at, the check legs appended after
+    construction included; a line-0 leg names no file."""
+    for finding in findings:
+        refs = list(finding.artifacts)
+        seen = {ref.file for ref in refs}
+        for leg in finding.evidence:
+            if leg.line <= 0 or leg.file in seen:
+                continue
+            digest = artifact_of(ctx, leg.file)
+            if digest is not None:
+                refs.append(ArtifactRef(file=leg.file, sha256=digest))
+                seen.add(leg.file)
+        finding.artifacts = tuple(refs)
+
+
 def _group_key(cand: Candidate) -> tuple[str | None, str | None, str]:
     return (cand.unit.id if cand.unit else None, cand.sub, cand.site.file)
 
@@ -480,6 +507,9 @@ class PersonProfileInPrompt(AuditRule):
         "v2: explicit settings the person chose (language, theme, timezone, reminder time) are "
         "never a profile; conversation history stays excluded unless fed to an inference",
         "v2: check legs replace lint legs; references replace controls; no package remedy",
+        "v2: a template placeholder that reads an explicit setting is not a profile; a "
+        "negated or discussed history inference is a mention; the mention test reads the "
+        "sentence that holds the match",
     )
     severity = Severity.MEDIUM
     basis = Basis.PRESENCE
@@ -576,7 +606,7 @@ class PersonProfileInPrompt(AuditRule):
         found = False
         for match in re.finditer(r"\b" + re.escape(name) + r"\b", text):
             found = True
-            if not vocab.is_settings_name(text, match.start(), match.end()):
+            if not _is_setting(text, match.start(), match.end()):
                 return False
         return found
 
@@ -593,9 +623,14 @@ class PersonProfileInPrompt(AuditRule):
         snippet: str | None,
         match_kind: MatchKind,
         spans: list[tuple[int, int]],
+        sensitive_text: str | None = None,
     ) -> None:
-        """One profile-binding candidate: sub `None` or `sensitive`, status by the chain."""
-        sensitive = any(vocab.SENSITIVE_PROFILE_RE.search(n) for n in names)
+        """One profile-binding candidate: sub `None` or `sensitive`, status by the chain.
+        `sensitive_text` is further text read for a special-category word (the template
+        line around a placeholder)."""
+        sensitive = any(vocab.SENSITIVE_PROFILE_RE.search(n) for n in names) or bool(
+            sensitive_text and vocab.SENSITIVE_PROFILE_RE.search(sensitive_text)
+        )
         sub = "sensitive" if sensitive else None
         flow = flow_for(ctx, file, line, out=out)
         established = _binding_established(flow)
@@ -749,9 +784,17 @@ class PersonProfileInPrompt(AuditRule):
             if found:
                 continue
             # The shapes the inference rows do not spell: "summarise the user's personality".
+            # A negated or discussed shape ("never infer the user's mood") is a mention here too.
             for lo, hi in spans:
                 text = window_text(ctx, file, lo, hi - lo + 1)
-                match = _HISTORY_INFERENCE_RE.search(text)
+                match = next(
+                    (
+                        m
+                        for m in _HISTORY_INFERENCE_RE.finditer(text)
+                        if not _text_mention(text, m, file)
+                    ),
+                    None,
+                )
                 if match is None:
                     continue
                 line = lo + text[: match.start()].count("\n")
@@ -837,21 +880,27 @@ class PersonProfileInPrompt(AuditRule):
                 spans=[],
             )
 
-        # A template placeholder binds the profile.
+        # A template placeholder binds the profile; one that reads an explicit setting
+        # (`{{ user.preferences.language }}`, `{preferences.timezone}`) does not.
         for signal in out.by_kind("profile_placeholder"):
             if (signal.file, signal.line) in covered:
                 continue
+            line, match = _row_match(ctx, signal)
+            if match is not None and _is_setting(line, match.start(), match.end()):
+                continue
+            symbol = match.group(0).strip() if match is not None else signal.symbol
             self._binding(
                 ctx,
                 out,
                 groups,
                 signal.file,
                 signal.line,
-                names=[signal.symbol, line_at(ctx, signal.file, signal.line)],
-                notes=f"prompt template placeholder {signal.symbol} binds a person profile",
+                names=[symbol],
+                notes=f"prompt template placeholder {symbol} binds a person profile",
                 snippet=None,
                 match_kind=MatchKind.GREP,
                 spans=[],
+                sensitive_text=line,
             )
 
         # /extraction: memory extraction rows in prompt material.
@@ -922,6 +971,7 @@ class PersonProfileInPrompt(AuditRule):
 
         findings = emit_groups(self, groups, ctx)
         _attach_legs(ctx, findings, check_hits(ctx, "personal_data_into_prompt"), None)
+        _bind_artifacts(ctx, findings)
         return findings
 
 
@@ -946,6 +996,9 @@ class AffectInference(AuditRule):
         "v2: /categorisation violates the policy when a persuasion or steering instruction "
         "shares the literal or the function; /workplace reads the native check, not the "
         "retired linter",
+        "v2: a mention is read inside the sentence that holds the inference: a negation or a "
+        "discussion cue before it, an evaluation after it; a purpose clause after it (to "
+        "prevent them leaving) continues the instruction",
     )
     severity = Severity.HIGH
     basis = Basis.PRESENCE
@@ -1270,6 +1323,7 @@ class AffectInference(AuditRule):
 
         findings = emit_groups(self, groups, ctx)
         _attach_legs(ctx, findings, legs, None)
+        _bind_artifacts(ctx, findings)
         return findings
 
 
@@ -1291,6 +1345,8 @@ class PersonScoring(AuditRule):
         "v2: /decision: a review or approval symbol in the function is recorded as "
         "control_status claimed and named in the notes; it no longer silences the finding",
         "v2: the native checks replace the retired linter legs",
+        "v2: the decision function's own approve call is not a review symbol; the mention "
+        "test reads the sentence that holds the match",
     )
     severity = Severity.HIGH
     basis = Basis.PRESENCE
@@ -1390,6 +1446,14 @@ class PersonScoring(AuditRule):
         if vocab.REVIEW_RE.search(window) or vocab.APPROVAL_SYMBOLS.search(window):
             return ControlStatus.CLAIMED
         return ControlStatus.NONE
+
+    def _review_symbol(self, ctx: AuditContext, file: str, line: int) -> bool:
+        """A review or approval symbol in the enclosing function, the function's own
+        `approve(` call set aside: in a decision function it is the decision itself."""
+        span = _function_span(ctx, file, line)
+        lo, count = (span[0], span[1] - span[0] + 1) if span else (line, FUNCTION_WINDOW)
+        text = _OWN_APPROVE_RE.sub("(", window_text(ctx, file, lo, count))
+        return bool(vocab.REVIEW_RE.search(text) or vocab.APPROVAL_SYMBOLS.search(text))
 
     def _readers(self, ctx: AuditContext, out: Facts, file: str) -> list[tuple[int, set[str], str]]:
         """(line, names, text) of every prompt assembly and send in `file`."""
@@ -1492,7 +1556,7 @@ class PersonScoring(AuditRule):
         groups: dict[tuple[str | None, str | None, str], list[Candidate]] = {}
 
         for signal in out.by_kind("scoring"):
-            if is_mention(ctx, signal) or not self._person_nearby(ctx, out, signal):
+            if instruction_mention(ctx, signal) or not self._person_nearby(ctx, out, signal):
                 continue
             text = _instruction_text(ctx, out, signal.file, signal.line)
             susceptible = _SUSCEPTIBILITY_RE.search(text) or _SUSCEPTIBILITY_RE.search(
@@ -1563,7 +1627,9 @@ class PersonScoring(AuditRule):
             window = window_text(ctx, hit.file, hit.line, FUNCTION_WINDOW)
             if not decides_about_a_person(window):
                 continue
-            reviewed = bool(extra.get("reviewed"))
+            # The check reads any approval symbol in the body; the decision's own verb
+            # (`approve(applicant)` in `approve_loan`) is the decision, not a review of it.
+            reviewed = bool(extra.get("reviewed")) and self._review_symbol(ctx, hit.file, hit.line)
             function = extra.get("function") or "?"
             detail = f"an automated decision function ({function}) names a person"
             if reviewed:
@@ -1596,6 +1662,7 @@ class PersonScoring(AuditRule):
 
         findings = emit_groups(self, groups, ctx)
         _attach_legs(ctx, findings, legs, "scoring")
+        _bind_artifacts(ctx, findings)
         return findings
 
 

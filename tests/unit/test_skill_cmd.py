@@ -1,12 +1,13 @@
-"""
-tests/unit/test_skill_cmd.py
+"""tests/unit/test_skill_cmd.py
 ----------------------------
 Tests for `aisafe skill install|path|list|diff`.
 
-Every test but the last runs against a fake packaged tree built in tmp_path,
+Every test but the last two runs against a fake packaged tree built in tmp_path,
 with `skill_root` / `iter_skill_files` / `home_dir` monkeypatched on the
 command module, so nothing here reads the real package or the real home
-directory. The last test uses the real package and skips when it is absent.
+directory. The last two tests use the real package and skip when it is absent.
+The host table lives in `aisafe.devtools.hosts` and is re-exported by the command
+module; the installer writes only `<host dir>/ai-safety-audit/` and nothing else.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ from pathlib import Path
 
 import pytest
 
+from aisafe.devtools import hosts as hostsmod
 from aisafe.devtools import skill as skillcmd
 from aisafe.devtools.skill import (
     ALWAYS_HOSTS,
@@ -28,6 +30,15 @@ from aisafe.devtools.skill import (
 )
 
 SKILL = "ai-safety-audit"
+# The bootstrap scripts the pivoted skill ships; the hook, attest and verify scripts are gone.
+EXPECTED_SCRIPTS = {
+    "audit.sh",
+    "audit.ps1",
+    "evaluate.sh",
+    "evaluate.ps1",
+    "review.sh",
+    "review.ps1",
+}
 
 FAKE_FILES = {
     "SKILL.md": b"---\nname: ai-safety-audit\ndescription: fake skill for tests\n---\n# fake\n",
@@ -103,6 +114,19 @@ class TestHosts:
     def test_expected_hosts_present(self):
         assert set(HOSTS) == {"claude", "agents", "codex", "cursor", "gemini", "antigravity"}
         assert set(ALWAYS_HOSTS) == {"claude", "agents"}
+
+    def test_the_table_lives_in_hosts_and_is_re_exported_by_the_command(self):
+        assert skillcmd.HOSTS is hostsmod.HOSTS
+        assert skillcmd.Host is hostsmod.Host
+        assert skillcmd.ALWAYS_HOSTS is hostsmod.ALWAYS_HOSTS
+        assert skillcmd.UNVERIFIED_NOTE == hostsmod.UNVERIFIED_NOTE
+        assert hostsmod.__all__ == ["ALWAYS_HOSTS", "HOSTS", "UNVERIFIED_NOTE", "Host"]
+
+    def test_every_host_dir_is_posix_and_relative(self):
+        for host in HOSTS.values():
+            for directory in (host.project_dir, host.global_dir):
+                assert "\\" not in directory and not directory.startswith("/"), host.name
+                assert directory.endswith("/skills"), host.name
 
 
 # ---------------------------------------------------------------------------
@@ -431,15 +455,31 @@ class TestMainOther:
 # ---------------------------------------------------------------------------
 
 
-def test_real_package_installs_to_tmp(tmp_path: Path):
+def _real_skill_root() -> Path:
     from aisafe.skills import skill_root as real_skill_root
 
     try:
-        real_skill_root()
+        return real_skill_root()
     except FileNotFoundError as exc:
         pytest.skip(f"packaged skill not present in this checkout: {exc}")
 
+
+def test_real_package_installs_to_tmp(tmp_path: Path):
+    _real_skill_root()
     dest = install(HOSTS["claude"], tmp_path)
     assert dest == tmp_path / ".claude/skills" / SKILL
     assert (dest / "SKILL.md").exists()
     assert diff_installed(HOSTS["claude"], tmp_path) == []
+
+
+def test_real_package_ships_the_pivoted_scripts_and_no_hook(tmp_path: Path):
+    """The installed copy carries the audit, review and evaluate bootstraps and none of the
+    scripts of the removed commands (hook, attest, verify, measure, decide)."""
+    _real_skill_root()
+    dest = install(HOSTS["claude"], tmp_path)
+    scripts = {p.name for p in (dest / "scripts").iterdir() if p.is_file()}
+    assert scripts == EXPECTED_SCRIPTS
+    names = {p.name.lower() for p in dest.rglob("*") if p.is_file()}
+    for removed in ("hook", "attest", "verify", "measure", "decide", "misalign", "lint"):
+        assert not any(name.startswith(removed) for name in names), removed
+    assert not (dest / "hooks").exists()

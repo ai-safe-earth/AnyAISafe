@@ -1,13 +1,20 @@
-"""
-tests/unit/test_audit_cli.py
+"""tests/unit/test_audit_cli.py
 ----------------------------
-End-to-end pins for `aisafe audit` run in-process: exit codes, flag handling,
-the document shape, baseline round-trip, pyproject defaults, and the two
-properties that must never regress -- no socket is ever opened, and no output
-carries verdict language. Most tests call `aisafe.devtools.audit.main.main`
-directly; the ones named `..._console_entry_...` (and the baseline and
-pyproject-override pins) go through `aisafe.cli.main` so the console script's
-REMAINDER pass-through is on the path too.
+End-to-end pins for `aisafe audit` run in-process after the pivot: exit codes, flag
+handling (the kept flags, the new `--review-record` and `--evaluation-report`, the retired
+`--no-external` that is accepted and ignored with a note, and the removed flags that are
+usage errors), the document shape (REPORT_KEYS, the summary keys, the policy block), the
+baseline round-trip including the re-review path when a baseline predates the policy,
+pyproject defaults, and the two properties that must never regress: no socket is ever
+opened, and no output carries verdict language. Most tests call `aisafe.audit.main`
+directly; the ones named `..._console_entry_...` (and the baseline and pyproject-override
+pins) go through `aisafe.cli.main` so the console script's REMAINDER pass-through is on
+the path too.
+
+The reference fixture with findings is `persons_companion` (exit 1: a companion prompt
+with an engagement objective, a hidden AI nature and no crisis path); `clean_py` has no
+AI surface (exit 0); `ts_agent` has a TypeScript AI surface and so a `deep` UNKNOWN item;
+`py_agent` yields one low finding (`AUD-1105/no-disclosure`) and nothing else.
 """
 
 from __future__ import annotations
@@ -22,11 +29,7 @@ from pathlib import Path
 import pytest
 
 from aisafe import cli
-from aisafe.devtools._config import find_pyproject
-from aisafe.devtools.audit import adapters, walk
-from aisafe.devtools.audit.baseline import read_baseline
-from aisafe.devtools.audit.html import _T_BANNER_NO_RULES
-from aisafe.devtools.audit.main import (
+from aisafe.audit import (
     EXIT_FATAL,
     EXIT_FINDINGS,
     EXIT_INTERRUPTED,
@@ -38,19 +41,136 @@ from aisafe.devtools.audit.main import (
     main,
     run_audit,
 )
-from aisafe.devtools.audit.model import SCHEMA_VERSION, TRIFECTA_RULE_ID
-from aisafe.devtools.audit.patterns import OWN_HTML_MARKER_LINE
-from aisafe.devtools.audit.report import BANNED_PHRASES, FORMATS
-from aisafe.devtools.audit.rules import rule_by_id
+from aisafe.devtools._config import find_pyproject
+from aisafe.discovery import walk
+from aisafe.discovery.patterns import OWN_HTML_MARKER_LINE
+from aisafe.evidence.model import INVENTORY_KEYS, REPORT_KEYS, SCHEMA_VERSION, UnknownCategory
+from aisafe.policy import POLICY_VERSION
+from aisafe.reporting.html import _T_BANNER_NO_RULES
+from aisafe.reporting.report import BANNED_PHRASES, FORMATS
+from aisafe.review.baseline import read_baseline
+from aisafe.rules import ALL_RULES, rule_by_id
 
-# The package's PEP 562 hook rebinds `aisafe.devtools.audit.main` to the function,
-# so the module object has to come from the import system directly.
-audit_main = importlib.import_module("aisafe.devtools.audit.main")
+# The module object, for monkeypatching the names `run_audit` looks up at call time.
+audit_main = importlib.import_module("aisafe.audit")
 
 # Assembled at runtime so this file never spells the banned word itself.
 BANNED_WORD = re.compile(r"\bcl" + r"ean\b", re.IGNORECASE)
+LEGACY_RULE_ID = re.compile(r"\bAUD-(?:[1-9]\d{2}|10\d{2})\b")  # AUD-101 .. AUD-1099
 
-LOW_RULE = "AUD-703"  # fires on py_agent at severity low
+FIXTURES = Path(__file__).resolve().parents[2] / "tests" / "fixtures" / "audit"
+
+REFERENCE_RULE = "AUD-1104"  # fires on persons_companion: high, and /vulnerable at critical
+REFERENCE_TITLE = "Engagement, retention, spend or experimentation objective"
+LOW_RULE = "AUD-1105"  # /no-disclosure fires on py_agent at severity low, nothing else does
+OLDER_POLICY = "0.9.0"
+PURPOSE = "a companion app for adults"
+REVIEWER = "J. Doe <product owner>"
+REASON = "accepted for the companion fixture; tracked in ticket 42"
+
+# Contract section 3: the summary block, keys in order.
+SUMMARY_KEYS = (
+    "findings",
+    "by_severity",
+    "by_evidence_status",
+    "by_decision",
+    "below_threshold",
+    "fail_on",
+    "unknown_items",
+    "unknown_by_category",
+    "exit_code",
+    "top",
+    "suppressed",
+    "baseline_new",
+    "re_review",
+    "stale_acceptances",
+)
+RULE_ENTRY_KEYS = [
+    "id",
+    "title",
+    "version",
+    "mechanism",
+    "measured_precision",
+    "ran",
+    "experimental",
+]
+BASELINE_KEYS = [
+    "schema",
+    "kind",
+    "generated_at",
+    "tool",
+    "policy_version",
+    "fingerprints",
+    "accepted",
+    "index",
+]
+BASELINE_BLOCK_KEYS = [
+    "file",
+    "kind",
+    "new",
+    "unchanged",
+    "re_review",
+    "stale_acceptances",
+    "accepted",
+    "generated_at",
+    "policy_version",
+    "no_longer_reported",
+]
+MECHANISM_IDS = [f"M{i}" for i in range(1, 9)]
+
+# Contract section 3: the report and inventory documents, keys in order. Pinned by value
+# and not only against the model's constants, so a reordering of REPORT_KEYS or
+# INVENTORY_KEYS is caught here as well as in the model tests.
+CONTRACT_REPORT_KEYS = (
+    "schema",
+    "kind",
+    "tool",
+    "target",
+    "generated_at",
+    "disclaimer",
+    "policy",
+    "summary",
+    "mechanisms",
+    "findings",
+    "reports",
+    "unknown",
+    "baseline",
+    "inventory",
+    "rules",
+)
+CONTRACT_INVENTORY_KEYS = (
+    "schema",
+    "kind",
+    "target",
+    "units",
+    "languages",
+    "llm_calls",
+    "models",
+    "frameworks",
+    "ingress",
+    "prompts",
+    "person_signals",
+    "memory_stores",
+    "personas",
+    "review_records",
+    "reports",
+    "system_card",
+    "own_output_skipped",
+    "unknown",
+)
+
+# Flags the pivot removed with the external tools, the buckets, the trifecta and the
+# decision document. Each is a usage error now, never a quiet no-op.
+REMOVED_FLAGS = (
+    ("--tools", "gitleaks"),
+    ("--run-evals",),
+    ("--pip-audit-env", "x"),
+    ("--trusted-mcp-hosts", "localhost"),
+    ("--include-home",),
+    ("--timeout", "5"),
+    ("--decision", "decision.json"),
+    ("--only", "x"),
+)
 
 
 # ---------------------------------------------------------------------------
@@ -80,25 +200,30 @@ def neutral_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 @pytest.fixture
-def no_adapter_binaries(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Every external tool is absent: not on PATH and not importable."""
-    monkeypatch.setattr(shutil, "which", lambda *a, **k: None)
-    monkeypatch.setattr(adapters, "_module_available", lambda module: False)
+def companion(tmp_path: Path) -> Path:
+    """A scratch copy of `persons_companion`, the reference fixture with findings."""
+    target = tmp_path / "persons_companion"
+    shutil.copytree(FIXTURES / "persons_companion", target)
+    return target
 
 
 @pytest.fixture
-def no_adapters(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Adapters produce nothing at all, so only walk/discover/pydeep UNKNOWN items remain."""
-
-    def nothing(ctx, names=None, *, timeout=120, no_external=False):
-        return [], [], []
-
-    monkeypatch.setattr(adapters, "run_adapters", nothing)
+def py_agent(tmp_path: Path) -> Path:
+    """A scratch copy of `py_agent`: one low finding (`AUD-1105/no-disclosure`)."""
+    target = tmp_path / "py_agent"
+    shutil.copytree(FIXTURES / "py_agent", target)
+    return target
 
 
 def _json_run(args: list[str], out: Path) -> tuple[int, dict]:
     code = main([*args, "--format", "json", "-o", str(out)])
     return code, json.loads(out.read_text(encoding="utf-8"))
+
+
+def _flat(text: str) -> str:
+    """The text with every run of whitespace folded: the terminal renderer wraps at 100
+    columns, so a sentence can be split across lines."""
+    return " ".join(text.split())
 
 
 def _assert_no_verdict_language(text: str) -> None:
@@ -107,6 +232,63 @@ def _assert_no_verdict_language(text: str) -> None:
     for phrase in BANNED_PHRASES:
         assert phrase not in lowered, phrase
     assert not BANNED_WORD.search(text)
+
+
+def _ids(doc: dict) -> set[str]:
+    return {f["id"] for f in doc["findings"]}
+
+
+def _evidence_files(doc: dict) -> set[str]:
+    return {ev["file"] for finding in doc["findings"] for ev in finding["evidence"]}
+
+
+def _rewrite_policy_version(baseline: Path, version: str | None, *, entries: bool = False) -> None:
+    """Make a baseline look as if it was written under `version` (None drops the key); with
+    `entries`, every accepted entry too."""
+    doc = json.loads(baseline.read_text(encoding="utf-8"))
+    targets = [doc] + (list(doc.get("accepted") or []) if entries else [])
+    for target in targets:
+        if version is None:
+            target.pop("policy_version", None)
+        else:
+            target["policy_version"] = version
+    baseline.write_text(json.dumps(doc, indent=2) + "\n", encoding="utf-8")
+
+
+def _write_review_record(root: Path, record: Path, *, scope: str | None = None) -> None:
+    """`aisafe review record` for `root`, written to `record` (outside the tree)."""
+    from aisafe.review.cli import main as review_main
+
+    args = ["record", str(root), "--record", str(record), "--reviewer", REVIEWER]
+    args += ["--purpose", PURPOSE]
+    if scope is not None:
+        args += ["--scope", scope]
+    assert review_main(args) == 0
+    assert record.is_file()
+
+
+def _write_evaluation_report(path: Path) -> Path:
+    """An `aisafe evaluate --transcripts` report (no network) at `path`."""
+    from aisafe.evaluation.scenarios import main as evaluate_main
+
+    transcripts = path.parent / "transcripts.jsonl"
+    transcripts.parent.mkdir(parents=True, exist_ok=True)
+    transcripts.write_text(
+        json.dumps(
+            {
+                "id": "t1",
+                "turns": [
+                    {"role": "user", "content": "I have to go now, bye."},
+                    {"role": "assistant", "content": "Goodbye, take care."},
+                ],
+            }
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    assert evaluate_main(["--transcripts", str(transcripts), "-o", str(path)]) == 0
+    assert json.loads(path.read_text(encoding="utf-8"))["kind"] == "evaluation"
+    return path
 
 
 # ---------------------------------------------------------------------------
@@ -123,31 +305,44 @@ def test_parser_defaults_match_the_design() -> None:
     assert ns.fail_on == "low"
     assert ns.fail_on_unknown is None
     assert ns.deep == "python"
-    assert ns.timeout == 120
-    assert ns.trusted_mcp_hosts == "localhost,127.0.0.1,::1"
     assert ns.redact is True
     assert ns.exclude is None
     assert ns.write_baseline is None
     assert ns.amend_baseline is None
     assert ns.accept is None
+    assert ns.review_record is None
+    assert ns.evaluation_report is None
+    assert ns.no_external is False
     options = AuditOptions.from_namespace(ns)
-    assert options.trusted_mcp_hosts == ("localhost", "127.0.0.1", "::1")
     assert options.exclude == ()
-    assert options.tools is None
     assert options.rules is None
     assert options.fail_on_unknown is None
     assert options.amend_baseline is None
     assert options.accept == ()
+    assert options.review_record is None
+    assert options.evaluation_report is None
+    assert options.no_external is False
     repeated = AuditOptions.from_namespace(
         parser.parse_args(["--amend-baseline", "b.json", "--accept", "a=x", "--accept", "b=y"])
     )
     assert repeated.amend_baseline == "b.json"
     assert repeated.accept == ("a=x", "b=y")
-    # adapters and discovery read these by name
-    for name in ("run_evals", "pip_audit_env", "tools", "no_external", "timeout"):
-        assert hasattr(options, name)
-    for name in ("include_home", "trusted_mcp_hosts"):
-        assert hasattr(options, name)
+    # the knobs of the removed product are gone from the namespace and the options
+    for name in (
+        "tools",
+        "run_evals",
+        "pip_audit_env",
+        "trusted_mcp_hosts",
+        "include_home",
+        "timeout",
+        "decision",
+        "only",
+    ):
+        assert not hasattr(ns, name), name
+        assert not hasattr(options, name), name
+    # the two new flags and the retired one are read by name
+    for name in ("review_record", "evaluation_report", "no_external"):
+        assert hasattr(options, name), name
 
 
 def test_parser_csv_flags_and_bare_fail_on_unknown() -> None:
@@ -158,26 +353,41 @@ def test_parser_csv_flags_and_bare_fail_on_unknown() -> None:
             "a,b",
             "--exclude",
             "c",
-            "--tools",
-            "gitleaks, semgrep",
             "--rules",
-            "AUD-301,AUD-101",
+            f"{REFERENCE_RULE},AUD-1101",
             "--fail-on-unknown",
         ]
     )
     options = AuditOptions.from_namespace(ns)
     assert options.exclude == ("a", "b", "c")
-    assert options.tools == ("gitleaks", "semgrep")
-    assert options.rules == ("AUD-301", "AUD-101")
+    assert options.rules == (REFERENCE_RULE, "AUD-1101")
     assert options.fail_on_unknown == frozenset(UNKNOWN_CATEGORIES)
-    scoped = AuditOptions.from_namespace(parser.parse_args(["--fail-on-unknown", "tools,reports"]))
-    assert scoped.fail_on_unknown == frozenset({"tools", "reports"})
+    scoped = AuditOptions.from_namespace(
+        parser.parse_args(["--fail-on-unknown", "coverage,reports"])
+    )
+    assert scoped.fail_on_unknown == frozenset({"coverage", "reports"})
+
+
+def test_unknown_categories_are_the_evidence_models() -> None:
+    assert UNKNOWN_CATEGORIES == ("coverage", "deep", "reports", "runtime")
+    assert UNKNOWN_CATEGORIES == tuple(category.value for category in UnknownCategory)
 
 
 def test_parser_rejects_bad_unknown_category() -> None:
     with pytest.raises(SystemExit) as exc:
         build_parser().parse_args(["--fail-on-unknown", "bogus"])
     assert exc.value.code == EXIT_FATAL
+    with pytest.raises(SystemExit) as exc:
+        build_parser().parse_args(["--fail-on-unknown", "tools"])  # a retired category
+    assert exc.value.code == EXIT_FATAL
+
+
+@pytest.mark.parametrize("flag", REMOVED_FLAGS, ids=lambda flag: flag[0])
+def test_removed_flags_are_usage_errors(flag: tuple[str, ...], capsys) -> None:
+    with pytest.raises(SystemExit) as exc:
+        build_parser().parse_args(list(flag))
+    assert exc.value.code == EXIT_FATAL
+    assert "unrecognized arguments" in capsys.readouterr().err
 
 
 def test_exit_constants() -> None:
@@ -185,26 +395,45 @@ def test_exit_constants() -> None:
 
 
 # ---------------------------------------------------------------------------
-# Reference run on py_agent
+# Reference run on persons_companion
 # ---------------------------------------------------------------------------
 
 
-def test_json_run_on_py_agent(py_agent: Path, tmp_path: Path, capsys) -> None:
+def test_json_run_on_the_reference_fixture(companion: Path, tmp_path: Path, capsys) -> None:
     out = tmp_path / "out.json"
-    code, doc = _json_run([str(py_agent), "--no-external"], out)
+    code, doc = _json_run([str(companion)], out)
     assert code == EXIT_FINDINGS
-    assert list(doc)[0] == "schema"
+    assert list(doc) == list(REPORT_KEYS) == list(CONTRACT_REPORT_KEYS)
     assert doc["schema"] == SCHEMA_VERSION
     assert doc["kind"] == "audit"
-    assert doc["findings"], "py_agent must produce findings"
-    assert doc["findings"][0]["rule_id"] == TRIFECTA_RULE_ID
-    assert doc["findings"][0]["scope"]["kind"] == "function"
+    assert doc["tool"]["name"] == "aisafe-audit"
+    assert doc["findings"], "persons_companion must produce findings"
+    ids = _ids(doc)
+    assert {
+        REFERENCE_RULE,
+        f"{REFERENCE_RULE}/vulnerable",
+        "AUD-1105/persona",
+        "AUD-1107/missing",
+    } <= ids
+    assert all(f["rule_id"].startswith("AUD-11") for f in doc["findings"])
+    assert doc["findings"][0]["severity"] == "critical"  # sorted by severity first
+    # the summary block, keys from the contract
+    assert list(doc["summary"]) == list(SUMMARY_KEYS)
     assert doc["summary"]["exit_code"] == EXIT_FINDINGS
-    for row in doc["external_tools"]:
-        assert row["status"] == "skipped_by_flag", row
-        assert row["flag"] == "--no-external"
-    assert doc["measured"] == []
-    assert len(doc["external_tools"]) == len(adapters.ADAPTERS)
+    assert doc["summary"]["findings"] == len(doc["findings"])
+    assert doc["summary"]["top"] == doc["findings"][0]["id"]
+    assert doc["summary"]["baseline_new"] is None
+    assert doc["summary"]["re_review"] == 0 and doc["summary"]["stale_acceptances"] == 0
+    assert set(doc["summary"]["unknown_by_category"]) == set(UNKNOWN_CATEGORIES)
+    # the policy the decisions were taken under
+    assert set(doc["policy"]) == {"version", "charter", "adopted"}
+    assert doc["policy"]["version"] == POLICY_VERSION
+    assert all(f["policy_version"] == POLICY_VERSION for f in doc["findings"])
+    assert all(f["mechanism"] in MECHANISM_IDS for f in doc["findings"])
+    assert [row["id"] for row in doc["mechanisms"]] == MECHANISM_IDS
+    assert doc["baseline"] is None
+    for removed in ("external_tools", "measured", "decision", "buckets"):
+        assert removed not in doc, removed
     # -o with a machine format still prints the terminal summary
     captured = capsys.readouterr()
     assert "finding" in captured.out
@@ -212,25 +441,58 @@ def test_json_run_on_py_agent(py_agent: Path, tmp_path: Path, capsys) -> None:
     _assert_no_verdict_language(captured.out)
 
 
-def test_deep_none_widens_trifecta_scope_to_unit(py_agent: Path, tmp_path: Path) -> None:
-    code, doc = _json_run([str(py_agent), "--no-external", "--deep", "none"], tmp_path / "o.json")
+def test_no_external_is_accepted_and_ignored_with_a_note(
+    companion: Path, tmp_path: Path, capsys
+) -> None:
+    code, plain = _json_run([str(companion)], tmp_path / "a.json")
     assert code == EXIT_FINDINGS
-    first = doc["findings"][0]
-    assert first["rule_id"] == TRIFECTA_RULE_ID
-    assert first["scope"]["kind"] == "unit"
+    assert "nothing external runs" not in capsys.readouterr().err
+    code, flagged = _json_run([str(companion), "--no-external"], tmp_path / "b.json")
+    assert code == EXIT_FINDINGS
+    err = capsys.readouterr().err
+    assert "--no-external is accepted and ignored" in err
+    assert "nothing external runs in this version" in err
+    assert {f["fingerprint"] for f in plain["findings"]} == {
+        f["fingerprint"] for f in flagged["findings"]
+    }
+    _assert_no_verdict_language(err)
 
 
-def test_every_rule_is_unmeasured_in_the_document(py_agent: Path, tmp_path: Path) -> None:
-    _, doc = _json_run([str(py_agent), "--no-external"], tmp_path / "o.json")
+def test_deep_none_keeps_the_findings_but_establishes_no_chain(
+    companion: Path, tmp_path: Path
+) -> None:
+    _, deep = _json_run([str(companion)], tmp_path / "deep.json")
+    code, flat = _json_run([str(companion), "--deep", "none"], tmp_path / "flat.json")
+    assert code == EXIT_FINDINGS
+    with_ast = {f["id"]: f for f in deep["findings"]}
+    without = {f["id"]: f for f in flat["findings"]}
+    # the profile-to-prompt chain is the syntax tree's work: without it the finding stays
+    # a detected signal at unit scope and says so
+    assert with_ast["AUD-1101"]["evidence_status"] == "supported_mechanism"
+    assert with_ast["AUD-1101"]["flow_established"] is True
+    assert without["AUD-1101"]["evidence_status"] == "detected_signal"
+    assert without["AUD-1101"]["flow_established"] is False
+    assert without["AUD-1101"]["flow"] is None
+    assert all(f["scope"]["kind"] == "unit" for f in flat["findings"])
+    assert {REFERENCE_RULE, "AUD-1105/persona", "AUD-1107/missing"} <= set(without)
+
+
+def test_every_rule_is_unmeasured_in_the_document(companion: Path, tmp_path: Path) -> None:
+    _, doc = _json_run([str(companion)], tmp_path / "o.json")
     assert doc["rules"], "catalogue must be present"
-    assert all(entry["measured_precision"] is None for entry in doc["rules"])
-    assert all(entry["ran"] for entry in doc["rules"])
+    assert {entry["id"] for entry in doc["rules"]} == {rule.id for rule in ALL_RULES}
+    for entry in doc["rules"]:
+        assert list(entry) == RULE_ENTRY_KEYS
+        assert entry["measured_precision"] is None
+        assert entry["ran"] is True and entry["experimental"] is False
+        assert entry["version"] >= 1
+        assert entry["mechanism"] in MECHANISM_IDS
     assert all(f["confidence"]["precision"] is None for f in doc["findings"])
 
 
 @pytest.mark.parametrize("fmt", FORMATS)
-def test_every_format_is_free_of_verdict_language(py_agent: Path, capsys, fmt: str) -> None:
-    code = main([str(py_agent), "--no-external", "--format", fmt])
+def test_every_format_is_free_of_verdict_language(companion: Path, capsys, fmt: str) -> None:
+    code = main([str(companion), "--format", fmt])
     assert code == EXIT_FINDINGS
     captured = capsys.readouterr()
     assert captured.out.strip()
@@ -238,38 +500,40 @@ def test_every_format_is_free_of_verdict_language(py_agent: Path, capsys, fmt: s
     _assert_no_verdict_language(captured.err)
 
 
-def test_quiet_terminal_keeps_summary_and_unknown(py_agent: Path, capsys) -> None:
-    main([str(py_agent), "--no-external", "-q"])
+def test_quiet_terminal_keeps_summary_mechanisms_and_unknown(companion: Path, capsys) -> None:
+    main([str(companion), "-q"])
     quiet = capsys.readouterr().out
-    main([str(py_agent), "--no-external"])
+    main([str(companion)])
     full = capsys.readouterr().out
     assert "UNKNOWN" in quiet
-    assert "skipped by --no-external" in quiet
-    assert TRIFECTA_RULE_ID not in quiet
-    assert TRIFECTA_RULE_ID in full
+    assert "Mechanisms" in quiet
+    assert "decisions: violates_policy" in quiet
+    assert REFERENCE_TITLE not in quiet
+    assert REFERENCE_TITLE in full
+    assert "Findings" in full
     assert len(quiet) < len(full)
     _assert_no_verdict_language(quiet)
 
 
-def test_run_audit_accepts_audit_options_directly(py_agent: Path, tmp_path: Path) -> None:
+def test_run_audit_accepts_audit_options_directly(companion: Path, tmp_path: Path) -> None:
     out = tmp_path / "direct.json"
-    options = AuditOptions(path=str(py_agent), no_external=True, format="json", output=str(out))
+    options = AuditOptions(path=str(companion), format="json", output=str(out))
     assert run_audit(options) == EXIT_FINDINGS
     assert json.loads(out.read_text(encoding="utf-8"))["schema"] == SCHEMA_VERSION
 
 
 def test_console_entry_every_renderer_is_free_of_verdict_language(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """
-    The end-to-end pin from the carry-forward: through the `aisafe audit` console
-    entry, on the reference fixture, none of the five renderings (json, sarif,
-    markdown, terminal full, terminal quiet) carries a banned phrase or the
-    banned word -- and neither does anything printed to stdout or stderr on the way.
+    Through the `aisafe audit` console entry, on the reference fixture, none of the six
+    renderings (json, sarif, markdown, html, terminal full, terminal quiet) carries a banned
+    phrase or the banned word -- and neither does anything printed to stdout or stderr on
+    the way.
     """
-    base = ["audit", str(py_agent), "--no-external"]
+    base = ["audit", str(companion)]
     rendered: dict[str, str] = {}
-    for fmt in ("json", "sarif", "markdown"):
+    for fmt in ("json", "sarif", "markdown", "html"):
         out = tmp_path / f"report.{fmt}"
         assert cli.main([*base, "--format", fmt, "-o", str(out)]) == EXIT_FINDINGS
         captured = capsys.readouterr()
@@ -281,17 +545,15 @@ def test_console_entry_every_renderer_is_free_of_verdict_language(
     assert cli.main([*base, "-q"]) == EXIT_FINDINGS
     rendered["terminal:quiet"] = capsys.readouterr().out
 
-    for fmt in ("json", "sarif", "markdown", "terminal", "terminal:quiet"):
+    for fmt in ("json", "sarif", "markdown", "html", "terminal", "terminal:quiet"):
         assert rendered[fmt].strip(), f"{fmt} rendering is empty"
     assert json.loads(rendered["json"])["findings"]
     assert json.loads(rendered["sarif"])["runs"][0]["results"]
-    assert TRIFECTA_RULE_ID in rendered["terminal"]
-    assert TRIFECTA_RULE_ID not in rendered["terminal:quiet"]
+    assert REFERENCE_TITLE in rendered["terminal"]
+    assert REFERENCE_TITLE not in rendered["terminal:quiet"]
     for name, text in rendered.items():
         _assert_no_verdict_language(text)
-        for phrase in BANNED_PHRASES:
-            assert phrase not in text.lower(), (name, phrase)
-        assert not BANNED_WORD.search(text), name
+        assert not LEGACY_RULE_ID.search(text), name
 
 
 # ---------------------------------------------------------------------------
@@ -299,46 +561,50 @@ def test_console_entry_every_renderer_is_free_of_verdict_language(
 # ---------------------------------------------------------------------------
 
 
-def test_reference_fixture_without_findings_exits_zero(audit_fixture, capsys) -> None:
-    code = main([str(audit_fixture("clean_py")), "--no-external", "--fail-on", "high"])
+def test_reference_fixture_without_findings_exits_zero(capsys) -> None:
+    code = main([str(FIXTURES / "clean_py"), "--fail-on", "high"])
     assert code == EXIT_OK
-    _assert_no_verdict_language(capsys.readouterr().out)
+    out = capsys.readouterr().out
+    assert "0 findings" in out
+    _assert_no_verdict_language(out)
 
 
-def test_fail_on_never_disables_findings_but_not_unknown(py_agent: Path) -> None:
-    assert main([str(py_agent), "--no-external", "--fail-on", "never"]) == EXIT_OK
-    assert (
-        main([str(py_agent), "--no-external", "--fail-on", "never", "--fail-on-unknown"])
-        == EXIT_FINDINGS
-    )
+def test_fail_on_never_disables_findings_but_not_unknown(companion: Path) -> None:
+    assert main([str(companion), "--fail-on", "never"]) == EXIT_OK
+    ts_agent = str(FIXTURES / "ts_agent")
+    assert main([ts_agent, "--fail-on", "never"]) == EXIT_OK
+    assert main([ts_agent, "--fail-on", "never", "--fail-on-unknown"]) == EXIT_FINDINGS
 
 
-def test_fail_on_unknown_tools_when_no_adapter_is_installed(
-    py_agent: Path, tmp_path: Path, no_adapter_binaries
-) -> None:
-    base = [str(py_agent), "--fail-on", "never"]
-    assert main(base) == EXIT_OK
-    code, doc = _json_run([*base, "--fail-on-unknown", "tools"], tmp_path / "o.json")
-    assert code == EXIT_FINDINGS
-    assert doc["summary"]["exit_code"] == EXIT_FINDINGS
-    assert {row["status"] for row in doc["external_tools"]} <= {"not_on_path", "not_applicable"}
-    assert any(item["category"] == "tools" for item in doc["unknown"])
-
-
-def test_fail_on_unknown_scoped_ignores_other_categories(
-    audit_fixture, tmp_path: Path, no_adapters
-) -> None:
+def test_fail_on_unknown_scoped_ignores_other_categories(tmp_path: Path) -> None:
     # ts_agent has a TypeScript AI surface and no deep layer: a `deep` item only.
-    base = [str(audit_fixture("ts_agent")), "--fail-on", "never"]
-    code, doc = _json_run([*base, "--fail-on-unknown", "tools,reports"], tmp_path / "a.json")
+    base = [str(FIXTURES / "ts_agent"), "--fail-on", "never"]
+    code, doc = _json_run([*base, "--fail-on-unknown", "coverage,reports"], tmp_path / "a.json")
     assert code == EXIT_OK
     assert {item["category"] for item in doc["unknown"]} == {"deep"}
+    assert doc["summary"]["unknown_by_category"]["deep"] == 1
+    assert doc["findings"] == []
+    assert main([*base, "--fail-on-unknown", "runtime"]) == EXIT_OK
     assert main([*base, "--fail-on-unknown", "deep"]) == EXIT_FINDINGS
     assert main([*base, "--fail-on-unknown"]) == EXIT_FINDINGS
 
 
-def test_no_redact_is_refused(py_agent: Path, capsys) -> None:
-    assert main([str(py_agent), "--no-redact"]) == EXIT_FATAL
+def test_fail_on_high_leaves_a_low_finding_uncounted(
+    py_agent: Path, tmp_path: Path, capsys
+) -> None:
+    code, doc = _json_run([str(py_agent)], tmp_path / "low.json")
+    assert code == EXIT_FINDINGS
+    assert _ids(doc) == {f"{LOW_RULE}/no-disclosure"}
+    assert doc["findings"][0]["severity"] == "low"
+    capsys.readouterr()
+    assert main([str(py_agent), "--fail-on", "high"]) == EXIT_OK
+    out = capsys.readouterr().out
+    assert "1 finding (1 below --fail-on high, not counted in exit code)" in out
+    _assert_no_verdict_language(out)
+
+
+def test_no_redact_is_refused(companion: Path, capsys) -> None:
+    assert main([str(companion), "--no-redact"]) == EXIT_FATAL
     captured = capsys.readouterr()
     assert "redaction is not optional" in captured.err
     assert captured.out == ""
@@ -349,17 +615,17 @@ def test_missing_path_is_fatal(tmp_path: Path, capsys) -> None:
     assert "does not exist" in capsys.readouterr().err
 
 
-def test_file_path_is_fatal(py_agent: Path, capsys) -> None:
-    assert main([str(py_agent / "app.py")]) == EXIT_FATAL
+def test_file_path_is_fatal(companion: Path, capsys) -> None:
+    assert main([str(companion / "app.py")]) == EXIT_FATAL
     assert "not a directory" in capsys.readouterr().err
 
 
-def test_keyboard_interrupt_maps_to_130(py_agent: Path, monkeypatch: pytest.MonkeyPatch) -> None:
+def test_keyboard_interrupt_maps_to_130(companion: Path, monkeypatch: pytest.MonkeyPatch) -> None:
     def interrupt(*args, **kwargs):
         raise KeyboardInterrupt
 
     monkeypatch.setattr(walk, "walk", interrupt)
-    assert main([str(py_agent), "--no-external"]) == EXIT_INTERRUPTED
+    assert main([str(companion)]) == EXIT_INTERRUPTED
 
 
 def test_keyboard_interrupt_in_amend_baseline_maps_to_130(
@@ -377,27 +643,27 @@ def test_keyboard_interrupt_in_amend_baseline_maps_to_130(
 
 
 def test_unexpected_exception_is_exit_2_with_one_line(
-    py_agent: Path, monkeypatch: pytest.MonkeyPatch, capsys
+    companion: Path, monkeypatch: pytest.MonkeyPatch, capsys
 ) -> None:
     def explode(*args, **kwargs):
         raise RuntimeError("walker fell over")
 
     monkeypatch.setattr(walk, "walk", explode)
-    assert main([str(py_agent), "--no-external"]) == EXIT_FATAL
+    assert main([str(companion)]) == EXIT_FATAL
     err = capsys.readouterr().err
     assert "RuntimeError: walker fell over" in err
     assert "Traceback" not in err
-    assert main([str(py_agent), "--no-external", "--debug"]) == EXIT_FATAL
+    assert main([str(companion), "--debug"]) == EXIT_FATAL
     assert "Traceback" in capsys.readouterr().err
 
 
 def test_debug_template_self_check_is_fatal(
-    py_agent: Path, monkeypatch: pytest.MonkeyPatch, capsys
+    companion: Path, monkeypatch: pytest.MonkeyPatch, capsys
 ) -> None:
-    assert main([str(py_agent), "--no-external", "--debug", "--fail-on", "never"]) == EXIT_OK
+    assert main([str(companion), "--debug", "--fail-on", "never"]) == EXIT_OK
     capsys.readouterr()
     monkeypatch.setattr(audit_main, "check_templates", lambda: ["placeholder phrase"])
-    assert main([str(py_agent), "--no-external", "--debug"]) == EXIT_FATAL
+    assert main([str(companion), "--debug"]) == EXIT_FATAL
     assert "placeholder phrase" in capsys.readouterr().err
 
 
@@ -409,22 +675,40 @@ def test_debug_template_self_check_is_fatal(
 def test_list_rules(capsys) -> None:
     assert main(["--list-rules"]) == EXIT_OK
     out = capsys.readouterr().out
-    assert TRIFECTA_RULE_ID in out
+    header = out.splitlines()[0].split()
+    assert header == [
+        "id",
+        "version",
+        "mechanism",
+        "severity",
+        "tier",
+        "measured_precision",
+        "default",
+    ]
+    for rule in ALL_RULES:
+        assert rule.id in out, rule.id
+    for mechanism in MECHANISM_IDS:
+        assert f" {mechanism} " in out, mechanism
     assert "UNMEASURED" in out
-    assert "measured_precision" in out
+    assert f"{len(ALL_RULES)} rules under policy {POLICY_VERSION}" in out
+    assert not LEGACY_RULE_ID.search(out)
     _assert_no_verdict_language(out)
 
 
 def test_rules_narrows_the_run_and_notes_unknown_ids(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     code, doc = _json_run(
-        [str(py_agent), "--no-external", "--rules", f"{LOW_RULE},AUD-9999"], tmp_path / "o.json"
+        [str(companion), "--rules", f"{REFERENCE_RULE},AUD-9999"], tmp_path / "o.json"
     )
     assert code == EXIT_FINDINGS
-    assert {f["rule_id"] for f in doc["findings"]} == {LOW_RULE}
+    assert {f["rule_id"] for f in doc["findings"]} == {REFERENCE_RULE}
     ran = {entry["id"] for entry in doc["rules"] if entry["ran"]}
-    assert ran == {LOW_RULE}
+    assert ran == {REFERENCE_RULE}
+    # the coverage table says which mechanisms were not assessed in this run
+    rows = {row["id"]: row for row in doc["mechanisms"]}
+    assert rows["M4"]["ran"] == [REFERENCE_RULE] and rows["M4"]["decision"] == "violates_policy"
+    assert rows["M1"]["ran"] == [] and rows["M1"]["decision"] == "not_assessed"
     assert "unknown rule id AUD-9999" in capsys.readouterr().err
 
 
@@ -435,33 +719,37 @@ def test_naming_a_demoted_rule_runs_it_with_a_note(
     assert rule is not None
     # A measured value below MIN_PRECISION demotes the rule. Only a test may set one.
     monkeypatch.setattr(rule, "measured_precision", 0.1)
-    assert main([str(py_agent), "--no-external", "--rules", LOW_RULE]) == EXIT_FINDINGS
+    assert main([str(py_agent), "--rules", LOW_RULE]) == EXIT_FINDINGS
     err = capsys.readouterr().err
     assert f"rule {LOW_RULE} is below MIN_PRECISION" in err
-    code, doc = _json_run([str(py_agent), "--no-external"], tmp_path / "o.json")
+    code, doc = _json_run([str(py_agent)], tmp_path / "o.json")
+    assert code == EXIT_OK  # the only rule that fires on py_agent did not run
     entry = next(e for e in doc["rules"] if e["id"] == LOW_RULE)
     assert entry["experimental"] is True
     assert entry["ran"] is False
-    code, doc = _json_run([str(py_agent), "--no-external", "--experimental"], tmp_path / "e.json")
+    assert entry["measured_precision"] == 0.1
+    code, doc = _json_run([str(py_agent), "--experimental"], tmp_path / "e.json")
+    assert code == EXIT_FINDINGS
     entry = next(e for e in doc["rules"] if e["id"] == LOW_RULE)
     assert entry["ran"] is True
 
 
-def test_inventory_only(py_agent: Path, capsys) -> None:
-    assert main([str(py_agent), "--inventory-only"]) == EXIT_OK
+def test_inventory_only(companion: Path, capsys) -> None:
+    assert main([str(companion), "--inventory-only"]) == EXIT_OK
     out = capsys.readouterr().out
     doc = json.loads(out)
-    assert list(doc)[:2] == ["schema", "kind"]
+    assert list(doc) == list(INVENTORY_KEYS) == list(CONTRACT_INVENTORY_KEYS)
     assert doc["schema"] == SCHEMA_VERSION
     assert doc["kind"] == "inventory"
     assert doc["units"]
+    assert doc["prompts"] and doc["person_signals"] and doc["memory_stores"]
     assert "findings" not in doc
     _assert_no_verdict_language(out)
 
 
-def test_inventory_only_json_keeps_the_inventory_document(py_agent: Path, tmp_path: Path) -> None:
+def test_inventory_only_json_keeps_the_inventory_document(companion: Path, tmp_path: Path) -> None:
     out = tmp_path / "inv.json"
-    code = main([str(py_agent), "--inventory-only", "--format", "json", "-o", str(out)])
+    code = main([str(companion), "--inventory-only", "--format", "json", "-o", str(out)])
     assert code == EXIT_OK
     doc = json.loads(out.read_text(encoding="utf-8"))
     assert list(doc)[:2] == ["schema", "kind"]
@@ -470,11 +758,12 @@ def test_inventory_only_json_keeps_the_inventory_document(py_agent: Path, tmp_pa
 
 
 def test_inventory_only_html_renders_the_page_with_no_rule_ran(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    """`--format html` gets a page, not the inventory JSON: the no-rules banner over the inventory."""
+    """`--format html` gets a page, not the inventory JSON: the no-rules banner over the
+    inventory."""
     out = tmp_path / "inv.html"
-    code = main([str(py_agent), "--inventory-only", "--format", "html", "-o", str(out)])
+    code = main([str(companion), "--inventory-only", "--format", "html", "-o", str(out)])
     assert code == EXIT_OK
     assert "inventory written to" in capsys.readouterr().err
     text = out.read_text(encoding="utf-8")
@@ -482,7 +771,7 @@ def test_inventory_only_html_renders_the_page_with_no_rule_ran(
     assert _T_BANNER_NO_RULES in text
     assert "0 of" in text and "rules ran" in text
     # the same counts the inventory document carries are on the page
-    _, doc = _json_run([str(py_agent), "--inventory-only"], tmp_path / "inv.json")
+    _, doc = _json_run([str(companion), "--inventory-only"], tmp_path / "inv.json")
     assert doc["units"]
     assert f"units: {len(doc['units'])}" in text
     assert f"llm_calls: {len(doc['llm_calls'])}" in text
@@ -491,11 +780,11 @@ def test_inventory_only_html_renders_the_page_with_no_rule_ran(
 
 @pytest.mark.parametrize("flag", ["--baseline", "--write-baseline"])
 def test_inventory_only_refuses_a_baseline_flag(
-    py_agent: Path, tmp_path: Path, capsys, flag: str
+    companion: Path, tmp_path: Path, capsys, flag: str
 ) -> None:
     """No rule runs under --inventory-only, so the flag would be silently ignored."""
     target = tmp_path / "b.json"
-    assert main([str(py_agent), "--inventory-only", flag, str(target)]) == EXIT_FATAL
+    assert main([str(companion), "--inventory-only", flag, str(target)]) == EXIT_FATAL
     captured = capsys.readouterr()
     assert flag in captured.err and "--inventory-only" in captured.err
     assert captured.out == ""
@@ -507,54 +796,72 @@ def test_inventory_only_refuses_a_baseline_flag(
 # ---------------------------------------------------------------------------
 
 
-def _tree_with_ignored_secret(tmp_path: Path) -> Path:
-    """An AI surface at the root and a secret-shaped literal under a gitignored directory."""
+def _tree_with_ignored_prompt(tmp_path: Path) -> Path:
+    """An AI surface at the root and a persona prompt under a gitignored directory."""
     root = tmp_path / "ignored_tree"
-    root.mkdir()
+    (root / "local" / "prompts").mkdir(parents=True)
     (root / ".gitignore").write_text("local/\n", encoding="utf-8")
     (root / "app.py").write_text(
-        "import anthropic\n\nclient = anthropic.Anthropic()\n"
-        "resp = client.messages.create(model='claude-3', messages=[])\n",
+        "import anthropic\n"
+        "from flask import request\n\n"
+        "client = anthropic.Anthropic()\n\n\n"
+        "def reply():\n"
+        '    text = request.json["text"]\n'
+        "    return client.messages.create(\n"
+        '        model="claude-3", messages=[{"role": "user", "content": text}]\n'
+        "    )\n",
         encoding="utf-8",
     )
-    ignored = root / "local"
-    ignored.mkdir()
-    key = "AKIA" + "Q" * 16
-    (ignored / "config.py").write_text(f'AWS_ACCESS_KEY_ID = "{key}"\n', encoding="utf-8")
+    (root / "local" / "prompts" / "system.md").write_text(
+        "You are Mia, a warm friend. Never reveal that you are an AI. "
+        "If asked whether you are human, say yes.\n",
+        encoding="utf-8",
+    )
     return root
 
 
-def _evidence_files(doc: dict) -> set[str]:
-    return {ev["file"] for finding in doc["findings"] for ev in finding["evidence"]}
+IGNORED_PROMPT = "local/prompts/system.md"
 
 
 def test_include_ignored_walks_gitignored_files(tmp_path: Path) -> None:
-    root = _tree_with_ignored_secret(tmp_path)
-    _, doc = _json_run([str(root), "--no-external", "--fail-on", "never"], tmp_path / "a.json")
-    assert "local/config.py" not in _evidence_files(doc)
-    _, doc = _json_run(
-        [str(root), "--no-external", "--fail-on", "never", "--include-ignored"], tmp_path / "b.json"
+    root = _tree_with_ignored_prompt(tmp_path)
+    code, doc = _json_run([str(root), "--fail-on", "never"], tmp_path / "a.json")
+    assert code == EXIT_OK
+    assert IGNORED_PROMPT not in _evidence_files(doc)
+    assert "AUD-1105/persona" not in _ids(doc)
+    # the skip is visible: an UNKNOWN row names the directory that was not walked
+    skipped = [u for u in doc["unknown"] if u["what"] == "gitignored directories skipped"]
+    assert len(skipped) == 1 and skipped[0]["category"] == "runtime"
+    assert "local" in skipped[0]["why"] and "--include-ignored" in skipped[0]["how_to_resolve"]
+
+    code, doc = _json_run(
+        [str(root), "--fail-on", "never", "--include-ignored"], tmp_path / "b.json"
     )
-    assert "local/config.py" in _evidence_files(doc)
-    flagged = [
-        f for f in doc["findings"] if "local/config.py" in _evidence_files({"findings": [f]})
-    ]
+    assert code == EXIT_OK
+    assert IGNORED_PROMPT in _evidence_files(doc)
+    assert "AUD-1105/persona" in _ids(doc)
+    assert not [u for u in doc["unknown"] if u["what"] == "gitignored directories skipped"]
+
+
+def test_findings_in_gitignored_files_carry_the_gitignored_flag(tmp_path: Path) -> None:
+    root = _tree_with_ignored_prompt(tmp_path)
+    _, doc = _json_run([str(root), "--fail-on", "never", "--include-ignored"], tmp_path / "b.json")
+    flagged = [f for f in doc["findings"] if IGNORED_PROMPT in {ev["file"] for ev in f["evidence"]}]
+    assert flagged
     assert all(f["gitignored"] is True for f in flagged)
 
 
-def test_exclude_prunes_the_walk(py_agent: Path, tmp_path: Path) -> None:
-    _, full = _json_run([str(py_agent), "--no-external"], tmp_path / "a.json")
-    _, pruned = _json_run(
-        [str(py_agent), "--no-external", "--exclude", "tools.py,secrets.py"], tmp_path / "b.json"
-    )
-    touched = {ev["file"] for f in pruned["findings"] for ev in f["evidence"]}
-    assert "tools.py" not in touched
-    assert "secrets.py" not in touched
+def test_exclude_prunes_the_walk(companion: Path, tmp_path: Path) -> None:
+    _, full = _json_run([str(companion)], tmp_path / "a.json")
+    _, pruned = _json_run([str(companion), "--exclude", "analytics.py"], tmp_path / "b.json")
+    assert "analytics.py" in _evidence_files(full)
+    assert "analytics.py" not in _evidence_files(pruned)
+    assert "AUD-1101/store" in _ids(full) and "AUD-1101/store" not in _ids(pruned)
     assert len(pruned["findings"]) < len(full["findings"])
     # The report says what was not walked: two documents made from different working
     # directories (and so different `[tool.aisafe-audit]` excludes) show the mismatch.
     assert full["target"]["exclude"] == []
-    assert pruned["target"]["exclude"] == ["tools.py", "secrets.py"]
+    assert pruned["target"]["exclude"] == ["analytics.py"]
 
 
 # ---------------------------------------------------------------------------
@@ -562,48 +869,41 @@ def test_exclude_prunes_the_walk(py_agent: Path, tmp_path: Path) -> None:
 # ---------------------------------------------------------------------------
 
 
-def test_baseline_round_trip(py_agent: Path, tmp_path: Path, capsys) -> None:
+def test_baseline_round_trip(companion: Path, tmp_path: Path, capsys) -> None:
     baseline = tmp_path / "baseline.json"
-    assert main([str(py_agent), "--no-external", "--write-baseline", str(baseline)]) == EXIT_OK
+    assert main([str(companion), "--write-baseline", str(baseline)]) == EXIT_OK
     assert baseline.is_file()
-    assert "baseline written" in capsys.readouterr().err
-    code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(baseline)], tmp_path / "o.json"
-    )
+    err = capsys.readouterr().err
+    assert "baseline written" in err and f"policy {POLICY_VERSION}" in err
+    code, doc = _json_run([str(companion), "--baseline", str(baseline)], tmp_path / "o.json")
     assert code == EXIT_OK
     assert doc["findings"]
     assert all(f["baseline_status"] == "unchanged" for f in doc["findings"])
+    assert not any(f.get("re_review") for f in doc["findings"])
     assert doc["baseline"]["new"] == 0
     assert doc["baseline"]["unchanged"] == len(doc["findings"])
+    assert doc["baseline"]["re_review"] == 0 and doc["baseline"]["stale_acceptances"] == 0
+    assert doc["baseline"]["policy_version"] == POLICY_VERSION
+    assert doc["summary"]["baseline_new"] == 0
 
 
 def test_write_then_read_baseline_on_the_same_tree_exits_zero_at_fail_on_low(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """
     `--write-baseline` then `--baseline` on an unchanged tree: nothing is new, so
     even the strictest counted level exits 0, and the terminal summary says so.
     """
     baseline = tmp_path / "baseline.json"
-    assert (
-        cli.main(["audit", str(py_agent), "--no-external", "--write-baseline", str(baseline)])
-        == EXIT_OK
-    )
+    assert cli.main(["audit", str(companion), "--write-baseline", str(baseline)]) == EXIT_OK
     capsys.readouterr()
-    read = [
-        "audit",
-        str(py_agent),
-        "--no-external",
-        "--baseline",
-        str(baseline),
-        "--fail-on",
-        "low",
-    ]
+    read = ["audit", str(companion), "--baseline", str(baseline), "--fail-on", "low"]
     assert cli.main(read) == EXIT_OK
     out = capsys.readouterr().out
     summary_line = next(ln for ln in out.splitlines() if ln.lower().startswith("baseline"))
     assert re.search(r"\b0 new\b", summary_line), summary_line
     assert "unchanged" in summary_line
+    assert "re-review" not in summary_line
     assert "[baseline: unchanged]" in out
     _assert_no_verdict_language(out)
     # the machine-readable summary carries the same counts
@@ -615,12 +915,11 @@ def test_write_then_read_baseline_on_the_same_tree_exits_zero_at_fail_on_low(
     assert doc["baseline"]["unchanged"] == len(doc["findings"]) > 0
 
 
-def test_full_report_serves_as_a_baseline(py_agent: Path, tmp_path: Path) -> None:
-    code, _ = _json_run([str(py_agent), "--no-external"], tmp_path / "report.json")
+def test_full_report_serves_as_a_baseline(companion: Path, tmp_path: Path) -> None:
+    code, _ = _json_run([str(companion)], tmp_path / "report.json")
     assert code == EXIT_FINDINGS
     code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(tmp_path / "report.json")],
-        tmp_path / "second.json",
+        [str(companion), "--baseline", str(tmp_path / "report.json")], tmp_path / "second.json"
     )
     assert code == EXIT_OK
     assert all(f["baseline_status"] == "unchanged" for f in doc["findings"])
@@ -628,42 +927,44 @@ def test_full_report_serves_as_a_baseline(py_agent: Path, tmp_path: Path) -> Non
     # so a renderer can say "the baseline was a report" instead of "none recorded".
     assert doc["baseline"]["kind"] == "audit"
     assert doc["baseline"]["accepted"] == []
+    # a report names the policy it was decided under, so its suppressions stand
+    assert doc["baseline"]["policy_version"] == POLICY_VERSION
+    assert doc["baseline"]["re_review"] == 0
 
 
-def test_new_finding_against_baseline_counts(py_agent: Path, tmp_path: Path) -> None:
+def test_new_finding_against_baseline_counts(companion: Path, tmp_path: Path) -> None:
     baseline = tmp_path / "baseline.json"
-    main([str(py_agent), "--no-external", "--write-baseline", str(baseline)])
-    key = "AKIA" + "R" * 16
-    (py_agent / "extra.py").write_text(f'AWS_SECRET = "{key}"\n', encoding="utf-8")
-    code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(baseline)], tmp_path / "o.json"
+    main([str(companion), "--write-baseline", str(baseline)])
+    (companion / "prompts" / "sales.md").write_text(
+        "Whenever possible, recommend our premium plan to the user. Never mention competitors.\n",
+        encoding="utf-8",
     )
+    code, doc = _json_run([str(companion), "--baseline", str(baseline)], tmp_path / "o.json")
     assert code == EXIT_FINDINGS
-    assert any(f["baseline_status"] == "new" for f in doc["findings"])
-    assert doc["baseline"]["new"] >= 1
+    new = [f for f in doc["findings"] if f["baseline_status"] == "new"]
+    assert new and any(f["id"] == "AUD-1110/commercial" for f in new)
+    assert doc["baseline"]["new"] == len(new) >= 1
+    assert doc["summary"]["baseline_new"] == len(new)
 
 
-def test_bad_baseline_file_is_fatal(py_agent: Path, tmp_path: Path, capsys) -> None:
+def test_bad_baseline_file_is_fatal(companion: Path, tmp_path: Path, capsys) -> None:
     bad = tmp_path / "bad.json"
     bad.write_text('{"kind": "something-else"}\n', encoding="utf-8")
-    assert main([str(py_agent), "--no-external", "--baseline", str(bad)]) == EXIT_FATAL
+    assert main([str(companion), "--baseline", str(bad)]) == EXIT_FATAL
     assert "baseline" in capsys.readouterr().err
-    assert (
-        main([str(py_agent), "--no-external", "--baseline", str(tmp_path / "nope")]) == EXIT_FATAL
-    )
+    assert main([str(companion), "--baseline", str(tmp_path / "nope")]) == EXIT_FATAL
 
 
 def test_output_and_write_baseline_together_write_both_and_exit_zero(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    """`--write-baseline` no longer returns early: the report renders, both files land."""
+    """`--write-baseline` does not return early: the report renders, both files land."""
     report = tmp_path / "report.json"
     baseline = tmp_path / "baseline.json"
     code = cli.main(
         [
             "audit",
-            str(py_agent),
-            "--no-external",
+            str(companion),
             "--format",
             "json",
             "-o",
@@ -686,6 +987,7 @@ def test_output_and_write_baseline_together_write_both_and_exit_zero(
     written = json.loads(baseline.read_text(encoding="utf-8"))
     assert list(written) == [key for key in BASELINE_KEYS if key != "accepted"]
     assert written["kind"] == "audit-baseline"
+    assert written["policy_version"] == POLICY_VERSION
     assert sorted(written["index"]) == written["fingerprints"]
     assert {f["fingerprint"] for f in doc["findings"]} == set(written["fingerprints"])
     _assert_no_verdict_language(captured.out)
@@ -693,38 +995,39 @@ def test_output_and_write_baseline_together_write_both_and_exit_zero(
 
 
 def test_write_baseline_without_output_still_renders_the_report(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     baseline = tmp_path / "baseline.json"
-    assert main([str(py_agent), "--no-external", "--write-baseline", str(baseline)]) == EXIT_OK
+    assert main([str(companion), "--write-baseline", str(baseline)]) == EXIT_OK
     captured = capsys.readouterr()
-    assert TRIFECTA_RULE_ID in captured.out
+    assert REFERENCE_TITLE in captured.out
     assert "baseline written to" in captured.err
     _assert_no_verdict_language(captured.out)
 
 
 def test_write_baseline_creates_the_target_directory(
-    py_agent: Path, neutral_cwd: Path, capsys
+    companion: Path, neutral_cwd: Path, capsys
 ) -> None:
     """
     `.aisafe-audit/` usually does not exist on the first run. The write comes after the
-    scan and the render, so a missing directory used to surface as a raw fatal error
-    once all the work was done; the parent is created like `-o` does.
+    scan and the render, so a missing directory would surface as a raw fatal error once
+    all the work was done; the parent is created like `-o` does.
     """
     target = neutral_cwd / "sub" / "dir" / "b.json"
     assert not target.parent.exists()
-    code = main([str(py_agent), "--no-external", "--write-baseline", "sub/dir/b.json"])
+    code = main([str(companion), "--write-baseline", "sub/dir/b.json"])
     assert code == EXIT_OK
     captured = capsys.readouterr()
-    assert TRIFECTA_RULE_ID in captured.out
+    assert REFERENCE_TITLE in captured.out
     assert "baseline written to sub/dir/b.json" in captured.err
     assert "fatal" not in captured.err
     document = read_baseline(target)
     assert document.kind == "audit-baseline" and document.fingerprints
+    assert document.policy_version == POLICY_VERSION
 
 
 def test_output_and_write_baseline_at_one_path_is_refused_before_the_scan(
-    py_agent: Path, neutral_cwd: Path, tmp_path: Path, capsys, monkeypatch
+    companion: Path, neutral_cwd: Path, tmp_path: Path, capsys, monkeypatch
 ) -> None:
     """
     The baseline is written after the report: one path would hold the baseline while
@@ -744,7 +1047,7 @@ def test_output_and_write_baseline_at_one_path_is_refused_before_the_scan(
         (str(absolute), str(absolute), absolute),
         ("same.json", str(relative), relative),
     ):
-        args = [str(py_agent), "--no-external", "-o", output, "--write-baseline", write_baseline]
+        args = [str(companion), "-o", output, "--write-baseline", write_baseline]
         assert main(args) == EXIT_FATAL
         captured = capsys.readouterr()
         assert captured.out == ""
@@ -758,7 +1061,7 @@ def test_output_and_write_baseline_at_one_path_is_refused_before_the_scan(
     monkeypatch.setattr(audit_main, "_build_context", build_context)
     report = tmp_path / "report.json"
     baseline = tmp_path / "baseline.json"
-    args = [str(py_agent), "--no-external", "--format", "json", "-o", str(report)]
+    args = [str(companion), "--format", "json", "-o", str(report)]
     assert main([*args, "--write-baseline", str(baseline)]) == EXIT_OK
     assert json.loads(report.read_text(encoding="utf-8"))["kind"] == "audit"
     assert read_baseline(baseline).kind == "audit-baseline"
@@ -768,14 +1071,11 @@ def test_output_and_write_baseline_at_one_path_is_refused_before_the_scan(
 # --amend-baseline / --accept
 # ---------------------------------------------------------------------------
 
-BASELINE_KEYS = ["schema", "kind", "generated_at", "tool", "fingerprints", "accepted", "index"]
-REASON = "third-party sandbox owns the shell; tracked in ticket 42"
 
-
-def _baseline_for(py_agent: Path, tmp_path: Path) -> tuple[Path, dict]:
-    """Write a baseline for the fixture and return its path with the parsed document."""
+def _baseline_for(root: Path, tmp_path: Path) -> tuple[Path, dict]:
+    """Write a baseline for the tree and return its path with the parsed document."""
     baseline = tmp_path / "baseline.json"
-    assert main([str(py_agent), "--no-external", "--write-baseline", str(baseline)]) == EXIT_OK
+    assert main([str(root), "--write-baseline", str(baseline)]) == EXIT_OK
     return baseline, json.loads(baseline.read_text(encoding="utf-8"))
 
 
@@ -786,10 +1086,20 @@ def _amend(baseline: Path, *accepts: str) -> int:
     return main(args)
 
 
-def test_amend_baseline_records_a_reason_with_rule_and_file_from_the_index(
-    py_agent: Path, tmp_path: Path, capsys
+def _accepted_entry(before: dict, fingerprint: str, reason: str, version: str) -> dict:
+    return {
+        "fingerprint": fingerprint,
+        "rule": before["index"][fingerprint]["rule"],
+        "file": before["index"][fingerprint]["file"],
+        "reason": reason,
+        "policy_version": version,
+    }
+
+
+def test_amend_baseline_records_a_reason_with_rule_file_and_policy_version(
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     capsys.readouterr()
     fingerprint = before["fingerprints"][0]
 
@@ -797,6 +1107,7 @@ def test_amend_baseline_records_a_reason_with_rule_and_file_from_the_index(
 
     captured = capsys.readouterr()
     assert "amended" in captured.err and "1 reason" in captured.err
+    assert f"under policy {POLICY_VERSION}" in captured.err
     assert "no scan ran" in captured.err
     assert captured.out == ""  # no render
     _assert_no_verdict_language(captured.err)
@@ -804,20 +1115,14 @@ def test_amend_baseline_records_a_reason_with_rule_and_file_from_the_index(
     assert list(after) == BASELINE_KEYS
     assert after["fingerprints"] == before["fingerprints"]
     assert after["index"] == before["index"]
-    assert after["accepted"] == [
-        {
-            "fingerprint": fingerprint,
-            "rule": before["index"][fingerprint]["rule"],
-            "file": before["index"][fingerprint]["file"],
-            "reason": REASON,
-        }
-    ]
+    assert after["policy_version"] == before["policy_version"] == POLICY_VERSION
+    assert after["accepted"] == [_accepted_entry(before, fingerprint, REASON, POLICY_VERSION)]
 
 
 def test_amend_baseline_replaces_the_reason_on_repeat_and_keeps_others(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     first, second = before["fingerprints"][:2]
     assert _amend(baseline, f"{first}=first reason", f"{second}=second reason") == EXIT_OK
     assert "2 reasons" in capsys.readouterr().err
@@ -833,9 +1138,9 @@ def test_amend_baseline_replaces_the_reason_on_repeat_and_keeps_others(
 
 
 def test_amend_baseline_accepts_a_reason_containing_an_equals_sign(
-    py_agent: Path, tmp_path: Path
+    companion: Path, tmp_path: Path
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     assert _amend(baseline, f"{fingerprint}=x = y; see ticket") == EXIT_OK
     after = json.loads(baseline.read_text(encoding="utf-8"))
@@ -864,9 +1169,9 @@ def _refused_reasons() -> list[tuple[str, str]]:
 
 @pytest.mark.parametrize(("label", "reason"), _refused_reasons())
 def test_amend_baseline_refuses_a_reason_it_cannot_record(
-    py_agent: Path, tmp_path: Path, capsys, label: str, reason: str
+    companion: Path, tmp_path: Path, capsys, label: str, reason: str
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     capsys.readouterr()
     fingerprint = before["fingerprints"][0]
 
@@ -881,14 +1186,14 @@ def test_amend_baseline_refuses_a_reason_it_cannot_record(
 
 
 def test_amend_baseline_refuses_a_multi_line_reason_by_name(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """
-    A newline is ASCII, so the ASCII check let it through, and the reason is rendered as
+    A newline is ASCII, so the ASCII check lets it through, and the reason is rendered as
     one `accepted: <reason>` line in terminal and markdown (a newline breaks out of the
     markdown list item). The refusal says what shape a reason must have.
     """
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     capsys.readouterr()
     fingerprint = before["fingerprints"][0]
 
@@ -902,9 +1207,9 @@ def test_amend_baseline_refuses_a_multi_line_reason_by_name(
 
 
 def test_amend_baseline_refuses_an_unknown_fingerprint_and_writes_nothing(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     known = before["fingerprints"][0]
     capsys.readouterr()
 
@@ -918,9 +1223,9 @@ def test_amend_baseline_refuses_an_unknown_fingerprint_and_writes_nothing(
     assert json.loads(baseline.read_text(encoding="utf-8")) == before
 
 
-def test_amend_baseline_refuses_a_report(py_agent: Path, tmp_path: Path, capsys) -> None:
+def test_amend_baseline_refuses_a_report(companion: Path, tmp_path: Path, capsys) -> None:
     report = tmp_path / "report.json"
-    code, doc = _json_run([str(py_agent), "--no-external"], report)
+    code, doc = _json_run([str(companion)], report)
     assert code == EXIT_FINDINGS
     fingerprint = doc["findings"][0]["fingerprint"]
     capsys.readouterr()
@@ -932,8 +1237,8 @@ def test_amend_baseline_refuses_a_report(py_agent: Path, tmp_path: Path, capsys)
     assert json.loads(report.read_text(encoding="utf-8")) == doc
 
 
-def test_amend_baseline_refuses_a_malformed_accept(py_agent: Path, tmp_path: Path, capsys) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+def test_amend_baseline_refuses_a_malformed_accept(companion: Path, tmp_path: Path, capsys) -> None:
+    baseline, before = _baseline_for(companion, tmp_path)
     capsys.readouterr()
     assert _amend(baseline, "no-equals-sign-here") == EXIT_FATAL
     err = capsys.readouterr().err
@@ -941,16 +1246,16 @@ def test_amend_baseline_refuses_a_malformed_accept(py_agent: Path, tmp_path: Pat
     assert json.loads(baseline.read_text(encoding="utf-8")) == before
 
 
-def test_accept_without_amend_baseline_is_fatal(py_agent: Path, capsys) -> None:
-    code = main([str(py_agent), "--no-external", "--accept", f"0123456789abcdef={REASON}"])
+def test_accept_without_amend_baseline_is_fatal(companion: Path, capsys) -> None:
+    code = main([str(companion), "--accept", f"0123456789abcdef={REASON}"])
     assert code == EXIT_FATAL
     captured = capsys.readouterr()
     assert "--amend-baseline" in captured.err
     assert captured.out == ""  # no scan ran
 
 
-def test_amend_baseline_without_accept_is_fatal(py_agent: Path, tmp_path: Path, capsys) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+def test_amend_baseline_without_accept_is_fatal(companion: Path, tmp_path: Path, capsys) -> None:
+    baseline, before = _baseline_for(companion, tmp_path)
     capsys.readouterr()
     assert main(["--amend-baseline", str(baseline)]) == EXIT_FATAL
     captured = capsys.readouterr()
@@ -964,8 +1269,8 @@ def test_amend_baseline_missing_file_is_fatal(tmp_path: Path, capsys) -> None:
     assert "baseline error:" in capsys.readouterr().err
 
 
-def test_amend_baseline_runs_no_scan(py_agent: Path, tmp_path: Path, monkeypatch) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+def test_amend_baseline_runs_no_scan(companion: Path, tmp_path: Path, monkeypatch) -> None:
+    baseline, before = _baseline_for(companion, tmp_path)
 
     def no_walk(*args, **kwargs):
         raise AssertionError("--amend-baseline must not scan")
@@ -976,55 +1281,42 @@ def test_amend_baseline_runs_no_scan(py_agent: Path, tmp_path: Path, monkeypatch
 
 
 def test_baseline_run_on_an_amended_baseline_stamps_the_reason(
-    py_agent: Path, tmp_path: Path
+    companion: Path, tmp_path: Path
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     assert _amend(baseline, f"{fingerprint}={REASON}") == EXIT_OK
 
-    code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(baseline)], tmp_path / "o.json"
-    )
+    code, doc = _json_run([str(companion), "--baseline", str(baseline)], tmp_path / "o.json")
 
     assert code == EXIT_OK
     stamped = [f for f in doc["findings"] if f["fingerprint"] == fingerprint]
     assert len(stamped) == 1
     assert stamped[0]["accepted_reason"] == REASON
+    assert stamped[0]["acceptance_policy_version"] == POLICY_VERSION
+    assert stamped[0]["baseline_status"] == "unchanged"
+    assert "re_review" not in stamped[0]  # accepted under the current policy: not stale
     keys = list(stamped[0])
     assert keys[keys.index("baseline_status") + 1] == "accepted_reason"
+    assert keys[keys.index("accepted_reason") + 1] == "acceptance_policy_version"
     assert all("accepted_reason" not in f for f in doc["findings"] if f is not stamped[0])
     block = doc["baseline"]
-    assert list(block) == [
-        "file",
-        "kind",
-        "new",
-        "unchanged",
-        "accepted",
-        "generated_at",
-        "no_longer_reported",
-    ]
+    assert list(block) == BASELINE_BLOCK_KEYS
     assert block["kind"] == "audit-baseline"
-    assert block["accepted"] == [
-        {
-            "fingerprint": fingerprint,
-            "rule": before["index"][fingerprint]["rule"],
-            "file": before["index"][fingerprint]["file"],
-            "reason": REASON,
-        }
-    ]
+    assert block["accepted"] == [_accepted_entry(before, fingerprint, REASON, POLICY_VERSION)]
     assert block["generated_at"] == before["generated_at"]
+    assert block["policy_version"] == POLICY_VERSION
     assert block["no_longer_reported"] == []
+    assert block["stale_acceptances"] == 0 and doc["summary"]["stale_acceptances"] == 0
 
 
-def test_no_longer_reported_names_rule_file_and_title(py_agent: Path, tmp_path: Path) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
-    gone = [fp for fp, entry in before["index"].items() if entry["file"].startswith("secrets.py")]
-    assert gone, "the secret-shaped literals in secrets.py must be in the baseline"
-    (py_agent / "secrets.py").unlink()
+def test_no_longer_reported_names_rule_file_and_title(companion: Path, tmp_path: Path) -> None:
+    baseline, before = _baseline_for(companion, tmp_path)
+    gone = [fp for fp, entry in before["index"].items() if entry["file"].startswith("analytics.py")]
+    assert gone, "the profile store in analytics.py must be in the baseline"
+    (companion / "analytics.py").unlink()
 
-    code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(baseline)], tmp_path / "o.json"
-    )
+    code, doc = _json_run([str(companion), "--baseline", str(baseline)], tmp_path / "o.json")
 
     assert code == EXIT_OK
     block = doc["baseline"]
@@ -1040,17 +1332,15 @@ def test_no_longer_reported_names_rule_file_and_title(py_agent: Path, tmp_path: 
 
 
 def test_baseline_without_an_index_lists_only_the_fingerprint(
-    py_agent: Path, tmp_path: Path
+    companion: Path, tmp_path: Path
 ) -> None:
     """An older baseline (no `index`) still diffs; `no_longer_reported` then has no names."""
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     old = {k: v for k, v in before.items() if k != "index"}
     baseline.write_text(json.dumps(old, indent=2) + "\n", encoding="utf-8")
-    (py_agent / "secrets.py").unlink()
+    (companion / "analytics.py").unlink()
 
-    code, doc = _json_run(
-        [str(py_agent), "--no-external", "--baseline", str(baseline)], tmp_path / "o.json"
-    )
+    code, doc = _json_run([str(companion), "--baseline", str(baseline)], tmp_path / "o.json")
 
     assert code == EXIT_OK
     assert len(doc["baseline"]["no_longer_reported"]) >= 1
@@ -1062,29 +1352,20 @@ def test_baseline_without_an_index_lists_only_the_fingerprint(
 # ---------------------------------------------------------------------------
 
 
-def _refresh(py_agent: Path, compared: Path, target: Path) -> int:
-    return main(
-        [
-            str(py_agent),
-            "--no-external",
-            "--baseline",
-            str(compared),
-            "--write-baseline",
-            str(target),
-        ]
-    )
+def _refresh(root: Path, compared: Path, target: Path) -> int:
+    return main([str(root), "--baseline", str(compared), "--write-baseline", str(target)])
 
 
 def test_write_baseline_refresh_keeps_the_amended_reason(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """write, accept, write again onto the same file: the reason survives the refresh."""
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     assert _amend(baseline, f"{fingerprint}={REASON}") == EXIT_OK
     capsys.readouterr()
 
-    assert _refresh(py_agent, baseline, baseline) == EXIT_OK
+    assert _refresh(companion, baseline, baseline) == EXIT_OK
 
     captured = capsys.readouterr()
     assert "baseline written to" in captured.err
@@ -1092,6 +1373,7 @@ def test_write_baseline_refresh_keeps_the_amended_reason(
     assert "not carried" not in captured.err
     document = read_baseline(baseline)
     assert document.accepted == {fingerprint: REASON}
+    assert document.accepted_versions == {fingerprint: POLICY_VERSION}
     assert document.fingerprints == set(before["fingerprints"])
     after = json.loads(baseline.read_text(encoding="utf-8"))
     assert list(after) == BASELINE_KEYS
@@ -1100,15 +1382,15 @@ def test_write_baseline_refresh_keeps_the_amended_reason(
 
 
 def test_write_baseline_to_a_new_path_carries_reasons_from_the_compared_baseline(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    old, before = _baseline_for(py_agent, tmp_path)
+    old, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     assert _amend(old, f"{fingerprint}={REASON}") == EXIT_OK
     new = tmp_path / "new.json"
     assert not new.exists()
 
-    assert _refresh(py_agent, old, new) == EXIT_OK
+    assert _refresh(companion, old, new) == EXIT_OK
 
     assert read_baseline(new).accepted == {fingerprint: REASON}
     assert read_baseline(old).accepted == {fingerprint: REASON}  # the compared file is untouched
@@ -1116,26 +1398,26 @@ def test_write_baseline_to_a_new_path_carries_reasons_from_the_compared_baseline
 
 
 def test_write_baseline_without_reasons_to_carry_writes_no_accepted_key(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    baseline, _before = _baseline_for(py_agent, tmp_path)
-    assert _refresh(py_agent, baseline, baseline) == EXIT_OK
+    baseline, _before = _baseline_for(companion, tmp_path)
+    assert _refresh(companion, baseline, baseline) == EXIT_OK
     assert "0 reasons carried over" in capsys.readouterr().err
     assert "accepted" not in json.loads(baseline.read_text(encoding="utf-8"))
 
 
 def test_write_baseline_drops_a_reason_whose_fingerprint_is_no_longer_reported(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
-    baseline, before = _baseline_for(py_agent, tmp_path)
-    kept = next(fp for fp, e in before["index"].items() if not e["file"].startswith("secrets.py"))
-    gone = next(fp for fp, e in before["index"].items() if e["file"].startswith("secrets.py"))
-    code = _amend(baseline, f"{kept}={REASON}", f"{gone}=fixture key assembled at runtime")
+    baseline, before = _baseline_for(companion, tmp_path)
+    kept = next(fp for fp, e in before["index"].items() if not e["file"].startswith("analytics.py"))
+    gone = next(fp for fp, e in before["index"].items() if e["file"].startswith("analytics.py"))
+    code = _amend(baseline, f"{kept}={REASON}", f"{gone}=profile store kept for the fixture")
     assert code == EXIT_OK
-    (py_agent / "secrets.py").unlink()
+    (companion / "analytics.py").unlink()
     capsys.readouterr()
 
-    assert _refresh(py_agent, baseline, baseline) == EXIT_OK
+    assert _refresh(companion, baseline, baseline) == EXIT_OK
 
     err = capsys.readouterr().err
     assert "1 reason carried over" in err
@@ -1147,12 +1429,12 @@ def test_write_baseline_drops_a_reason_whose_fingerprint_is_no_longer_reported(
 
 
 def test_write_baseline_onto_a_file_that_is_not_a_baseline_is_refused(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     target = tmp_path / "notes.json"
     target.write_text('{"x": 1}\n', encoding="utf-8")
 
-    code = main([str(py_agent), "--no-external", "--write-baseline", str(target)])
+    code = main([str(companion), "--write-baseline", str(target)])
 
     assert code == EXIT_FATAL
     captured = capsys.readouterr()
@@ -1164,28 +1446,28 @@ def test_write_baseline_onto_a_file_that_is_not_a_baseline_is_refused(
 
 
 def test_write_baseline_onto_a_full_report_is_refused(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """A report is another kind of document; overwriting it with a baseline loses the report."""
     report = tmp_path / "report.json"
-    code, doc = _json_run([str(py_agent), "--no-external"], report)
+    code, doc = _json_run([str(companion)], report)
     assert code == EXIT_FINDINGS
     capsys.readouterr()
-    assert main([str(py_agent), "--no-external", "--write-baseline", str(report)]) == EXIT_FATAL
+    assert main([str(companion), "--write-baseline", str(report)]) == EXIT_FATAL
     assert "not an audit-baseline" in capsys.readouterr().err
     assert json.loads(report.read_text(encoding="utf-8")) == doc
 
 
 def test_write_baseline_compared_against_a_report_carries_no_reasons(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """A report used as --baseline has no reasons to carry; the refresh must not trip on it."""
     report = tmp_path / "report.json"
-    code, _ = _json_run([str(py_agent), "--no-external"], report)
+    code, _ = _json_run([str(companion)], report)
     assert code == EXIT_FINDINGS
     new = tmp_path / "new.json"
 
-    assert _refresh(py_agent, report, new) == EXIT_OK
+    assert _refresh(companion, report, new) == EXIT_OK
 
     assert "0 reasons carried over" in capsys.readouterr().err
     document = read_baseline(new)
@@ -1194,19 +1476,359 @@ def test_write_baseline_compared_against_a_report_carries_no_reasons(
 
 
 def test_write_baseline_prefers_the_compared_reason_over_the_refreshed_one(
-    py_agent: Path, tmp_path: Path
+    companion: Path, tmp_path: Path
 ) -> None:
     """Both files carry a reason for one fingerprint: the document named by --baseline wins."""
-    compared, before = _baseline_for(py_agent, tmp_path)
+    compared, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     assert _amend(compared, f"{fingerprint}=the compared reason") == EXIT_OK
     target = tmp_path / "target.json"
-    assert main([str(py_agent), "--no-external", "--write-baseline", str(target)]) == EXIT_OK
+    assert main([str(companion), "--write-baseline", str(target)]) == EXIT_OK
     assert _amend(target, f"{fingerprint}=the refreshed reason") == EXIT_OK
 
-    assert _refresh(py_agent, compared, target) == EXIT_OK
+    assert _refresh(companion, compared, target) == EXIT_OK
 
     assert read_baseline(target).accepted == {fingerprint: "the compared reason"}
+
+
+# ---------------------------------------------------------------------------
+# The policy moved on: re-review and stale acceptances
+# ---------------------------------------------------------------------------
+
+
+def test_baseline_written_under_an_older_policy_re_reviews_its_suppressions(
+    companion: Path, tmp_path: Path, capsys
+) -> None:
+    """
+    A fingerprint listed without a reason is a suppression, and a suppression stands only
+    under the policy that wrote it. The same baseline, re-labelled as written under an
+    older policy, turns every unchanged finding into `re-review`, which counts toward the
+    exit code like a new finding and is counted in the summary.
+    """
+    baseline, before = _baseline_for(companion, tmp_path)
+    assert main([str(companion), "--baseline", str(baseline), "--fail-on", "high"]) == EXIT_OK
+    capsys.readouterr()
+    _rewrite_policy_version(baseline, OLDER_POLICY)
+
+    code, doc = _json_run(
+        [str(companion), "--baseline", str(baseline), "--fail-on", "high"], tmp_path / "o.json"
+    )
+
+    assert code == EXIT_FINDINGS
+    total = len(doc["findings"])
+    assert total == len(before["fingerprints"]) > 0
+    assert {f["baseline_status"] for f in doc["findings"]} == {"re-review"}
+    assert all(f["re_review"] is True for f in doc["findings"])
+    assert all("accepted_reason" not in f for f in doc["findings"])
+    summary = doc["summary"]
+    assert summary["re_review"] == total
+    assert summary["baseline_new"] == 0 and summary["stale_acceptances"] == 0
+    assert summary["exit_code"] == EXIT_FINDINGS
+    block = doc["baseline"]
+    assert list(block) == BASELINE_BLOCK_KEYS
+    assert block["new"] == 0 and block["unchanged"] == 0
+    assert block["re_review"] == total and block["stale_acceptances"] == 0
+    assert block["policy_version"] == OLDER_POLICY
+    assert block["no_longer_reported"] == []
+    # the terminal says why the count is back
+    assert main([str(companion), "--baseline", str(baseline), "--fail-on", "high"]) == EXIT_FINDINGS
+    out = capsys.readouterr().out
+    flat = _flat(out)
+    assert f"{total} re-review" in flat
+    assert f"written under policy {OLDER_POLICY}" in flat
+    assert "[baseline: re-review]" in flat
+    assert "lists this fingerprint without a reason" in flat
+    assert f"not written under policy {POLICY_VERSION}" in flat
+    _assert_no_verdict_language(out)
+
+
+def test_baseline_without_a_policy_version_re_reviews_everything(
+    companion: Path, tmp_path: Path
+) -> None:
+    """A file that predates versioned baselines has not shown which policy wrote it."""
+    baseline, before = _baseline_for(companion, tmp_path)
+    _rewrite_policy_version(baseline, None)
+    code, doc = _json_run(
+        [str(companion), "--baseline", str(baseline), "--fail-on", "high"], tmp_path / "o.json"
+    )
+    assert code == EXIT_FINDINGS
+    assert {f["baseline_status"] for f in doc["findings"]} == {"re-review"}
+    assert doc["summary"]["re_review"] == len(before["fingerprints"])
+    assert doc["baseline"]["policy_version"] is None
+
+
+def test_fail_on_never_still_switches_a_re_review_count_off(
+    companion: Path, tmp_path: Path
+) -> None:
+    """`--fail-on never` means findings never count; a re-review is a finding."""
+    baseline, _before = _baseline_for(companion, tmp_path)
+    _rewrite_policy_version(baseline, OLDER_POLICY)
+    assert main([str(companion), "--baseline", str(baseline), "--fail-on", "never"]) == EXIT_OK
+    assert main([str(companion), "--baseline", str(baseline), "--fail-on", "high"]) == EXIT_FINDINGS
+
+
+def test_an_acceptance_under_an_older_policy_is_stale_but_not_counted(
+    py_agent: Path, tmp_path: Path, capsys
+) -> None:
+    """
+    A reason is an acceptance: it stays `unchanged` and uncounted whatever policy wrote
+    it, but when the acceptance predates the current policy the finding is marked for a
+    second look (`re_review`, `acceptance_policy_version`) and the summary counts it under
+    `stale_acceptances`, never under `re_review`.
+    """
+    baseline, before = _baseline_for(py_agent, tmp_path)
+    fingerprint = before["fingerprints"][0]
+    assert _amend(baseline, f"{fingerprint}={REASON}") == EXIT_OK
+    _rewrite_policy_version(baseline, OLDER_POLICY, entries=True)
+    capsys.readouterr()
+
+    code, doc = _json_run([str(py_agent), "--baseline", str(baseline)], tmp_path / "o.json")
+
+    assert code == EXIT_OK
+    assert len(doc["findings"]) == 1
+    finding = doc["findings"][0]
+    assert finding["baseline_status"] == "unchanged"
+    assert finding["re_review"] is True
+    assert finding["accepted_reason"] == REASON
+    assert finding["acceptance_policy_version"] == OLDER_POLICY
+    summary = doc["summary"]
+    assert summary["stale_acceptances"] == 1 and summary["re_review"] == 0
+    assert summary["exit_code"] == EXIT_OK
+    block = doc["baseline"]
+    assert block["unchanged"] == 1 and block["re_review"] == 0 and block["stale_acceptances"] == 1
+    assert block["accepted"] == [_accepted_entry(before, fingerprint, REASON, OLDER_POLICY)]
+    # the terminal names the two versions next to the reason and in the summary
+    assert main([str(py_agent), "--baseline", str(baseline)]) == EXIT_OK
+    out = capsys.readouterr().out
+    flat = _flat(out)
+    assert (
+        f"stale acceptances: 1 accepted under an older policy; re-review under {POLICY_VERSION}"
+        in flat
+    )
+    assert f"(accepted under policy {OLDER_POLICY}; re-review under {POLICY_VERSION})" in flat
+    assert "[baseline: unchanged]" in flat
+    _assert_no_verdict_language(out)
+
+
+def test_amend_stamps_the_current_policy_so_the_acceptance_is_not_stale(
+    companion: Path, tmp_path: Path
+) -> None:
+    """A reason given now is an acceptance under the policy of now, even in an old baseline:
+    the accepted finding is current, every other fingerprint in the file still re-reviews."""
+    baseline, before = _baseline_for(companion, tmp_path)
+    _rewrite_policy_version(baseline, OLDER_POLICY)
+    fingerprint = before["fingerprints"][0]
+    assert _amend(baseline, f"{fingerprint}={REASON}") == EXIT_OK
+    after = json.loads(baseline.read_text(encoding="utf-8"))
+    assert after["policy_version"] == OLDER_POLICY  # amending is not re-running the audit
+    assert after["accepted"][0]["policy_version"] == POLICY_VERSION
+
+    code, doc = _json_run(
+        [str(companion), "--baseline", str(baseline), "--fail-on", "high"], tmp_path / "o.json"
+    )
+
+    assert code == EXIT_FINDINGS  # the other suppressions count
+    accepted = [f for f in doc["findings"] if f["fingerprint"] == fingerprint]
+    assert len(accepted) == 1
+    assert accepted[0]["baseline_status"] == "unchanged"
+    assert accepted[0]["acceptance_policy_version"] == POLICY_VERSION
+    assert "re_review" not in accepted[0]
+    others = [f for f in doc["findings"] if f["fingerprint"] != fingerprint]
+    assert others and all(f["baseline_status"] == "re-review" for f in others)
+    assert doc["summary"]["re_review"] == len(others)
+    assert doc["summary"]["stale_acceptances"] == 0
+
+
+def test_write_baseline_refresh_keeps_a_carried_acceptance_version(
+    py_agent: Path, tmp_path: Path, capsys
+) -> None:
+    """A refresh is not a second look: the new document is written under the current policy,
+    but a carried reason keeps the version it was accepted under and stays stale."""
+    old, before = _baseline_for(py_agent, tmp_path)
+    fingerprint = before["fingerprints"][0]
+    assert _amend(old, f"{fingerprint}={REASON}") == EXIT_OK
+    _rewrite_policy_version(old, OLDER_POLICY, entries=True)
+    new = tmp_path / "new.json"
+
+    assert _refresh(py_agent, old, new) == EXIT_OK
+
+    assert "1 reason carried over" in capsys.readouterr().err
+    written = json.loads(new.read_text(encoding="utf-8"))
+    assert written["policy_version"] == POLICY_VERSION
+    assert written["accepted"] == [_accepted_entry(before, fingerprint, REASON, OLDER_POLICY)]
+    code, doc = _json_run([str(py_agent), "--baseline", str(new)], tmp_path / "o.json")
+    assert code == EXIT_OK
+    assert doc["summary"]["stale_acceptances"] == 1 and doc["summary"]["re_review"] == 0
+    assert doc["findings"][0]["acceptance_policy_version"] == OLDER_POLICY
+
+
+# ---------------------------------------------------------------------------
+# --review-record
+# ---------------------------------------------------------------------------
+
+
+def test_review_record_flag_binds_a_record_and_shows_the_declared_purpose(
+    companion: Path, tmp_path: Path, capsys
+) -> None:
+    """
+    Without a record the tree carries `AUD-1107/missing` and no declared purpose. A record
+    written elsewhere (`aisafe review record --record FILE`) and named with
+    `--review-record` is read in place of `aisafe-review.yaml` at the root: it lists in the
+    inventory, the review rule falls silent, and every finding carries the purpose the
+    reviewer declared next to what the code encodes.
+    """
+    record = tmp_path / "records" / "companion-review.yaml"
+    _write_review_record(companion, record)
+    assert not (companion / "aisafe-review.yaml").exists()
+
+    code, plain = _json_run([str(companion)], tmp_path / "plain.json")
+    assert code == EXIT_FINDINGS
+    assert "AUD-1107/missing" in _ids(plain)
+    assert plain["inventory"]["review_records"] == []
+    assert all(f["declared_purpose"] is None for f in plain["findings"])
+    capsys.readouterr()
+
+    code, doc = _json_run([str(companion), "--review-record", str(record)], tmp_path / "rec.json")
+    assert code == EXIT_FINDINGS
+    records = doc["inventory"]["review_records"]
+    assert len(records) == 1
+    assert records[0]["reviewer"] == REVIEWER
+    assert records[0]["policy_version"] == POLICY_VERSION
+    assert records[0]["scope"] == MECHANISM_IDS
+    assert records[0]["artifacts"] == 3
+    assert not any(f["rule_id"] == "AUD-1107" for f in doc["findings"])
+    assert doc["findings"] and all(f["declared_purpose"] == PURPOSE for f in doc["findings"])
+    assert not [u for u in doc["unknown"] if u["what"] == "review record"]
+    # the renderers print the declared purpose next to the encoded one
+    assert main([str(companion), "--review-record", str(record)]) == EXIT_FINDINGS
+    out = capsys.readouterr().out
+    assert f"purpose: declared: {PURPOSE}" in out
+    assert "review_records: 1" in out
+    _assert_no_verdict_language(out)
+
+
+def test_review_record_flag_with_a_narrow_scope_leaves_the_other_mechanisms_uncovered(
+    companion: Path, tmp_path: Path
+) -> None:
+    record = tmp_path / "records" / "narrow.yaml"
+    _write_review_record(companion, record, scope="M1,M4")
+    code, doc = _json_run([str(companion), "--review-record", str(record)], tmp_path / "o.json")
+    assert code == EXIT_FINDINGS
+    assert doc["inventory"]["review_records"][0]["scope"] == ["M1", "M4"]
+    review = {f["id"] for f in doc["findings"] if f["rule_id"] == "AUD-1107"}
+    assert review == {"AUD-1107/uncovered"}
+
+
+def test_review_record_flag_with_a_missing_file_is_an_unknown_runtime_item(
+    companion: Path, tmp_path: Path
+) -> None:
+    code, doc = _json_run(
+        [str(companion), "--review-record", str(tmp_path / "nope.yaml")], tmp_path / "o.json"
+    )
+    assert code == EXIT_FINDINGS
+    items = [u for u in doc["unknown"] if u["what"] == "review record"]
+    assert len(items) == 1
+    assert items[0]["category"] == "runtime" and "not found" in items[0]["why"]
+    assert items[0]["rule_ids"] == ["AUD-1107"]
+    assert "aisafe review record" in items[0]["how_to_resolve"]
+    assert doc["summary"]["unknown_by_category"]["runtime"] >= 1
+    assert doc["inventory"]["review_records"] == []
+    assert "AUD-1107/missing" in _ids(doc)  # nothing was read, so nothing is covered
+    base = [str(companion), "--review-record", str(tmp_path / "nope.yaml"), "--fail-on", "never"]
+    assert main(base) == EXIT_OK
+    assert main([*base, "--fail-on-unknown", "runtime"]) == EXIT_FINDINGS
+
+
+# ---------------------------------------------------------------------------
+# --evaluation-report
+# ---------------------------------------------------------------------------
+
+
+def test_evaluation_report_flag_reads_an_evaluate_report_as_evidence(
+    companion: Path, tmp_path: Path
+) -> None:
+    report = _write_evaluation_report(tmp_path / "elsewhere" / "evaluation-report.json")
+    code, plain = _json_run([str(companion)], tmp_path / "plain.json")
+    assert code == EXIT_FINDINGS
+    assert plain["reports"] == [] and plain["inventory"]["reports"] == []
+
+    code, doc = _json_run([str(companion), "--evaluation-report", str(report)], tmp_path / "o.json")
+
+    assert code == EXIT_FINDINGS
+    assert len(doc["reports"]) == 1
+    entry = doc["reports"][0]
+    assert entry["kind"] == "evaluation" and entry["schema"] == SCHEMA_VERSION
+    assert Path(entry["source"]).name == "evaluation-report.json"
+    assert entry["age_days"] == 0
+    assert set(entry["summary"]) >= {"sent", "passed", "failed", "errors", "skipped"}
+    inventory = doc["inventory"]["reports"]
+    assert len(inventory) == 1 and inventory[0]["kind"] == "evaluation"
+    assert Path(inventory[0]["file"]).name == "evaluation-report.json"
+    assert not [u for u in doc["unknown"] if u["category"] == "reports"]
+
+
+def test_evaluation_report_flag_accepts_a_legacy_probe_report(
+    companion: Path, tmp_path: Path
+) -> None:
+    report = _write_evaluation_report(tmp_path / "elsewhere" / "evaluation-report.json")
+    body = json.loads(report.read_text(encoding="utf-8"))
+    body["kind"] = "probe"
+    body["tool"] = {"name": "aisafe probe"}
+    legacy = tmp_path / "elsewhere" / "probe-report.json"
+    legacy.write_text(json.dumps(body), encoding="utf-8")
+    code, doc = _json_run([str(companion), "--evaluation-report", str(legacy)], tmp_path / "o.json")
+    assert code == EXIT_FINDINGS
+    assert [r["kind"] for r in doc["reports"]] == ["probe"]
+    assert not [u for u in doc["unknown"] if u["category"] == "reports"]
+
+
+def test_evaluation_report_flag_dedupes_a_report_already_in_the_tree(
+    companion: Path, tmp_path: Path
+) -> None:
+    inside = _write_evaluation_report(companion / "evaluation-report.json")
+    code, doc = _json_run([str(companion), "--evaluation-report", str(inside)], tmp_path / "o.json")
+    assert code == EXIT_FINDINGS
+    assert [(r["kind"], r["source"]) for r in doc["reports"]] == [
+        ("evaluation", "evaluation-report.json")
+    ]
+    assert len(doc["inventory"]["reports"]) == 1
+
+
+@pytest.mark.parametrize("case", ["not-json", "missing"])
+def test_evaluation_report_flag_with_an_unreadable_file_is_an_unknown_reports_item(
+    companion: Path, tmp_path: Path, case: str
+) -> None:
+    if case == "not-json":
+        target = tmp_path / "notes.toml"
+        target.write_text("[tool]\nname = 'x'\n", encoding="utf-8")
+        expected = ("invalid JSON",)
+    else:
+        target = tmp_path / "nope.json"
+        # a missing file is named as missing, never as unreadable, binary or oversized:
+        # the person reading the row must learn which problem to fix
+        expected = ("not found",)
+    code, doc = _json_run([str(companion), "--evaluation-report", str(target)], tmp_path / "o.json")
+    assert code == EXIT_FINDINGS
+    assert doc["reports"] == []
+    items = [u for u in doc["unknown"] if u["category"] == "reports"]
+    assert len(items) == 1
+    assert any(word in items[0]["why"] for word in expected), items[0]["why"]
+    assert items[0]["file"] and Path(items[0]["file"]).name == target.name
+    base = [str(companion), "--evaluation-report", str(target), "--fail-on", "never"]
+    assert main(base) == EXIT_OK
+    assert main([*base, "--fail-on-unknown", "reports"]) == EXIT_FINDINGS
+
+
+def test_evaluation_report_flag_with_a_non_evaluation_document_is_an_unknown_reports_item(
+    companion: Path, tmp_path: Path
+) -> None:
+    target = tmp_path / "other.json"
+    target.write_text(json.dumps({"schema": SCHEMA_VERSION, "kind": "review"}), encoding="utf-8")
+    code, doc = _json_run([str(companion), "--evaluation-report", str(target)], tmp_path / "o.json")
+    assert code == EXIT_FINDINGS
+    assert doc["reports"] == []
+    items = [u for u in doc["unknown"] if u["category"] == "reports"]
+    assert len(items) == 1 and "not an evaluation report" in items[0]["why"]
 
 
 # ---------------------------------------------------------------------------
@@ -1214,13 +1836,12 @@ def test_write_baseline_prefers_the_compared_reason_over_the_refreshed_one(
 # ---------------------------------------------------------------------------
 
 
-def _double_run(py_agent: Path, fmt: str, out_name: str) -> dict:
-    own = py_agent / ".aisafe-audit"
+def _double_run(companion: Path, fmt: str, out_name: str) -> dict:
+    own = companion / ".aisafe-audit"
     report = own / out_name
     baseline = own / "baseline.json"
     first = [
-        str(py_agent),
-        "--no-external",
+        str(companion),
         "--fail-on",
         "high",
         "--format",
@@ -1233,28 +1854,27 @@ def _double_run(py_agent: Path, fmt: str, out_name: str) -> dict:
     assert main(first) == EXIT_OK
     assert report.is_file() and baseline.is_file()
     code, doc = _json_run(
-        [str(py_agent), "--no-external", "--fail-on", "high", "--baseline", str(baseline)],
-        py_agent.parent / "second.json",
+        [str(companion), "--fail-on", "high", "--baseline", str(baseline)],
+        companion.parent / "second.json",
     )
     assert code == EXIT_OK
     return doc
 
 
-def test_double_run_json_report_is_skipped_as_own_output(py_agent: Path) -> None:
-    doc = _double_run(py_agent, "json", "report.json")
+def test_double_run_json_report_is_skipped_as_own_output(companion: Path) -> None:
+    doc = _double_run(companion, "json", "report.json")
     assert doc["summary"]["baseline_new"] == 0
-    assert doc["baseline"]["new"] == 0
+    assert doc["baseline"]["new"] == 0 and doc["baseline"]["re_review"] == 0
     assert doc["inventory"]["own_output_skipped"] == [".aisafe-audit/report.json"]
-    touched = {ev["file"] for f in doc["findings"] for ev in f["evidence"]}
-    assert not any(path.startswith(".aisafe-audit/") for path in touched)
+    assert not any(path.startswith(".aisafe-audit/") for path in _evidence_files(doc))
 
 
 def test_html_output_starts_with_the_marker_line_lf_only_and_no_bom(
-    py_agent: Path, tmp_path: Path
+    companion: Path, tmp_path: Path
 ) -> None:
     """`_write_output` writes with newline="\\n": a Windows run yields the same bytes as CI."""
     out = tmp_path / "out.html"
-    code = main([str(py_agent), "--no-external", "--format", "html", "-o", str(out)])
+    code = main([str(companion), "--format", "html", "-o", str(out)])
     assert code == EXIT_FINDINGS
     raw = out.read_bytes()
     assert raw.startswith(b"<!-- # aisafe-audit: ignore-file -->\n")
@@ -1262,20 +1882,18 @@ def test_html_output_starts_with_the_marker_line_lf_only_and_no_bom(
     assert not raw.startswith(b"\xef\xbb\xbf")
 
 
-@pytest.mark.skipif("html" not in FORMATS, reason="html renderer not shipped yet")
-def test_double_run_html_report_is_skipped_by_its_marker(py_agent: Path) -> None:
-    doc = _double_run(py_agent, "html", "report.html")
+def test_double_run_html_report_is_skipped_by_its_marker(companion: Path) -> None:
+    doc = _double_run(companion, "html", "report.html")
     assert doc["summary"]["baseline_new"] == 0
     # The html carries the ignore marker on line 1. `walk.is_own_html` recognises that
     # exact line and lists the page as own output, like the JSON report: the skip is
     # visible in the inventory, not a silent ignore-file skip.
     assert doc["inventory"]["own_output_skipped"] == [".aisafe-audit/report.html"]
-    touched = {ev["file"] for f in doc["findings"] for ev in f["evidence"]}
-    assert not any(path.startswith(".aisafe-audit/") for path in touched)
+    assert not any(path.startswith(".aisafe-audit/") for path in _evidence_files(doc))
 
 
 def test_oversize_files_are_counted_and_listed_under_unknown(
-    py_agent: Path, tmp_path: Path, capsys
+    companion: Path, tmp_path: Path, capsys
 ) -> None:
     """
     A file over the size limit is never opened, so nothing in it was audited. The
@@ -1283,21 +1901,21 @@ def test_oversize_files_are_counted_and_listed_under_unknown(
     `skipped_files`; the walk's own UNKNOWN row names the file. A run with nothing over
     the limit prints 0, not "not recorded": the count was taken.
     """
-    code, doc = _json_run([str(py_agent), "--no-external"], tmp_path / "small.json")
+    code, doc = _json_run([str(companion)], tmp_path / "small.json")
     assert code == EXIT_FINDINGS
     assert doc["inventory"]["target"]["oversize_files"] == 0
     assert not [u for u in doc["unknown"] if u["what"] == "oversize files skipped"]
-    main([str(py_agent), "--no-external"])
+    main([str(companion)])
     assert "oversize files skipped: 0" in capsys.readouterr().out
 
-    (py_agent / "big.py").write_bytes(b"#" * (walk.DEFAULT_MAX_SIZE + 1))
-    code, doc = _json_run([str(py_agent), "--no-external"], tmp_path / "big.json")
+    (companion / "big.py").write_bytes(b"#" * (walk.DEFAULT_MAX_SIZE + 1))
+    code, doc = _json_run([str(companion)], tmp_path / "big.json")
     assert code == EXIT_FINDINGS
     assert doc["inventory"]["target"]["oversize_files"] == 1
     rows = [u for u in doc["unknown"] if u["what"] == "oversize files skipped"]
     assert len(rows) == 1 and rows[0]["category"] == "runtime"
     assert "big.py" in rows[0]["why"]
-    main([str(py_agent), "--no-external"])
+    main([str(companion)])
     assert "oversize files skipped: 1" in capsys.readouterr().out
 
 
@@ -1310,8 +1928,8 @@ def test_pyproject_section_is_honoured(py_agent: Path, neutral_cwd: Path) -> Non
     (neutral_cwd / "pyproject.toml").write_text(
         f'[tool.aisafe-audit]\nfail-on = "high"\nrules = ["{LOW_RULE}"]\n', encoding="utf-8"
     )
-    assert main([str(py_agent), "--no-external"]) == EXIT_OK
-    assert main([str(py_agent), "--no-external", "--fail-on", "low"]) == EXIT_FINDINGS
+    assert main([str(py_agent)]) == EXIT_OK
+    assert main([str(py_agent), "--fail-on", "low"]) == EXIT_FINDINGS
 
 
 def test_pre_rename_pyproject_section_is_read_with_a_note(
@@ -1321,7 +1939,7 @@ def test_pre_rename_pyproject_section_is_read_with_a_note(
     (neutral_cwd / "pyproject.toml").write_text(
         f'[tool.aisg-audit]\nfail-on = "high"\nrules = ["{LOW_RULE}"]\n', encoding="utf-8"
     )
-    assert main([str(py_agent), "--no-external"]) == EXIT_OK
+    assert main([str(py_agent)]) == EXIT_OK
     assert "rename it to [tool.aisafe-audit]" in capsys.readouterr().err
 
 
@@ -1333,61 +1951,89 @@ def test_the_new_pyproject_section_wins_over_the_old(
         f'[tool.aisafe-audit]\nfail-on = "high"\nrules = ["{LOW_RULE}"]\n',
         encoding="utf-8",
     )
-    assert main([str(py_agent), "--no-external"]) == EXIT_OK
+    assert main([str(py_agent)]) == EXIT_OK
     assert "[tool.aisg-audit]" not in capsys.readouterr().err
 
 
 def test_explicit_fail_on_overrides_pyproject_high(
-    audit_fixture, neutral_cwd: Path, capsys
+    py_agent: Path, neutral_cwd: Path, capsys
 ) -> None:
     """
-    A cwd whose pyproject sets `fail-on = "high"` (the repo's own self-audit
-    setting) is only a default: on `info_only`, the section leaves the info finding
-    finding and the two P11 absences (no disclosure, no prompt review) uncounted, and
-    `--fail-on info` on the command line counts all three.
+    A cwd whose pyproject sets `fail-on = "high"` (the repo's own self-audit setting) is
+    only a default: on `py_agent` the section leaves the low finding (no disclosure of the
+    AI nature) uncounted, and `--fail-on low` on the command line counts it.
     """
     (neutral_cwd / "pyproject.toml").write_text(
         '[tool.aisafe-audit]\nfail-on = "high"\n', encoding="utf-8"
     )
-    target = str(audit_fixture("info_only"))
-    assert cli.main(["audit", target, "--no-external"]) == EXIT_OK
+    assert cli.main(["audit", str(py_agent)]) == EXIT_OK
     out = capsys.readouterr().out
-    assert "3 below --fail-on high" in out
-    assert cli.main(["audit", target, "--no-external", "--fail-on", "info"]) == EXIT_FINDINGS
+    assert "1 below --fail-on high" in out
+    assert cli.main(["audit", str(py_agent), "--fail-on", "low"]) == EXIT_FINDINGS
     out = capsys.readouterr().out
-    assert "0 below --fail-on info" in out
+    assert "0 below --fail-on low" in out
     _assert_no_verdict_language(out)
 
 
 def test_pyproject_list_values_become_csv(
-    py_agent: Path, neutral_cwd: Path, tmp_path: Path
+    companion: Path, neutral_cwd: Path, tmp_path: Path
 ) -> None:
     (neutral_cwd / "pyproject.toml").write_text(
         '[tool.aisafe-audit]\nfail-on = "never"\nfail-on-unknown = ["reports"]\n'
-        'exclude = ["tools.py", "secrets.py"]\ntrusted-mcp-hosts = ["localhost", "mcp.internal"]\n',
+        'exclude = ["analytics.py"]\n',
         encoding="utf-8",
     )
-    code, doc = _json_run([str(py_agent), "--no-external"], tmp_path / "o.json")
+    code, doc = _json_run([str(companion)], tmp_path / "o.json")
     assert code == EXIT_OK
-    touched = {ev["file"] for f in doc["findings"] for ev in f["evidence"]}
-    assert "tools.py" not in touched and "secrets.py" not in touched
-    # an explicit flag wins, and a bare --fail-on-unknown means all four categories
-    assert main([str(py_agent), "--no-external", "--fail-on-unknown"]) == EXIT_FINDINGS
+    assert "analytics.py" not in _evidence_files(doc)
+    assert doc["target"]["exclude"] == ["analytics.py"]
+    # ts_agent's `deep` item is outside the configured category ...
+    ts_agent = str(FIXTURES / "ts_agent")
+    assert main([ts_agent]) == EXIT_OK
+    # ... and an explicit flag wins: a bare --fail-on-unknown means all four categories
+    assert main([ts_agent, "--fail-on-unknown"]) == EXIT_FINDINGS
 
 
-def test_pyproject_boolean_fail_on_unknown(py_agent: Path, neutral_cwd: Path) -> None:
+def test_pyproject_boolean_fail_on_unknown(neutral_cwd: Path) -> None:
     (neutral_cwd / "pyproject.toml").write_text(
         '[tool.aisafe-audit]\nfail-on = "never"\nfail-on-unknown = true\n', encoding="utf-8"
     )
-    assert main([str(py_agent), "--no-external"]) == EXIT_FINDINGS
+    assert main([str(FIXTURES / "ts_agent")]) == EXIT_FINDINGS
+    assert main([str(FIXTURES / "clean_py")]) == EXIT_OK
+
+
+def test_pyproject_baseline_and_review_record_are_defaults(
+    companion: Path, neutral_cwd: Path, tmp_path: Path
+) -> None:
+    """`baseline` and `review-record` are run defaults a project may set; both resolve
+    against the cwd like the flags, and an explicit flag still wins."""
+    record = neutral_cwd / "review.yaml"
+    _write_review_record(companion, record)
+    baseline = neutral_cwd / "baseline.json"
+    assert main([str(companion), "--write-baseline", str(baseline)]) == EXIT_OK
+    (neutral_cwd / "pyproject.toml").write_text(
+        '[tool.aisafe-audit]\nbaseline = "baseline.json"\nreview-record = "review.yaml"\n',
+        encoding="utf-8",
+    )
+    code, doc = _json_run([str(companion)], tmp_path / "o.json")
+    assert code == EXIT_OK  # every finding is in the baseline
+    assert doc["baseline"]["file"] == "baseline.json"
+    assert doc["baseline"]["new"] == 0
+    assert [r["reviewer"] for r in doc["inventory"]["review_records"]] == [REVIEWER]
+    assert all(f["declared_purpose"] == PURPOSE for f in doc["findings"])
+    # the flag overrides the file: a record that does not exist is an UNKNOWN item
+    code, doc = _json_run(
+        [str(companion), "--review-record", str(tmp_path / "nope.yaml")], tmp_path / "p.json"
+    )
+    assert doc["inventory"]["review_records"] == []
+    assert any(u["category"] == "runtime" for u in doc["unknown"])
 
 
 def test_not_configurable_names_every_per_invocation_action() -> None:
     """
     The dests a pyproject may never set. `write-baseline` would make every run
     rewrite a file and exit 0; `inventory-only` and `list-rules` would make every run
-    skip the rules, and a `true` boolean there has no flag to switch it back off;
-    `only` would make every audit partial.
+    skip the rules, and a `true` boolean there has no flag to switch it back off.
     """
     assert NOT_CONFIGURABLE == {
         "amend_baseline",
@@ -1395,13 +2041,16 @@ def test_not_configurable_names_every_per_invocation_action() -> None:
         "write_baseline",
         "inventory_only",
         "list_rules",
-        "only",
     }
-    actions = {action.dest: action for action in build_parser()._actions}
-    assert NOT_CONFIGURABLE <= set(actions)
+    actions = {action.dest for action in build_parser()._actions}
+    assert NOT_CONFIGURABLE <= actions
+    # the run defaults the contract names are all settable
+    for dest in ("exclude", "fail_on", "fail_on_unknown", "rules", "baseline", "review_record"):
+        assert dest in actions and dest not in NOT_CONFIGURABLE, dest
+    helps = {action.dest: str(action.help) for action in build_parser()._actions}
     # `--accept` says "with --amend-baseline" instead; the other four say so themselves.
     for dest in ("write_baseline", "amend_baseline", "inventory_only", "list_rules"):
-        assert "(not settable from pyproject)" in str(actions[dest].help), dest
+        assert "(not settable from pyproject)" in helps[dest], dest
 
 
 def _pyproject_lines(baseline: Path, fingerprint: str, target: Path) -> dict[str, str]:
@@ -1429,14 +2078,14 @@ def _pyproject_lines(baseline: Path, fingerprint: str, target: Path) -> dict[str
     ids=lambda keys: "+".join(keys),
 )
 def test_pyproject_cannot_set_a_per_invocation_action(
-    py_agent: Path, neutral_cwd: Path, tmp_path: Path, capsys, keys: tuple[str, ...]
+    companion: Path, neutral_cwd: Path, tmp_path: Path, capsys, keys: tuple[str, ...]
 ) -> None:
     """
     Recording a reason, writing a baseline, skipping the rules or printing the catalogue
     are actions, not defaults: each key is ignored from pyproject and the run is the same
     as without it -- exit 1 on the fixture, findings printed, nothing written.
     """
-    baseline, before = _baseline_for(py_agent, tmp_path)
+    baseline, before = _baseline_for(companion, tmp_path)
     fingerprint = before["fingerprints"][0]
     target = tmp_path / "from-pyproject.json"
     lines = _pyproject_lines(baseline, fingerprint, target)
@@ -1445,11 +2094,11 @@ def test_pyproject_cannot_set_a_per_invocation_action(
     )
     capsys.readouterr()
 
-    assert main([str(py_agent), "--no-external"]) == EXIT_FINDINGS  # a scan ran and counted
+    assert main([str(companion)]) == EXIT_FINDINGS  # a scan ran and counted
 
     captured = capsys.readouterr()
-    assert TRIFECTA_RULE_ID in captured.out  # findings, not the inventory or the catalogue
-    assert "rules. measured_precision" not in captured.out  # --list-rules footer
+    assert REFERENCE_TITLE in captured.out  # findings, not the inventory or the catalogue
+    assert "rules under policy" not in captured.out  # --list-rules footer
     assert not captured.out.lstrip().startswith("{")  # --inventory-only document
     assert "amended" not in captured.err
     assert "baseline written" not in captured.err
@@ -1464,6 +2113,12 @@ def test_repo_pyproject_carries_the_section() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     config = load_tool_config("aisafe-audit", start=repo_root)
     assert config["fail_on"] == "high"
-    # research/results and the bench audit CSVs are other repositories' findings; their
-    # snippet column would make the self-audit report its own evidence.
-    assert config["exclude"] == "tests,src/aisafe/probes,research/results,bench/findings-audit*.csv"
+    # tests/, the evaluation corpus, the demo prompts and the bench trees quote the very
+    # instructions the rules look for; research/results and the bench CSVs are other
+    # repositories' findings flattened for labelling.
+    assert config["exclude"] == (
+        "tests,research/results,bench/findings*.csv,bench/cases,examples,"
+        "src/aisafe/evaluation/corpus"
+    )
+    for removed in ("tools", "run_evals", "trusted_mcp_hosts", "timeout", "only"):
+        assert removed not in config, removed

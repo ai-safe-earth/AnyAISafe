@@ -22,40 +22,9 @@ prints its resolved destination, because the vendor page (the design-time URL
 repository skills and `~/.agents/skills` for user-level skills without mentioning
 `~/.codex/skills`. Check the printed path against your own Codex layout.
 
-## Hooks
-
-`aisafe hook install --host <name>` writes this adapter's entries into the host's hook
-configuration (it prints the diff and writes only with `--yes` or an interactive yes: those
-files are protected paths) and copies the pinned bootstrap `scripts/hook.sh` / `hook.ps1`
-next to it. `aisafe hook list` prints the table for the installed version. In the skill's
-closing step the install is offered by name only: the host's hook file is a protected
-path (rule 4), so the user runs the command, reads the diff and answers yes themselves;
-the skill never writes it for them.
-
-| host | hook config (project) | events wired | ask | verified | source |
-|---|---|---|---|---|---|
-| `claude` | `.claude/settings.json` | PreToolUse (edits, Bash), PostToolUse (edits), SessionStart, Stop; UserPromptSubmit with `--policies prompt_injection` | yes | yes | https://code.claude.com/docs/en/hooks |
-| `cursor` | `.cursor/hooks.json` | beforeShellExecution, beforeMCPExecution, afterFileEdit, stop; beforeSubmitPrompt with the prompt policy | yes | yes | https://cursor.com/docs/agent/hooks |
-| `gemini` | `.gemini/settings.json` | BeforeTool (`write_file`, `replace`, `run_shell_command`), AfterTool (`write_file`, `replace`), SessionStart | no | yes | https://geminicli.com/docs/hooks/reference/ |
-| `codex` | `.codex/config.toml` | none: command hooks are not documented for the Codex CLI; `install` prints this and writes nothing | no | no | https://developers.openai.com/codex/config-reference |
-
-What the hooks decide, on every host that has the event: a secret-shaped literal about to be
-written is denied; an edit to a protected path (host permission file, CI workflow, `.env*`,
-`.secrets*`, `.pre-commit-config.yaml`) asks; `curl ... | sh`, `wget -O- ... | sh` and
-plain-http `pip install` are denied; `npx -y`, a permission-bypass flag and a shell write to
-a protected path ask; after an edit, `aisafe audit --only <file>` runs against the baseline and
-new findings on that file become context; at Stop, a full audit against the baseline blocks
-once when a new finding at or above `fail-on` appears. Cursor has no pre-edit event, so its
-file checks are advisory and run after the edit; shell and MCP gating is enforced. Gemini
-has no "ask", so an `ask` follows `[tool.aisafe-hook].ask-fallback` (`allow`, recorded, or
-`deny`). The adapter fails OPEN on its own errors, records them in
-`.aisafe-audit/hook-state.json` and says so at the next session start; it never calls a model,
-never installs anything and never opens a socket.
-
-The Claude Code plugin (`claude plugin marketplace add ai-safe-earth/AnyAISafe`,
-then `claude plugin install aisafe@ai-safe-earth`) carries the same hooks in
-`hooks/hooks.json` and this skill as `skills/ai-safety-audit/`, so no settings file is
-edited at all.
+The Claude Code plugin (`claude plugin marketplace add ai-safe-earth/AnyAISafe`, then
+`claude plugin install aisafe@ai-safe-earth`) carries this skill as
+`skills/ai-safety-audit/` and nothing else; no settings file is edited.
 
 ## The `all` rule
 
@@ -87,6 +56,16 @@ host table; `aisafe skill diff --host <x>` compares the installed copy with the 
 and exits 1 when they differ. `install` refuses to overwrite a differing copy without
 `--force`; `--dry-run` prints what it would write.
 
+## What the installed copy contains
+
+`SKILL.md` (the five-phase flow and the hard rules), `agents/openai.yaml` (host metadata
+for hosts that read it), `references/` (`report-format.md`, `mechanisms.md`, generated from
+the policy and the rule registry, `apply/python.md`, `apply/typescript.md`,
+`apply/generic.md`, and this file) and `scripts/` (`audit`, `review` and `evaluate`, each as
+`.sh` and `.ps1`). The reference documents whose examples quote the prompt phrases the rules
+look for carry `<!-- # aisafe-audit: ignore-file -->` on their second line, so an audit of
+the repository the skill is installed in skips them instead of reporting the examples.
+
 ## Frontmatter rule
 
 `SKILL.md` frontmatter carries exactly two keys, `name` and `description`, and nothing else.
@@ -95,20 +74,16 @@ That is the intersection of what the hosts above accept; host-specific metadata 
 
 ## Bootstrap scripts
 
-`scripts/audit.sh`, `audit.ps1`, `verify.sh`, `verify.ps1`, `hook.sh`, `hook.ps1`,
-`attest.sh` and `attest.ps1` resolve `aisafe` in this order:
-`aisafe` on PATH, else `uvx --from 'aisafe==<version>'`, else
-`pipx run --spec 'aisafe==<version>'`. `aisafe` is the distribution, the importable name
-and the console script; on PyPI the unrelated `aisafeguard` also installs an `aisafe`
-command, so `audit.sh` and `attest.sh` say which one ran and `hook.sh` fails open when
-the one it found rejects `hook run`, and when uvx or pipx cannot fetch the pinned
-release (offline, for example). The version is pinned to the package
-that shipped the scripts and a test asserts it equals `pyproject.toml`; an unpinned bootstrap
-is what AUD-602 flags in targets, and the skill does not get an exception. When none of the
-three is available, `audit.sh` exits 2 with install hints, `verify.sh` prints
-`measure skipped: aisafe not importable in target`, and `hook.sh` exits 0 with
-`hook skipped` on stderr: a hook is a gate on someone else's editor and fails open.
-`audit.sh` / `audit.ps1` and `attest.sh` / `attest.ps1` print one line on stderr before
-running, `aisafe: <path> version <version> (pinned <version>)` (or `aisafe: uvx
-aisafe==<version> ...`), so the conversation records which aisafe ran; when the version
-differs from the pin, stop and say so before reading any result.
+`scripts/audit.sh`, `audit.ps1`, `review.sh`, `review.ps1`, `evaluate.sh` and
+`evaluate.ps1` resolve `aisafe` in this order: `aisafe` on PATH, else `uvx --from
+'aisafe==<version>'`, else `pipx run --spec 'aisafe==<version>'`. `aisafe` is the
+distribution, the importable name and the console script; on PyPI the unrelated
+`aisafeguard` also installs an `aisafe` command, so every script says which one ran: one
+line on stderr before the command, `aisafe: <path> version <version> (pinned <version>)`
+(or `aisafe: uvx aisafe==<version> ...`). When the version differs from the pin, stop and
+say so before reading any result. The version is pinned to the package that shipped the
+scripts, and a test asserts it equals `pyproject.toml`; an unpinned bootstrap would run
+whatever version the index serves that day. When none of the three is available,
+`audit.sh` and `review.sh` exit 2 with install hints, and `evaluate.sh` prints `evaluate
+skipped: aisafe not importable in target` after the test step and exits 0: it is a step on
+someone else's project and reports what it could not do.

@@ -1,308 +1,445 @@
 # Reading an `aisafe audit` report
+<!-- # aisafe-audit: ignore-file -->
 
 Read this before phase 2. It condenses the finding and report schema so you can present
 `.aisafe-audit/audit-report.json` without guessing what a field means. The JSON is
 authoritative in every phase; the html documents are rendered from the same `Report` and
-carry no information the JSON lacks.
+carry no information the JSON lacks. Every key below is spelled the way the JSON spells it.
+The marker on line 2 keeps this file, which quotes prompt phrases as examples, out of the
+audit of the repository it is installed in.
 
-## The three buckets
+## Three statements, never one score
 
-Every finding sits in exactly one bucket. The bucket says where the evidence came from, not
-how bad the finding is.
+Every finding separates what was established, what the project's policy says about it, and
+what could not be checked. Read all three out, every time.
 
-| bucket | meaning | how it renders |
-|---|---|---|
-| `measured` | an external scanner ran during THIS audit and produced the finding (gitleaks, detect-secrets, pip-audit, npm audit, osv-scanner, semgrep, mcp-scan) | `MEASURED` |
-| `asserted` | this audit's own rules matched code or config, OR a report file on disk was read | `[UNMEASURED]`, plus `[REPORTED <age>d, <source>]` when it came from a file |
-| `unknown` | nobody checked: a scanner was not on PATH, deep analysis is not available for a language, a report was unreadable or undated, something could not be established statically | listed under UNKNOWN with `how_to_resolve` |
+`evidence_status`, weakest to strongest (`unknown` stands apart):
+
+| value | meaning |
+|---|---|
+| `detected_signal` | a lexical or structural match whose role in the system is not established: a variable name, an SDK call, a phrase in code outside prompt material, two patterns in one file |
+| `supported_mechanism` | the mechanism is supported by structure: an instruction to the model inside prompt material (a prompt file, a system prompt literal, an assembled prompt), a data flow the syntax tree establishes, a scheduled job and a send in one scope, an objective a training or ranking call reads |
+| `observed_behavior` | a reply recorded in an evaluation report shows the mechanism, or the absence of an owed control, in the running system |
+| `unknown` | the audit could not establish the status: a prompt fetched at runtime, an opaque model, a language it reads only with patterns, missing runtime configuration |
+
+`decision`, what the policy (`policy/mechanisms.yaml`, version in `policy.version`) says:
+
+| value | meaning |
+|---|---|
+| `violates_policy` | a supported mechanism or an observed behaviour the charter prohibits, with no contextual condition left to settle. A prohibited instruction to the model is enough; demonstrated harm is not required |
+| `requires_contextual_review` | a signal or mechanism the charter says to record and review: a profile store, an inference step, a scoring function, a persona, an outreach schedule, a control claimed but not demonstrated, a stale review. A person decides, and records the decision (phase 3) |
+| `no_violation_identified_in_scope` | used on the mechanism coverage rows, not on findings: the rules ran on the surfaces the audit could read and nothing landed. Not a certification; the UNKNOWN list is part of the scope |
+| `not_assessed` | coverage rows only: the mechanism's rules did not run, or there was no surface |
 
 Rules that hold:
 
-- `MEASURED` means a tool ran now. A `measure-report.json` or `probe-report.json` read from
-  disk is never `MEASURED`; it is `REPORTED <age>` under `asserted`, and the age comes from
-  the report's `generated_at`, else the file mtime, else `git log`. If none of those is
-  available the report yields an UNKNOWN item ("report age unknown") and no finding.
+- A keyword match is a signal, never a violation. `detected_signal` with
+  `requires_contextual_review` means a person has to look; it does not mean the system does
+  the thing.
 - `UNKNOWN` is never a pass. A run with zero findings still prints the UNKNOWN block and the
-  disclaimer. Present the list verbatim with its `how_to_resolve` hints.
-- Absence of a finding is not evidence of safety.
+  disclaimer. Present the list verbatim with its `how_to_resolve` hints, and a finding's
+  `coverage_gaps` with the finding.
+- Absence of a finding is not evidence of safety. The disclaimer says so on every format.
+- Whether a practice falls under a law is a legal determination the operator makes. The
+  `references` on a finding are pointers for a reviewer, nothing more.
 
-## `[UNMEASURED]`
+## `[UNMEASURED]` and `[REPORTED <age>d, <source>]`
 
 Every rule carries `measured_precision: null`. `null` means nobody has labelled a corpus for
-that rule yet; it does not mean the rule is perfect and it does not mean it is noisy. An
-unmeasured rule still fires by default. When you present a finding, say `[UNMEASURED]` out
-loud and never invent a confidence number. `confidence.label` is always `"UNMEASURED"` in this
-version; `confidence.evidence_kind` (`code`, `config`, `absence`, `tool_output`, `report`)
-and `confidence.match_kind` (`grep`, `structured`, `ast`, `external`) tell you how the match
-was made. A `grep` match on a non-Python sink (AUD-401..406) is rendered "co-located,
-unverified": the sink and a model call share a file and an identifier, nothing more.
+that rule yet; it does not mean the rule is right and it does not mean it is noisy. An
+unmeasured rule still fires by default. `confidence.label` is `"UNMEASURED"` for every
+finding in this version; never invent a number. `confidence.evidence_kind` (`code`,
+`config`, `absence`, `report`) and `confidence.match_kind` (`grep`, `structured`, `ast`) say
+how the match was made: `ast` means the Python syntax tree connected it, `grep` a pattern
+over text, `structured` a rule reading the inventory (an absence finding, a control status).
 
-## `[REPORTED <age>]`
-
-AUD-803, AUD-902 and AUD-903 read `measure-report.json` / `probe-report.json` from the target.
-Their findings carry `evidence_kind: "report"` and a `report` block:
-
-    "report": {"file": "measure-report.json", "schema": "aisg/1",
-               "generated_at": null, "age_source": "mtime", "age_days": 41}
-
-Say how old the report is and where the age came from. A 41-day-old measurement of a guard
-that has since been reconfigured measures the old configuration. `aisafe measure` never emits a
-precision figure, so no audit rule compares one; AUD-803 reads `threshold_failures` and
-`false_positive_rate` only.
+A finding with a `report` block read an evaluation report from disk (AUD-1108 and AUD-1106
+do; see "The evaluation report"). The terminal and markdown tag it
+`[REPORTED <age>d, <source>]`, the html shows the same tag. `age_source` is `generated_at`
+(the report's own timestamp), else `mtime`, else `git`, else `unknown` (then the tag reads
+`[REPORTED age unknown]`). Say how old the report is: a reply recorded 40 days ago describes
+the model of 40 days ago, and the policy's `evaluation_max_age_days` (30) is the window
+inside which a passing family counts as a `demonstrated` control.
 
 ## One finding
 
+Abbreviated from a real run on the packaged fixture `persons_companion`
+(`known_failure_modes` and the long lists cut):
+
     {
-      "id": "AUD-301",
-      "fingerprint": "3f9a1c0b2d4e5f67",
-      "title": "LETHAL TRIFECTA: private data + untrusted content + external action in one scope",
-      "severity": "critical",
-      "priority": 3,
-      "bucket": "asserted",
+      "id": "AUD-1104",
+      "rule_id": "AUD-1104",
+      "sub": null,
+      "fingerprint": "7f5009e87f96f78b",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "severity": "high",
+      "priority": 4,
+      "mechanism": "M4",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "violates_policy",
       "basis": "presence",
-      "confidence": {"evidence_kind": "code", "match_kind": "ast", "precision": null, "label": "UNMEASURED"},
-      "scope": {"kind": "function", "unit": "u1", "name": "services/agent/app.py::handle_ticket"},
-      "evidence": [{"role": "private", "file": "...", "line": 52, "snippet": "..."}, ...],
-      "controls": ["ASI01", "ASI02", "ASI06", "LLM01", "LLM02", "LLM06", "EU:Art.9", "EU:Art.15", "NIST:MAP-5.1", "NIST:MANAGE-2.2"],
-      "recommendation": {"tier": "T3", "summary": "...", "alternatives": ["aisafe ToolPolicyGuard + PIIDetector", "NeMo Guardrails flows", "Guardrails AI validators", "LLM Guard scanners"],
-                         "package": {"mechanism": "gate", "symbols": ["ToolPolicyGuard", "PIIDetector"], "same_control": false,
-                                     "leaves_open": "the control is the structural split of trusted and untrusted scopes; a gate plus a detector never closes this"}},
-      "related_lint_rules": ["EU-AIA-012a", "ALIGN-003"],
-      "known_failure_modes": ["unit-level scope over-approximates in monorepos"],
+      "confidence": {"evidence_kind": "code", "match_kind": "grep", "precision": null, "label": "UNMEASURED"},
+      "scope": {"kind": "unit", "unit": "u0", "name": "."},
+      "evidence": [
+        {"role": "match", "file": "prompts/companion.md", "line": 3, "snippet": "Your goal is to maximize engagement and daily active use. ..."},
+        {"role": "check", "file": "app.py", "line": 12, "snippet": "undesired_objective_language: engagement, dependency or manipulation objective language"}
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "Your goal is to maximize engagement and daily active use.",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {"file": "prompts/companion.md", "sha256": "5c26dfa1a0a1648b65db5de64214d05b271e0512ed1c0fd4260a96a30b510b89"},
+        {"file": "app.py", "sha256": "bee2ba1432a68cdc014d40be39ea95d72f2d221ef597b3de72bfb733377e1d65"}
+      ],
+      "references": ["EU:Art.5(1)(a)", "EU:Art.5(1)(b)", "US-CA:SB1119", "US-WA:HB2225", "DSA:Art.25", "LLM09", "NIST:GOVERN-1.1", "NIST:MAP-5.1", "NIST:MEASURE-2.11"],
+      "recommendation": {"tier": "T2", "summary": "Rewrite the objective as task completion ...", "alternatives": ["...", "..."], "removes": ["objective", "intervention", "feedback"]},
+      "known_failure_modes": ["..."],
+      "coverage_gaps": ["the model call that reads this prompt material was not located in the tree"],
+      "uncertainty": "The row reads an imperative over engagement; a prompt that describes the product's tone, or a rule to ask a clarifying question, can match.",
       "suppressed": false,
       "gitignored": false,
-      "baseline_status": "unchanged",
-      "accepted_reason": "reader and writer split tracked in ticket 412; scope of the writer reviewed 2026-09"
+      "notes": "an engagement or retention objective in prompt material (...). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. ..."
     }
 
-- `severity` is blast radius (what the gap lets an attacker do), never detector confidence.
-  It is not adjusted downward because a match is a grep.
-- `priority` is the threat-model group (1 = blast radius, 2 = irreversible gates, 3 = trust
-  boundaries, 4 = output sinks, 5 = secrets and PII, 6 = supply chain, 7 = observability,
-  8 = detection guards, 9 = evaluation loop, 10 = governance). Findings sort by
-  `(priority, severity, file, line)` and AUD-301 is pinned first whenever present.
-- `fingerprint` is stable across renumbered lines and renamed locals; it is what
-  `--baseline` compares and what `--accept` names in phase 4.
-- `controls` are evidence for a human reviewer: OWASP Agentic (ASI), OWASP LLM (LLM), EU AI
-  Act articles and NIST AI RMF functions the finding is relevant to. The terminal and
-  markdown renderers print them as one line, `controls: <items>` (comma-separated); a
-  later finding of the same rule with the same list gets `controls: see the first
-  <id> above` instead of a repeat. The html does not print the list: its plan table's
-  `control` column is `recommendation.summary`, the control the rule asks for, not these
-  ids. Read them from the JSON. Never state or imply compliance with any of them.
-- `baseline_status` is present only when `--baseline` was given: `new` (not in the
-  baseline) or `unchanged` (in it). Findings whose fingerprint is in the baseline but not in
-  this run do not appear as findings at all; they are listed under
-  `baseline.no_longer_reported`.
-- `accepted_reason` is present only when the baseline carries a reason for this fingerprint
-  (recorded with `--amend-baseline ... --accept`). It is the operator's own words, ASCII,
-  html-escaped when rendered. An accepted finding is still a finding: it stays in
-  `findings` with its severity and its `unchanged` status, and a reason does not change
-  what the exit code counts (see "Exit codes and the fail threshold"). The reason
-  travels into every format: this JSON key, a SARIF result property, the html's
-  "Operator-recorded reason" label, and an `accepted: <reason>` line under the finding in
-  the terminal and markdown output. In the html plan an accepted finding is not counted
-  as package work and is not an open row; it sits under the accepted group.
+Every key, in the order the JSON writes them (`FINDING_KEYS` in `aisafe.evidence.model`):
 
-## `recommendation.package`
+- `id`: the display id, `AUD-1104` or `AUD-1104/vulnerable` for a sub-finding. `rule_id` is
+  the rule alone; `sub` is the sub-finding name or `null` (`vulnerable`, `persona`,
+  `extraction`, `store`, `missing`, `stale`, `none`, `claimed`, ...).
+- `fingerprint`: 16 hex characters, stable across renumbered lines and renamed locals. It is
+  what `--baseline` compares, what `--accept` names in phase 4, and what a review record's
+  `decisions:` entry names in phase 3.
+- `title`: the rule's title; the same for every sub-finding of the rule.
+- `severity`: `critical`, `high`, `medium`, `low` or `info`. It follows the policy's
+  severity criteria (what the mechanism does to the person), never detector confidence, and
+  is never lowered because a match is a grep.
+- `priority`: the mechanism's position in the policy, 1 to 8. It orders the report and
+  nothing else; a `priority` of 8 is not a low severity.
+- `mechanism`: `M1` to `M8`; the header the renderers group findings under.
+- `policy_version`: the policy the decision was taken under. `rule_version`: the rule's own
+  version (the catalogue's `changed` lines say what moved between versions).
+- `evidence_status`, `decision`: the two statements above.
+- `basis`: `presence` (something was found) or `absence` (something owed was not found: a
+  crisis path, a disclosure symbol, a review record, a control).
+- `confidence`: see `[UNMEASURED]` above.
+- `scope`: `kind` (`unit`, `function`, `file`, `repo`), `unit` (the unit id from the
+  inventory) and `name`.
+- `evidence`: locations backing the finding, each `role`, `file`, `line`, `snippet`. Roles:
+  `match` (the pattern hit), `check` (a native check over the Python text, named in the
+  snippet), `absence` (what was not found, file `.` line 0), `surface` (the prompt or
+  persona lines that make the unit the kind of surface the rule speaks about), plus the
+  flow roles some rules copy in. Snippets are whitespace-normalised, redacted
+  (`<redacted:PREFIX...LAST4>` for anything secret-shaped) and cut to 160 characters.
+- `flow` and `flow_established`: the chain `objective -> person_data -> inference -> prompt
+  -> intervention -> feedback`, as far as it was reconstructed, as `links`, each `kind`,
+  `file`, `line`, `snippet`, `established_by`. `established_by` is `ast` (the Python syntax
+  tree connects it: the profile variable is a source of the prompt assembly, the assembly is
+  the `system=` argument of the model call, the call's result is returned), `declared` (it
+  sits inside the same prompt literal the chain reads) or `co-located` (same file or window
+  only). `flow_established` is `true` only when every present link is `ast` or `declared`.
+  A chain with a `co-located` link is lexical co-occurrence and the renderers say so; `null`
+  means no chain was drawn. Outside Python every link is co-located.
+- `declared_purpose`: the `declared_purpose` of the review record covering the unit and
+  file (phase 3), else `null`. `encoded_objective`: the instruction the prompt carries,
+  redacted, at most 160 characters, when the finding has one. The renderers print the two
+  side by side: `purpose: declared: <text> | encoded: <text>`.
+- `person_data_use`: the profile variable, SDK or inferred trait the finding read, when
+  known (`user_profile`, `segment.identify(`).
+- `control_status`: `none`, `claimed`, `wired`, `exercised`, `demonstrated`, `unknown`, or
+  `null` when the rule does not speak about a control. `claimed` = named in docs, config or
+  an import only; `wired` = instantiated or called in the file that makes the model call or
+  returns the reply; `exercised` = a test references it; `demonstrated` = an evaluation
+  report within the window shows the relevant scenarios passing. No status resolves the
+  objective or the inference that caused the finding; AUD-1106 says so in its notes.
+- `affected_population`: only when evidenced: the vulnerable-group word found in the same
+  prompt literal or file (`lonely`, `teens`), or the review record's `affected_population`.
+  Otherwise `null`; never guessed.
+- `artifacts`: the evidence files with the sha256 of their content, the same hashes a
+  review record binds (`{"file", "sha256"}`).
+- `references`: law and standard pointers for a reviewer, grammar `EU:Art.5(1)(a)`,
+  `GDPR:Art.22`, `US-CA:SB243`, `US-NY:GBL-Art.47`, `US-WA:HB2225`, `DSA:Art.25`,
+  `NIST:MAP-5.1`, `LLM09`. Never state or imply conformity with any of them.
+- `recommendation`: `tier` (`T1` a text or config change, `T2` a new step, `T3`
+  restructuring), `summary`, `alternatives` (at least three, at least one not naming aisafe),
+  and `removes`: which part of the chain the remediation takes out, a subset of
+  `objective`, `inference`, `intervention`, `feedback`, `record`. Phase 4 reads `removes`
+  first: a change that removes the objective, the inference or the intervention is preferred
+  over one that adds a filter in front of the person. `references/apply/<language>.md` has
+  the shapes.
+- `known_failure_modes`: the rule author's list of ways the rule misreads code. Read it with
+  the finding; it is what makes "the rule says" different from "the code does".
+- `coverage_gaps`: what the rule could not see for this finding (the model call that reads
+  the prompt was not located; a control outside the tree). `uncertainty`: one sentence on
+  what could make the finding wrong. Both are the finding's own UNKNOWN; read them out.
+- `suppressed`: `true` when `--baseline` carries the finding's fingerprint with no reason
+  under the same policy version: a suppression nobody signed, still printed, not counted
+  in the exit code. Never read it as "hidden" (`--quiet` trims the terminal text, not the
+  JSON). `gitignored`: the evidence file is excluded by `.gitignore` but was walked anyway
+  (`--include-ignored`; `.aisafe-audit/` always is).
+- Present only when they apply: `report` (`file`, `schema`, `generated_at`, `age_source`,
+  `age_days` of the evaluation report a finding read); `baseline_status` (`new`,
+  `unchanged` or `re-review`, with `--baseline`); `accepted_reason` (the operator's words
+  from the baseline's `accepted` list) with `acceptance_policy_version` (the policy the
+  acceptance was recorded under) and `re_review: true` when that version is older than the
+  current policy; `review_decision` and `review_justification` (a contextual decision
+  recorded in the review record for this fingerprint, shown next to the finding and never
+  hiding it; a `violates_policy` decision from the record upgrades the finding's
+  `decision`); `notes` (the rule's sentence on what it matched, ending with the legal
+  caveat).
 
-What this package offers for the finding, and what that leaves open. Four keys, always
-present, in this order:
+## How the terminal and markdown print a finding
 
-| key | values | meaning |
-|---|---|---|
-| `mechanism` | `gate`, `budget`, `detector`, `record`, `measurement`, `document`, `none` | the kind of thing the package can add. `gate` lowers impact; `detector` lowers probability; `record` writes evidence; `measurement` and `document` produce reports and cards, not runtime behaviour |
-| `symbols` | list of aisafe class names (`ToolPolicyGuard`) or verbs (`aisafe measure`); empty when `mechanism` is `none` | what to wire, in preference order; the first entry keys `apply/python.md` |
-| `same_control` | `true` / `false` | `true` only when wiring `symbols` IS the control the rule asks for. `false` means the package offers a different, additional mechanism |
-| `leaves_open` | text; non-empty whenever `mechanism` is not `none` | what wiring the symbols still does not do, in the rule author's words. Quote it every time you offer the symbol |
+The same `Report`, as lines, grouped by mechanism in policy order and by severity inside a
+group. The fixed strings, with placeholders in angle brackets:
 
-`same_control: true` does not mean the finding disappears once the symbol is wired: the
-symbol must sit on the path the finding is about (a `ToolPolicyGuard` only sees calls
-dispatched through `run_processing`; a `TelemetryProvider` only traces calls through
-`run_full`), and `leaves_open` says what is outside it even then. It also does not mean the
-rule will stop firing: only the re-audit in phase 4 shows that. `same_control: false` with
-symbols means "in addition to, not instead of" the control in `controls.md`; a detector is
-never the control for a P1-P4 finding. aisafe symbols are Python-only; on a non-Python unit
-the mechanism is still named, the control still applies, and the symbol does not.
+- the head: `[####.] AUD-1104 high [UNMEASURED] [baseline: unchanged] <title>`, with
+  `[REPORTED <age>d, <source>]` when the finding read a report;
+- `scope: <kind> <name>`;
+- `status: <evidence_status> | decision: <decision> | control: <control_status>` (the
+  `control:` part only when `control_status` is set);
+- `review decision: <decision> -- <justification>` when the record holds one;
+- the evidence legs, `[<role>] <file>:<line>: <snippet>`;
+- `chain: objective (declared) -> person data (ast) -> prompt (ast) -> intervention (ast)
+  [established]`, or `[not established: a co-located link is lexical co-occurrence]`, or
+  `lexical co-occurrence only`;
+- `purpose: declared: <text> | encoded: <text>` when either is known, `population: <text>`
+  when set;
+- `fix (<tier>, removes <removes>): <summary>`, then `alternatives:`, `references:` and
+  `known failure modes:` (a later finding of the same rule says `see the first <id> above`
+  instead of repeating them);
+- `gaps: <items>`, `uncertainty: <text>`, `note: <text>`;
+- last, `accepted: <reason>`, or `accepted: <reason> (accepted under policy <old>;
+  re-review under <new>)`, or the line saying why a `re-review` finding counts again.
 
-Every row's `who` in the html plan table derives from this block and nothing else:
-`package` when `same_control` is true, the finding's language is Python and the file is
-not a protected path; `you, approval needed` when the file is protected; `you` otherwise.
-The language comes from the finding's file extension; a finding without a file takes its
-unit's language, and a repo-scoped finding the root unit's. Protected paths are the host
-permission and MCP files (`.claude/settings*.json`, `.codex/config.toml`, `.cursor/*`,
-`.gemini/*`, `.mcp.json`, `.vscode/mcp.json`, `claude_desktop_config.json`), CI workflows
-and pipeline files (`.github/workflows/*`, `.gitlab-ci*.yml`, `.circleci/config.yml`,
-`Jenkinsfile`, `azure-pipelines.yml`, `bitbucket-pipelines.yml`, `.travis.yml`), `.env*`,
-`.secrets*` and `.pre-commit-config.yaml`. An accepted finding is neither package work
-nor an open row; it sits under the accepted group.
-- `sub` names a sub-finding (`AUD-101/interpreter`, `AUD-107/inert`, `AUD-701/apm-only`);
-  the display id is `AUD-101/interpreter`.
-- `gitignored: true` means the evidence file is excluded by `.gitignore` but was walked
-  anyway. `.env*` always is, and so is `.aisafe-audit/`, so the reports there count as
-  evidence whether or not they are committed. Say so for a credential: it is a
-  developer-machine one, not a committed one.
-- Snippets are masked before they enter a finding, by two different mechanisms with two
-  different shapes. Secret-shaped tokens become `<redacted:PREFIX...LAST4>` (`sk-ant-`,
-  `sk-`, `ghp_`, `AKIA`, `xoxb-`, `AIza`, bearer tokens, `key=`/`token=` assignments and
-  long hex or base64 values next to such a name); this runs on every snippet in every
-  format. PII hits become `<pii:ENTITY>` with the entity name in upper case -- `<pii:EMAIL>`,
-  `<pii:PHONE_US>`, `<pii:PHONE_INTL>`, `<pii:SSN>`, `<pii:CREDIT_CARD>`,
-  `<pii:IP_ADDRESS>`, `<pii:IBAN>`, `<pii:DATE_OF_BIRTH>`, the shipped PII detector's
-  default entities -- and are masked when discovery records the hit, so the AUD-505
-  snippet never holds the value. There is no flag to turn either off: `--no-redact` is
-  refused with exit 2.
+After the findings, a "Mechanisms" table from `report.mechanisms` (below) and the UNKNOWN
+block, each item with `resolve: <how_to_resolve>`.
 
 ## The report envelope
 
 Key order is fixed; `schema` is first.
 
-    schema, kind, tool, target, generated_at, disclaimer, summary, findings, measured,
-    reports, unknown, external_tools, baseline, inventory, rules
+    schema, kind, tool, target, generated_at, disclaimer, policy, summary, mechanisms,
+    findings, reports, unknown, baseline, inventory, rules
 
-- `disclaimer` opens every format: "Not an assessment of compliance with any regulation.
-  Risk classification under the EU AI Act is a legal determination made by the operator, not
-  a tool output. Every rule in this report is UNMEASURED ... Absence of a finding is not
-  evidence of safety." Repeat its substance when you close.
-- `summary`: `findings`, `by_severity`, `by_bucket`, `reported` (findings read from disk),
-  `below_threshold`, `fail_on`, `unknown_items`, `unknown_by_category`
-  (`tools` / `deep` / `reports` / `runtime`), `exit_code`, `top` (first finding id),
-  `suppressed`, `baseline_new` (null without `--baseline`).
-- `measured`: one row per scanner that ran, with `version`, `duration_ms`, `findings` and
-  `network` (whether that scanner uses the network the way it normally does).
-- `reports`: every on-disk aisafe report that was read, with its age and the fields the rules
-  consumed (`guards` for measure, `summary` for probe).
-- `external_tools`: every adapter and its status: `ran`, `not_on_path`, `not_applicable`,
-  `failed`, `timeout`, `skipped_by_flag` (`--no-external`), `skipped_needs_flag`
-  (promptfoo needs `--run-evals` because it may call providers). Read this list to the user
-  so they know which scanners did not run.
-- `baseline`: present when `--baseline` was given, keys in this order:
-  `file`, `kind`, `new`, `unchanged` (counts), `accepted`, `generated_at`,
-  `no_longer_reported`. There is no count key for the fingerprints that are gone: the
-  length of `no_longer_reported` is the count. Every renderer's baseline line reads
-  `baseline: N new, N unchanged, N no longer reported (file)`. Only `new` findings count
-  toward the exit code; `unchanged` ones do not, reason or no reason.
-  - `kind`: `audit-baseline` for a baseline file, `audit` when a full report was used as
-    the baseline. A report carries no reasons, so `accepted` is always empty then; say
-    "the baseline was a report", not "no reasons recorded".
-  - `accepted`: `[{"fingerprint", "rule", "file", "reason"}]`, one entry per reason in
-    the baseline file that matched a finding reported this run. A reason whose finding
-    is gone shows up under `no_longer_reported` instead, not here.
-  - `generated_at`: the compared document's own timestamp (a baseline file's, or the
-    report's), so document 2 can say how old the comparison point is; `null` when the
-    document has none.
-  - `no_longer_reported`: `[{"fingerprint", "rule", "file", "title"}]`, one entry per
-    fingerprint the baseline holds that this run did not produce. The names come from the
-    baseline file's `index`; a baseline written without one yields `{"fingerprint"}` only.
-    Say "no longer reported": a rename, a move or a changed snippet produces the same
-    entry as a removed gap, and the audit cannot tell them apart.
-- `rules`: the catalogue that ran, each with `measured_precision: null`.
+- `schema` is `"aisg/1"`, `kind` is `"audit"`; the walker recognises its own earlier output
+  by these two and skips it (`inventory.own_output_skipped`).
+- `tool`: `{"name": "aisafe-audit", "version": ...}`. `target`: `path`, `git_sha`, `dirty`
+  and `exclude` (the resolved walker excludes, so two documents made from different working
+  directories show the mismatch).
+- `disclaimer` opens every format: "This report lists observations about prompts and code,
+  and the decision the project's policy (version <v>) takes on each. It is not legal advice,
+  not an assessment of compliance with any regulation, and not a certification. Every rule
+  in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding
+  is not evidence of safety." Repeat its substance when you close.
+- `policy`: `{"version", "charter", "adopted"}`, the policy every decision in the file was
+  taken under.
+- `summary`: `findings`, `by_severity`, `by_evidence_status`, `by_decision`,
+  `below_threshold` (findings under `--fail-on`, not counted in the exit code, still
+  findings), `fail_on`, `unknown_items`, `unknown_by_category` (`coverage`, `deep`,
+  `reports`, `runtime`), `exit_code`, `top` (the first finding's id), `suppressed`,
+  `baseline_new` (`null` without `--baseline`), `re_review` (findings whose baseline entry
+  was a suppression under another policy version; they count like new), `stale_acceptances`
+  (acceptances recorded under an older policy; not counted, marked for a second look).
+- `mechanisms`: the coverage table, one row per mechanism in policy order: `id`, `name`,
+  `rules` (the rules serving it), `ran` (the ids that ran), `surfaces` (units with an AI
+  surface the rules read), `findings`, `decision` (`not_assessed` when nothing ran or no
+  surface; `no_violation_identified_in_scope` when the rules ran and nothing landed; else the
+  strongest decision among its findings). A row at `no_violation_identified_in_scope` is a
+  statement about the surfaces read, with UNKNOWN beside it; never a certification.
+- `reports`: every evaluation report read from disk: `source`, `kind` (`evaluation`, or the
+  legacy `probe`), `schema`, `generated_at`, `age_source`, `age_days`, `families`,
+  `config_digest`, `summary`. Read this list to the user: it says what evidence about the
+  running system the audit had.
+- `unknown`: items with `category`, `what`, `why`, optional `how_to_resolve`, `file`,
+  `rule_ids`. `coverage` = a prompt-only unit with no model call (`runtime evidence <unit>`)
+  or a prompt fetched at runtime or read from settings; `deep` = a non-Python unit read with
+  patterns only (`<language> deep analysis`: "not available in this version; pattern-level
+  findings only") or a Python file the syntax-tree layer could not parse; `reports` = an
+  evaluation report unreadable or undated; `runtime` = anything else, including a malformed
+  review record (with `rule_ids: ["AUD-1107"]`).
+- `baseline`: present when `--baseline` was given, keys in this order: `file`, `kind`,
+  `new`, `unchanged`, `re_review`, `stale_acceptances`, `accepted`, `generated_at`,
+  `policy_version`, `no_longer_reported`.
+  - `kind`: `audit-baseline` for a baseline file, `audit` when a full report was used as the
+    baseline (it carries no reasons: say "the baseline was a report").
+  - `accepted`: `[{"fingerprint", "rule", "file", "reason", "policy_version"}]`, one per
+    reason in the baseline that matched a finding this run.
+  - `generated_at` and `policy_version`: the compared document's own, so document 2 can say
+    how old the comparison point is and under which policy it was written.
+  - `no_longer_reported`: `[{"fingerprint", "rule", "file", "title"}]`, one per fingerprint
+    the baseline holds that this run did not produce, named from the baseline's `index`. Its
+    length is the count; there is no count key. Say "no longer reported": a rename, a move
+    or a changed snippet produces the same entry as a removed mechanism, and the audit
+    cannot tell them apart.
+  - The renderers' line: `baseline: N new, N unchanged, N no longer reported (<file>)`, or,
+    when the run has re-review findings, `baseline: N new, N unchanged, N re-review, N no
+    longer reported (<file>, written under policy <old>)`; then `stale acceptances: N
+    accepted under an older policy; re-review under <current>` when any.
+- `inventory`: the inventory document (below). `rules`: the catalogue that ran, each `id`,
+  `title`, `version`, `mechanism`, `measured_precision` (`null`), `ran`, `experimental`.
 
 ## Inventory keys worth reading out
 
-`inventory.own_output_skipped`: the paths of the toolchain's own earlier output the walk
-skipped: a JSON whose head carries `"schema": "aisg/1"` and `"kind": "audit"` (the
-report), `"kind": "inventory"` (the `--inventory-only` document) or `"kind":
-"attestation"` (phase 7's document), and an html whose first line is exactly
-`<!-- # aisafe-audit: ignore-file -->` (the audit's pages and `attestation.html`). Without this the phase-1
-documents would be scanned as source and their evidence snippets reported as new findings.
-Baseline files are not skipped (they hold no snippets; the reasons are read as text, which
-is why a reason must not quote the literal it accepts), and measure and probe reports are
-not skipped (they are evidence for AUD-803, AUD-902 and AUD-903). `.aisafe-audit/` is
-deliberately not a skipped directory, for the same reason, and `.gitignore` never prunes
-it. The list is one inventory line in every format; SARIF carries it at
-`runs[0].properties.own_output_skipped`.
+The inventory sits inside the report and is the whole document of `--inventory-only`
+(`schema: "aisg/1"`, `kind: "inventory"`, skipped as own output by the next walk). Keys:
+`target`, `units` (`id`, `root`, `manifest`, `language`, `ai_surface`), `languages`,
+`llm_calls`, `models` (with `pinned`), `frameworks`, `ingress`, `prompts`, `person_signals`,
+`memory_stores`, `personas`, `review_records`, `reports`, `system_card`,
+`own_output_skipped`, `unknown`. For phase 1:
+
+- `prompts`: `{file, line, kind, name, is_system, unit}`; `kind` is `file` (a path under
+  the prompt globs: `prompts/`, `*.prompt.*`, `*.jinja`, `agents/*.yaml`, ...), `literal`
+  (a system prompt string in Python), `assembly` (an f-string or concatenation that builds
+  one), `remote` (fetched at runtime: `hub.pull(`, `get_prompt(`) or `runtime` (read from
+  the environment or settings). `remote` and `runtime` rows come with a `coverage` UNKNOWN
+  item: the text was not available.
+- `person_signals`: `{file, line, kind, symbol, unit}`, the places where code or prompts
+  touch people, by kind (`profile_name`, `profile_sdk`, `engagement`, `persona`, `memory`,
+  `inference`, `attachment`, `steering`, `vulnerable`, ...). Count them by kind.
+- `memory_stores` (kind `memory`) and `personas` (kinds `persona`, `confidant`, `fiction`),
+  same row shape.
+- `review_records`: `{file, reviewer, reviewed_at, policy_version, artifacts (count), scope}`
+  for each valid record; empty until phase 3.
+- `reports`: the evaluation reports found: the fields of the report's `reports` entries,
+  keyed `file` where the report says `source`, and without `summary`.
+- `system_card`: a legacy `ai-system-card.yaml`, read only for `affected_persons` and
+  `prompt_audit` (AUD-1107 `/unbound`), or `null`.
+- `own_output_skipped`: the paths of the toolchain's own earlier output the walk skipped: a
+  JSON whose head carries `"schema": "aisg/1"` and `"kind": "audit"` or `"kind":
+  "inventory"`, and an html whose first line is exactly `<!-- # aisafe-audit: ignore-file -->`.
+  Without this the phase-1 documents would be scanned as source and their snippets reported
+  as findings. Baseline files are not skipped (they hold no snippets; the reasons are read as
+  text, which is why a reason must not quote the literal it accepts), the review record is
+  not skipped (same rule for its justifications), and the evaluation report is not skipped
+  (it is evidence). `.aisafe-audit/` is walked even when `.gitignore` lists it.
 
 ## The baseline file
 
 `--write-baseline FILE` writes, keys in this order: `schema`, `kind: "audit-baseline"`,
-`generated_at`, `tool`, `fingerprints`, then `accepted` when any reason has been recorded,
-then `index` (`{fingerprint: {rule, file, title}}`). With `-o` the report is rendered and
-written first, then the baseline, and the exit code is 0 regardless of findings: the
-command records, it does not judge. Read the report it wrote; the baseline alone tells you
-nothing about severity.
+`generated_at`, `tool`, `policy_version`, `fingerprints`, then `accepted` when any reason
+has been recorded, then `index` (`{fingerprint: {rule, file, title}}`). With `-o` the report
+is rendered and written first, then the baseline, and the exit code is 0 regardless of
+findings: the command records, it does not judge. Read the report it wrote; the baseline
+alone tells you nothing about severity.
 
-Operator reasons are carried over, not retyped: from the `--baseline` document the run
-was compared against (when that document is an audit-baseline; a report holds none) and
-from the file `--write-baseline` refreshes. A reason whose fingerprint is no longer
-reported is dropped, and the note on stderr says how many. `--write-baseline` refuses
-(exit 2) to overwrite a file that exists and is not `kind: audit-baseline`, so a report or
-a source file cannot be replaced by mistake. Reading a baseline applies the same check as
-`--accept`: a reason carrying verdict language or a secret shape is rejected.
+Operator reasons are carried over, not retyped: from the `--baseline` document the run was
+compared against (when that document is an audit-baseline) and from the file
+`--write-baseline` refreshes. A reason whose fingerprint is no longer reported is dropped,
+and the stderr note says how many. `--write-baseline` refuses (exit 2) to overwrite a file
+that exists and is not `kind: audit-baseline`.
 
-`--amend-baseline FILE --accept FINGERPRINT=REASON` (repeatable) adds reasons to an
-existing baseline without scanning or rendering. It refuses (exit 2) a file that is not
-`kind: audit-baseline`, a fingerprint not in `fingerprints`, an empty reason, a reason that
-is not ASCII, one that contains compliance language, and one that looks like a secret. A
-second `--accept` for the same fingerprint replaces the reason. `--accept` without
-`--amend-baseline` is exit 2.
+`--amend-baseline FILE --accept FINGERPRINT=REASON` (repeatable) adds reasons to an existing
+baseline without scanning or rendering. It refuses (exit 2) a file that is not `kind:
+audit-baseline`, a fingerprint not in `fingerprints`, an empty reason, a reason that is not
+ASCII, one that reads as a verdict, and one that looks like a secret. A second `--accept`
+for the same fingerprint replaces the reason. `--accept` without `--amend-baseline` is exit
+2. Each `accepted[]` entry is `{fingerprint, rule, file, reason, policy_version}`.
 
-## The decision document (`kind: decision`)
+What the policy version does to a baseline, on the next `--baseline` run:
 
-`aisafe decide --format json -o .aisafe-audit/decision-report.json` (phase 3) writes the trade
-table as data. Top-level keys, in order: `schema`, `kind`, `tool`, `generated_at`,
-`disclaimer`, `inputs` (`audit`, `measure` or null, `prices` with `as_of` and `stale`,
-`card` or null), `traffic` (`requests_per_day`, `avg_input_tokens`, `avg_output_tokens`,
-`source`), `budgets` (`p99_ms`, `monthly_usd`, `max_usd_per_request`,
-`human_review_capacity_per_day`, `max_human_rate`, `source`), `controls`, `selected`,
-`totals`, `unmeasured`, `exit_code`.
+- a fingerprint WITH a reason is an acceptance: `unchanged`, not counted; when its
+  `policy_version` (or the document's, when the entry has none) is older than the current
+  policy, the finding is marked `re_review: true` with `acceptance_policy_version`, rendered
+  "accepted under policy X; re-review under Y", and counted in `summary.stale_acceptances`;
+- a fingerprint WITHOUT a reason is a suppression: `unchanged` only while the baseline's
+  `policy_version` equals the current one; under a newer policy it is `baseline_status:
+  "re-review"`, counts toward the exit code like `new`, and `summary.re_review` counts it.
 
-One `controls[]` row per package symbol the findings name: `control`, `symbol`, `kind`
-(`guard` | `config` | `record` | `action`), `stage`, `rules` (`id`, `same_control`,
-`mechanism`), `mechanisms`, `catch_rate`, `catch_rate_relevant` (the families the guard
-is for), `catch_rate_meaningful`, `benign_broken_rate`, `benign_modified_rate`,
-`human_rate`, `p50_ms`, `p99_ms`, `llm_calls_per_request`, `tokens_in_per_request`,
-`tokens_out_per_request`, `usd_per_request`, `usd_per_month`, `usd_basis` (`measured` |
-`estimated` | `unavailable` | `none` | `free` | `local`, with `, stale` when the price
-table is past its shelf life), `fail_mode` (`open` | `closed` | `mixed` | `n/a`),
-`provenance` (`MEASURED <date>` | `ESTIMATED <date>` | `UNMEASURED`), `over_budget`
-(any of `p99`, `usd/request`, `usd/month`, `human`, `benign`) and `recommendation`
-(`verdict`, `reasons`, `config_changes`). Read the verdict and the provenance together:
-`apply` is a reading of declared budgets, never a safety statement, and `ESTIMATED`
-means the judge's tokens were computed from its prompt because `aisafe measure` ran
-offline. `totals` carries `mode`, `p50_ms`, `p99_ms_upper_bound`, `usd_per_request`,
-`usd_per_month`, `human_per_day`, `human_capacity_per_day`, `over_budget`,
-`excluded_unmeasured`.
+An old suppression never becomes an acceptance because the policy moved.
 
-The document is evidence, not own output: the next audit reads it as `REPORTED <age>`
-and AUD-806 turns each over-budget row into a finding (`AUD-806/latency`, `/cost`,
-`/human`, `/benign`). `aisafe audit --format html --decision <file>` adds it to the page
-as the "Trade table" section after the plan.
+## The review record (`kind: review`)
 
-## The attestation document (`kind: attestation`)
+`aisafe-review.yaml` at the audited root (`.aisafe/review.yaml` and
+`.aisafe-audit/review.yaml` are found too; `--review-record PATH` overrides; the
+`[tool.aisafe-audit]` key is `review-record`). `aisafe review init` writes the skeleton with
+every discovered artifact hashed, `aisafe review record` completes it, `aisafe review check`
+reads it back. Shape:
 
-`aisafe attest . --owner "<Name <role>>" --html` (phase 7) writes `.aisafe-audit/attestation.json`,
-`attestation.md`, `attestation.html` and `badge.json`. Top-level keys, in order: `schema`,
-`kind`, `tool`, `target` (`path`, `git_sha`, `dirty`), `generated_at`, `owner`, `level`,
-`inputs`, `accepted_risks`, `unknown`, `residual`, `next_review_by`, `notes`, `disclaimer`.
+    schema: aisg/1
+    kind: review
+    policy_version: "1.0.0"
+    reviews:
+      - reviewer: "J. Doe <product owner>"       # a person, by name and role; never a tool
+        assisted_by: "Claude Code (agent)"       # attribution only; optional
+        reviewed_at: 2026-10-29                  # ISO date; null in a skeleton
+        units: []                                # default: every unit the artifacts fall in
+        scope: ["M1", "M4", "M5", "M6"]          # mechanisms considered; non-empty
+        declared_purpose: "a companion app for adults who want to practise small talk"
+        affected_population: "adults learning conversation skills"   # optional
+        artifacts:
+          - {path: "prompts/companion.md", sha256: "<64 hex>"}
+        decisions:
+          - fingerprint: "494b8d2efb84b87b"
+            decision: requires_contextual_review
+            justification: "<the reviewer's words: ASCII, no verdict language>"
+        notes: null
 
-- `level`: `reached` (0..3, or null when a level-0 criterion is unmet), `name` (`audited`,
-  `triaged`, `measured`, `governed`), `statement` and `criteria`. The statement is literal:
-  `<owner> states that <path> at commit <sha> meets the AnyAISafe level <N> (<name>) criteria on
-  <date>.`; with no level it says the tree was checked and reaches no level. Each
-  `criteria[]` row is `id`, `level`, `met`, `evidence` (what was read) and `missing` (empty
-  when met; otherwise what would have to change). The level reached is the highest N with
-  every criterion of levels 0..N met. `references/levels.md` lists the criteria.
-- `inputs`: one row per document the command looked for (`audit`, `baseline`, `measure`,
-  `probe`, `decision`, `card`) with `file`, `generated_at` and `age_days`; an absent
-  document has nulls in all three. Absence fails the criteria that need the document, not
-  the run; a document of the wrong kind or unparseable JSON is fatal (exit 2).
-- `accepted_risks`: `[{fingerprint, rule, file, reason, owner}]`, one per reasoned entry of
-  the baseline, copied with the owner's name. A fingerprint without a reason is not here
-  and its finding stays open for the level criteria: a bare fingerprint is a suppression.
-- `residual`: `findings_by_severity`, `open`, `accepted`. `unknown`: the after report's
-  list, verbatim. `next_review_by`: `generated_at` plus the criteria file's review interval
-  (90 days). `disclaimer`: the audit's disclaimer plus "An attestation is a statement by
-  the named owner; the tool checked the listed criteria and nothing else."
+What the audit does with it:
 
-`badge.json` is a shields.io endpoint: `{"schemaVersion": 1, "label": "aisafe", "message":
-"level N (<date>)", "color": "informational"}`, `lightgrey` at level 0 or no level, never
-green or red. `--check` evaluates and prints without writing anything; `--check
---require-level N` exits 1 when N is not reached. `--owner` is required to write and can
-never come from `pyproject.toml` (`[tool.aisafe-attest]` defaults every other flag). The
-attestation is the toolchain's own output: a later walk skips `attestation.json` by its
-kind and `attestation.html` by its first line, and lists both under `own_output_skipped`;
-`attestation.md` and `badge.json` stay walked.
+- every finding in a unit and file the record covers gets `declared_purpose` (and
+  `affected_population` when the finding has none of its own);
+- a `decisions:` entry for a finding's fingerprint shows as `review_decision` and
+  `review_justification` on the finding; `no_violation_identified_in_scope` never hides the
+  finding, `violates_policy` upgrades its `decision`;
+- AUD-1107 reports `/missing` (no record covers the unit), `/uncovered` (a file carrying
+  person signals is listed in no covering record, or the record's `scope` omits the
+  mechanism), `/stale` (a listed artifact's sha256 changed, or `reviewed_at` is older than
+  `review_max_age_days`, 180; the notes say which), `/unbound` (only a legacy system-card
+  `prompt_audit` block, no hashes) and `/policy` (the record's `policy_version` is older than
+  the current policy);
+- a malformed record covers nothing: each problem is one UNKNOWN (runtime) item with
+  `rule_ids: ["AUD-1107"]`, never a half-trusted record;
+- the free text (reviewer, purpose, justification, notes) is held to the baseline's bar:
+  printable ASCII, no verdict language, nothing secret-shaped. `record` exits 2 on a
+  verdict-shaped reviewer or purpose; it cannot tell a tool's name from a person's, so rule 4
+  of SKILL.md is yours to keep.
+
+`aisafe review` exit codes: 0 nothing to report; 1 (`check`) a listed artifact changed or
+is missing, the review is older than the window, or a discovered artifact is listed in no
+record; 2 refused or failed (`init` on an existing file without `--force`, an empty or
+verdict-shaped reviewer or purpose, a malformed record).
+
+## The evaluation report (`kind: evaluation`)
+
+Written by `aisafe evaluate` (phase 5), read by the next audit from `.aisafe-audit/` (or
+anywhere in the tree, or `--evaluation-report PATH`). Keys: `schema`, `kind`,
+`generated_at`, `tool` (`name: "aisafe evaluate"`, `mode: "endpoint" | "transcripts"`,
+`corpus_families`), `target` (the endpoint `url`, `response_path` and `request_template`,
+or the transcripts file, `count` and `assistant_messages`; `models` is always empty: a
+black-box run never sees the model), `config_digest` (what was sent or read, so two reports
+can be compared), `summary`, `by_family`, `disclaimer`, `notes`, `cases`.
+
+`summary` keys: `sent`, `passed`, `failed`, `errors`, `skipped`, `inconclusive`, `missing`,
+`observed`, `not_judged`. Only `passed` means passed. `missing` is the part of `failed`
+where the reply lacked what it owed the person (a crisis referral); `errors`, `skipped` and
+`inconclusive` (the endpoint echoed the payload) are never folded into `passed`;
+`observed` (transcript runs only) is an assistant message that carried a tactic or an
+identity claim; `not_judged` lists the families a transcript run cannot settle. `by_family`
+holds the same counters per family; `cases[]` has one row per case (`id`, `family`, `kind`,
+`expected_behaviour`, `status`, `matched`, `response_excerpt`, ...).
+
+What the audit does with it, through `policy.evaluation_max_age_days` (30):
+
+- AUD-1108 reads `by_family["crisis_disclosure"]`: every case passed and the report inside
+  the window -> the finding stays, `control_status: demonstrated`, severity `low`,
+  `evidence_status: observed_behavior`, decision `requires_contextual_review` (a model update
+  can change the reply); any case failed or in error -> `observed_behavior`,
+  `violates_policy`, severity unchanged, with the `report` block;
+- AUD-1106 reads `goodbye_pressure` and `manipulation_elicitation` the same way: a passing
+  family is a `demonstrated` control and the finding is no longer reported, which the M8
+  coverage row records; a failing one is observed behaviour;
+- a `--transcripts` run writes its families as `transcripts/<family>`, so it never counts as
+  a demonstration (the scenarios were not performed) and never flips a finding; it is listed
+  under `reports`, and its `observed` hits are for the person to read;
+- a report that is unreadable or undated yields an UNKNOWN (reports) item, never a finding
+  and never a pass. A failing report never silences a finding, and a passing one never
+  removes an objective written into a prompt.
 
 ## `--format html`
 
@@ -312,40 +449,40 @@ prose. `--quiet` has no effect on html. `--inventory-only` renders the header, F
 the inventory with a banner saying the rules did not run, and no plan. ASCII throughout, no
 severity colour, no ticks, grades, scores or percentages. Sections, in order:
 
-1. Line 1 is `<!-- # aisafe-audit: ignore-file -->`, so a re-audit of a tree that contains the
-   document skips it instead of reporting its own snippets.
-2. Header: target, commit, `generated_at`, tool version; "Compared against: none -- this
-   is the first survey" or "Compared against <path>, written <age> ago" plus the number of
-   operator-recorded reasons; the resolved `fail-on` and `exclude` so two documents made
-   from different working directories show the mismatch.
-3. The disclaimer verbatim, "Absence of a finding is not evidence of safety.", and the
-   UNKNOWN count, all above the figure. No severity totals strip.
-4. Document 2 only -- "Since the baseline": What changed (`no_longer_reported`, named,
-   and `new`), What is left, What we still do not know.
-5. Fig. 1 -- System map: eleven subsystem boxes drawn from the inventory (Data in; Host and
-   agent runtime; Model calls and prompts; Tools and actions; Output sinks; Secrets and
-   personal data; Supply chain; Guardrails; Observability; Evals and governance; Persons
-   and manipulation, on a third row) plus a dashed "Not attributed / UNKNOWN" box. Each box: up to two inventory facts,
-   "reported n | UNKNOWN m | rules ran k/K", and `[UNMEASURED]`. "No surface found" is
-   different from "reported 0". The caption says what the figure deliberately omits.
-6. One section per subsystem: inventory facts with file:line, then the findings placed
-   there in report order, each with its bucket tag, baseline status, redacted evidence,
-   recommendation and the package line (`aisafe: <symbols> -- implements the control this
-   rule asks for. Leaves open: ...`, or `... a different control (<mechanism>), in
-   addition to, not instead of: ...`, or `outside the package: ...`), the Python-only note
-   on non-Python units, the approval note on protected paths, and the operator's recorded
+1. Line 1 is `<!-- # aisafe-audit: ignore-file -->`, so a re-audit of a tree that contains
+   the document skips it instead of reporting its own snippets.
+2. Header: "Prompt and algorithm audit: <target>", document 1 or 2, commit, uncommitted
+   changes, `generated_at`, tool version, policy version; "Compared against: none -- this
+   is the first survey" or "Compared against <file>, written <age> ago" with the number of
+   operator-recorded reasons and the baseline's policy version; the resolved `fail-on` and
+   `exclude`, so two documents made from different working directories show the mismatch.
+3. "Read this first": the disclaimer verbatim, "Absence of a finding is not evidence of
+   safety.", and the UNKNOWN count, all above the figure.
+4. Document 2 only, "Since the baseline": What changed (`no_longer_reported`, named, and
+   new), What is left, What we still do not know, with the re-review and stale-acceptance
+   counts.
+5. "Mechanism map", Fig. 1: eight boxes M1 to M8 drawn from the policy in two rows of four,
+   each with `findings N | UNKNOWN M` and its decision, plus a dashed "Not attributed /
+   UNKNOWN" box. The caption says the map is drawn from the policy, not traced at runtime,
+   how many rules ran, and that a box's decision is never a score.
+6. "Mechanisms": one section per mechanism with `Prohibited:` and `Distinct from:` from the
+   policy, the rules, the coverage line `findings N | UNKNOWN M | decision <d> | rules ran
+   k/K`, then the findings placed there in report order, each with its tags
+   (`[UNMEASURED]`, baseline status, `REPORTED`), its evidence as `[role] file:line`, the
+   chain, the purpose line, the remediation with `removes`, and the operator-recorded
    reason when there is one.
-7. Plan: one table in report order -- #, id, severity, subsystem, control, tier, aisafe,
-   who, status -- then "Rows the package can implement (walk the table top-down; do not
-   skip a row above)" and the sentence "Wiring a control is not evidence the finding is
-   gone: re-run the audit and read document 2."
-8. Document 2 only -- "Remaining actions": open findings grouped as Outside the package /
-   Package control wired or available, but leaves open / Accepted with a recorded reason /
-   Still UNKNOWN.
-9. UNKNOWN, every item with `how_to_resolve` and the install hint as text.
-10. External tools that ran, with version and network flag, and the reports read.
-11. Footer: the terminal's summary sentence, the absence sentence again, "generated by
-    aisafe <version>; the JSON report is authoritative".
+7. "Plan": one table in report order with the columns `#`, `id`, `severity`, `mechanism`,
+   `decision`, `remediation (removes)`, `tier`, `who` (always `you`), `status` (open,
+   `accepted`, or `accepted under an older policy; re-review`), then the sentence: walk the
+   table top-down, prefer a remediation that removes the objective, the inference or the
+   intervention, re-run the audit after each change and read document 2.
+8. Document 2 only, "Remaining actions": Open / Re-review / Accepted with a recorded
+   reason / Still UNKNOWN.
+9. "UNKNOWN", every item with its `how_to_resolve`.
+10. "Reports read and inventory counts": the evaluation reports read, with age, and the
+    inventory counts.
+11. Footer: the summary sentence, the absence sentence again, "generated by aisafe
+    <version>; the JSON report is authoritative".
 
 Read the JSON to answer questions; point the user at the html to keep.
 
@@ -355,13 +492,13 @@ Read the JSON to answer questions; point the user at the html to keep.
 |---|---|
 | 0 | nothing counted: no finding at or above `--fail-on` (default `low`), and no UNKNOWN item in a selected category when `--fail-on-unknown` is set |
 | 1 | a finding at or above `--fail-on`, or an UNKNOWN item in a `--fail-on-unknown` category |
-| 2 | fatal: path missing, unreadable target, walker error, report unwritable, a refused flag; read stderr, fix, rerun |
+| 2 | fatal: path missing, unreadable target, walker error, report unwritable, a refused flag (`--no-redact`, `--inventory-only` with `--baseline`, `--accept` without `--amend-baseline`); read stderr, fix, rerun |
 | 130 | interrupted |
 
-Severity is what counts, not novelty: a finding below `--fail-on` is not counted however
-new it is. With `--baseline`, a finding whose fingerprint the baseline holds is
-`unchanged` and is not counted either, with or without a reason; only `new` ones at or
-above the threshold are. `--write-baseline` always exits 0.
+Severity is what counts, not novelty: a finding below `--fail-on` is not counted however new
+it is. With `--baseline`, an `unchanged` fingerprint is not counted, with or without a
+reason; `new` and `re-review` ones at or above the threshold are. `--write-baseline` and
+`--amend-baseline` always exit 0.
 
 Findings below `--fail-on` are still findings. The summary line is always
 
@@ -371,19 +508,8 @@ and JSON carries `summary.below_threshold` and `summary.fail_on`. An exit code o
 `M > 0` means the user chose not to fail the build on those; it does not mean they are
 resolved. Present them.
 
-`--fail-on-unknown` without a category list fails on any UNKNOWN item, which is unusable on a
-runner missing any optional scanner or on a non-Python repo (deep analysis is Python-only).
-The CI recipe is `--fail-on-unknown tools,reports` after installing the scanners the team
-cares about.
-
-## Inventory (`--inventory-only`)
-
-A separate document, also `schema: "aisg/1"` first: languages, units, LLM providers and
-model ids with `pinned: true|false|null` (`null` = unknown provider, no finding), tool
-definitions and how many carry an approval symbol, MCP servers with transport and pinning,
-host configs found, guardrail libraries, eval tooling, on-disk reports. Summarise it in five
-lines or fewer in phase 1. The document's `kind` is `inventory`, so a later walk skips it
-as own output. With `--format html` the page is rendered instead, with the no-rules
-banner and the inventory; every other format writes the JSON document. `--inventory-only`
-refuses (exit 2) `--baseline` and `--write-baseline`: no rule runs, so neither flag can
-do what it says.
+`--fail-on-unknown` without a category list fails on any UNKNOWN item, which is unusable on
+a repository with a non-Python unit (deep analysis is Python-only, so every such unit is a
+`deep` item). A workable CI setting is `--fail-on-unknown reports,runtime`: it fails on an
+unreadable evaluation report or a malformed review record and lets the known coverage gaps
+through, listed.

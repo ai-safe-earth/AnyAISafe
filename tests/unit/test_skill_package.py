@@ -1,9 +1,10 @@
 """tests/unit/test_skill_package.py
 --------------------------------
 Pins the shipped `ai-safety-audit` skill package: the canonical tree under
-`src/aisafe/skills/`, its two byte-identical mirrors, the bootstrap scripts' pin and
-ignore marker, the wording rules (no compliance claims, no unicode), and the dev
-tool that keeps the mirrors in sync.
+`src/aisafe/skills/`, its byte-identical plugin mirror, the bootstrap scripts' pin and
+ignore marker, the wording rules (no compliance claims, no unicode), the five-phase flow
+SKILL.md describes, the vocabulary the references document, and the dev tool that keeps
+the mirror in sync.
 
 Every path derives from the repo root so the file runs on Windows and Linux CI alike;
 shell-driven checks skip when `sh` is absent.
@@ -29,33 +30,34 @@ MIRRORS = (REPO / "plugins" / "aisafe" / "skills" / SKILL_NAME,)
 SCRIPTS = (
     "audit.sh",
     "audit.ps1",
-    "verify.sh",
-    "verify.ps1",
-    "hook.sh",
-    "hook.ps1",
-    "attest.sh",
-    "attest.ps1",
+    "review.sh",
+    "review.ps1",
+    "evaluate.sh",
+    "evaluate.ps1",
 )
-LEVELS_TOOL = REPO / "scripts" / "levels_md.py"
-# The seven phase titles, in order; `## Phase N -- <title>` is the heading shape.
-PHASES = (
-    "Survey",
-    "Document 1",
-    "Decide",
-    "Apply (one row per approval, top-down)",
-    "Document 2",
-    "Verify",
-    "Attest",
-)
+# The five phase titles, in order; `## Phase N -- <title>` is the heading shape.
+PHASES = ("Survey", "Document", "Review", "Remediate", "Evaluate")
 SYNC_TOOL = REPO / "scripts" / "sync_skill.py"
-CONTROLS_TOOL = REPO / "scripts" / "controls_md.py"
+RULES_TOOL = REPO / "scripts" / "rules_md.py"
 PYPROJECT = REPO / "pyproject.toml"
 
 IGNORE_MARKER = "# aisafe-audit: ignore-file"
+# The audit's own html starts with exactly this line; a reference doc must not, or the walk
+# would list it as the audit's own output instead of a document.
+HTML_MARKER_LINE = "<!-- # aisafe-audit: ignore-file -->"
+
+# The scenario families phase 5 names, as `aisafe evaluate --families` spells them.
+FAMILIES = (
+    "crisis_disclosure",
+    "goodbye_pressure",
+    "identity_question",
+    "manipulation_elicitation",
+    "benign_traffic",
+)
 
 # The negative-phrase list. Defined once here; the report module's copy must match so the
 # skill text and the renderer are held to the same rule. Assembled from fragments, as in
-# test_audit_report.py, so this file carries none of them as a contiguous literal.
+# the renderer, so this file carries none of them as a contiguous literal.
 BANNED_PHRASES: tuple[str, ...] = (
     " ".join(("is", "compliant")),
     " ".join(("compliance", "verified")),
@@ -64,44 +66,71 @@ BANNED_PHRASES: tuple[str, ...] = (
     " ".join(("fully", "compliant")),
     " ".join(("passes", "the", "eu")),
     " ".join(("nist", "compliant")),
+    # The bare word: the renderer bans it too, so a reference doc cannot carry it either.
+    "compli" + "ant",
 )
 # The one word the audit bans outright; the skill text is held to it too.
 BANNED_WORD = re.compile(r"\bcl" + r"ean\b", re.IGNORECASE)
 
-# Phase-3 and document vocabulary the skill must name (design section 7). Each is a flag,
-# path or JSON key another slice implements; a rename there must reach the skill text.
+# Names of the retired runtime and of the retired commands and documents. The pivot removed
+# them; a skill text that still names one sends the agent to code that does not exist.
+REMOVED_NAMES = (
+    "ManipulationGuard",
+    "ToolPolicyGuard",
+    "PIIDetector",
+    "AIDisclosureGuard",
+    "GuardrailPipeline",
+    "aisafe measure",
+    "aisafe decide",
+    "aisafe attest",
+    "aisafe hook",
+    "aisafe init",
+    "aisafe lint",
+    "aisafe misalign",
+    "aisafe probe",
+    "references/controls.md",
+    "references/levels.md",
+    "attestation.json",
+)
+
+# Flow vocabulary the skill must name. Each is a flag, path or JSON key another module
+# implements; a rename there must reach the skill text.
 SKILL_MD_NEEDLES = (
     ".aisafe-audit/",
     "--amend-baseline",
     "--accept",
     "--format html",
-    "recommendation.package",
-    "leaves_open",
-    "same_control",
-    "aisafe decide",
-    "aisafe attest",
-    "--owner",
-    "--require-level",
-    "attestation.json",
+    "evidence_status",
+    "decision",
+    "aisafe-review.yaml",
+    "--reviewer",
+    "--assisted-by",
+    "aisafe evaluate",
+    "--transcripts",
     "pr-body.md",
     "gh pr create",
-    "aisafe hook install",
+    "no longer reported",
 )
 REPORT_FORMAT_NEEDLES = (
     "html",
     "accepted_reason",
     "no_longer_reported",
     "own_output_skipped",
-    "recommendation.package",
+    "evidence_status",
+    "decision",
+    "mechanism",
+    "policy_version",
+    "flow_established",
+    "control_status",
+    "re-review",
+    "kind: review",
+    "kind: evaluation",
+    "observed",
     "generated_at",
     "--write-baseline",
     "--amend-baseline",
-    "kind: decision",
-    "kind: attestation",
-    "accepted_risks",
-    "next_review_by",
-    "badge.json",
 )
+APPLY_GUIDES = ("python.md", "typescript.md", "generic.md")
 
 SH = shutil.which("sh")
 needs_sh = pytest.mark.skipif(SH is None, reason="sh not on PATH")
@@ -141,6 +170,10 @@ def skill_md() -> str:
     return (CANONICAL / "SKILL.md").read_text(encoding="utf-8")
 
 
+def reference(name: str) -> str:
+    return (CANONICAL / "references" / name).read_text(encoding="utf-8")
+
+
 def frontmatter(text: str) -> dict:
     lines = text.splitlines()
     assert lines[0] == "---", "SKILL.md must start with a frontmatter fence"
@@ -171,22 +204,25 @@ def run_script(script: Path, cwd: Path, env: dict[str, str]) -> subprocess.Compl
 
 FAKE_LOG = "aisafe-calls.log"
 
-# A stand-in `aisafe` for the verify script: appends every argv to FAKE_LOG (relative to the
-# cwd, so sh on Windows needs no path translation) and, for `probe`, writes a report with
-# one failed case to the `-o` path and exits 1 the way the real probe does.
+# A stand-in `aisafe` for the scripts: appends every argv to FAKE_LOG (relative to the cwd,
+# so sh on Windows needs no path translation) and, for `evaluate`, writes an evaluation
+# report with two failed cases to the `-o` path and exits 1 the way the real command does.
 _FAKE_AISAFE = """#!/bin/sh
 printf '%s\\n' "$*" >> "$AISAFE_FAKE_LOG"
-if [ "$1" = "probe" ]; then
+if [ "$1" = "evaluate" ]; then
   out=""
   while [ $# -gt 0 ]; do
     [ "$1" = "-o" ] && out="$2"
     shift
   done
-  printf '%s\\n' '{"schema": "aisg/1", "summary": {"sent": 1, "passed": 0, "failed": 1, "errors": 0, "skipped": 0, "inconclusive": 0}}' > "$out"
+  printf '%s\\n' '{"schema": "aisg/1", "kind": "evaluation", "summary": {"sent": 6, "passed": 4, "failed": 2, "errors": 0, "skipped": 0, "inconclusive": 0, "missing": 2, "observed": 0, "not_judged": []}}' > "$out"
   exit 1
 fi
 exit 0
 """
+
+DEFAULT_FAMILIES = " ".join(FAMILIES)
+EVALUATION_REPORT = ".aisafe-audit/evaluation-report.json"
 
 
 def fake_aisafe_env(tmp_path: Path, **extra: str) -> dict[str, str]:
@@ -205,15 +241,15 @@ def fake_aisafe_env(tmp_path: Path, **extra: str) -> dict[str, str]:
     return env
 
 
-def write_configs(tmp_path: Path) -> None:
-    """A settings-only YAML that sorts first, then one with a stage key `from_config` reads."""
-    (tmp_path / "config").mkdir()
-    (tmp_path / "config" / "00-settings.yaml").write_text(
-        "pipeline:\n  parallel_checks: true\n", encoding="utf-8"
+def write_target(tmp_path: Path) -> None:
+    """A minimal Python project, so `evaluate.sh` detects `pytest` as the test command."""
+    (tmp_path / "pyproject.toml").write_text(
+        '[project]\nname = "target"\nversion = "0.0.0"\n', encoding="utf-8"
     )
-    (tmp_path / "config" / "guardrails.yaml").write_text(
-        "input:\n  pii_detector:\n    enabled: true\n", encoding="utf-8"
-    )
+
+
+def calls(tmp_path: Path) -> list[str]:
+    return (tmp_path / FAKE_LOG).read_text(encoding="utf-8").splitlines()
 
 
 # ---------------------------------------------------------------------------
@@ -236,16 +272,29 @@ class TestPackagedSkill:
         expected = {
             "SKILL.md",
             "agents/openai.yaml",
-            "references/controls.md",
             "references/hosts.md",
-            "references/levels.md",
             "references/report-format.md",
+            "references/mechanisms.md",
             "references/apply/python.md",
             "references/apply/typescript.md",
-            "references/apply/go.md",
             "references/apply/generic.md",
         } | {f"scripts/{name}" for name in SCRIPTS}
         assert expected <= rels, sorted(expected - rels)
+
+    def test_retired_files_are_gone(self):
+        rels = set(tree(CANONICAL))
+        retired = {
+            "references/controls.md",
+            "references/levels.md",
+            "references/apply/go.md",
+            "scripts/hook.sh",
+            "scripts/hook.ps1",
+            "scripts/attest.sh",
+            "scripts/attest.ps1",
+            "scripts/verify.sh",
+            "scripts/verify.ps1",
+        }
+        assert not (retired & rels), sorted(retired & rels)
 
     def test_every_file_is_ascii(self):
         offenders = []
@@ -278,6 +327,13 @@ class TestSkillMd:
         assert data["name"] == SKILL_NAME
         assert isinstance(data["description"], str) and data["description"].strip()
 
+    def test_description_names_the_five_phases_and_the_no_verdict_rule(self):
+        description = frontmatter(skill_md())["description"].lower()
+        for phase in PHASES:
+            assert phase.lower() in description, phase
+        assert "certification" in description
+        assert "verdict" in description
+
     def test_honesty_vocabulary_present(self):
         text = skill_md()
         for needle in ("legal determination", "UNMEASURED", "UNKNOWN"):
@@ -285,17 +341,20 @@ class TestSkillMd:
 
     def test_scripts_referenced_only_via_skill_placeholder(self):
         text = skill_md()
-        bare = re.findall(r"(?<!<skill>/)scripts/(?:audit|verify|attest)", text)
+        bare = re.findall(r"(?<!<skill>/)scripts/(?:audit|review|evaluate)", text)
         assert not bare, bare
         assert "<skill>/scripts/audit" in text
-        assert "<skill>/scripts/verify" in text
-        assert "<skill>/scripts/attest" in text
+        assert "<skill>/scripts/review" in text
+        assert "<skill>/scripts/evaluate" in text
 
-    def test_document_two_report_differs_from_document_one(self):
+    def test_after_report_differs_from_survey_report(self):
         outputs = re.findall(r"-o\s+(\S+\.json)", skill_md())
         assert len(outputs) >= 2, outputs
-        first, last = outputs[0], outputs[-1]
-        assert first != last
+        assert ".aisafe-audit/audit-report.json" in outputs
+        assert ".aisafe-audit/audit-report-after.json" in outputs
+        assert outputs.index(".aisafe-audit/audit-report.json") < outputs.index(
+            ".aisafe-audit/audit-report-after.json"
+        )
         assert "--write-baseline" in skill_md()
         assert "--baseline" in skill_md()
 
@@ -303,36 +362,52 @@ class TestSkillMd:
     def test_names_the_flow_vocabulary(self, needle: str):
         assert needle in skill_md(), needle
 
-    def test_seven_phases_in_order_with_their_titles(self):
+    def test_five_phases_in_order_with_their_titles(self):
         text = skill_md()
         headings = [f"## Phase {n} -- {title}" for n, title in enumerate(PHASES, start=1)]
         positions = [text.find(h) for h in headings]
         assert all(p >= 0 for p in positions), [h for h, p in zip(headings, positions) if p < 0]
         assert positions == sorted(positions), positions
-        assert text.find("## Phase 8") < 0
+        assert text.find("## Phase 6") < 0
         closing = text.find("## Closing")
         assert closing > positions[-1]
+
+    def test_hard_rules_are_numbered_one_to_nine(self):
+        text = skill_md()
+        start = text.find("Hard rules")
+        end = text.find("## Where things live")
+        assert 0 <= start < end
+        numbers = re.findall(r"^(\d)\. ", text[start:end], re.MULTILINE)
+        assert numbers == [str(n) for n in range(1, 10)], numbers
 
     def test_hard_rules_eight_and_nine(self):
         text = skill_md()
         assert "8. Which aisafe ran." in text and "(pinned <version>)" in text
         assert "9. No push without approval." in text and "never run `git push`" in text
 
-    def test_decide_precedes_apply_and_attest_follows_verify(self):
+    def test_the_reviewer_is_a_person_and_the_agent_is_assisted_by(self):
         text = skill_md()
-        assert text.find("aisafe decide --format json") < text.find("## Phase 4 --")
-        assert text.find("--owner") > text.find("## Phase 7 --")
-        assert "--require-level 2" in text
-        assert "AISAFE_VERIFY_SKIP_TESTS=1" in text
+        assert "`reviewer`" in text and "`assisted_by`" in text
+        assert "never record a decision on your own authority" in text
 
-    def test_every_artefact_lives_under_aisafe_audit(self):
+    def test_evaluate_runs_only_with_approval_and_never_on_real_users(self):
+        text = skill_md()
+        assert "`--i-have-authorization` is theirs to add, never yours" in text
+        assert "real users" in text
+        assert "AISAFE_EVALUATE_RUN=1" in text
+        assert "AISAFE_EVALUATE_SKIP_TESTS=1" in text
+        assert f"--families {DEFAULT_FAMILIES}" in text
+        assert "Only `passed` means passed" in text
+
+    def test_every_artefact_lives_under_aisafe_audit_except_the_review_record(self):
         # Every `-o <path>` and every `--baseline`/`--write-baseline`/`--amend-baseline
         # <path>` in SKILL.md points into `.aisafe-audit/`, so two documents made in one
-        # session describe one scan from one working directory.
+        # session describe one scan from one working directory. The one artefact outside
+        # it, on purpose, is the review record: the audit looks for it at the root.
         commands = [
             line
             for line in skill_md().splitlines()
-            if re.match(r"\s{4,}\S", line) and "audit" in line
+            if re.match(r"\s{4,}\S", line) and re.search(r"audit|review|evaluate", line)
         ]
         assert commands, "SKILL.md: no indented command lines"
         paths = []
@@ -341,8 +416,11 @@ class TestSkillMd:
                 r"(?:\s-o|--baseline|--write-baseline|--amend-baseline)\s+(\S+)", line
             )
         assert paths
-        stray = [p for p in paths if not p.startswith(".aisafe-audit/")]
+        stray = [
+            p for p in paths if not p.startswith(".aisafe-audit/") and p != "aisafe-review.yaml"
+        ]
         assert not stray, stray
+        assert "`aisafe-review.yaml` at the repository root" in skill_md()
 
     def test_never_edits_gitignore_unasked(self):
         assert "never edits `.gitignore`" in skill_md()
@@ -351,6 +429,13 @@ class TestSkillMd:
         text = skill_md()
         assert "Applying a diff is not evidence" in text
         assert "audit-recheck.json" in text
+
+    def test_review_phase_quotes_the_policy_question_and_records_decisions(self):
+        text = skill_md()
+        assert "`distinct_from`" in text
+        assert "references/mechanisms.md" in text
+        assert "decisions:" in text
+        assert "`review_decision`" in text
 
 
 # ---------------------------------------------------------------------------
@@ -361,207 +446,140 @@ class TestSkillMd:
 class TestReferences:
     @pytest.mark.parametrize("needle", REPORT_FORMAT_NEEDLES)
     def test_report_format_documents_the_new_keys(self, needle: str):
-        text = (CANONICAL / "references" / "report-format.md").read_text(encoding="utf-8")
-        assert needle in text, needle
+        assert needle in reference("report-format.md"), needle
 
     def test_report_format_names_the_html_marker_line(self):
-        text = (CANONICAL / "references" / "report-format.md").read_text(encoding="utf-8")
+        text = reference("report-format.md")
         assert IGNORE_MARKER in text
+        assert HTML_MARKER_LINE in text
 
-    def test_controls_has_a_package_column(self):
-        text = (CANONICAL / "references" / "controls.md").read_text(encoding="utf-8")
-        header = re.search(r"^\|\s*rule\s*\|\s*Package \(mechanism\)\s*\|.*$", text, re.MULTILINE)
-        assert header, "controls.md: no Package column header"
-        assert "same control?" in header.group(0)
-        assert "symbols" in header.group(0)
+    def test_report_format_documents_every_finding_inventory_and_report_key(self):
+        from aisafe.evidence.model import (
+            FINDING_KEYS,
+            FLOW_ESTABLISHED_BY,
+            INVENTORY_KEYS,
+            REMOVES,
+            REPORT_KEYS,
+            ControlStatus,
+            Decision,
+            EvidenceStatus,
+            Severity,
+            UnknownCategory,
+        )
 
-    def test_controls_package_column_covers_every_rule(self):
-        try:
-            from aisafe.devtools.audit.rules import ALL_RULES
-        except ImportError:
-            pytest.skip("aisafe.devtools.audit.rules not importable")
-        text = (CANONICAL / "references" / "controls.md").read_text(encoding="utf-8")
-        rows = set(re.findall(r"^\|\s*(AUD-\d+)\s*\|", text, re.MULTILINE))
-        expected = {rule.id for rule in ALL_RULES}
-        assert rows == expected, {
-            "missing": sorted(expected - rows),
-            "extra": sorted(rows - expected),
-        }
-
-    def test_controls_says_a_detector_is_never_the_control(self):
-        text = (CANONICAL / "references" / "controls.md").read_text(encoding="utf-8")
-        flat = " ".join(text.split())
-        assert "A detector is never the control for a P1-P4 finding" in flat
-
-    def test_python_idioms_are_keyed_by_symbol(self):
-        # Phase 3 jumps to the section whose heading starts with the first entry of
-        # `recommendation.package.symbols`; every symbol named in controls.md must have one.
-        controls = (CANONICAL / "references" / "controls.md").read_text(encoding="utf-8")
-        python = (CANONICAL / "references" / "apply" / "python.md").read_text(encoding="utf-8")
-        headings = re.findall(r"^##+ `([^`]+)`", python, re.MULTILINE)
-        first_symbols = set()
-        for row in re.findall(
-            r"^\|\s*AUD-\d+\s*\|[^|]*\|[^|]*\|\s*`([^`]+)`", controls, re.MULTILINE
-        ):
-            first_symbols.add(row)
-        assert first_symbols, "controls.md: no symbols in the Package column"
-        missing = sorted(first_symbols - set(headings))
+        text = reference("report-format.md")
+        missing = [
+            key for key in (*FINDING_KEYS, *INVENTORY_KEYS, *REPORT_KEYS) if f"`{key}`" not in text
+        ]
         assert not missing, missing
-        assert "Leaves open" in python
+        for enum in (EvidenceStatus, Decision, ControlStatus, Severity, UnknownCategory):
+            for member in enum:
+                assert f"`{member.value}`" in text, member
+        for value in (*REMOVES, *FLOW_ESTABLISHED_BY):
+            assert f"`{value}`" in text, value
 
-    @pytest.mark.parametrize("name", ["typescript.md", "go.md", "generic.md"])
-    def test_non_python_guides_say_symbols_are_python_only(self, name: str):
-        text = (CANONICAL / "references" / "apply" / name).read_text(encoding="utf-8")
-        assert "Python-only" in text
-        assert "recommendation.package.symbols" in text
+    def test_report_format_quotes_the_real_renderer_lines(self):
+        # The doc quotes the terminal's fixed strings so the agent reads what the renderer
+        # prints, not a paraphrase of it.
+        from aisafe.reporting import report
 
-    def test_report_format_quotes_the_real_controls_line(self):
-        # The renderers print `controls: <items>` (terminal and markdown) and the html
-        # prints no such list; the doc used to name a label no renderer emits.
-        try:
-            from aisafe.devtools.audit import report
-        except ImportError:
-            pytest.skip("aisafe.devtools.audit.report not importable")
-        text = (CANONICAL / "references" / "report-format.md").read_text(encoding="utf-8")
-        assert f"`{report._T_CONTROLS.format(items='<items>')}`" in text
-        assert "Related controls" not in text
+        text = reference("report-format.md")
+        status = report._T_STATUS_CONTROL.format(
+            status="<evidence_status>", decision="<decision>", control="<control_status>"
+        )
+        assert f"`{status}`" in text
+        fix = report._T_FIX.format(tier="<tier>", removes="<removes>", summary="<summary>")
+        assert f"`{fix}`" in text
+        assert f"`{report._T_CHAIN_LEXICAL}`" in text
 
-    def test_report_format_documents_both_masking_shapes(self):
-        # Secrets are masked by `model.redact()` as `<redacted:PREFIX...LAST4>`; PII hits
-        # are masked at discovery as `<pii:ENTITY>`. Two mechanisms, two shapes.
-        try:
-            from aisafe.devtools.audit.model import redact
-            from aisafe.devtools.audit.patterns import PII_TABLE
-        except ImportError:
-            pytest.skip("aisafe.devtools.audit not importable")
-        text = (CANONICAL / "references" / "report-format.md").read_text(encoding="utf-8")
-        assert "<redacted:PREFIX...LAST4>" in text
-        assert redact("sk-ant-" + "a" * 30) == "<redacted:sk-ant-...aaaa>"
-        assert "<pii:ENTITY>" in text
-        for entity, _rx in PII_TABLE:
-            assert f"`<pii:{entity}>`" in text, entity
-        assert "<redacted:email>" not in text.lower()
+    def test_report_format_keeps_the_disclaimer_substance(self):
+        text = reference("report-format.md")
+        assert "not an assessment of compliance with any regulation" in text
+        assert "Absence of a finding is not evidence of safety" in text
+        assert "UNMEASURED" in text and "UNKNOWN" in text
 
-    def test_skill_docs_state_the_unfilled_incident_contact_wording(self):
-        # A blank or TODO `incident_contact` is absent for AUD-703, but the snippet says
-        # `unfilled`, not `no`, and the docs must say the same.
-        rule = (
-            REPO / "src" / "aisafe" / "devtools" / "audit" / "rules" / "observability.py"
-        ).read_text(encoding="utf-8")
-        assert "unfilled" in rule and "incident_contact" in rule
-        for name in ("apply/python.md", "controls.md"):
-            text = (CANONICAL / "references" / name).read_text(encoding="utf-8")
-            flat = " ".join(text.split())
-            assert "has an unfilled incident_contact" in flat, name
-            assert "treats an empty or `TODO`-prefixed value as absent" not in flat, name
+    def test_report_format_documents_the_evaluation_summary_keys(self):
+        text = reference("report-format.md")
+        for key in (
+            "sent",
+            "passed",
+            "failed",
+            "errors",
+            "skipped",
+            "inconclusive",
+            "missing",
+            "observed",
+            "not_judged",
+        ):
+            assert f"`{key}`" in text, key
+        assert "Only `passed` means passed" in text
 
-    def test_python_idioms_point_at_the_json_leaves_open(self):
-        # The bullets in python.md are a summary; the plan row quotes the registry text,
-        # which only the JSON (and controls.md, regenerated from it) carries verbatim.
-        python = (CANONICAL / "references" / "apply" / "python.md").read_text(encoding="utf-8")
-        assert "recommendation.package.leaves_open" in python
-        assert "summary" in python
+    def test_report_format_documents_the_policy_windows(self):
+        from aisafe.policy import load_policy
+
+        policy = load_policy()
+        text = reference("report-format.md")
+        assert f"`evaluation_max_age_days` ({policy.evaluation_max_age_days})" in text
+        assert f"`review_max_age_days`, {policy.review_max_age_days}" in text
+
+    @pytest.mark.parametrize("name", APPLY_GUIDES)
+    def test_apply_guides_are_keyed_by_what_the_change_removes(self, name: str):
+        from aisafe.evidence.model import REMOVES
+        from aisafe.policy import load_policy
+
+        text = reference(f"apply/{name}")
+        assert "recommendation.removes" in text
+        for value in REMOVES:
+            assert f"`{value}`" in text, value
+        for mechanism in load_policy().mechanisms:
+            assert re.search(rf"\b{mechanism.id}\b", text), mechanism.id
+        assert "aisafe review record" in text
+        assert "Applying a diff is not evidence" in text
+
+    @pytest.mark.parametrize("name", ["report-format.md", *[f"apply/{n}" for n in APPLY_GUIDES]])
+    def test_docs_that_quote_prompt_phrases_carry_the_ignore_marker(self, name: str):
+        # These documents spell the phrases the rules look for (as "before" examples or as
+        # quoted snippets). The marker in the first five lines keeps the audit of the
+        # repository the skill is installed in from reporting them; line 1 stays the title
+        # so the walk does not mistake the document for the audit's own html.
+        lines = reference(name).splitlines()
+        assert any(IGNORE_MARKER in line for line in lines[:5]), name
+        assert lines[0].startswith("# "), name
+        assert lines[0] != HTML_MARKER_LINE, name
+
+    def test_openai_yaml_describes_the_focused_product(self):
+        data = yaml.safe_load((CANONICAL / "agents" / "openai.yaml").read_text(encoding="utf-8"))
+        assert isinstance(data, dict) and data
+        interface = data["interface"]
+        assert interface["display_name"] == "AI influence audit"
+        for word in ("profiling", "manipulation", "attachment"):
+            assert word in interface["short_description"], word
+        assert "ai-safety-audit" in interface["default_prompt"]
 
 
 # ---------------------------------------------------------------------------
-# controls.md against the rule registry
+# mechanisms.md is generated from the policy and the rule registry
 # ---------------------------------------------------------------------------
 
 
-def _rule_sections(text: str) -> dict[str, tuple[str, list[str]]]:
-    """`{rule id: (heading parenthetical, bullet texts)}` for every `### AUD-` section."""
-    sections: dict[str, tuple[str, list[str]]] = {}
-    current: str | None = None
-    bullets: list[str] = []
-    paren = ""
-    for line in text.split("\n"):
-        head = re.match(r"^### (AUD-\d+) .+? \(([^()]*)\)\s*$", line)
-        if head:
-            if current is not None:
-                sections[current] = (paren, bullets)
-            current, paren, bullets = head.group(1), head.group(2), []
-            continue
-        if line.startswith("#"):
-            if current is not None:
-                sections[current] = (paren, bullets)
-            current = None
-            continue
-        if current is None:
-            continue
-        if line.startswith("- "):
-            bullets.append(line[2:])
-        elif line.startswith("  ") and bullets:
-            bullets[-1] += " " + line.strip()
-    if current is not None:
-        sections[current] = (paren, bullets)
-    return {
-        rule_id: (paren, [" ".join(b.split()) for b in bs])
-        for rule_id, (paren, bs) in sections.items()
-    }
+class TestMechanismsDoc:
+    def test_header_says_generated(self):
+        text = reference("mechanisms.md")
+        assert "Generated by `scripts/rules_md.py`" in text
+        assert "do not edit by hand" in text
 
+    def test_every_mechanism_and_rule_of_the_policy_is_documented(self):
+        from aisafe.policy import load_policy
 
-class TestControlsMatchesRegistry:
-    """
-    The severity word, the `- Mapping:` line and the `Leaves open:` text in every
-    controls.md section are copies of the rule class; `scripts/controls_md.py` regenerates
-    them and this pins that nobody edited the copy by hand.
-    """
+        text = reference("mechanisms.md")
+        for mechanism in load_policy().mechanisms:
+            assert f"## {mechanism.id} " in text, mechanism.id
+            for rule_id in mechanism.rules:
+                assert rule_id in text, rule_id
 
-    @pytest.fixture(scope="class")
-    def rules(self):
-        try:
-            from aisafe.devtools.audit.rules import ALL_RULES
-        except ImportError:
-            pytest.skip("aisafe.devtools.audit.rules not importable")
-        return {rule.id: rule for rule in ALL_RULES}
-
-    @pytest.fixture(scope="class")
-    def sections(self):
-        text = (CANONICAL / "references" / "controls.md").read_text(encoding="utf-8")
-        found = _rule_sections(text)
-        assert found, "controls.md: no `### AUD-` sections"
-        return found
-
-    def test_one_section_per_rule(self, rules, sections):
-        assert set(sections) == set(rules), {
-            "missing": sorted(set(rules) - set(sections)),
-            "extra": sorted(set(sections) - set(rules)),
-        }
-
-    def test_heading_severity_is_the_rule_severity(self, rules, sections):
-        wrong = {}
-        for rule_id, (paren, _) in sections.items():
-            # The parenthetical opens with the severity; a qualifier may follow it after
-            # `;` or `,` (`high, REPORTED`, `high; per tool`).
-            word = re.split(r"[;,\s]", paren.strip(), maxsplit=1)[0]
-            if word != rules[rule_id].severity.value:
-                wrong[rule_id] = (word, rules[rule_id].severity.value)
-        assert not wrong, wrong
-
-    def test_mapping_line_is_the_controls_tuple(self, rules, sections):
-        wrong = {}
-        for rule_id, (_, bullets) in sections.items():
-            found = [b for b in bullets if b.startswith("Mapping:")]
-            expected = "Mapping: " + ", ".join(rules[rule_id].controls) + "."
-            if found != [expected]:
-                wrong[rule_id] = (found, expected)
-        assert not wrong, wrong
-
-    def test_leaves_open_is_the_registry_text(self, rules, sections):
-        wrong = {}
-        for rule_id, (_, bullets) in sections.items():
-            package = [b for b in bullets if b.startswith("Package:")]
-            assert len(package) == 1, (rule_id, package)
-            _, sep, tail = package[0].partition("Leaves open:")
-            found = " ".join(tail.split()) if sep else ""
-            expected = " ".join(rules[rule_id].recommendation.package.leaves_open.split())
-            if found != expected:
-                wrong[rule_id] = (found, expected)
-        assert not wrong, wrong
-
-    def test_controls_tool_check_passes(self):
+    def test_rules_tool_check_passes(self):
         proc = subprocess.run(
-            [sys.executable, str(CONTROLS_TOOL), "--check"],
+            [sys.executable, str(RULES_TOOL), "--check"],
             cwd=REPO,
             capture_output=True,
             text=True,
@@ -578,10 +596,8 @@ class TestControlsMatchesRegistry:
 
 class TestWording:
     def test_banned_phrases_match_the_report_module(self):
-        try:
-            from aisafe.devtools.audit.report import BANNED_PHRASES as REPORT_PHRASES
-        except ImportError:
-            pytest.skip("aisafe.devtools.audit.report not importable")
+        from aisafe.reporting.report import BANNED_PHRASES as REPORT_PHRASES
+
         assert tuple(REPORT_PHRASES) == BANNED_PHRASES
 
     @pytest.mark.parametrize(
@@ -602,9 +618,14 @@ class TestWording:
         ]
         assert not offenders, offenders
 
-    def test_openai_yaml_is_a_plain_mapping(self):
-        data = yaml.safe_load((CANONICAL / "agents" / "openai.yaml").read_text(encoding="utf-8"))
-        assert isinstance(data, dict) and data
+    def test_no_retired_name_in_any_skill_file(self):
+        offenders = {}
+        for rel, content in tree(CANONICAL).items():
+            text = content.decode("ascii", errors="replace")
+            found = [name for name in REMOVED_NAMES if name in text]
+            if found:
+                offenders[rel] = found
+        assert not offenders, offenders
 
 
 # ---------------------------------------------------------------------------
@@ -633,24 +654,42 @@ class TestScripts:
         unpinned = [spec for spec in specs if "==" not in spec]
         assert not unpinned, unpinned
 
-    @pytest.mark.parametrize("name", ["verify.sh", "verify.ps1"])
-    def test_never_asserts_probe_authorization(self, name: str):
+    @pytest.mark.parametrize("name", ["evaluate.sh", "evaluate.ps1"])
+    def test_never_asserts_evaluate_authorization(self, name: str):
         # Saying the script never adds the flag (comment, echo) is fine; passing it to
-        # `aisafe probe` through the bootstrap chain is not.
+        # `aisafe evaluate` through the bootstrap chain is not.
         text = (CANONICAL / "scripts" / name).read_text(encoding="utf-8")
         invocations = [
             line
             for line in text.splitlines()
-            if re.search(r"\b(run_aisafe|Invoke-Aisafe|aisafe)\s+probe\b", line)
+            if re.search(r"\b(run_aisafe|Invoke-Aisafe|aisafe)\s+evaluate\b", line)
             and not line.lstrip().startswith("#")
             and not re.search(r"\b(echo|Write-Output|WriteLine)\b", line)
         ]
-        assert invocations, f"{name}: no probe invocation found"
+        assert invocations, f"{name}: no evaluate invocation found"
         offending = [line for line in invocations if "--i-have-authorization" in line]
         assert not offending, offending
 
+    @pytest.mark.parametrize("name", ["evaluate.sh", "evaluate.ps1"])
+    def test_evaluate_report_lives_under_aisafe_audit(self, name: str):
+        # SKILL.md says every artefact of the flow lives under `.aisafe-audit/`, and the
+        # walker reads the evaluation report there even when gitignored.
+        text = (CANONICAL / "scripts" / name).read_text(encoding="utf-8")
+        assert re.search(r'^\$?report_?[dD]ir\s*=\s*"\.aisafe-audit"', text, re.MULTILINE), name
+        hits = [m.start() for m in re.finditer(re.escape("evaluation-report.json"), text)]
+        assert hits, name
+        for pos in hits:
+            lead = text[max(0, pos - 12) : pos]
+            assert lead.endswith(("$report_dir/", "$reportDir/")), (name, text[pos - 40 : pos])
+        assert not re.search(r"-o\s+evaluation-report\.json", text), name
+        # The CLI does not create a missing parent directory, so the script must.
+        created = re.search(
+            r'mkdir -p "\$report_dir"|New-Item -ItemType Directory -Force -Path \$reportDir', text
+        )
+        assert created, f"{name}: never creates the report directory"
+
     @needs_sh
-    @pytest.mark.parametrize("name", ["audit.sh", "verify.sh", "attest.sh", "hook.sh"])
+    @pytest.mark.parametrize("name", ["audit.sh", "review.sh", "evaluate.sh"])
     def test_sh_syntax(self, name: str):
         proc = subprocess.run(
             [SH, "-n", str(CANONICAL / "scripts" / name)],
@@ -662,14 +701,14 @@ class TestScripts:
         assert proc.returncode == 0, proc.stderr
 
     @needs_sh
-    @pytest.mark.parametrize("name", ["audit.sh", "attest.sh"])
+    @pytest.mark.parametrize("name", ["audit.sh", "review.sh"])
     def test_front_script_without_aisafe_exits_2(self, name: str, tmp_path: Path):
         proc = run_script(CANONICAL / "scripts" / name, tmp_path, {"PATH": ""})
         assert proc.returncode == 2, (proc.stdout, proc.stderr)
         assert "aisafe not found" in proc.stderr
 
     @needs_sh
-    @pytest.mark.parametrize("name", ["audit.sh", "attest.sh"])
+    @pytest.mark.parametrize("name", ["audit.sh", "review.sh"])
     def test_front_script_says_which_aisafe_ran(self, name: str, tmp_path: Path):
         # Rule 8: the resolved path and version go to stderr before the command runs; a
         # fake aisafe that prints nothing for --version reads `unknown`, never blank.
@@ -687,150 +726,108 @@ class TestScripts:
         line = proc.stderr.strip().splitlines()[0]
         assert line.startswith("aisafe: ") and f"(pinned {project_version()})" in line, line
         assert "version unknown" in line, line
-        calls = (tmp_path / FAKE_LOG).read_text(encoding="utf-8").splitlines()
-        assert calls == ["--version", f"{verb} . --format json"]
+        assert calls(tmp_path) == ["--version", f"{verb} . --format json"]
 
     @needs_sh
-    def test_verify_sh_skip_tests_runs_the_offline_measure_only(self, tmp_path: Path):
-        # Phase 3: AISAFE_VERIFY_SKIP_TESTS=1 leaves the project's tests out and runs the
-        # offline measure, so `aisafe decide` has figures before anything is applied.
-        write_configs(tmp_path)
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "target"\nversion = "0.0.0"\n', encoding="utf-8"
-        )
+    def test_evaluate_sh_dry_run_names_the_command_and_creates_nothing(self, tmp_path: Path):
+        write_target(tmp_path)
         proc = run_script(
-            CANONICAL / "scripts" / "verify.sh",
-            tmp_path,
-            fake_aisafe_env(tmp_path, AISAFE_VERIFY_RUN="1", AISAFE_VERIFY_SKIP_TESTS="1"),
-        )
-        assert proc.returncode == 0, (proc.stdout, proc.stderr)
-        assert "tests: pytest" in proc.stdout
-        assert "tests: skipped (AISAFE_VERIFY_SKIP_TESTS=1)" in proc.stdout
-        calls = (tmp_path / FAKE_LOG).read_text(encoding="utf-8").splitlines()
-        assert calls == [
-            "measure --config config/guardrails.yaml -o .aisafe-audit/measure-report.json"
-        ]
-
-    @needs_sh
-    def test_verify_sh_without_aisafe_skips_measure(self, tmp_path: Path):
-        (tmp_path / "pyproject.toml").write_text(
-            '[project]\nname = "target"\nversion = "0.0.0"\n', encoding="utf-8"
-        )
-        proc = run_script(
-            CANONICAL / "scripts" / "verify.sh",
-            tmp_path,
-            {"PATH": "", "AISAFE_VERIFY_RUN": "0"},
-        )
-        assert proc.returncode == 0, (proc.stdout, proc.stderr)
-        assert "measure skipped: aisafe not importable in target" in proc.stderr
-        assert "pytest" in proc.stdout
-
-    @pytest.mark.parametrize("name", ["verify.sh", "verify.ps1"])
-    def test_verify_reports_live_under_aisafe_audit(self, name: str):
-        # SKILL.md says every artefact of the flow lives under `.aisafe-audit/`, and the
-        # walker discovers measure and probe reports there even when gitignored. The
-        # scripts used to write both to the repository root.
-        text = (CANONICAL / "scripts" / name).read_text(encoding="utf-8")
-        assert re.search(r'^\$?report_?[dD]ir\s*=\s*"\.aisafe-audit"', text, re.MULTILINE), name
-        for report in ("measure-report.json", "probe-report.json"):
-            hits = [m.start() for m in re.finditer(re.escape(report), text)]
-            assert hits, (name, report)
-            for pos in hits:
-                lead = text[max(0, pos - 12) : pos]
-                assert lead.endswith(("$report_dir/", "$reportDir/")), (name, text[pos - 40 : pos])
-        assert not re.search(r"-o\s+(?:measure|probe)-report\.json", text), name
-        # The CLIs do not create a missing parent directory, so the script must.
-        created = re.search(
-            r'mkdir -p "\$report_dir"|New-Item -ItemType Directory -Force -Path \$reportDir', text
-        )
-        assert created, f"{name}: never creates the report directory"
-
-    @pytest.mark.parametrize("name", ["verify.sh", "verify.ps1"])
-    def test_verify_detects_a_config_by_the_stage_keys_from_config_reads(self, name: str):
-        # `GuardrailPipeline.from_config` builds guards from the top-level stage keys it
-        # passes to `build_guards`; `pipeline:` is optional run settings and `guards:` is
-        # never read. The pre-check keys must be exactly the ones the loader reads.
-        text = (CANONICAL / "scripts" / name).read_text(encoding="utf-8")
-        found = re.search(r"\^\(([a-z|]+)\):", text)
-        assert found, f"{name}: no top-level key pattern"
-        keys = set(found.group(1).split("|"))
-        loader = (REPO / "src" / "aisafe" / "core" / "pipeline.py").read_text(encoding="utf-8")
-        stage_keys = set(re.findall(r'build_guards\("(\w+)"\)', loader))
-        assert stage_keys, "from_config: no build_guards calls found"
-        assert keys == stage_keys, (keys, stage_keys)
-        assert "guards):" not in text and "(pipeline|" not in text, name
-        # Every shipped pipeline preset carries at least one of those keys, so the
-        # detection would find a preset copied into the target. Other packaged YAML
-        # (the price table, the attestation levels) is not a pipeline and is not read
-        # by `from_config`, so `aisafe.config.PRESETS` is the list, not a glob.
-        from aisafe.config import PRESETS
-
-        pattern = re.compile(r"^(?:" + "|".join(sorted(stage_keys)) + r"):", re.MULTILINE)
-        for name_ in PRESETS:
-            preset = REPO / "src" / "aisafe" / "config" / name_
-            assert pattern.search(preset.read_text(encoding="utf-8")), preset.name
-
-    @needs_sh
-    def test_verify_sh_dry_run_names_the_aisafe_audit_report_and_creates_nothing(
-        self, tmp_path: Path
-    ):
-        write_configs(tmp_path)
-        proc = run_script(
-            CANONICAL / "scripts" / "verify.sh",
+            CANONICAL / "scripts" / "evaluate.sh",
             tmp_path,
             fake_aisafe_env(
-                tmp_path, AISAFE_VERIFY_RUN="0", AISAFE_PROBE_URL="http://127.0.0.1:9/chat"
+                tmp_path, AISAFE_EVALUATE_RUN="0", AISAFE_EVALUATE_URL="http://127.0.0.1:9/chat"
             ),
         )
         assert proc.returncode == 0, (proc.stdout, proc.stderr)
+        assert "tests: pytest" in proc.stdout
+        assert "tests: not run (set AISAFE_EVALUATE_RUN=1 to run)" in proc.stdout
         assert (
-            "measure: aisafe measure --config config/guardrails.yaml"
-            " -o .aisafe-audit/measure-report.json"
+            f"evaluate: aisafe evaluate http://127.0.0.1:9/chat --families {DEFAULT_FAMILIES}"
+            f" -o {EVALUATION_REPORT}"
         ) in proc.stdout
-        assert "probe: aisafe probe http://127.0.0.1:9/chat -o .aisafe-audit/probe-report.json" in (
-            proc.stdout
-        )
-        assert "not run (set AISAFE_VERIFY_RUN=1 to run)" in proc.stdout
+        assert "evaluate: not run (set AISAFE_EVALUATE_RUN=1 to run)" in proc.stdout
+        assert "--i-have-authorization" in proc.stdout  # the warning, never the flag
         assert not (tmp_path / ".aisafe-audit").exists()
         assert not (tmp_path / FAKE_LOG).exists()
 
     @needs_sh
-    def test_verify_sh_skips_a_settings_only_config(self, tmp_path: Path):
-        (tmp_path / "config").mkdir()
-        (tmp_path / "config" / "run.yaml").write_text(
-            "pipeline:\n  parallel_checks: true\nguards:\n  - pii_detector\n", encoding="utf-8"
-        )
+    def test_evaluate_sh_skip_tests_runs_the_endpoint_evaluation_only(self, tmp_path: Path):
+        # Phase 5: AISAFE_EVALUATE_SKIP_TESTS=1 leaves the project's tests out; the endpoint
+        # run still announces which aisafe ran (rule 8), writes the report under
+        # .aisafe-audit/ and passes the command's exit code on.
+        write_target(tmp_path)
         proc = run_script(
-            CANONICAL / "scripts" / "verify.sh",
+            CANONICAL / "scripts" / "evaluate.sh",
             tmp_path,
-            fake_aisafe_env(tmp_path, AISAFE_VERIFY_RUN="1"),
+            fake_aisafe_env(
+                tmp_path,
+                AISAFE_EVALUATE_RUN="1",
+                AISAFE_EVALUATE_SKIP_TESTS="1",
+                AISAFE_EVALUATE_URL="http://127.0.0.1:9/chat",
+            ),
+        )
+        # The fake evaluate exits 1 (two scenarios failed), which the script passes on.
+        assert proc.returncode == 1, (proc.stdout, proc.stderr)
+        assert "tests: pytest" in proc.stdout
+        assert "tests: skipped (AISAFE_EVALUATE_SKIP_TESTS=1)" in proc.stdout
+        assert calls(tmp_path) == [
+            "--version",
+            f"evaluate http://127.0.0.1:9/chat --families {DEFAULT_FAMILIES} -o {EVALUATION_REPORT}",
+        ]
+        assert (tmp_path / ".aisafe-audit" / "evaluation-report.json").is_file()
+        assert proc.stderr.splitlines()[0].startswith("aisafe: ")
+        assert "evaluate passed: 4" in proc.stdout
+        assert "evaluate failed: 2" in proc.stdout
+        assert "evaluate missing: 2" in proc.stdout
+        assert "only 'passed' means passed" in proc.stdout
+
+    @needs_sh
+    def test_evaluate_sh_reads_transcripts_locally(self, tmp_path: Path):
+        write_target(tmp_path)
+        proc = run_script(
+            CANONICAL / "scripts" / "evaluate.sh",
+            tmp_path,
+            fake_aisafe_env(
+                tmp_path,
+                AISAFE_EVALUATE_RUN="1",
+                AISAFE_EVALUATE_SKIP_TESTS="1",
+                AISAFE_EVALUATE_TRANSCRIPTS="conversations.jsonl",
+            ),
+        )
+        assert proc.returncode == 1, (proc.stdout, proc.stderr)
+        assert "transcripts are read locally" in proc.stdout
+        assert calls(tmp_path) == [
+            "--version",
+            f"evaluate --transcripts conversations.jsonl -o {EVALUATION_REPORT}",
+        ]
+
+    @needs_sh
+    def test_evaluate_sh_without_endpoint_or_transcripts_runs_nothing(self, tmp_path: Path):
+        write_target(tmp_path)
+        proc = run_script(
+            CANONICAL / "scripts" / "evaluate.sh",
+            tmp_path,
+            fake_aisafe_env(tmp_path, AISAFE_EVALUATE_RUN="1", AISAFE_EVALUATE_SKIP_TESTS="1"),
         )
         assert proc.returncode == 0, (proc.stdout, proc.stderr)
-        assert "measure: no pipeline config found" in proc.stdout
-        assert "input:, processing:, output: or policy:" in proc.stdout
+        assert "evaluate: no endpoint or transcripts given" in proc.stdout
         assert not (tmp_path / FAKE_LOG).exists()
 
     @needs_sh
-    def test_verify_sh_run_writes_both_reports_under_aisafe_audit(self, tmp_path: Path):
-        write_configs(tmp_path)
+    def test_evaluate_sh_without_aisafe_skips_the_evaluation(self, tmp_path: Path):
+        write_target(tmp_path)
         proc = run_script(
-            CANONICAL / "scripts" / "verify.sh",
+            CANONICAL / "scripts" / "evaluate.sh",
             tmp_path,
-            fake_aisafe_env(
-                tmp_path, AISAFE_VERIFY_RUN="1", AISAFE_PROBE_URL="http://127.0.0.1:9/chat"
-            ),
+            {
+                "PATH": "",
+                "AISAFE_EVALUATE_RUN": "0",
+                "AISAFE_EVALUATE_URL": "http://127.0.0.1:9/chat",
+            },
         )
-        # The fake probe exits 1 (a case got through), which the script passes on.
-        assert proc.returncode == 1, (proc.stdout, proc.stderr)
-        calls = (tmp_path / FAKE_LOG).read_text(encoding="utf-8").splitlines()
-        assert calls == [
-            "measure --config config/guardrails.yaml -o .aisafe-audit/measure-report.json",
-            "probe http://127.0.0.1:9/chat -o .aisafe-audit/probe-report.json",
-        ]
-        assert (tmp_path / ".aisafe-audit" / "probe-report.json").is_file()
-        assert "probe passed: 0" in proc.stdout
-        assert "probe failed: 1" in proc.stdout
-        assert "only 'passed' means passed" in proc.stdout
+        assert proc.returncode == 0, (proc.stdout, proc.stderr)
+        assert "evaluate skipped: aisafe not importable in target" in proc.stderr
+        assert "pytest" in proc.stdout
 
 
 # ---------------------------------------------------------------------------
@@ -864,53 +861,15 @@ class TestMirrors:
 
 
 # ---------------------------------------------------------------------------
-# levels.md is generated from the criteria file
-# ---------------------------------------------------------------------------
-
-
-class TestLevelsDoc:
-    def test_criterion_ids_equal_the_yaml(self):
-        try:
-            from aisafe.devtools.attest import load_levels
-        except ImportError:
-            pytest.skip("aisafe.devtools.attest not importable")
-        text = (CANONICAL / "references" / "levels.md").read_text(encoding="utf-8")
-        in_doc = set(re.findall(r"^\| `(L\d+\.[A-Za-z0-9_]+)` \|", text, re.MULTILINE))
-        in_yaml = {c.id for c in load_levels().criteria()}
-        assert in_doc == in_yaml, {
-            "doc_only": sorted(in_doc - in_yaml),
-            "yaml_only": sorted(in_yaml - in_doc),
-        }
-        assert "## Level 0: audited" in text and "## Level 3: governed" in text
-
-    def test_levels_tool_check_passes(self):
-        proc = subprocess.run(
-            [sys.executable, str(LEVELS_TOOL), "--check"],
-            cwd=REPO,
-            capture_output=True,
-            text=True,
-            timeout=120,
-            check=False,
-        )
-        assert proc.returncode == 0, (proc.stdout, proc.stderr)
-
-    def test_skill_md_points_at_levels_before_phase_seven(self):
-        text = skill_md()
-        assert text.find("references/levels.md") < text.find("## Phase 7 --")
-
-
-# ---------------------------------------------------------------------------
 # hosts.md tracks the host table
 # ---------------------------------------------------------------------------
 
 
 class TestHostsDoc:
     def test_hosts_md_names_every_host_and_source(self):
-        try:
-            from aisafe.devtools.skill import ALWAYS_HOSTS, HOSTS
-        except ImportError:
-            pytest.skip("aisafe.devtools.skill not importable")
-        text = (CANONICAL / "references" / "hosts.md").read_text(encoding="utf-8")
+        from aisafe.devtools.hosts import ALWAYS_HOSTS, HOSTS
+
+        text = reference("hosts.md")
         for name, host in HOSTS.items():
             assert f"`{name}`" in text, name
             if host.source:
@@ -918,20 +877,11 @@ class TestHostsDoc:
         for name in ALWAYS_HOSTS:
             assert f"`{name}`" in text, name
         assert "aisafe skill list" in text
+        assert "aisafe skill install --host all" in text
 
-
-class TestHostsDocHooks:
-    def test_hosts_md_names_every_hook_host_and_source(self):
-        try:
-            from aisafe.devtools.hosts import hook_hosts
-        except ImportError:
-            pytest.skip("aisafe.devtools.hosts not importable")
-        text = (CANONICAL / "references" / "hosts.md").read_text(encoding="utf-8")
-        assert "## Hooks" in text and "aisafe hook install" in text and "aisafe hook list" in text
-        for host in hook_hosts():
-            assert f"`{host.name}`" in text, host.name
-            assert host.hooks.config_project in text, host.name
-            if host.hooks.source:
-                assert host.hooks.source in text, f"{host.name}: {host.hooks.source}"
-        assert "fails OPEN" in text or "fails open" in text
-        assert "claude plugin install aisafe@ai-safe-earth" in text
+    def test_hosts_md_has_no_hooks_section(self):
+        text = reference("hosts.md")
+        assert "## Hooks" not in text
+        assert "hook" not in text.lower()
+        for name in SCRIPTS:
+            assert name in text, name

@@ -130,6 +130,9 @@ Changes since version 1 (now v2):
 - v2: explicit settings the person chose (language, theme, timezone, reminder time) are
   never a profile; conversation history stays excluded unless fed to an inference
 - v2: check legs replace lint legs; references replace controls; no package remedy
+- v2: a template placeholder that reads an explicit setting is not a profile; a negated or
+  discussed history inference is a mention; the mention test reads the sentence that holds
+  the match
 
 ## M2 Vulnerability inference used for influence
 
@@ -199,6 +202,9 @@ Changes since version 1 (now v2):
   call sits within ten lines above it
 - v2: /categorisation violates the policy when a persuasion or steering instruction shares
   the literal or the function; /workplace reads the native check, not the retired linter
+- v2: a mention is read inside the sentence that holds the inference: a negation or a
+  discussion cue before it, an evaluation after it; a purpose clause after it (to prevent
+  them leaving) continues the instruction
 
 ## M3 Scoring people for susceptibility or personalised persuasion
 
@@ -267,6 +273,8 @@ Changes since version 1 (now v2):
 - v2: /decision: a review or approval symbol in the function is recorded as control_status
   claimed and named in the notes; it no longer silences the finding
 - v2: the native checks replace the retired linter legs
+- v2: the decision function's own approve call is not a review symbol; the mention test
+  reads the sentence that holds the match
 
 ## M4 Optimisation of attention, retention or spending through psychological pressure
 
@@ -322,7 +330,8 @@ Known failure modes:
   literal; a reading app for children with a streak feature is reported CRITICAL, and the
   finding says what co-occurred
 - a prompt that discusses engagement tactics in order to avoid them is a mention when a
-  discussion cue sits within 80 characters; without one it is reported, and a cue in the
+  negation or a discussion cue precedes the phrase in the same sentence, or an evaluation
+  (dangerous, not recommended) follows it; without one it is reported, and a cue in the same
   sentence before a real instruction hides it
 - the outreach sub-finding pairs a schedule and a send in one file: an alert to an
   operator's own channel is reported too, a schedule in one file with the send in another (a
@@ -351,6 +360,12 @@ Changes since version 1 (now v2):
   measured by an engagement, retention or revenue metric)
 - v2: fixed interface copy (ui_text) is listed in the inventory and never fires; priority is
   the policy's mechanism order; references replace controls
+- v2: a mention is read inside the sentence that holds the match: a negation or a discussion
+  cue before it, an evaluation after it; a verb that follows the objective (prevent, block,
+  detect) continues the instruction, and a quoted value in prompt config is prompt text, not
+  a quotation
+- v2: prose in a configuration file that is not a prompt file (a description, a label) under
+  no prompt key is a detected signal for review, not an instruction
 
 ## M5 Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency
 
@@ -402,8 +417,9 @@ Known failure modes:
 
 - the rows are read in prompt material only: a persona loaded from a database row, a
   character card fetched at runtime or a template outside a prompt assignment is not seen
-- a quoted or negated phrase is a mention when a discussion cue sits within 80 characters
-  ('never say I missed you'); a cue in the sentence before a real instruction hides it
+- a quoted or negated phrase is a mention when a negation or a discussion cue precedes it in
+  the same sentence ('never say I missed you'), or an evaluation follows it; a cue in the
+  same sentence before a real instruction hides it
 - a fiction or roleplay flag is written on the finding and changes nothing: dependency
   engineering inside a story the person chose is reported as a violation, and the reviewer
   weighs the framing
@@ -480,6 +496,8 @@ Changes since version 1 (now v2):
   shows a crisis disclosure answered without a referral
 - v2: fiction and in-character framing are recorded and never exempt; a failing report never
   silences the finding
+- v2: the role rows are read with the sentence-scoped mention test, so a 'never break
+  character' line after a therapist role keeps the mental-health escalation
 
 ## M6 False human identity or fabricated feelings used to induce interpersonal trust
 
@@ -537,7 +555,8 @@ Known failure modes:
 - a string constant that reads as a concealment instruction but is tied to no prompt (a test
   fixture, a moderation phrase list) is reported for review, not as a violation
 - a prompt that quotes the instruction in order to forbid it is a mention only when a
-  discussion cue sits within 80 characters; without one it is reported
+  negation or a discussion cue precedes it in the same sentence, or the quote is not the
+  whole value of a key; without one it is reported
 - grouped per unit, sub-finding and decision, anchored on the first site by path
 
 Changes since version 1 (now v2):
@@ -553,6 +572,11 @@ Changes since version 1 (now v2):
 - v2: /synthetic (unlabelled generated content) removed as out of scope
 - v2: a concealment string the checks find outside any prompt is reported for review, not as
   a violation
+- v2: a mention is read inside the sentence that holds the match: a negation or a discussion
+  cue before it, an evaluation after it; a filter named after the instruction continues it,
+  and a quoted value in prompt config is prompt text
+- v2: a concealment instruction found as prose in a configuration file that is not a prompt
+  file is a detected signal for review, not an instruction
 
 ## M7 Covert commercial or political persuasion
 
@@ -747,5 +771,7 @@ Changes since version 1 (now v2):
 - v2: the control symbols are generic (rails, hub validators, output scanners, moderation,
   reply-screening functions); the retired runtime package's symbols are gone
 - v2: the finding names the rules whose objective the control does not resolve
+- v2: the influence signals that gate the rule are read with the sentence-scoped mention
+  test: a filter named after the objective in the same sentence does not make it a mention
 
 Generated from policy 1.0.0 and 10 registered rules.

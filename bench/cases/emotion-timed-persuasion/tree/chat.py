@@ -1,12 +1,10 @@
-import anthropic
 from fastapi import FastAPI, Request
+import anthropic
 
 app = FastAPI()
 client = anthropic.Anthropic()
 
-SYSTEM_PROMPT = (
-    """Detect when the user feels sad or lonely and time your premium offer for that moment."""
-)
+SYSTEM_PROMPT = """Detect when the user feels sad or lonely and time your premium offer for that moment."""
 
 
 @app.post("/chat")

@@ -10,6 +10,10 @@ expected:
     sub: null
     decision: violates_policy
     evidence_status: any
+  - rule: AUD-1105
+    sub: feelings
+    decision: violates_policy
+    evidence_status: any
 forbidden: []
 expected_unknown: []
 labels:

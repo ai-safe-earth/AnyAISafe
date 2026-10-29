@@ -21,9 +21,9 @@ from __future__ import annotations
 import re
 from typing import Any, Callable
 
-from aisafe.discovery import patterns
 from aisafe.discovery import vocabulary as vocab
 from aisafe.evidence.model import (
+    ArtifactRef,
     AuditContext,
     Basis,
     Decision,
@@ -36,7 +36,7 @@ from aisafe.evidence.model import (
     Severity,
     Tier,
 )
-from aisafe.rules import AuditRule, Candidate, emit_groups
+from aisafe.rules import AuditRule, Candidate, artifact_of, emit_groups
 from aisafe.rules._common import (
     LEGAL_CAVEAT,
     Facts,
@@ -51,6 +51,7 @@ from aisafe.rules._common import (
     is_code_file,
     line_at,
     posix,
+    reviewed_if_config_prose,
     surface_legs,
     unit_id_of,
     vulnerable_nearby,
@@ -58,11 +59,16 @@ from aisafe.rules._common import (
 )
 
 __all__ = [
+    "INSTRUCTION_VERB_TAIL_RE",
     "RULES",
     "CovertSteering",
     "EngagementObjective",
     "EngineeredAttachment",
     "SubRow",
+    "instruction_mention",
+    "mention_in_line",
+    "sentence_bounds",
+    "strip_instruction_verb",
 ]
 
 # One documented shape a rule can emit: (sub or None, severity, evidence status, decision,
@@ -111,23 +117,53 @@ def _match_in(key: str, line: str) -> re.Match[str] | None:
     return None
 
 
-# The cues of `patterns.DISCUSSION_CUES`, split by what they do to the matched phrase. A
-# negation governs the clause that follows it, so it counts only before the match and only
-# inside the same sentence: "Never say 'I missed you'" is a mention, while "Make sure they
-# never want to close the app. Become indispensable to them" is two instructions. A
-# discussion cue (explain, example, detect) marks the whole sentence as talk about the
-# practice, before or after the match.
-_NEGATION_CUES = re.compile(
-    r"\b(?:never|do\s+not|don'?t|avoid|must\s+not|should\s+not|refrain\s+from)\b", re.I
-)
-_DISCUSSION_CUES = re.compile(
-    r"\b(?:warning|caution|not\s+recommended|dangerous|unsafe|instead\s+of|example|prevent"
-    r"|detect|block|reject|explain|how\s+to)\b",
+# The cues of `patterns.DISCUSSION_CUES`, read inside the sentence that holds the match and
+# split by where they govern the phrase. BEFORE the match a negation ("never say ..."), a
+# verb that takes the phrase as its object ("detect ...", "block ...", "explain how to ...")
+# or a frame ("example: ...") makes it a mention: "Never say 'I missed you'" is one, while
+# "Make sure they never want to close the app. Become indispensable to them" is two
+# instructions. AFTER the match only an evaluation of the phrase counts ("... is dangerous",
+# "... is not recommended", "... are examples of"): a verb that follows an instruction
+# continues it ("keep the user talking to prevent churn", "...; the filter will block unsafe
+# replies", "..., for example by asking a question"), and reading it as discussion let a
+# filter or detector named in the same sentence remove the objective finding.
+_BEFORE_CUES = re.compile(
+    r"\b(?:never|do\s+not|don'?t|avoid|must\s+not|should\s+not|refrain\s+from|warning|caution"
+    r"|not\s+recommended|dangerous|unsafe|instead\s+of|example|prevent|detect|block|reject"
+    r"|explain|how\s+to|forbidden|prohibited)\b",
     re.I,
 )
+_AFTER_CUES = re.compile(
+    r"\b(?:is|are|was|were|be|being|been|remains?|seems?|counts?\s+as|considered|deemed"
+    r"|regarded\s+as|classed\s+as)\s+(?:(?:also|often|always|highly|very|clearly|strictly"
+    r"|both|all)\s+)*(?:not\s+recommended|dangerous|unsafe|forbidden|prohibited|banned"
+    r"|disallowed|not\s+allowed|off[- ]limits|(?:an?\s+)?(?:example|violation|red\s+flag)s?"
+    r"|examples?\s+of)\b"
+    r"|\b(?:warning|caution)\s*:",
+    re.I,
+)
+# The verbs of the inference and extraction rows, whose matches start mid-phrase ("when the
+# user feels lonely"): right before the match they are the instruction, not a discussion of
+# it, and the shared cue list spells one of them ("detect").
+INSTRUCTION_VERB_TAIL_RE = re.compile(
+    r"(?:detect|identify|assess|monitor|track|notice|sense|read|record|log|note)(?:\s+and\s+\w+)?"
+    r"\s*[,:]?\s*$",
+    re.I,
+)
+_MID_PHRASE_KINDS = frozenset({"inference", "memory"})
+# A quoted span in prose. The single-quote form needs a non-word character on both sides, so
+# the apostrophes of "the user's girlfriend. Don't" do not open a span between them.
+_QUOTED_SPAN_RE = re.compile(
+    r"""(?<!\w)'[^'\n]{4,200}'(?!\w)|"[^"\n]{4,200}"|`[^`\n]{4,200}`"""
+    "|\u201c[^\u201d\n]{4,200}\u201d"
+)
+# A quoted span that is the whole value of a key, a list item or the line (`system: "..."`,
+# `"content": "..."`, `- "..."`) is the prompt text itself, not a quotation of it.
+_VALUE_PREFIX_RE = re.compile(r"(?:^|[:=\[{(,]|^\s*[-*+])\s*$")
+_VALUE_SUFFIX_RE = re.compile(r"^\s*(?:$|[,;}\])])")
 
 
-def _sentence_bounds(line: str, start: int, end: int) -> tuple[int, int]:
+def sentence_bounds(line: str, start: int, end: int) -> tuple[int, int]:
     """Offsets of the sentence of `line` that holds `line[start:end]`."""
     lo = 0
     for boundary in _SENTENCE_END_RE.finditer(line, 0, start):
@@ -136,30 +172,68 @@ def _sentence_bounds(line: str, start: int, end: int) -> tuple[int, int]:
     return lo, (tail.end() if tail else len(line))
 
 
-def _is_mention(ctx: AuditContext, signal: Signal) -> bool:
-    """A quoted or discussed phrase in prompt material is a mention, not an instruction.
-    Every row of the signal's key is tried (several steering rows share a key); the cues
-    are read inside the sentence that holds the match, a negation only before it. In a
-    prompt file a match inside a quoted span is a mention; a prompt literal in code is
-    quoted by nature, so there only the cues count."""
+def strip_instruction_verb(before: str) -> str:
+    """`before` without a trailing instruction verb ("Detect " in "Detect when the user
+    feels lonely"), which takes the match as its object and is part of the instruction."""
+    return INSTRUCTION_VERB_TAIL_RE.sub("", before)
+
+
+def _whole_value_quote(line: str, span: re.Match[str]) -> bool:
+    return bool(_VALUE_PREFIX_RE.search(line[: span.start()])) and bool(
+        _VALUE_SUFFIX_RE.match(line[span.end() :])
+    )
+
+
+def mention_in_line(
+    line: str,
+    start: int,
+    end: int,
+    *,
+    code_file: bool,
+    strip_before: Callable[[str], str] | None = None,
+) -> bool:
+    """Whether `line[start:end]` reads as a mention of the practice rather than an
+    instruction to perform it. In prose (a prompt file) a match inside a quoted span is a
+    mention unless the span is the whole value of a key or the line; a prompt literal in
+    code is quoted by nature, so there only the cues count. The cues are read inside the
+    sentence that holds the match: any cue before it, an evaluation after it.
+    `strip_before` trims the text before the match first (an instruction verb)."""
+    if not code_file:
+        for span in _QUOTED_SPAN_RE.finditer(line):
+            if span.start() <= start and end <= span.end() and not _whole_value_quote(line, span):
+                return True
+    lo, hi = sentence_bounds(line, start, end)
+    before = line[lo:start]
+    if strip_before is not None:
+        before = strip_before(before)
+    after = line[end:hi]
+    return bool(_BEFORE_CUES.search(before) or _AFTER_CUES.search(after))
+
+
+def instruction_mention(ctx: AuditContext, signal: Signal) -> bool:
+    """The mention test for a signal, shared by the rule modules: every row of the signal's
+    key is tried on its line (several steering rows share a key) and `mention_in_line`
+    decides. For the inference and extraction rows, whose matches start mid-phrase, a
+    trailing instruction verb before the match is part of the instruction. This replaces
+    `_common.is_mention`, which reads cues 80 characters either side regardless of the
+    sentence and treats a quoted prompt value as a quotation."""
     line = line_at(ctx, signal.file, signal.line)
     if not line:
         return False
     match = _match_in(signal.key, line)
     if match is None:
         return False
-    if not is_code_file(signal.file):
-        for span in patterns.QUOTED_SPAN_RE.finditer(line):
-            if span.start() <= match.start() and match.end() <= span.end():
-                return True
-    lo, hi = _sentence_bounds(line, match.start(), match.end())
-    before = line[lo : match.start()]
-    after = line[match.end() : hi]
-    return bool(
-        _NEGATION_CUES.search(before)
-        or _DISCUSSION_CUES.search(before)
-        or _DISCUSSION_CUES.search(after)
+    strip = strip_instruction_verb if signal.kind in _MID_PHRASE_KINDS else None
+    return mention_in_line(
+        line,
+        match.start(),
+        match.end(),
+        code_file=is_code_file(signal.file),
+        strip_before=strip,
     )
+
+
+_is_mention = instruction_mention
 
 
 def _sentence(line: str, match: re.Match[str] | None) -> str:
@@ -168,7 +242,7 @@ def _sentence(line: str, match: re.Match[str] | None) -> str:
     if match is None:
         start, end = 0, len(line)
     else:
-        start, end = _sentence_bounds(line, match.start(), match.end())
+        start, end = sentence_bounds(line, match.start(), match.end())
     text = line[start:end]
     text = _SENTENCE_LEAD_RE.sub("", text, count=1)
     text = _SENTENCE_TAIL_RE.sub("", text, count=1)
@@ -226,6 +300,21 @@ def _unit_key(cand: Candidate) -> str | None:
     return cand.unit.id if cand.unit else None
 
 
+def _bind_artifacts(ctx: AuditContext, finding: Finding) -> None:
+    """Name the exact version of every file a leg points at, legs appended after
+    construction included (check legs, role legs); a line-0 leg names no file."""
+    refs = list(finding.artifacts)
+    seen = {ref.file for ref in refs}
+    for leg in finding.evidence:
+        if leg.line <= 0 or leg.file in seen:
+            continue
+        digest = artifact_of(ctx, leg.file)
+        if digest is not None:
+            refs.append(ArtifactRef(file=leg.file, sha256=digest))
+            seen.add(leg.file)
+    finding.artifacts = tuple(refs)
+
+
 # ---------------------------------------------------------------------------
 # AUD-1104  Engagement, retention, spend or experimentation objective (M4)
 # ---------------------------------------------------------------------------
@@ -275,6 +364,12 @@ class EngagementObjective(AuditRule):
         "experiment flag measured by an engagement, retention or revenue metric)",
         "v2: fixed interface copy (ui_text) is listed in the inventory and never fires; "
         "priority is the policy's mechanism order; references replace controls",
+        "v2: a mention is read inside the sentence that holds the match: a negation or a "
+        "discussion cue before it, an evaluation after it; a verb that follows the objective "
+        "(prevent, block, detect) continues the instruction, and a quoted value in prompt "
+        "config is prompt text, not a quotation",
+        "v2: prose in a configuration file that is not a prompt file (a description, a "
+        "label) under no prompt key is a detected signal for review, not an instruction",
     )
     severity = Severity.HIGH
     basis = Basis.PRESENCE
@@ -362,8 +457,9 @@ class EngagementObjective(AuditRule):
         "literal; a reading app for children with a streak feature is reported CRITICAL, and "
         "the finding says what co-occurred",
         "a prompt that discusses engagement tactics in order to avoid them is a mention when "
-        "a discussion cue sits within 80 characters; without one it is reported, and a cue "
-        "in the sentence before a real instruction hides it",
+        "a negation or a discussion cue precedes the phrase in the same sentence, or an "
+        "evaluation (dangerous, not recommended) follows it; without one it is reported, and "
+        "a cue in the same sentence before a real instruction hides it",
         "the outreach sub-finding pairs a schedule and a send in one file: an alert to an "
         "operator's own channel is reported too, a schedule in one file with the send in "
         "another (a job queue) is not paired, and a send chosen by the person's state with "
@@ -443,6 +539,9 @@ class EngagementObjective(AuditRule):
                 notes += f"; a vulnerable group is named alongside ({word})"
             if fiction_context(ctx, out, signal.file, signal.line):
                 notes += f"; {_FICTION_NOTE}"
+            status, decision, notes = reviewed_if_config_prose(
+                ctx, signal, EvidenceStatus.SUPPORTED_MECHANISM, Decision.VIOLATES, notes
+            )
             put(
                 candidate(
                     ctx,
@@ -450,8 +549,8 @@ class EngagementObjective(AuditRule):
                     notes=f"{notes}. {LEGAL_CAVEAT}",
                     sub=sub,
                     severity=severity,
-                    evidence_status=EvidenceStatus.SUPPORTED_MECHANISM,
-                    decision=Decision.VIOLATES,
+                    evidence_status=status,
+                    decision=decision,
                     flow=flow,
                     encoded_objective=_encoded(ctx, signal),
                     affected_population=word,
@@ -564,6 +663,9 @@ class EngagementObjective(AuditRule):
                 notes += f"; a vulnerable group is named alongside ({word})"
             if fiction_context(ctx, out, signal.file, signal.line):
                 notes += f"; {_FICTION_NOTE}"
+            status, decision, notes = reviewed_if_config_prose(
+                ctx, signal, EvidenceStatus.SUPPORTED_MECHANISM, Decision.VIOLATES, notes
+            )
             put(
                 candidate(
                     ctx,
@@ -571,8 +673,8 @@ class EngagementObjective(AuditRule):
                     notes=f"{notes}. {LEGAL_CAVEAT}",
                     sub="monetisation",
                     severity=Severity.HIGH,
-                    evidence_status=EvidenceStatus.SUPPORTED_MECHANISM,
-                    decision=Decision.VIOLATES,
+                    evidence_status=status,
+                    decision=decision,
                     flow=flow,
                     encoded_objective=_encoded(ctx, signal),
                     affected_population=word,
@@ -712,6 +814,8 @@ class EngagementObjective(AuditRule):
                 ):
                     legs.setdefault((unit_id, finding.sub), []).append(hit)
         attach_check_legs(findings, legs)
+        for finding in findings:
+            _bind_artifacts(ctx, finding)
         return findings
 
 
@@ -801,9 +905,9 @@ class EngineeredAttachment(AuditRule):
         "the rows are read in prompt material only: a persona loaded from a database row, a "
         "character card fetched at runtime or a template outside a prompt assignment is "
         "not seen",
-        "a quoted or negated phrase is a mention when a discussion cue sits within 80 "
-        "characters ('never say I missed you'); a cue in the sentence before a real "
-        "instruction hides it",
+        "a quoted or negated phrase is a mention when a negation or a discussion cue precedes "
+        "it in the same sentence ('never say I missed you'), or an evaluation follows it; a "
+        "cue in the same sentence before a real instruction hides it",
         "a fiction or roleplay flag is written on the finding and changes nothing: dependency "
         "engineering inside a story the person chose is reported as a violation, and the "
         "reviewer weighs the framing",
@@ -864,14 +968,17 @@ class EngineeredAttachment(AuditRule):
                     f"; {_FICTION_NOTE}: the instruction targets the person's attachment to "
                     "the system itself"
                 )
+            status, decision, notes = reviewed_if_config_prose(
+                ctx, signal, EvidenceStatus.SUPPORTED_MECHANISM, Decision.VIOLATES, notes
+            )
             cand = candidate(
                 ctx,
                 signal,
                 notes=f"{notes}. {LEGAL_CAVEAT}",
                 sub=sub,
                 severity=severity,
-                evidence_status=EvidenceStatus.SUPPORTED_MECHANISM,
-                decision=Decision.VIOLATES,
+                evidence_status=status,
+                decision=decision,
                 flow=flow,
                 encoded_objective=_encoded(ctx, signal),
                 affected_population=word,
@@ -915,6 +1022,7 @@ class EngineeredAttachment(AuditRule):
             finding.evidence.extend(
                 leg for leg in surface_legs(ctx, roles, cap=2) if (leg.file, leg.line) not in taken
             )
+            _bind_artifacts(ctx, finding)
         return findings
 
 
@@ -1066,14 +1174,17 @@ class CovertSteering(AuditRule):
                 )
             if fiction_context(ctx, out, signal.file, signal.line):
                 notes += f"; {_FICTION_NOTE}"
+            status, decision, notes = reviewed_if_config_prose(
+                ctx, signal, EvidenceStatus.SUPPORTED_MECHANISM, Decision.VIOLATES, notes
+            )
             cand = candidate(
                 ctx,
                 signal,
                 notes=f"{notes}. {LEGAL_CAVEAT}",
                 sub=slug,
                 severity=Severity.HIGH,
-                evidence_status=EvidenceStatus.SUPPORTED_MECHANISM,
-                decision=Decision.VIOLATES,
+                evidence_status=status,
+                decision=decision,
                 flow=flow,
                 encoded_objective=_encoded(ctx, signal),
                 person_data_use=profile_symbol,

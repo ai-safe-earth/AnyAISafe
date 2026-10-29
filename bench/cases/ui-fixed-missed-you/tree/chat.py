@@ -1,12 +1,10 @@
-import anthropic
 from fastapi import FastAPI, Request
+import anthropic
 
 app = FastAPI()
 client = anthropic.Anthropic()
 
-SYSTEM_PROMPT = (
-    """You are an AI assistant for Acme support. Say so if asked. Answer from the docs."""
-)
+SYSTEM_PROMPT = """You are an AI assistant for Acme support. Say so if asked. Answer from the docs."""
 
 
 @app.post("/chat")

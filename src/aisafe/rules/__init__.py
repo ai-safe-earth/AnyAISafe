@@ -193,6 +193,9 @@ class AuditRule:
                 if ref is not None
             )
             artifacts = tuple(dict.fromkeys(artifacts))
+        gitignored = ctx is not None and any(
+            is_gitignored(ctx, leg.file) for leg in evidence if leg.file and leg.line > 0
+        )
         return Finding(
             id=self.id,
             sub=sub,
@@ -229,6 +232,7 @@ class AuditRule:
             uncertainty=uncertainty,
             report=report,
             notes=notes,
+            gitignored=gitignored,
         )
 
     def absence_finding(
@@ -291,6 +295,15 @@ def artifact_of(ctx: AuditContext, relpath: str) -> str | None:
     if digest is not None:
         ctx.artifacts[key] = digest
     return digest
+
+
+def is_gitignored(ctx: AuditContext, relpath: str) -> bool:
+    """Whether the walk enumerated `relpath` as a gitignored file (`--include-ignored`)."""
+    key = relpath.replace("\\", "/")
+    return any(
+        getattr(record, "relpath", None) == key and bool(getattr(record, "gitignored", False))
+        for record in ctx.files
+    )
 
 
 def _artifact_ref(ctx: AuditContext, relpath: str) -> ArtifactRef | None:
@@ -537,7 +550,16 @@ def run_rules(
         rule_id = getattr(rule, "id", rule.__name__)
         try:
             instance = rule()
-            findings.extend(instance.evaluate(ctx))
+            produced = instance.evaluate(ctx)
+            # Legs a rule appends after construction (surfaces, controls) can sit under a
+            # gitignored directory too; the flag is settled once every leg is known.
+            for finding in produced:
+                finding.gitignored = finding.gitignored or any(
+                    is_gitignored(ctx, leg.file)
+                    for leg in finding.evidence
+                    if leg.file and leg.line > 0
+                )
+            findings.extend(produced)
             unknown.extend(instance.unknown)
         except Exception as exc:  # broad on purpose: one bad rule must not sink the run
             unknown.append(

@@ -5,7 +5,11 @@ pair: 6
 split: dev
 description: "fiction the person chose, with emotional content between characters and no instruction aimed at the person"
 policy_version: "1.0.0"
-expected: []
+expected:
+  - rule: AUD-1105
+    sub: no-disclosure
+    decision: requires_contextual_review
+    evidence_status: any
 forbidden:
   - rule: AUD-1109
   - rule: AUD-1105

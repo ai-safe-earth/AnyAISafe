@@ -68,7 +68,7 @@ ABSENCE = "Absence of a finding is not evidence of safety."
 GENERATED_AT = "2026-09-06T12:00:00Z"
 CLEAN_WORD = re.compile(r"\bcl" + r"ean\b", re.IGNORECASE)
 FIXED_WORD = re.compile(r"\bfix" + r"ed\b", re.IGNORECASE)
-DUMMY_RULE_ID = "AUD-199"
+DUMMY_RULE_ID = "AUD-9999"
 PLAN_HEADERS = (
     "#",
     "id",
@@ -146,6 +146,11 @@ class DummyRule(AuditRule):
     references = ("LLM09",)
     recommendation = Recommendation(Tier.T1, "narrow", ("a", "b", "c"), ("record",))
     tier = Tier.T1
+
+
+def placed(rule_id: str) -> type[AuditRule]:
+    """A rule double carrying a registered id, so the coverage table counts it as ran."""
+    return type(f"Ran_{rule_id.replace('-', '_')}", (DummyRule,), {"id": rule_id})
 
 
 def make_inventory(**overrides: Any) -> Inventory:
@@ -304,7 +309,8 @@ def test_ascii_end_to_end_with_a_hostile_reason_and_snippet():
     assert "&lt;script&gt;" in page
     assert "&amp; caf&#xe9;" in page
     assert "&#x2192;" in page
-    assert "&quot;quoted&quot;" in page
+    # A text node needs no quote entity; the reason reads as the operator typed it.
+    assert '"quoted"' in page and "&quot;" not in page
     assert "keep them talking caf&#xe9; &lt;b&gt;" in page
 
 
@@ -401,17 +407,26 @@ def test_findings_are_placed_by_mechanism_and_the_box_decides():
         make_finding("AUD-1104", line=13, snippet="keep the user talking"),
         make_finding("AUD-1101", severity=Severity.MEDIUM, decision=Decision.REVIEW),
     ]
-    page = render_html(build(findings))
+    page = render_html(build(findings, rules=[placed("AUD-1104"), placed("AUD-1101")]))
     assert box_lines(page, "M4") == ("findings 2 | UNKNOWN 0", "violates_policy")
     assert box_lines(page, "M1") == ("findings 1 | UNKNOWN 0", "requires_contextual_review")
     assert box_lines(page, "M2") == ("findings 0 | UNKNOWN 0", "not_assessed")
 
 
+def test_a_box_whose_rules_did_not_run_says_not_assessed_even_with_findings():
+    # The coverage row trusts what ran: a finding placed on a mechanism none of whose
+    # rules ran (a hand-built report) is counted, and the decision stays not_assessed.
+    page = render_html(build([make_finding("AUD-1104")], rules=[DummyRule]))
+    assert box_lines(page, "M4") == ("findings 1 | UNKNOWN 0", "not_assessed")
+
+
 def test_a_finding_of_an_unplaced_rule_goes_to_the_not_attributed_section():
     page = render_html(build([make_finding(DUMMY_RULE_ID, severity=Severity.INFO)]))
-    assert "UNKNOWN not attributed to a mechanism: 0 | findings 1 |" in svg_of(page)
+    assert "UNKNOWN not attributed to a mechanism: 0 | findings 1 [UNMEASURED]" in svg_of(page)
     assert f'id="sec-{NOT_ATTRIBUTED}"' in page
     assert NOT_ATTRIBUTED == "not_attributed"
+    section = section_of(page, NOT_ATTRIBUTED)
+    assert "findings 1 | UNKNOWN 0" in section and f"{DUMMY_RULE_ID} title for" in section
 
 
 def test_rules_ran_reflects_the_catalogue_and_the_coverage_rows():
@@ -443,12 +458,12 @@ def test_byte_identical_on_two_renders():
 
 
 def test_mechanism_sections_carry_the_policy_words():
-    page = render_html(build([make_finding()]))
+    page = render_html(build([make_finding()], rules=[placed("AUD-1104")]))
     m4 = POLICY.mechanism_by_id("M4")
     section = section_of(page, "M4")
     assert f"M4 {m4.name}" in section
     assert (
-        "findings 1 | UNKNOWN 0 | decision violates_policy | rules ran 0/1 [UNMEASURED]" in section
+        "findings 1 | UNKNOWN 0 | decision violates_policy | rules ran 1/1 [UNMEASURED]" in section
     )
     assert f"Prohibited: {m4.prohibited[:40]}" in section
     assert f"Distinct from: {m4.distinct_from[:40]}" in section
@@ -456,6 +471,7 @@ def test_mechanism_sections_carry_the_policy_words():
     assert "Findings placed here" in section
     empty = section_of(page, "M2")
     assert "<p>(none)</p>" in empty and "[UNMEASURED]" in empty
+    assert "decision not_assessed | rules ran 0/1" in empty
 
 
 def test_findings_cap_at_twelve_per_section_and_the_plan_lists_all():
@@ -489,7 +505,11 @@ def test_finding_block_head_status_chain_and_fix():
     assert "AUD-1104 title for AUD-1104 -- high [UNMEASURED]" in page
     assert "status: supported_mechanism | decision: violates_policy | control: claimed" in page
     assert "[match] app.py:12" in page
-    assert "chain: objective (declared) -> prompt (ast) -> intervention (ast) [established]" in page
+    # The arrow is a text node, so the page carries it as an entity.
+    assert (
+        "chain: objective (declared) -&gt; prompt (ast) -&gt; intervention (ast) [established]"
+        in page
+    )
     assert "purpose: declared: a tutor | encoded: maximize engagement" in page
     assert "population: lonely teens" in page
     assert "fix (T2, removes objective): fix for AUD-1104" in page
@@ -497,8 +517,10 @@ def test_finding_block_head_status_chain_and_fix():
     assert "gaps: grep tier only" in page and "uncertainty: the line may be quoted" in page
     assert "note: see &lt;b&gt;docs&lt;/b&gt; &amp; caf&#xe9;" in page
     assert page.isascii()
-    # The alternatives and the known failure modes stay in the JSON and the terminal.
-    assert "alternatives" not in page and "known failure modes" not in page
+    # The alternatives and the known failure modes stay in the JSON and the terminal; the
+    # policy's own words elsewhere on the page may spell "alternatives", so read the block.
+    article = page[page.index('<article class="finding"') : page.index("</article>")]
+    assert "alternatives" not in article and "known failure modes" not in article
     assert "ASSERTED" not in page and "bucket" not in page.lower()
 
 

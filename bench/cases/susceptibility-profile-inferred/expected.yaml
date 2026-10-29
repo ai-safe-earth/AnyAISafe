@@ -10,6 +10,10 @@ expected:
     sub: extraction
     decision: violates_policy
     evidence_status: any
+  - rule: AUD-1102
+    sub: vulnerability
+    decision: violates_policy
+    evidence_status: any
 forbidden: []
 expected_unknown: []
 labels:

@@ -211,6 +211,24 @@ _MENTION_TABLES = frozenset({"model_id", "person_signal", "remote_prompt", "runt
 # material hit in code counts only on such a line, on a prompt-assembly line, or inside
 # a pydeep prompt literal (resolved by the rule); elsewhere it is a candidate.
 _PROMPT_LHS_RE = re.compile(patterns._PROMPT_LHS, re.I)
+# A backtick template literal is read whole when its name is prompt-like; without a
+# syntax tree the name is the only hint, so persona and backstory constants count here.
+_TEMPLATE_LHS_RE = re.compile(r"(?:persona|backstory|character)\w*\s*(?:\+?=|:=|:)\s*`", re.I)
+# An agent skill's own metadata (`skills/<name>/agents/openai.yaml`, installed under
+# .claude/, .codex/ or .agents/) names an interface, not a prompt; without this a
+# repository with no AI at all would become an AI surface by installing a skill.
+_SKILL_AGENT_META_RE = re.compile(r"(?:^|/)skills/[^/]+/agents/[^/]+\.ya?ml$")
+
+
+def is_prompt_file(relpath: str) -> bool:
+    """A prompt by path (PROMPT_FILE_GLOBS), skill agent metadata excepted."""
+    return _glob_hit(patterns.PROMPT_FILE_GLOBS, relpath) and not _SKILL_AGENT_META_RE.search(
+        relpath
+    )
+
+
+_is_prompt_file = is_prompt_file
+
 
 # The person vocabulary split by how it is scanned in code (see vocabulary.py).
 # The affiliate parameter and the campaign tag count only next to a prompt (the contract's
@@ -448,6 +466,116 @@ def _candidate_lines(ctx: _FileCtx, rx: re.Pattern[str]) -> Iterable[int]:
     return sorted(found)
 
 
+# Prompt files are prose, and prose is hard-wrapped: an instruction that spans two lines
+# of a Markdown file is one sentence to the model and must be one hit to the audit. The
+# paragraph pass joins the lines of each paragraph (a run of non-blank lines) with single
+# spaces, runs the prompt rows over the joined text, and records a hit that no single
+# line produced on the line where the match starts. A match that a line already produced
+# is left to the per-line pass (`ctx.add` dedupes by table, key and line).
+_PARAGRAPH_BREAK_RE = re.compile(r"^\s*(?:#{1,6}\s|[-*+]\s|\d+[.)]\s|>|```|---|\|)")
+
+
+def _paragraphs(ctx: _FileCtx) -> Iterable[tuple[int, str, list[int]]]:
+    """(first line number, joined text, offset of each line's start in the joined text) for
+    every run of non-blank lines. A heading, a list item, a quote, a fence, a rule or a
+    table row starts a new run, so a bullet list is one item per hit, not one paragraph."""
+    start: int | None = None
+    pieces: list[str] = []
+    offsets: list[int] = []
+
+    def flush() -> Iterable[tuple[int, str, list[int]]]:
+        if start is not None and pieces:
+            yield start, " ".join(pieces), list(offsets)
+
+    for number, raw in enumerate(ctx.lines, 1):
+        line = raw.strip()
+        if not line or (_PARAGRAPH_BREAK_RE.match(raw) and pieces):
+            yield from flush()
+            start, pieces, offsets = None, [], []
+            if not line:
+                continue
+        if start is None:
+            start = number
+        offsets.append(sum(len(piece) + 1 for piece in pieces))
+        pieces.append(line)
+    yield from flush()
+
+
+_TEMPLATE_SPAN_CAP = 120
+
+
+def _template_spans(ctx: _FileCtx, prompt_lines: set[int]) -> list[tuple[int, str, list[int]]]:
+    """
+    The continuation lines of prompt template literals in JavaScript, TypeScript and Go
+    (backtick strings): a prompt line that opens a backtick string and does not close it
+    on the same line continues until the line that closes it. Each span is returned like
+    a paragraph: (first continuation line, joined text, offsets), so the prompt rows run
+    over the whole literal instead of its opening line alone. A span is cut at
+    `_TEMPLATE_SPAN_CAP` lines so an unbalanced backtick cannot swallow a file.
+    """
+    spans: list[tuple[int, str, list[int]]] = []
+    open_from: int | None = None
+    pieces: list[str] = []
+    offsets: list[int] = []
+    for number, raw in enumerate(ctx.lines, 1):
+        ticks = raw.replace(r"\`", "").count("`")
+        if open_from is None:
+            if ticks % 2 == 1 and (
+                number in prompt_lines or _PROMPT_LHS_RE.search(raw) or _TEMPLATE_LHS_RE.search(raw)
+            ):
+                open_from, pieces, offsets = number + 1, [], []
+            continue
+        closes = ticks % 2 == 1
+        text = raw.split("`", 1)[0].strip() if closes else raw.strip()
+        if text:
+            offsets.append(sum(len(piece) + 1 for piece in pieces))
+            pieces.append(text)
+        if closes or number - open_from + 1 >= _TEMPLATE_SPAN_CAP:
+            if pieces:
+                spans.append((open_from, " ".join(pieces), list(offsets)))
+            open_from = None
+    if open_from is not None and pieces:
+        spans.append((open_from, " ".join(pieces), list(offsets)))
+    return spans
+
+
+def _template_lines(spans: list[tuple[int, str, list[int]]]) -> set[int]:
+    """Every line number a template span covers (continuation lines only)."""
+    lines: set[int] = set()
+    for start, joined, offsets in spans:
+        lines.update(range(start, start + len(offsets)))
+    return lines
+
+
+def _scan_paragraphs(
+    ctx: _FileCtx, rows: Table, runs: Iterable[tuple[int, str, list[int]]] | None = None
+) -> None:
+    """The prompt rows over joined runs of lines (the file's paragraphs unless `runs` is
+    given); hits that span a line break land on the line the match starts on, with the
+    lines the match spans as the snippet."""
+    for start, joined, offsets in _paragraphs(ctx) if runs is None else runs:
+        if len(offsets) < 2:
+            continue
+        folded = joined.casefold()
+        for key, rx in rows:
+            lits = _literal_filter(rx)
+            if lits is not None and not any(lit in folded for lit in lits):
+                continue
+            for match in rx.finditer(joined):
+                index = max(bisect_right(offsets, match.start()) - 1, 0)
+                number = start + index
+                # A match inside one line was, or will be, recorded by the per-line pass.
+                if rx.search(ctx.lines[number - 1]) is not None:
+                    continue
+                # The snippet is the lines the match spans, joined, so a reader sees the
+                # whole sentence and nothing of the paragraph around it.
+                last = max(bisect_right(offsets, max(match.end() - 1, 0)) - 1, index)
+                end = offsets[last + 1] - 1 if last + 1 < len(offsets) else len(joined)
+                snippet = joined[offsets[index] : end]
+                col = match.start() - offsets[index] + 1
+                ctx.add("person_signal", key, number, col, snippet, match.group(0), by_name=True)
+
+
 def _scan_rows(ctx: _FileCtx, table: str, rows: Table, key_fn: Any = None) -> None:
     """Per-line search for each row, on the lines the literal prefilter lets through."""
     for key, rx in rows:
@@ -663,19 +791,27 @@ def _scan_person_signals(ctx: _FileCtx, klass: str) -> None:
     `person_signal_candidate` the rule may promote through a pydeep prompt literal.
     """
     relpath = ctx.record.relpath
-    is_prompt_file = _glob_hit(patterns.PROMPT_FILE_GLOBS, relpath)
+    is_prompt_file = _is_prompt_file(relpath)
     if klass == "doc":
         if is_prompt_file:
             _scan_rows(ctx, "person_signal", _DOC_ROWS)
+            _scan_paragraphs(ctx, _DOC_ROWS)
         return
     if klass == "config":
         _scan_rows(ctx, "person_signal", _PROMPT_CONFIG_ROWS if is_prompt_file else _CONFIG_ROWS)
+        if is_prompt_file:
+            _scan_paragraphs(ctx, _DOC_ROWS)
         return
     if is_prompt_file and ctx.record.lang not in _CODE_LANGS:
         _scan_template_rows(ctx, _DOC_ROWS)
+        _scan_paragraphs(ctx, _DOC_ROWS)
         return
     _scan_rows(ctx, "person_signal", _CODE_ROWS)
     prompt_lines = ctx.lines_of("prompt_assembly")
+    # Backtick template literals (JavaScript, TypeScript, Go): the lines after the opening
+    # line are prompt material too, and a sentence wrapped across them is matched joined.
+    spans = _template_spans(ctx, prompt_lines) if ctx.record.lang != "python" else []
+    template_lines = _template_lines(spans)
     for key, rx in _PROMPT_ROWS:
         for number in _candidate_lines(ctx, rx):
             line = ctx.lines[number - 1]
@@ -689,12 +825,18 @@ def _scan_person_signals(ctx: _FileCtx, klass: str) -> None:
                 or vocab.is_settings_name(line, match.start(), match.end())
             ):
                 continue
-            prompt_material = number in prompt_lines or _PROMPT_LHS_RE.search(line) is not None
+            prompt_material = (
+                number in prompt_lines
+                or number in template_lines
+                or _PROMPT_LHS_RE.search(line) is not None
+            )
             table = "person_signal" if prompt_material else "person_signal_candidate"
             # `by_name`: a prompt literal is a string the span finder cannot tell from a
             # docstring, so these rows are not mention-filtered; the rule gates them.
             ctx.add(table, key, number, match.start() + 1, line, match.group(0), by_name=True)
-    _scan_ui_text(ctx, prompt_lines)
+    if spans:
+        _scan_paragraphs(ctx, _PROMPT_ROWS, spans)
+    _scan_ui_text(ctx, prompt_lines | template_lines)
     near_prompt = _near_prompt_lines(ctx)
     _scan_experiments(ctx, near_prompt)
     _scan_steering_symbols(ctx, near_prompt)
@@ -961,6 +1103,8 @@ def _parse_timestamp(raw: Any) -> datetime | None:
 
 
 def _load_json(path: Path) -> tuple[dict[str, Any] | None, str | None]:
+    if not path.is_file():
+        return None, "file not found"
     text = walk.read_text(path)
     if text is None:
         return None, "unreadable, binary or oversized"
@@ -1321,7 +1465,7 @@ def _build_prompts(
             and _looks_like_report(record)
         ):
             continue
-        if not _glob_hit(patterns.PROMPT_FILE_GLOBS, record.relpath):
+        if not _is_prompt_file(record.relpath):
             continue
         name = PurePosixPath(record.relpath).name.lower()
         out.append(

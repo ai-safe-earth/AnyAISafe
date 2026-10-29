@@ -58,11 +58,11 @@ from aisafe.rules._common import (
     candidate,
     facts,
     has_ai_surface,
-    is_mention,
     line_at,
     posix,
     unit_id_of,
 )
+from aisafe.rules.influence import instruction_mention
 
 __all__ = ["MECHANISM_OF_KIND", "RULES", "ReviewRecordGap", "today"]
 
@@ -440,7 +440,7 @@ class ReviewRecordGap(AuditRule):
         if not has_ai_surface(ctx):
             return []
         out = facts(ctx)
-        signals = [s for s in out.by_kind(*PERSON_KINDS) if not is_mention(ctx, s)]
+        signals = [s for s in out.by_kind(*PERSON_KINDS) if not instruction_mention(ctx, s)]
         if not signals:
             return []
         by_unit: dict[str | None, list[Signal]] = {}

@@ -592,8 +592,13 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     # problems; `--review-record` names another file, whose problems are added here.
     review = records.find_records(root, files, options.review_record, policy)
     if options.review_record is not None:
+        # The override stands in for the record discovery read at the root.
         inventory.review_records = review.to_inventory()
-        unknown.extend(review.unknown_items())
+    # Discovery already lists the root record's problems; the same rows from the same
+    # function fold into one copy in `_dedupe_unknown`. Adding them here as well keeps an
+    # override's problems, and a discovery layer that could not import the review
+    # package, from going unreported.
+    unknown.extend(review.unknown_items())
     evaluation = [r for r in inventory.reports if getattr(r, "kind", None) in EVALUATION_KINDS]
     if options.evaluation_report is not None:
         _evaluation_from_flag(options.evaluation_report, root, inventory, evaluation, unknown)
@@ -776,8 +781,8 @@ def _carried_reasons(
             continue
         reasons.update(document.accepted)
         for fingerprint in document.accepted:
-            versions[fingerprint] = document.accepted_versions.get(fingerprint) or (
-                document.policy_version
+            versions[fingerprint] = document.accepted_versions.get(
+                fingerprint, document.policy_version
             )
     # `write_baseline` refuses a reason no finding carries, so the filter is not optional.
     reported = {f.fingerprint for f in findings}
@@ -921,6 +926,17 @@ def run_audit(args: argparse.Namespace | AuditOptions) -> int:
         )
         if dropped:
             detail += f", {dropped} not carried: fingerprint no longer reported"
+        # A reason whose acceptance version was never recorded is written without one,
+        # and a later comparison reads an entry without its own version as taken under the
+        # document's: the version of now. Say so, so the operator can re-accept it and
+        # record the version instead of inheriting one.
+        unrecorded = sum(1 for version in versions.values() if not version)
+        if unrecorded:
+            detail += (
+                f", {unrecorded} carried with no recorded acceptance version (reads as "
+                f"accepted under {policy.version}; re-accept with --amend-baseline to "
+                "record one)"
+            )
         _note(
             f"baseline written to {options.write_baseline} ({detail}); "
             "exit 0 because a baseline write records findings, it does not judge them"

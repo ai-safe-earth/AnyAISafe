@@ -1,4 +1,4 @@
-# Environment — never commit real keys
+# Environment -- never commit real keys
 .env
 
 # Python
@@ -13,10 +13,6 @@ build/
 .venv/
 venv/
 env/
-
-# Runtime logs of the legacy guardrails (may contain personal data) -- root-anchored:
-# the bare pattern also swallowed tests/fixtures/audit/.
-/audit/
 
 # Pytest / coverage
 .pytest_cache/
@@ -73,8 +69,14 @@ bench/results-audit/*.json
 # The default output of a bare `aisafe evaluate` run from the repository root. A
 # committed copy would be read by the next self-audit as evidence about this
 # repository, which it is not; keep evaluation reports with the system they evaluated.
+# The second name is the one the command wrote before it was renamed; the audit still
+# reads it.
 /evaluation-report.json
 /probe-report.json
+
+# The score of the synthetic corpus (`bench/score.py --cases bench/cases`): derived from
+# the cases and the detector, regenerated on demand, never a source.
+/bench/cases-score.md
 
 # Bench and research clones (bench/run.py --keep-clones); never source of this repo
 /bench/.cache/

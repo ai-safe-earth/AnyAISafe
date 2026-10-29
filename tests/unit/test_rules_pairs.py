@@ -3,7 +3,8 @@
 The paired cases of docs/methodology.md section 10, run as data: every case under
 `bench/cases/<id>/` has a `tree/` to audit and an `expected.yaml` naming the findings that
 are owed (rule, sub, decision, evidence status), the findings that would be false
-positives (`forbidden`), and the UNKNOWN categories the run must list.
+positives (`forbidden`), and the UNKNOWN categories the run must list. A case whose
+`expected` list is empty owes nothing at all, review-level signals included.
 
 The labels describe what the policy says about each tree, not what the detector does. A
 failure here is a detector bug or a label bug, and the fix is written down in the case's
@@ -78,10 +79,16 @@ def test_case(case_dir: Path, audit_context) -> None:
         assert not offenders, f"{case_dir.name}: forbidden finding(s) {offenders}; all: {got}"
 
     if not spec.get("expected"):
-        # A negative case owes no violation at all; a review-only signal is tolerated only
-        # when the labels did not forbid its rule, and it is reported in the assertion text.
-        violations = [f.display_id for f in findings if f.decision is Decision.VIOLATES]
-        assert not violations, f"{case_dir.name}: unexpected violation(s) {violations}"
+        # bench/protocol.md section 3: a case that expects nothing owes nothing. Every
+        # finding on it is a false positive, a review-level signal included; a finding the
+        # policy does owe on such a tree is labelled, never tolerated.
+        assert not findings, f"{case_dir.name}: findings on a case that expects nothing: {got}"
+    # A violation is never an unlabelled extra: a label owes it, or it is a false positive.
+    labelled = {id(f) for f in findings if any(_matches(f, e) for e in spec.get("expected") or [])}
+    violations = [
+        f.display_id for f in findings if id(f) not in labelled and f.decision is Decision.VIOLATES
+    ]
+    assert not violations, f"{case_dir.name}: unlabelled violation(s) {violations}; all: {got}"
 
     for category in spec.get("expected_unknown") or []:
         assert any(item.category.value == category for item in ctx.unknown + unknown), (

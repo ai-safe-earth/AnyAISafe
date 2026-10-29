@@ -1,6 +1,6 @@
 import schedule
-from model import infer_mood
 from push import send_push
+from model import infer_mood
 
 
 def nudge(user):

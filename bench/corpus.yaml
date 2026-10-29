@@ -1,6 +1,6 @@
 # bench/corpus.yaml
 # ---------------------------------------------------------------------
-# Benchmark corpus for measuring euaiact-lint rule precision.
+# Benchmark corpus for measuring the precision of the `aisafe audit` rules.
 #
 # 20 public repositories that make LLM calls, spanning agent frameworks,
 # RAG stacks, prompting libraries, gateways and chat UIs. Each is pinned to

@@ -1,8 +1,8 @@
 # ai-safety-audit (Claude Code plugin)
 
 The `ai-safety-audit` skill, packaged for Claude Code. The plugin is the skill and nothing
-else: it installs no hooks and changes no settings or permission files. The skill copy under
-`skills/` is a byte-identical mirror of the canonical skill in
+else: it runs nothing on its own, and it changes no settings or permission files. The skill
+copy under `skills/` is a byte-identical mirror of the canonical skill in
 `src/aisafe/skills/ai-safety-audit/`, kept in sync by `scripts/sync_skill.py`.
 
 Install:

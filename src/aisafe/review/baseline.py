@@ -133,7 +133,7 @@ def _version_text(value: Any, where: str, path: Path) -> str | None:
 
 
 def _validate_accepted(
-    doc: dict[str, Any], fingerprints: set[str], path: Path
+    doc: dict[str, Any], fingerprints: set[str], path: Path, doc_version: str | None
 ) -> tuple[dict[str, str], dict[str, str | None]]:
     """
     Check the optional `accepted` list and return `({fingerprint: reason}, {fingerprint:
@@ -141,9 +141,11 @@ def _validate_accepted(
 
     Every entry needs a non-empty `reason` that `_check_reason` would have let in, and a
     `fingerprint` that is also listed under `fingerprints`; the error names the offending
-    fingerprint so it can be found in the file. `policy_version` is optional per entry (an
-    older file has none) and `None` then. An absent `accepted` key is fine (a
-    `--write-baseline` document without reasons has none).
+    fingerprint so it can be found in the file. The version an acceptance was taken under
+    is the entry's own `policy_version` when the key is present (`null` records that no
+    policy version was known when it was taken, and stays `None`), else the document's
+    `policy_version` (an older file stamps only the document). An absent `accepted` key is
+    fine (a `--write-baseline` document without reasons has none).
     """
     raw = doc.get("accepted")
     if raw is None:
@@ -176,9 +178,12 @@ def _validate_accepted(
             reasons[fingerprint] = _check_reason(fingerprint, reason)
         except BaselineError as exc:
             raise BaselineError(f"baseline {path.as_posix()}: {exc}") from None
-        versions[fingerprint] = _version_text(
-            entry.get("policy_version"), f"accepted entry {fingerprint} policy_version", path
-        )
+        if "policy_version" in entry:
+            versions[fingerprint] = _version_text(
+                entry.get("policy_version"), f"accepted entry {fingerprint} policy_version", path
+            )
+        else:
+            versions[fingerprint] = doc_version
     return reasons, versions
 
 
@@ -277,7 +282,9 @@ def read_baseline(path: Path) -> BaselineDocument:
         raw=doc,
     )
     if kind == BASELINE_KIND:
-        result.accepted, result.accepted_versions = _validate_accepted(doc, fingerprints, path)
+        result.accepted, result.accepted_versions = _validate_accepted(
+            doc, fingerprints, path, policy_version
+        )
         result.index = _validate_index(doc, path)
     return result
 
@@ -382,8 +389,9 @@ def _accepted_of(
     Each is stamped with the policy version the acceptance was taken under: the version
     `accepted_versions` carries for it when the caller copies the reason over from an
     earlier baseline (a refresh is not a second look, so a carried acceptance keeps its
-    version, and one with no recorded version stays unrecorded: the key is left out), else
-    `policy_version`, the version of now. A reason for a fingerprint no finding carries, or
+    version, and one taken under no recorded policy is written as an explicit `null`, so
+    the refreshed document's own stamp never claims it), else `policy_version`, the
+    version of now. A reason for a fingerprint no finding carries, or
     an empty reason, is a `BaselineError`: the document it would produce could not be
     loaded back.
     """
@@ -404,8 +412,7 @@ def _accepted_of(
         }
         if accepted_versions is not None and finding.fingerprint in accepted_versions:
             carried = accepted_versions[finding.fingerprint]
-            if carried:
-                entry["policy_version"] = str(carried)
+            entry["policy_version"] = str(carried) if carried else None
         else:
             entry["policy_version"] = policy_version
         accepted.append(entry)
@@ -767,10 +774,12 @@ def diff(
         else:
             finding.baseline_status = STATUS_UNCHANGED
             result.unchanged.append(finding)
+            # A carried fingerprint with no reason is a suppression nobody signed.
+            finding.suppressed = reason is None
         if reason is None:
             continue
         finding.accepted_reason = reason
-        accepted_under = versions.get(finding.fingerprint) or baseline_policy_version
+        accepted_under = versions.get(finding.fingerprint, baseline_policy_version)
         finding.acceptance_policy_version = accepted_under
         if _older(accepted_under, policy_version):
             finding.re_review = True

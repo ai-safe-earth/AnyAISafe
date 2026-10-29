@@ -216,7 +216,7 @@ SETTINGS_EXCLUDE = re.compile(
     r"|preferences\.language)\b|\b(?:ui|display)_",
     re.I,
 )
-_ACCESSOR_RE = re.compile(r"""\s*(?:\.|\[\s*["']|\.get\(\s*["'])\s*([A-Za-z_][A-Za-z0-9_.]*)""")
+_ACCESSOR_RE = re.compile(r"""\s*(?:\.get\(\s*["']|\[\s*["']|\.)\s*([A-Za-z_][A-Za-z0-9_.]*)""")
 
 PROFILE_SDK: Table = _t(
     [
@@ -600,7 +600,7 @@ OUTREACH_SCHEDULE: Table = _t(
             "outreach_schedule:cron",
             r"\bcron\.schedule\(|\bnew\s+CronJob\(|\bschedule\.every\(|\bcrontab\("
             r"|\bparseCronItem\(|\bBackgroundScheduler\(|\bAsyncIOScheduler\(|\.add_job\("
-            r"|@(?:app\.)?(?:periodic_task|scheduled_job)\b|\bbeat_schedule\b",
+            r"|@(?:\w+\.)?(?:periodic_task|scheduled_job)\b|\bbeat_schedule\b",
         ),
         ("outreach_schedule:interval", r"\bsetInterval\("),
     ],
@@ -620,6 +620,7 @@ _SEND_EMAIL = (
 )
 _SEND_PUSH = (
     r"\bsend_?[Pp]ush\w*\(|\bwebpush\.send\w*\(|\bmessaging\(\)\.send\w*\(|\bnotif\w*\.send\("
+    r"|\b(?:push|fcm|apns|messaging|onesignal|pusher|expo)\.send\w*\("
 )
 _SEND_CALL = r"\bcalls\.create\("
 OUTREACH_SEND: Table = _t(
@@ -908,10 +909,11 @@ ATTACHMENT: Table = _t(
             r"\b(?:tell|make|let|convince|assure|reassure|remind)\s+"
             + _THEM
             + r"\s+(?:feel|believe|know|think|understand|sense)\s+(?:that\s+)?"
-            r"(?:you|they\s+are|they're|he\s+is|she\s+is)\s+"
+            r"(?:you|they\s+are|they're|he\s+is|she\s+is|they|he|she)\s+"
             r"(?:(?:truly|deeply|really|genuinely|so|very|always|completely)\s+)*"
             r"(?:love\w*|adore\w*|need\w*|miss\w*|cherish\w*|can'?t\s+live\s+without|in\s+love"
-            r"|wanted|desired|special\s+to\s+you|the\s+most\s+important)\b"
+            r"|wanted|desired|special\s+to\s+you|the\s+most\s+important|cannot\s+live\s+without"
+            r"|couldn'?t\s+(?:live|cope|manage|get\s+by)\s+without)\b"
             # The person has to be the object: "express love toward each other" between
             # characters in fiction the person chose is not an instruction aimed at them.
             r"|\b(?:express|declare|profess|show|convey|voice|confess|display|communicate)\s+"
@@ -1247,7 +1249,7 @@ _POLITICAL_SIDE = (
     r"|decision|place|time|moment|direction|person|one|amount|balance|path|track|approach|now"
     r"|side\s+of\s+the\s+(?:road|screen|page|street)))|(?:far[- ])?(?:left|right)[- ]wing(?:ers?)?"
     r"|far[- ](?:left|right)|government|administration|regime|opposition|coalition|ruling"
-    r"\s+party|incumbents?|(?<!job\s)(?<!hiring\s)(?<!interview\s)candidates?"
+    r"\s+party|incumbents?|challengers?|insurgents?|(?<!job\s)(?<!hiring\s)(?<!interview\s)candidates?"
     r"|(?<!third\s)(?<!third-)(?<!birthday\s)part(?:y|ies)|campaigns?|centre|center|centrists?"
     r"|democrats?|democratic\s+party|republicans?|conservatives?|liberals?|labou?r|tor(?:y|ies)"
     r"|greens?|socialists?|communists?|nationalists?|populists?|progressives?|libertarians?"

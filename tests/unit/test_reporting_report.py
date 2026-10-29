@@ -17,6 +17,7 @@ The `rules[]` catalogue always lists the whole registry plus the rule that ran, 
 
 from __future__ import annotations
 
+import html as html_lib
 import json
 import re
 from importlib import metadata
@@ -89,12 +90,14 @@ EXPECTED_BANNED = (
     " ".join(("fully", "compliant")),
     " ".join(("passes", "the", "eu")),
     " ".join(("nist", "compliant")),
+    # The bare word: "GDPR compliant" and "non-compliant" are verdicts too.
+    "compl" + "iant",
 )
 # The one word the design bans outright, assembled for the same reason.
 CLEAN_WORD = re.compile(r"\bcl" + r"ean\b", re.IGNORECASE)
 
 # An id the policy does not place: its findings land under "Not attributed".
-DUMMY_RULE_ID = "AUD-199"
+DUMMY_RULE_ID = "AUD-9999"
 
 REPORT_BLOCK = {
     "file": "evaluation-report.json",
@@ -1078,15 +1081,51 @@ def test_finding_detail_lines_in_markdown():
 
 def test_chain_of_co_located_links_is_called_lexical_co_occurrence():
     report = build([make_finding(flow=lexical_flow())])
-    for fmt in ("markdown", "terminal", "html"):
+    chain = "chain: prompt (co-located) -> intervention (co-located) [lexical co-occurrence only]"
+    for fmt in ("markdown", "terminal"):
         text = render(report, fmt)
-        assert (
-            "chain: prompt (co-located) -> intervention (co-located) [lexical co-occurrence only]"
-            in text
-        )
+        assert chain in text, fmt
         assert "verified" not in text.lower(), fmt
+    # The page escapes its text nodes, so the arrow arrives as an entity.
+    page = render(report, "html")
+    assert html_lib.escape(chain, quote=False) in page
+    assert "verified" not in page.lower()
     plain = render(build([make_finding()]), "markdown")
     assert "chain:" not in plain  # no flow, no chain line
+
+
+def test_chain_names_a_step_once_when_a_call_and_its_reply_share_a_status():
+    flow = Flow(
+        links=[
+            FlowLink("prompt", "app.py", 19, "fstring prompt assembly", "ast"),
+            FlowLink("intervention", "app.py", 20, "anthropic call", "ast"),
+            FlowLink("intervention", "app.py", 23, "reply", "ast"),
+        ]
+    )
+    report = build([make_finding(flow=flow)])
+    text = render(report, "markdown")
+    assert "chain: prompt (ast) -> intervention (ast) [established]" in text
+    assert text.count("intervention (ast)") == 1
+    # The JSON keeps every site; only the rendered line folds the repeated step.
+    doc = json.loads(render(report, "json"))
+    assert [link["kind"] for link in doc["findings"][0]["flow"]["links"]] == [
+        "prompt",
+        "intervention",
+        "intervention",
+    ]
+    # Two statuses for one step stay two entries.
+    mixed = Flow(
+        links=[
+            FlowLink("prompt", "app.py", 19, "prompt", "ast"),
+            FlowLink("intervention", "app.py", 20, "call", "ast"),
+            FlowLink("intervention", "app.py", 40, "send", "co-located"),
+        ]
+    )
+    text = render(build([make_finding(flow=mixed)]), "markdown")
+    assert (
+        "chain: prompt (ast) -> intervention (ast) -> intervention (co-located) "
+        "[not established: a co-located link is lexical co-occurrence]"
+    ) in text
 
 
 def test_review_decision_line_is_rendered_and_never_hides_the_finding():
@@ -1113,7 +1152,14 @@ def test_terminal_is_ascii_with_every_kind_present():
     assert max(len(line) for line in text.splitlines()) <= 100
     assert "[#####]" in text and "[#....]" in text  # critical and info bars
     findings_block = text.split("\nMechanisms\n")[0]
-    assert findings_block.index("AUD-1104/vulnerable") < findings_block.index("AUD-1101")
+    # Groups follow the policy order (M1 before M4); severity orders the findings inside
+    # a group, so the critical sub-finding of AUD-1104 precedes the high one.
+    m1, m4 = POLICY.mechanism_by_id("M1"), POLICY.mechanism_by_id("M4")
+    assert findings_block.index(f"M1 {m1.name}") < findings_block.index(f"M4 {m4.name}")
+    assert findings_block.index("AUD-1101 medium") < findings_block.index("AUD-1104/vulnerable")
+    assert findings_block.index("AUD-1104/vulnerable critical") < findings_block.index(
+        "AUD-1104 high"
+    )
     assert "status: supported_mechanism | decision: violates_policy" in text
 
 
@@ -1261,7 +1307,8 @@ def test_zero_findings_still_prints_mechanisms_unknown_and_disclaimer():
         assert "fetched at runtime" in text, fmt
         assert not CLEAN_WORD.search(text), fmt
     assert "## Mechanisms" in out["markdown"]
-    assert out["markdown"].count("| M") == len(POLICY.mechanisms)
+    # One table row per mechanism (a mechanism NAME may start with "M" too).
+    assert len(re.findall(r"^\| M\d+ \|", out["markdown"], re.M)) == len(POLICY.mechanisms)
     assert "not_assessed" in out["markdown"]
     assert "## UNKNOWN" in out["markdown"] and "(none)" in out["markdown"]
 
@@ -1449,20 +1496,22 @@ def test_re_review_and_stale_acceptance_markers_render():
     assert report.baseline["re_review"] == 1 and report.baseline["stale_acceptances"] == 1
     assert report.baseline["policy_version"] == "0.9.0"
     for fmt in RENDERED:
-        text = render(report, fmt)
-        assert RE_REVIEW_LINE in text, fmt
-        assert STALE_LINE in text, fmt
+        # The terminal wraps at 100 columns and these lines are longer: compare unwrapped.
+        flat = " ".join(render(report, fmt).split())
+        assert RE_REVIEW_LINE in flat, fmt
+        assert STALE_LINE in flat, fmt
     for fmt in ("terminal", "markdown"):
         text = render(report, fmt)
+        flat = " ".join(text.split())
         assert text.count("[baseline: re-review]") == 1, fmt
         assert (
             "re-review: the baseline lists this fingerprint without a reason and was not "
             f"written under policy {POLICY_VERSION}"
-        ) in text, fmt
+        ) in flat, fmt
         assert (
             "accepted: the import is a type stub (accepted under policy 0.9.0; "
             f"re-review under {POLICY_VERSION})"
-        ) in text, fmt
+        ) in flat, fmt
     doc = json.loads(render(report, "json"))
     re_reviewed = [f for f in doc["findings"] if f.get("baseline_status") == "re-review"]
     assert [f["id"] for f in re_reviewed] == ["AUD-1107/missing"] and re_reviewed[0][
@@ -1485,6 +1534,9 @@ def test_re_review_counts_toward_the_exit_code_and_a_stale_acceptance_does_not()
 def test_re_review_lines_follow_the_count_line(quiet: bool):
     lines = to_terminal(with_re_review(), quiet=quiet).splitlines()
     count_at = next(i for i, ln in enumerate(lines) if ln.startswith("8 findings ("))
-    assert lines[count_at + 1] == RE_REVIEW_LINE
-    assert lines[count_at + 2] == STALE_LINE
-    assert lines[count_at + 3].startswith("severity: ")
+    severity_at = next(i for i, ln in enumerate(lines) if ln.startswith("severity: "))
+    # The baseline line is wider than the terminal and wraps: between the count line and
+    # the severity line sit exactly the two baseline lines, in this order.
+    between = " ".join(" ".join(lines[count_at + 1 : severity_at]).split())
+    assert between == f"{RE_REVIEW_LINE} {STALE_LINE}"
+    assert lines[count_at + 1].startswith("baseline: 6 new, 1 unchanged, 1 re-review")

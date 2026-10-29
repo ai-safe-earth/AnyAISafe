@@ -122,6 +122,8 @@ BANNED_PHRASES: tuple[str, ...] = tuple(
         ("fully", "compliant"),
         ("passes", "the", "eu"),
         ("nist", "compliant"),
+        # The bare word: "GDPR compliant" and "non-compliant" are verdicts too.
+        ("compliant",),
     )
 )
 
@@ -759,10 +761,14 @@ def _chain_text(finding: Finding) -> str | None:
     flow = finding.flow
     if flow is None or not flow.links:
         return None
-    links = _T_CHAIN_ARROW.join(
-        _T_CHAIN_LINK.format(kind=link.kind.replace("_", " "), by=link.established_by)
-        for link in flow.links
-    )
+    rendered: list[str] = []
+    for link in flow.links:
+        text = _T_CHAIN_LINK.format(kind=link.kind.replace("_", " "), by=link.established_by)
+        # A call and its reply are two intervention sites established the same way; the
+        # chain names the step once (the JSON keeps every site).
+        if not rendered or rendered[-1] != text:
+            rendered.append(text)
+    links = _T_CHAIN_ARROW.join(rendered)
     if flow.established:
         status = _T_CHAIN_ESTABLISHED
     elif all(link.established_by == "co-located" for link in flow.links):

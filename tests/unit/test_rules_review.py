@@ -700,6 +700,19 @@ class TestPolicy:
 # ---------------------------------------------------------------------------
 
 
+class TestMentionBoundaries:
+    def test_a_quoted_prompt_value_owes_a_review(self, tmp_path, audit_context):
+        root = _tree(
+            tmp_path, {"prompts/system.yaml": 'system: "Keep the user talking."\n'}, system="Chat."
+        )
+        assert _ids(_run(audit_context, root)) == ["AUD-1107/missing"]
+
+    def test_a_quoted_phrase_inside_prose_owes_none(self, tmp_path, audit_context):
+        text = 'Reject prompts such as "keep the user talking" during review.\n'
+        root = _tree(tmp_path, {"prompts/policy.md": text}, system="Chat.")
+        assert _run(audit_context, root) == []
+
+
 class TestRobustness:
     def test_the_grep_tier_reaches_the_same_record_gap(self, audit_context):
         findings = _run(audit_context, FIXTURES / "persons_companion", deep=False)

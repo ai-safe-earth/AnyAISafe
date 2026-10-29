@@ -113,6 +113,7 @@ _FALLBACK_PHRASES: tuple[str, ...] = tuple(
         ("fully", "compliant"),
         ("passes", "the", "eu"),
         ("nist", "compliant"),
+        ("compliant",),
     )
 )
 
@@ -146,6 +147,32 @@ def _posix(path: Any) -> str:
 # ---------------------------------------------------------------------------
 # Field checks
 # ---------------------------------------------------------------------------
+
+
+_TOOL_NAME_RE = re.compile(
+    r"^(?:an?\s+)?(?:claude|chatgpt|gpt(?:-?[\w.]+)?|gemini|copilot|codex|llama|mistral|cursor"
+    r"|openai|anthropic|llm|ai|a\.i\.|model|language\s+model|bot|chatbot|assistant|agent"
+    r"|ai\s+(?:assistant|agent|model|reviewer)|the\s+(?:model|tool|agent|assistant))\s*$",
+    re.IGNORECASE,
+)
+
+
+def tool_name_problem(reviewer: Any) -> str | None:
+    """
+    Why `reviewer` cannot be the person who reviewed: the name part (before any `<role>`)
+    is a model, a tool or a generic word for one. A tool that helped belongs in
+    `assisted_by`; the reviewer is a person, by name. None when the name passes.
+    """
+    if not isinstance(reviewer, str):
+        return None
+    name = reviewer.split("<", 1)[0].strip().strip("\"'")
+    if _TOOL_NAME_RE.match(name):
+        return (
+            f"reviewer {reviewer.strip()!r} names a tool, not a person; the reviewer is the "
+            "person who read the artifacts (name and role), and a tool that helped is named "
+            "in assisted_by"
+        )
+    return None
 
 
 def check_text(label: str, value: Any, *, multiline: bool = False) -> str | None:
@@ -559,7 +586,9 @@ def _parse_record(
     errors: list[str] = []
     if not isinstance(raw, Mapping):
         return None, [f"{where} is not a mapping"]
-    problem = check_text(f"{where}.reviewer", raw.get("reviewer"))
+    problem = check_text(f"{where}.reviewer", raw.get("reviewer")) or tool_name_problem(
+        raw.get("reviewer")
+    )
     if problem:
         errors.append(problem)
     assisted_by = _optional_text(raw, "assisted_by", where, errors)

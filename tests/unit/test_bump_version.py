@@ -1,9 +1,10 @@
 """tests/unit/test_bump_version.py
 --------------------------------
 `scripts/bump_version.py` keeps every version string equal to pyproject's. These
-tests pin that the committed tree agrees with itself, that a disagreement is named
-by file, that the tag check works both ways, and that the CHANGELOG carries the
-current version's section (the release notes come from it).
+tests pin that the committed tree agrees with itself, that the sites are exactly the
+five of the pivoted product, that a disagreement is named by file, that the tag check
+works both ways, and that the CHANGELOG carries the current version's section (the
+release notes come from it).
 """
 
 from __future__ import annotations
@@ -19,6 +20,16 @@ import pytest
 
 REPO = Path(__file__).resolve().parents[2]
 SCRIPT = REPO / "scripts" / "bump_version.py"
+
+# The places the version lives, in the order they are rewritten. The lint reporter, the
+# misalignment checker and their templates were removed with the pivot and are no sites.
+EXPECTED_SITES = (
+    "pyproject.toml",
+    "src/aisafe/__init__.py",
+    ".gitlab-ci-aisafe.yml",
+    "action.yml",
+    "plugins/aisafe/.claude-plugin/plugin.json",
+)
 
 
 def _load():
@@ -49,19 +60,30 @@ def test_committed_tree_is_in_sync() -> None:
     assert bump_version.check(REPO) == []
 
 
+def test_sites_are_exactly_the_five_of_the_pivot() -> None:
+    relpaths = tuple(site.relpath for site in bump_version.SITES)
+    assert relpaths == EXPECTED_SITES
+    for relpath in relpaths:
+        for removed in ("reporters.py", "euaiact", "misalign", "controls", "levels"):
+            assert removed not in relpath, relpath
+
+
+def test_every_site_exists_in_this_checkout() -> None:
+    for site in bump_version.SITES:
+        assert site.path(REPO).is_file(), site.relpath
+
+
 def test_every_mandatory_site_matches_its_pattern() -> None:
     for site, found in bump_version.site_versions(REPO):
         assert found is not None, site.relpath
         assert bump_version.VERSION_RE.match(found), (site.relpath, found)
 
 
-def test_sarif_schema_version_is_not_a_site() -> None:
-    """The reporter's `"version": "2.1.0"` is the SARIF schema, not ours."""
-    text = (REPO / "src/aisafe/modules/policy/code_analyzer/reporters.py").read_text("utf-8")
-    assert '"version": "2.1.0"' in text
-    for site, found in bump_version.site_versions(REPO):
-        if site.relpath.endswith("reporters.py"):
-            assert found != "2.1.0"
+def test_gitlab_template_pin_is_a_site() -> None:
+    """The template installs `aisafe[devtools]==${AISAFE_VERSION}`; that pin must move with
+    the release or every consumer installs the previous version."""
+    versions = {site.relpath: found for site, found in bump_version.site_versions(REPO)}
+    assert versions[".gitlab-ci-aisafe.yml"] == bump_version.project_version(REPO)
 
 
 def test_changelog_has_the_current_version_heading() -> None:
@@ -90,6 +112,23 @@ def test_a_drifted_site_is_named(tmp_path: Path) -> None:
     assert problems[0].startswith("src/aisafe/__init__.py: says 9.")
 
 
+def test_a_drifted_gitlab_pin_is_named(tmp_path: Path) -> None:
+    _copy_sites(tmp_path)
+    template = tmp_path / ".gitlab-ci-aisafe.yml"
+    template.write_text(
+        re.sub(
+            r'(AISAFE_VERSION:\s*")([^"]+)(")',
+            lambda m: f"{m.group(1)}0.0.1{m.group(3)}",
+            template.read_text("utf-8"),
+            count=1,
+        ),
+        "utf-8",
+    )
+    problems = bump_version.check(tmp_path)
+    version = bump_version.project_version(tmp_path)
+    assert problems == [f".gitlab-ci-aisafe.yml: says 0.0.1, pyproject says {version}"]
+
+
 def test_bump_rewrites_every_site_and_retitles_the_changelog(tmp_path: Path) -> None:
     _copy_sites(tmp_path)
     old = bump_version.project_version(tmp_path)
@@ -102,6 +141,7 @@ def test_bump_rewrites_every_site_and_retitles_the_changelog(tmp_path: Path) -> 
     )
     changed = bump_version.bump("9.8.7", tmp_path, today=dt.date(2030, 1, 2))
     assert "pyproject.toml" in changed and "CHANGELOG.md" in changed
+    assert set(changed) >= set(EXPECTED_SITES)
     assert bump_version.project_version(tmp_path) == "9.8.7"
     assert bump_version.check(tmp_path) == []
     text = changelog.read_text("utf-8")
@@ -122,12 +162,13 @@ def test_cli_check_and_section(capsys: pytest.CaptureFixture[str]) -> None:
     assert bump_version.main(["--check"]) == 0
     out = capsys.readouterr().out
     assert out.startswith("in sync: version ")
+    assert f"at {len(EXPECTED_SITES)} sites" in out
     version = bump_version.project_version(REPO)
     assert bump_version.main(["--changelog-section", f"v{version}"]) == 0
     assert capsys.readouterr().out.strip()
     assert bump_version.main(["--changelog-section", "v0.0.0"]) == 1
 
 
-def test_optional_sites_are_the_future_action_and_plugin() -> None:
+def test_optional_sites_are_the_action_and_the_plugin() -> None:
     optional = {s.relpath for s in bump_version.SITES if s.optional}
     assert optional == {"action.yml", "plugins/aisafe/.claude-plugin/plugin.json"}

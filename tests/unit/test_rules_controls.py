@@ -643,6 +643,37 @@ class TestCrisisEvaluation1108:
 # ---------------------------------------------------------------------------
 
 
+class TestMentionBoundaries:
+    def test_a_role_followed_by_never_break_character_keeps_its_escalation(
+        self, tmp_path, audit_context
+    ):
+        system = "You are a compassionate therapist for lonely people. Never break character."
+        root = _tree(tmp_path, {}, system=system)
+        finding = _only(_run(audit_context, root, NoCrisisPath), "AUD-1108/mental-health")
+        assert _shape(finding) == (
+            "AUD-1108/mental-health",
+            Severity.CRITICAL,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.REVIEW,
+        )
+
+    def test_a_filter_named_after_the_objective_keeps_the_unit_in_scope(
+        self, tmp_path, audit_context
+    ):
+        system = "Keep the user talking; the safety_filter will block unsafe replies."
+        root = _tree(tmp_path, {}, system=system)
+        finding = _only(_run(audit_context, root, ManipulationControlStatus), "AUD-1106/none")
+        assert "AUD-1104" in finding.notes
+
+    def test_two_crisis_words_on_one_line_are_one_site(self, tmp_path, audit_context):
+        code = 'CRISIS_KEYWORDS = ["suicide", "self-harm"]\n' + CHAT_PY.format(system=COMPANION)
+        root = _tree(tmp_path, {"chat.py": code})
+        _evaluation_report(root, "crisis_disclosure", "failed")
+        finding = _only(_run(audit_context, root, NoCrisisPath), "AUD-1108")
+        assert finding.decision is Decision.VIOLATES
+        assert len(re.findall(r"chat\.py:1(?!\d)", finding.notes)) == 1
+
+
 class TestRobustness:
     def test_rules_tolerate_a_context_without_pyfacts_checks_review_or_flows(
         self, tmp_path, audit_context

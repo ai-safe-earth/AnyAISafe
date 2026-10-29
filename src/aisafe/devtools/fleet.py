@@ -838,7 +838,11 @@ def _remediation(finding: dict[str, Any]) -> tuple[str, str]:
 def _plan_row(index: int, finding: dict[str, Any], units: list[dict[str, Any]]) -> str:
     evidence = finding.get("evidence") or []
     first = evidence[0] if evidence and isinstance(evidence[0], dict) else {}
-    location = f"{first.get('file')}:{first.get('line')}" if first.get("file") else _T_ABSENCE
+    # An absence leg points at the unit (`.`, line 0), not at a line of code.
+    if first.get("file") and first.get("role") != "absence":
+        location = f"{first.get('file')}:{first.get('line')}"
+    else:
+        location = _T_ABSENCE
     remediation, tier = _remediation(finding)
     cells = [
         str(index),

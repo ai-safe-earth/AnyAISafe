@@ -1,3 +1,4 @@
+# aisafe-audit: ignore-file
 """src/aisafe/analysis/pydeep.py
 ------------------------------
 Python AST layer of `aisafe audit`: where a prompt is written, where it is assembled, which

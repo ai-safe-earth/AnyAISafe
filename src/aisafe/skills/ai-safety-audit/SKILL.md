@@ -99,7 +99,7 @@ in a `--fail-on-unknown` category, 2 = fatal (read stderr, fix the target path, 
 or the refused flag, rerun), 130 = interrupted. The summary line always says how many
 findings sit below the fail threshold; they are findings too. With `--baseline`, a
 fingerprint the baseline holds is `unchanged` and not counted, with or without a reason,
-unless the baseline was written under an older policy version and the entry has no reason:
+unless the baseline was written under another policy version and the entry has no reason:
 then it is `re-review` and counts like `new`.
 
 ## Phase 1 -- Survey
@@ -124,8 +124,9 @@ and summarise it in five lines or fewer: languages; model providers; prompt file
 literals (`inventory.prompts`, kinds `file`, `literal`, `assembly`, `remote`, `runtime`);
 person signals by kind (`inventory.person_signals`); memory stores and personas; review
 records found; evaluation reports found; and the coverage gaps -- the UNKNOWN items of
-category `coverage`: prompt-only units with no model call, prompts fetched at runtime, and
-non-Python units read with patterns only.
+category `coverage` (prompt-only units with no model call, prompts fetched at runtime or
+read from settings) and `deep` (non-Python units, read with patterns only, and any Python
+file the syntax tree could not parse).
 
 ## Phase 2 -- Document
 
@@ -313,11 +314,14 @@ settle. The results hold for these scenarios against this endpoint on this date 
 nothing else.
 
 Then re-run the audit (the recheck line of phase 4): AUD-1106 and AUD-1108 read the report
-from `.aisafe-audit/`. A passing family within the policy's freshness window is a
-`demonstrated` control (the finding stays, at LOW, as observed behaviour: a model update can
-change it); a failing family is observed behaviour with the decision `violates_policy`. A
-failing report never silences a finding, and a passing one never removes the objective
-written into a prompt.
+from `.aisafe-audit/`. A passing family within the policy's freshness window (30 days) is a
+`demonstrated` control: AUD-1108 stays, at LOW, as observed behaviour (a model update can
+change the reply), and AUD-1106 is no longer reported, which the M8 coverage row records; a
+failing family is observed behaviour with the decision `violates_policy` and a `report`
+block naming the file and its age. A `--transcripts` run demonstrates nothing (the scenarios
+were not performed): it is listed under `reports`, and its `observed` hits are for the
+person to read. A failing report never silences a finding, and a passing one never removes
+the objective written into a prompt.
 
 ## Closing
 

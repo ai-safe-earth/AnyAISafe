@@ -289,6 +289,53 @@ def _row_regex(key: str) -> re.Pattern[str] | None:
     return None
 
 
+_PROMPT_KEY_RE = re.compile(patterns._PROMPT_LHS, re.I)
+CONFIG_PROSE_NOTE = (
+    "prose in a configuration file that is not a prompt file (a description, a label, a "
+    "comment) under no prompt key: recorded for review, not read as an instruction to the model"
+)
+
+
+def config_prose(ctx: AuditContext, signal: Signal) -> bool:
+    """
+    The signal sits in a configuration file that is not a prompt file, on a line that
+    carries no prompt key (`system:`, `prompt:`, `instructions:` ...): a description or a
+    comment that names the practice. The charter records it for review; only prompt
+    material can be an instruction to the model.
+    """
+    if is_code_file(signal.file):
+        return False
+    lang = next(
+        (
+            getattr(record, "lang", None)
+            for record in ctx.files
+            if getattr(record, "relpath", None) == signal.file
+        ),
+        None,
+    )
+    if lang != "config":
+        return False
+    from aisafe.discovery.discover import is_prompt_file
+
+    if is_prompt_file(signal.file):
+        return False
+    return _PROMPT_KEY_RE.search(line_at(ctx, signal.file, signal.line)) is None
+
+
+def reviewed_if_config_prose(
+    ctx: AuditContext,
+    signal: Signal,
+    status: EvidenceStatus,
+    decision: Decision,
+    notes: str,
+) -> tuple[EvidenceStatus, Decision, str]:
+    """The prompt-material status and decision, lowered to a detected signal for review
+    when the signal is configuration prose (see `config_prose`)."""
+    if config_prose(ctx, signal):
+        return EvidenceStatus.DETECTED_SIGNAL, Decision.REVIEW, f"{notes}; {CONFIG_PROSE_NOTE}"
+    return status, decision, notes
+
+
 def is_mention(ctx: AuditContext, signal: Signal) -> bool:
     """A quoted or discussed phrase in prompt material: `Explain how we detect social
     scoring` is a mention of the practice, not an instruction to perform it."""
@@ -670,6 +717,7 @@ def evaluation_demonstrates(
 
 _TEST_FILE_RE = re.compile(
     r"(?:^|/)(?:tests?|__tests__|spec)/|(?:^|/)test_[^/]+\.py$|_test\.(?:py|go)$|\.(?:test|spec)\.(?:[cm]?[jt]sx?)$"
+    r"|Tests?\.(?:java|kt|cs|scala)$"
 )
 _CALL_SHAPE_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*\s*\(")
 _IMPORT_LINE_RE = re.compile(

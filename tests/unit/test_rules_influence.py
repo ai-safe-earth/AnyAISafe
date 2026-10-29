@@ -868,6 +868,104 @@ class TestPolitical1110:
 # ---------------------------------------------------------------------------
 
 
+class TestMentionBoundaries:
+    """The mention test reads the sentence that holds the match: a cue before it governs
+    it, only an evaluation after it does, and a quoted prompt value is prompt text."""
+
+    @pytest.mark.parametrize(
+        "system",
+        [
+            "Keep the user engaged to prevent churn.",
+            "Keep the user talking; the safety_filter will block unsafe replies.",
+            "Maximize engagement and detect when the user gets bored.",
+            "Keep the conversation going, for example by asking a follow-up question.",
+        ],
+    )
+    def test_a_verb_after_the_objective_continues_the_instruction(
+        self, tmp_path, audit_context, system
+    ):
+        root = _tree(tmp_path, {}, system=system)
+        finding = _one(_run(audit_context, root, EngagementObjective), "AUD-1104")
+        _pin(finding, Severity.HIGH, SUPPORTED, VIOLATES)
+        root = _tree(tmp_path / "md", {"prompts/style.md": system}, system="Chat.")
+        assert "AUD-1104" in _ids(_run(audit_context, root, EngagementObjective))
+
+    def test_an_evaluation_after_the_phrase_is_a_mention(self, tmp_path, audit_context):
+        system = "Prompts that maximise engagement are dangerous and not recommended."
+        assert _run(audit_context, _tree(tmp_path, {}, system=system), EngagementObjective) == []
+
+    @pytest.mark.parametrize(
+        "rel, text",
+        [
+            (
+                "prompts/system.yaml",
+                'system: "Keep the user talking. Make them feel guilty for leaving. '
+                'Never mention competitors."\n',
+            ),
+            (
+                "prompts/system.yaml",
+                'lines:\n  - "Keep the user talking. Make them feel guilty for leaving. '
+                'Never mention competitors."\n',
+            ),
+            (
+                "prompts/system.md",
+                '"Keep the user talking. Make them feel guilty for leaving. '
+                'Never mention competitors."\n',
+            ),
+        ],
+    )
+    def test_a_quoted_value_in_prompt_config_is_prompt_text(
+        self, tmp_path, audit_context, rel, text
+    ):
+        findings = _run(audit_context, _tree(tmp_path, {rel: text}, system="Chat."))
+        assert {"AUD-1104", "AUD-1109", "AUD-1110/commercial"} <= set(_ids(findings)), _ids(
+            findings
+        )
+        for finding in findings:
+            if finding.id in ("AUD-1104", "AUD-1109", "AUD-1110"):
+                _pin(finding, Severity.HIGH, SUPPORTED, VIOLATES)
+
+    def test_a_quoted_phrase_inside_prose_stays_a_mention(self, tmp_path, audit_context):
+        text = 'Reject prompts such as "keep the user talking" or "never mention competitors".\n'
+        root = _tree(tmp_path, {"prompts/policy.md": text}, system="Chat.")
+        assert _run(audit_context, root) == []
+
+    def test_mention_in_line_reads_the_sentence_and_the_quote_shape(self):
+        line = "Be brief. Never say you missed them. Keep the user talking to prevent churn."
+        start = line.index("say you missed them")
+        assert influence.mention_in_line(
+            line, start, start + len("say you missed them"), code_file=False
+        )
+        start = line.index("Keep the user talking")
+        assert not influence.mention_in_line(
+            line, start, start + len("Keep the user talking"), code_file=False
+        )
+        value = 'system: "Keep the user talking."'
+        start = value.index("Keep")
+        assert not influence.mention_in_line(
+            value, start, start + len("Keep the user talking"), code_file=False
+        )
+        prose = 'Avoid prompts like "Keep the user talking".'
+        start = prose.index("Keep")
+        assert influence.mention_in_line(
+            prose, start, start + len("Keep the user talking"), code_file=False
+        )
+        apostrophes = "You are the user's friend. Don't let the user leave the chat."
+        start = apostrophes.index("Don't let")
+        assert not influence.mention_in_line(
+            apostrophes, start, start + len("Don't let the user leave the chat"), code_file=False
+        )
+
+    def test_check_legs_are_hashed_into_the_artifacts(self, audit_context):
+        findings = _run(audit_context, FIXTURES / "persons_companion", EngagementObjective)
+        assert findings
+        for finding in findings:
+            hashed = {ref.file for ref in finding.artifacts}
+            assert all(leg.file in hashed for leg in finding.evidence if leg.line > 0), (
+                finding.display_id
+            )
+
+
 class TestRobustness:
     def test_rules_tolerate_a_context_without_pyfacts_or_checks(self, tmp_path, audit_context):
         root = _tree(

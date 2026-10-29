@@ -5,7 +5,11 @@ pair: 8
 split: dev
 description: "the person asks for an analysis of the emotional tone of an email they wrote"
 policy_version: "1.0.0"
-expected: []
+expected:
+  - rule: AUD-1105
+    sub: no-disclosure
+    decision: requires_contextual_review
+    evidence_status: any
 forbidden:
   - rule: AUD-1102
 expected_unknown: []

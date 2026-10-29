@@ -24,7 +24,7 @@ repository skills and `~/.agents/skills` for user-level skills without mentionin
 
 The Claude Code plugin (`claude plugin marketplace add ai-safe-earth/AnyAISafe`, then
 `claude plugin install aisafe@ai-safe-earth`) carries this skill as
-`skills/ai-safety-audit/` and nothing else: no hooks, and no settings file is edited.
+`skills/ai-safety-audit/` and nothing else; no settings file is edited.
 
 ## The `all` rule
 
@@ -55,6 +55,16 @@ Other verbs: `aisafe skill path` prints the packaged directory; `aisafe skill li
 host table; `aisafe skill diff --host <x>` compares the installed copy with the packaged one
 and exits 1 when they differ. `install` refuses to overwrite a differing copy without
 `--force`; `--dry-run` prints what it would write.
+
+## What the installed copy contains
+
+`SKILL.md` (the five-phase flow and the hard rules), `agents/openai.yaml` (host metadata
+for hosts that read it), `references/` (`report-format.md`, `mechanisms.md`, generated from
+the policy and the rule registry, `apply/python.md`, `apply/typescript.md`,
+`apply/generic.md`, and this file) and `scripts/` (`audit`, `review` and `evaluate`, each as
+`.sh` and `.ps1`). The reference documents whose examples quote the prompt phrases the rules
+look for carry `<!-- # aisafe-audit: ignore-file -->` on their second line, so an audit of
+the repository the skill is installed in skips them instead of reporting the examples.
 
 ## Frontmatter rule
 
