@@ -1,0 +1,16 @@
+schema: aisg/1
+kind: bench-case
+id: remote-prompt-unavailable
+pair: 14
+split: dev
+description: "the system prompt is fetched from a URL at runtime; its text is not in the tree"
+policy_version: "1.0.0"
+expected: []
+forbidden: []
+expected_unknown: [coverage]
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

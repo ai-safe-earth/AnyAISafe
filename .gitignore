@@ -14,8 +14,8 @@ build/
 venv/
 env/
 
-# Audit logs (may contain PII / sensitive data) -- root-anchored: the bare
-# pattern also swallowed src/aisafe/devtools/audit/ and tests/fixtures/audit/.
+# Runtime logs of the legacy guardrails (may contain personal data) -- root-anchored:
+# the bare pattern also swallowed tests/fixtures/audit/.
 /audit/
 
 # Pytest / coverage
@@ -61,8 +61,8 @@ bench/results/*.sarif
 bench/results-audit/*.json
 
 # aisafe audit artefacts written by the skill flow (before/after documents,
-# baseline drafts). The walk still reads them: measure and probe reports there
-# count as evidence, and the audit's own documents are skipped by content.
+# baseline drafts). The walk still reads them: evaluation reports there count
+# as evidence, and the audit's own documents are skipped by content.
 .aisafe-audit/
 .aisg-audit/
 
@@ -70,11 +70,10 @@ bench/results-audit/*.json
 .aisafe-fleet/
 .aisg-fleet/
 
-# The default output of a bare `aisafe measure` / `aisafe probe` run from the repository
-# root. A committed copy is read by the next self-audit as evidence and silences the
-# AUD-801 acceptances whose reasons say no such report is committed; CI keeps its
-# report as a build artifact instead.
-/measure-report.json
+# The default output of a bare `aisafe evaluate` run from the repository root. A
+# committed copy would be read by the next self-audit as evidence about this
+# repository, which it is not; keep evaluation reports with the system they evaluated.
+/evaluation-report.json
 /probe-report.json
 
 # Bench and research clones (bench/run.py --keep-clones); never source of this repo

@@ -40,11 +40,29 @@ import yaml
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / "src"))
 
-from aisafe.devtools.audit import patterns  # noqa: E402
-from aisafe.devtools.audit.model import redact  # noqa: E402
+from aisafe.evidence.model import redact  # noqa: E402
 
 _KEY_BEGIN = re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----")
 _KEY_END = re.compile(r"-----END [A-Z ]*PRIVATE KEY-----")
+
+# Secret-shaped tokens, masked whole before `redact()` runs: the prefixes that
+# `aisafe.evidence.model.REDACT_PATTERNS` recognises (Anthropic, OpenAI, GitHub, AWS,
+# Slack, Google), a bearer token, and a PEM private-key header or footer on its own line.
+_SECRET_RE = re.compile(
+    r"\b(?:sk-ant-|sk-|github_pat_|gh[pousr]_)[A-Za-z0-9_\-]{20,}"
+    r"|\b(?:AKIA|ASIA)[0-9A-Z]{16}\b"
+    r"|\bxox[abpors]-[A-Za-z0-9\-]{10,}"
+    r"|\bAIza[0-9A-Za-z_\-]{35}"
+    r"|(?i:\bbearer\s+)[A-Za-z0-9_\-.=+/]{20,}"
+    r"|-----(?:BEGIN|END) [A-Z ]*PRIVATE KEY-----"
+)
+# Personal data a quoted line may carry: an e-mail address, an IBAN-shaped account
+# number, and a phone-shaped run of nine or more digits with optional separators.
+_PII_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("email", re.compile(r"[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}")),
+    ("iban", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{11,30}\b")),
+    ("phone", re.compile(r"(?<![\w/.])\+?\d(?:[ \-.()]?\d){8,}(?![\w/.])")),
+)
 
 BUILD = ROOT / "research" / "console" / "build"
 CORPUS = ROOT / "research" / "corpus.yaml"
@@ -263,22 +281,13 @@ def load_findings(results: Path) -> dict[tuple, dict]:
 
 def clip(text: str, limit: int) -> str:
     text = text.rstrip("\r\n")
-    return text if len(text) <= limit else text[:limit] + " …"
-
-
-def _hide_secret(m: re.Match[str]) -> str:
-    """Mask the secret itself: group 1 where the pattern captures one, else the match."""
-    if not m.lastindex:
-        return "<secret>"
-    whole, s = m.group(0), m.start(0)
-    return whole[: m.start(1) - s] + "<secret>" + whole[m.end(1) - s :]
+    return text if len(text) <= limit else text[:limit] + " ..."
 
 
 def mask(line: str) -> str:
-    """Hide what the audit's discover pass hides: secret tokens, PII, then redact()."""
-    for _key, rx in patterns.SECRET_PATTERNS:
-        line = rx.sub(_hide_secret, line)
-    for entity, rx in patterns.PII_TABLE:
+    """Hide what a quoted line must not carry: secret tokens, personal data, then redact()."""
+    line = _SECRET_RE.sub("<secret>", line)
+    for entity, rx in _PII_PATTERNS:
         line = rx.sub(f"<pii:{entity}>", line)
     return redact(line)
 

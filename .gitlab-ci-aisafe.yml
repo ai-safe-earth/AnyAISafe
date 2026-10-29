@@ -1,0 +1,70 @@
+# .gitlab-ci-aisafe.yml
+# -------------------------------------------------------
+# `aisafe audit` as a GitLab CI/CD job
+# -------------------------------------------------------
+# Include in your main .gitlab-ci.yml:
+#   include:
+#     - local: '.gitlab-ci-aisafe.yml'
+#
+# Or merge the stage and the job into your existing pipeline.
+#
+# `aisafe audit` walks the repository and reports how its prompts and the code
+# around them treat the person using it: profiling, manipulation, engineered
+# attachment, deceptive identity, behavioural influence. It exits 1 on a finding
+# at or above AUDIT_FAIL_ON (only NEW findings when AUDIT_BASELINE is set).
+# Findings describe evidence and the project's policy decision; no document
+# states a compliance verdict. The SARIF lands in the Security Dashboard; the
+# verdict step reads the JSON.
+#
+# Every `aisafe audit` call is followed by `|| [ $? -eq 1 ]`: exit 1 means
+# findings, which the verdict step reads from the JSON; anything else is a
+# broken run and must stay fatal.
+
+stages:
+  - audit
+
+variables:
+  AUDIT_PATH: "."                     # what `aisafe audit` walks
+  AUDIT_FAIL_ON: "high"               # critical | high | medium | low | info | never
+  AUDIT_BASELINE: ""                  # e.g. "audit-baseline.json"; empty = every finding counts
+  AISAFE_VERSION: "0.1.0"             # the `aisafe` release on PyPI; pinned, never "latest"
+
+.aisafe-base:
+  stage: audit
+  image: python:3.11-slim
+  before_script:
+    # git is for the audit's commit metadata, not the install.
+    - apt-get update -qq && apt-get install -y -qq git >/dev/null
+    - pip install --quiet "aisafe[devtools]==${AISAFE_VERSION}"
+
+# -- The audit (merge requests and the main branches) ------------------------
+
+aisafe-audit:
+  extends: .aisafe-base
+  rules:
+    - if: '$CI_PIPELINE_SOURCE == "merge_request_event"'
+    - if: '$CI_COMMIT_BRANCH == "main" || $CI_COMMIT_BRANCH == "develop"'
+  script:
+    - aisafe audit $AUDIT_PATH --fail-on $AUDIT_FAIL_ON ${AUDIT_BASELINE:+--baseline $AUDIT_BASELINE} --format json --output aisafe-audit-report.json || [ $? -eq 1 ]
+    - aisafe audit $AUDIT_PATH --fail-on $AUDIT_FAIL_ON ${AUDIT_BASELINE:+--baseline $AUDIT_BASELINE} --format sarif --output aisafe-audit-results.sarif || [ $? -eq 1 ]
+    - |
+      python - <<'EOF'
+      import json, sys
+      report = json.load(open("aisafe-audit-report.json", encoding="utf-8"))
+      if report.get("schema") != "aisg/1" or report.get("kind") != "audit":
+          sys.exit("not an aisafe audit report")
+      s = report["summary"]
+      print(f"findings={s['findings']} unknown_items={s['unknown_items']} "
+            f"new={s.get('baseline_new')} exit_code={s['exit_code']}")
+      sys.exit(int(s["exit_code"]))
+      EOF
+  artifacts:
+    name: "aisafe-audit-$CI_COMMIT_SHORT_SHA"
+    paths:
+      - aisafe-audit-report.json
+      - aisafe-audit-results.sarif
+    reports:
+      sast: aisafe-audit-results.sarif   # Shows in the GitLab Security Dashboard
+    expire_in: 90 days
+    when: always
+  allow_failure: false

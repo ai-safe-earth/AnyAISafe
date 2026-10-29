@@ -32,7 +32,7 @@ jobs:
         with:
           python-version: "3.13"
           cache: pip
-      - run: pip install -e ".[dev,devtools,settings,otel,metrics]"
+      - run: pip install -e ".[dev,devtools]"
       - name: Version sites equal pyproject and the tag
         run: |
           if [ "${GITHUB_REF_TYPE}" = "tag" ]; then
@@ -41,11 +41,10 @@ jobs:
             python scripts/bump_version.py --check
           fi
       - run: python scripts/sync_skill.py --check
-      - run: python scripts/controls_md.py --check
-      - run: python scripts/levels_md.py --check
+      - run: python scripts/rules_md.py --check
       - run: pytest -q
       - name: Self-audit against the committed baseline
-        run: aisafe audit . --no-external --fail-on high --baseline audit-baseline.json
+        run: aisafe audit . --fail-on high --baseline audit-baseline.json
 
   build:
     name: sdist and wheel
@@ -144,8 +143,8 @@ jobs:
           done
           cat version.txt
           grep -qx "aisafe ${V}" version.txt
-          rc=0; uvx --from "aisafe==${V}" aisafe audit "${FIXTURES}/clean_py" --no-external || rc=$?
+          rc=0; uvx --from "aisafe==${V}" aisafe audit "${FIXTURES}/clean_py" || rc=$?
           [ "$rc" -eq 0 ] || { echo "clean_py: expected exit 0, got $rc"; exit 1; }
-          rc=0; uvx --from "aisafe==${V}" aisafe audit "${FIXTURES}/py_agent" --no-external || rc=$?
-          [ "$rc" -eq 1 ] || { echo "py_agent: expected exit 1, got $rc"; exit 1; }
+          rc=0; uvx --from "aisafe==${V}" aisafe audit "${FIXTURES}/persons_companion" || rc=$?
+          [ "$rc" -eq 1 ] || { echo "persons_companion: expected exit 1, got $rc"; exit 1; }
           echo "smoke: aisafe==${V} audits as expected"

@@ -1,0 +1,12 @@
+schema: aisg/1
+kind: review
+policy_version: "1.0.0"
+reviews:
+  - reviewer: "A. Reviewer <product owner>"
+    reviewed_at: 2026-10-29
+    scope: [M1, M2, M3, M4, M5, M6, M7, M8]
+    declared_purpose: "a conversational companion for adults who chose it"
+    affected_population: "adult users of the companion app"
+    artifacts:
+      - {path: prompts/companion.md, sha256: "3d2ba7d158e6f2f0534bf72a0ce65e8f8dfd615fc1cc8b26cd9fb276ba313ff4"}
+      - {path: chat.py, sha256: "1a4a54a41a3286c6f3ce5ba44d3589304bf38a54012349224d3a808a8b92ce4d"}

@@ -3,27 +3,24 @@ requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project.scripts]
-# Single entry point. `aisafe <command> --help` shows each tool's own options.
-#   aisafe lint src/
-#   aisafe lint src/ --format sarif --output results.sarif
-#   aisafe misalign src/ --fail-on-warnings
+# Single entry point. `aisafe <command> --help` shows each command's own options.
+#   aisafe audit . --format json -o audit-report.json
+#   aisafe review record --reviewer "J. Doe <product owner>" --purpose "..."
+#   aisafe evaluate --transcripts conversations.jsonl
 aisafe = "aisafe.cli:main"
-# Retained so existing pre-commit configs and CI keep working.
-euaiact-lint = "aisafe.devtools.euaiact_lint:main"
-misalignment-check = "aisafe.devtools.misalignment_check:main"
 
 [project]
 # The project is AnyAISafe; the distribution, the importable name and the console
 # script are all `aisafe`.
-# pip install "aisafe[devtools]", then import aisafe.
+# pip install "aisafe[devtools]", then `aisafe audit .`
 name = "aisafe"
 version = "0.1.0"
-description = "AnyAISafe: audit the prompts and algorithms of AI software for how they treat the person using it (profiling, engagement design, manipulation, a hidden AI nature, no crisis path) and for agent-safety gaps; measure, price, apply and attest controls; runtime guardrails included"
+description = "AnyAISafe: audit the prompts and algorithms of AI-enabled software for profiling, manipulation, engineered emotional attachment, deceptive identity and behavioural influence over the person using it. Deterministic, local, offline; evidence and a policy decision, never a certification."
 readme = "README.md"
 license = { text = "MIT" }
 requires-python = ">=3.10"
 
-keywords = ["AI safety", "AI ethics", "AI safety audit", "prompt audit", "manipulation", "dark patterns", "AI companions", "guardrails", "agents", "LLM", "EU AI Act", "prompt injection", "PII"]
+keywords = ["AI safety", "AI ethics", "prompt audit", "manipulation", "dark patterns", "AI companions", "emotional attachment", "profiling", "deceptive identity", "behavioural influence", "LLM", "static analysis"]
 
 classifiers = [
     "Development Status :: 4 - Beta",
@@ -31,13 +28,16 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
     "Topic :: Security",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 
+# The audit reads files and nothing else: one dependency, for the policy, the review
+# records and the evaluation corpus (all YAML). No HTTP client: `aisafe evaluate` uses the
+# standard library, and the audit opens no socket at all.
 dependencies = [
     "pyyaml>=6.0",
-    "aiohttp>=3.9",
 ]
 
 [project.urls]
@@ -47,111 +47,17 @@ Repository = "https://github.com/ai-safe-earth/AnyAISafe"
 Security = "https://github.com/ai-safe-earth/AnyAISafe/security/advisories/new"
 
 [project.optional-dependencies]
-# PII detection (Presidio)
-presidio = [
-    "presidio-analyzer>=2.2",
-    "presidio-anonymizer>=2.2",
-    "spacy>=3.7",
-]
-
-# LangChain integration
-langchain = [
-    "langchain>=0.3",
-    "langchain-core>=0.3",
-]
-
-# FastAPI integration
-fastapi = [
-    "fastapi>=0.110",
-    "starlette>=0.37",
-]
-
-# Anthropic integration
-anthropic = [
-    "anthropic>=0.40",
-]
-
-# LlamaGuard 3 via Groq, Together, Ollama or OpenAI needs nothing beyond the
-# core aiohttp dependency. Listed for discoverability.
-llamaguard = []
-
-# Local LlamaGuard inference through transformers. ~2GB of wheels for one of
-# five providers, so it is deliberately not part of `llamaguard` or `all` --
-# installing the judge should not drag in torch.
-llamaguard-local = [
-    "transformers>=4.40",
-    "torch>=2.2",
-    "accelerate>=0.30",
-]
-
-# OpenAI Moderation API judge (uses only aiohttp — no extra packages needed)
-# Listed here for discoverability; no actual extra deps required.
-openai-mod = []
-
-# Settings / .env file support
-settings = [
-    "pydantic-settings>=2.0",
-]
-
-# Claude judge (uses anthropic SDK)
-claude-judge = [
-    "anthropic>=0.40",
-]
-
-# All LLM judges
-llm-judges = [
-    "aisafe[anthropic]",
-]
-
-# NVIDIA NeMo Guardrails integration
-nemo = [
-    "nemoguardrails>=0.9",
-]
-
-# OpenTelemetry observability
-otel = [
-    "opentelemetry-api>=1.24",
-    "opentelemetry-sdk>=1.24",
-    "opentelemetry-exporter-otlp>=1.24",
-]
-
-# Prometheus metrics
-metrics = [
-    "prometheus-client>=0.20",
-]
-
-# Static analysis CLI (`aisafe lint` / `aisafe misalign`) -- deliberately light.
-# The analysers are pure-stdlib AST walkers; they need nothing beyond the base
-# dependencies. tomli only backfills tomllib on Python 3.10 so the CLI can read
-# its [tool.*] defaults out of pyproject.toml.
+# `aisafe audit` reads its [tool.aisafe-audit] defaults out of pyproject.toml; tomli only
+# backfills tomllib on Python 3.10. Nothing else is needed: the audit is stdlib + pyyaml.
 devtools = [
     "tomli>=2.0; python_version < '3.11'",
-]
-
-# Deprecated alias for `devtools`.
-lint = [
-    "aisafe[devtools]",
-]
-
-# Pre-commit companion tools
-precommit = [
-    "pre-commit>=3.7",
-    "detect-secrets>=1.4",
-]
-
-# Full install (everything)
-all = [
-    "aisafe[presidio,langchain,fastapi,anthropic,otel,metrics,devtools,precommit,llm-judges,settings,nemo]",
 ]
 
 # Development
 dev = [
     "pytest>=8.0",
-    "pytest-asyncio>=0.23",
-    "black>=24.0",
     "ruff>=0.4",
     "mypy>=1.10",
-    "httpx>=0.27",          # FastAPI middleware tests
     "pre-commit>=3.7",      # Local hook testing
     "detect-secrets>=1.4",  # Secret scanning companion
 ]
@@ -161,10 +67,12 @@ where = ["src"]
 include = ["aisafe*"]
 
 [tool.setuptools.package-data]
-# YAML presets ship inside the wheel; readable via aisafe.config.preset_path().
-"aisafe.config" = ["*.yaml", "nemo_rails/*"]
-# Attack corpus for `aisafe probe`, loaded via importlib.resources.
-"aisafe.probes" = ["*.yaml"]
+# The policy ships inside the wheel: `aisafe.policy.load_policy()` reads mechanisms.yaml,
+# `charter_path()` points at charter.md. /policy/ at the repository root holds the source
+# copies; a test pins the two pairs identical.
+"aisafe.policy" = ["*.yaml", "*.md"]
+# Scenario corpus for `aisafe evaluate`, loaded via importlib.resources.
+"aisafe.evaluation" = ["corpus/*.yaml"]
 # Agent skill copied by `aisafe skill install`, read via aisafe.skills.skill_root().
 # The recursive glob is the intent; the per-type globs cover setuptools
 # versions that do not recurse `**`.
@@ -176,29 +84,24 @@ include = ["aisafe*"]
     "ai-safety-audit/**/*.sh",
     "ai-safety-audit/**/*.ps1",
 ]
-# Semgrep taint rules for the `aisafe audit` semgrep adapter.
-"aisafe.devtools.audit" = ["semgrep/*.yaml"]
 
 [tool.pytest.ini_options]
-asyncio_mode = "auto"
 testpaths = ["tests"]
 
 [tool.ruff]
 line-length = 100
 target-version = "py310"
-# Deliberately-broken linter input; mypy excludes it too.
-extend-exclude = ["tests/fixtures"]
+# Deliberately-broken audit input; mypy excludes it too.
+extend-exclude = ["tests/fixtures", "bench/cases", "examples"]
 
 [tool.ruff.lint]
 select = ["E", "F", "W", "I"]
 ignore = ["E501"]   # line length handled by formatter
 
 [tool.ruff.lint.per-file-ignores]
-# examples/ call sys.path.insert to run against src/ without installing.
 # tests/ stub optional dependencies into sys.modules before importing the code
 # under test, so those imports must follow the stub.
 "tests/*" = ["E402"]
-"examples/*" = ["E402"]
 
 [tool.mypy]
 python_version = "3.10"
@@ -206,68 +109,26 @@ ignore_missing_imports = true
 exclude = ["tests/fixtures/"]   # fixtures contain intentionally bad code
 
 # -------------------------------------------------------
-# euaiact-lint configuration
-# -------------------------------------------------------
-# Read by aisafe/devtools/euaiact_lint.py via aisafe/devtools/_config.py
-# when invoked with no explicit flags.
-[tool.euaiact-lint]
-paths = ["src", "examples"]
-exclude = ["tests/fixtures", "__pycache__", ".venv", "dist"]
-format = "terminal"
-errors_only = false         # set true to only report Art.5 / security errors
-fail_on_warnings = false    # set true for strict CI enforcement
-
-# -------------------------------------------------------
-# misalignment-check configuration
-# -------------------------------------------------------
-# Read by aisafe/devtools/misalignment_check.py via aisafe/devtools/_config.py
-# when invoked with no explicit flags.
-[tool.misalignment-check]
-paths = ["src", "examples"]
-exclude = ["tests/fixtures", "__pycache__", ".venv", "dist"]
-format = "terminal"
-errors_only = false         # set true to hard-block on ALIGN-001/005/006/008 only
-fail_on_warnings = false    # set true for strict PR enforcement
-
-# -------------------------------------------------------
 # aisafe-audit configuration
 # -------------------------------------------------------
-# Read by aisafe/devtools/audit/main.py via aisafe/devtools/_config.py.
-# An explicit CLI flag always wins over a value here.
+# Read by aisafe/audit.py via aisafe/devtools/_config.py. An explicit CLI flag always
+# wins over a value here. Per-invocation actions (--write-baseline, --amend-baseline,
+# --inventory-only, --list-rules) are never read from this table.
 #
-# exclude: tests/ and the probe corpus hold fake keys and injection text the
-# rules must catch elsewhere but not here. audit-baseline.json is NOT
-# excluded: it is scanned like any other file, so a reason there must
-# describe the accepted evidence without quoting the literal that produced
-# it (an over-grant flag, a kill-switch name, a floating model id) or the
-# self-audit reports the finding a second time, from the baseline itself.
+# exclude: tests/ and the evaluation corpus quote the very instructions the rules look
+# for, as do the demo prompts under examples/ and the bench trees; research/results and
+# the bench CSVs are other repositories' findings flattened for labelling, so their
+# snippet column would make the self-audit report its own evidence. audit-baseline.json
+# is NOT excluded: it is scanned like any other file, so a reason there must describe the
+# accepted evidence without quoting the matched text, or the baseline reports itself.
 # tests/unit/test_audit_baseline.py pins that the committed file stays quiet.
 [tool.aisafe-audit]
-# research/results and the bench audit CSVs are other repositories' findings flattened
-# for labelling: their snippet column quotes the matched line, so the self-audit would
-# report its own evidence (the JSON reports beside them are already skipped as own output).
-exclude = ["tests", "src/aisafe/probes", "research/results", "bench/findings-audit*.csv"]
+exclude = [
+    "tests",
+    "research/results",
+    "bench/findings*.csv",
+    "bench/cases",
+    "examples",
+    "src/aisafe/evaluation/corpus",
+]
 fail-on = "high"
-
-# -------------------------------------------------------
-# aisafe-decide configuration
-# -------------------------------------------------------
-# Read by aisafe/devtools/decide.py via aisafe/devtools/_config.py. Every flag of
-# `aisafe decide` can be defaulted here except `select` (a per-decision act).
-# `prices` points the decision at a price table other than the packaged one;
-# a figure typed in with a date beats a figure nobody can recheck.
-[tool.aisafe-decide]
-# prices = "config/prices.yaml"
-
-# `aisafe hook` (agent-host hooks). Every key is optional; these are the defaults.
-# fail-on falls back to [tool.aisafe-audit].fail-on. `prompt_injection` is opt-in.
-[tool.aisafe-hook]
-# fail-on = "high"
-# policies = ["protected_path", "secret_literal", "unsafe_in_hook_config", "shell_unsafe",
-#             "shell_overgrant", "shell_protected_write", "recheck", "posture", "stop_gate"]
-# max-audit-seconds = 10          # PostToolUse re-audits the whole tree only below this
-# stop-max-audit-seconds = 90     # the Stop gate is skipped (context only) above this
-# debounce-seconds = 2
-# baseline = ".aisafe-audit/audit-baseline.json"   # else audit-baseline.json at the root
-# report = ".aisafe-audit/audit-report.json"
-# ask-fallback = "allow"          # hosts without an ask primitive (Gemini): allow | deny

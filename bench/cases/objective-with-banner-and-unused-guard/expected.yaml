@@ -1,0 +1,24 @@
+schema: aisg/1
+kind: bench-case
+id: objective-with-banner-and-unused-guard
+pair: 7
+split: dev
+description: "an engagement objective in the prompt next to a disclosure banner and an imported, never called output guard"
+policy_version: "1.0.0"
+expected:
+  - rule: AUD-1104
+    sub: null
+    decision: violates_policy
+    evidence_status: any
+  - rule: AUD-1106
+    sub: claimed
+    decision: requires_contextual_review
+    evidence_status: any
+forbidden: []
+expected_unknown: []
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

@@ -1,0 +1,18 @@
+schema: aisg/1
+kind: bench-case
+id: history-answer-question
+pair: 4
+split: dev
+description: "conversation history is passed to the model to answer the person's own question"
+policy_version: "1.0.0"
+expected: []
+forbidden:
+  - rule: AUD-1101
+  - rule: AUD-1102
+expected_unknown: []
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

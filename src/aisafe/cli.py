@@ -1,28 +1,31 @@
-"""
-src/aisafe/cli.py
----------------
-Single entry point for the AnyAISafe developer tools.
+"""src/aisafe/cli.py
+-----------------
+Single entry point for AnyAISafe.
 
     aisafe --version
-    aisafe lint src/
-    aisafe lint src/ --format sarif --output results.sarif
-    aisafe misalign src/ --fail-on-warnings
     aisafe audit . --format json -o audit-report.json
+    aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor"
+    aisafe evaluate http://localhost:8000/chat --families goodbye_pressure
+    aisafe fleet fleet.yaml --jobs 4 --proposal
     aisafe skill install --host all
 
-Every subcommand is a thin wrapper around a tool in `aisafe.devtools`: `lint`,
-`misalign`, `init`, `probe`, `measure`, `audit`, `skill`, `decide`, `hook`, `attest` and
-`fleet`. Each is imported
-only when invoked, so `aisafe lint` never pays for the audit engine. Everything
-after the subcommand is handed to the underlying tool untouched, so their
-flags, defaults and exit codes are unchanged:
+Five commands: `audit` (the static audit of prompts and the code around them), `review`
+(the record a named person signs about what they read), `evaluate` (fixed scenarios
+against an endpoint you are authorised to test, or held transcripts), `fleet` (many
+repositories, one audit each) and `skill` (install the agent skill). `probe` is a hidden
+alias of `evaluate` kept for scripts written before the rename; it prints a note on
+stderr and runs `evaluate`.
 
-    0  no errors (warnings/info allowed)
-    1  errors found
-    2  fatal error (bad args, parse failure)
+Each command is imported only when invoked, so `aisafe --help` pays for nothing it does
+not run. Everything after the command is handed to the tool untouched, so its flags,
+defaults and exit codes are unchanged:
 
-`audit` adds 130 for an interrupted run; `skill` returns 1 when an install is
-refused or an installed copy differs from the packaged skill.
+    0  nothing counted
+    1  findings (audit), stale or uncovered artifacts (review check), failed cases
+       (evaluate), a repository not audited (fleet), a refused or drifted install (skill)
+    2  fatal (bad args, unreadable input)
+
+`audit` and `review` add 130 for an interrupted run.
 """
 
 from __future__ import annotations
@@ -33,104 +36,62 @@ from typing import Callable, Sequence
 
 from aisafe import __version__
 
-__all__ = ["main", "build_parser"]
+__all__ = ["COMMANDS", "main", "build_parser"]
 
 _EPILOG = """
 Commands:
-  lint        EU AI Act static compliance analysis (was: euaiact-lint)
-  misalign    AI misalignment static analysis      (was: misalignment-check)
-  init        Write an ai-system-card.yaml for the system under assessment
-  probe       Send a fixed attack corpus to a live endpoint and report what got through
-  measure     Report what each guard catches, what it breaks, and what it costs
-  audit       Static AI-safety audit of a repository: findings describe evidence, never verdicts
+  audit       Audit the prompts and code of a repository for profiling, manipulation,
+              engineered attachment, deceptive identity and behavioural influence over
+              the person using it; findings carry evidence and a policy decision
+  review      Write or check the review record: a named person, the artifacts they read
+              (bound by content hash), the mechanisms considered, the declared purpose
+  evaluate    Send fixed scenarios to an endpoint you are authorised to test, or read
+              held transcripts, and report what each reply carried
+  fleet       Audit every repository in a list, one subprocess each, and aggregate the
+              counts
   skill       Install the packaged ai-safety-audit agent skill into host skill directories
-  decide      What each proposed control costs (latency, tokens, usd, human load) against the declared budgets
-  hook        Agent-host hooks: gate protected paths, secret literals and unsafe shell; re-audit edits; Stop gate
-  attest      Evaluate the level criteria against the written documents; a named owner signs the result
-  fleet       Audit every repository in a list, one subprocess each, and aggregate the counts
 
 Run `aisafe <command> --help` for a command's own options.
 
 Examples:
-  aisafe lint src/
-  aisafe lint src/ --format sarif --output results.sarif
-  aisafe lint src/ --errors-only
-  aisafe lint --staged                       # pre-commit
-  aisafe misalign src/ --fail-on-warnings
-  aisafe init --defaults
-  aisafe probe http://localhost:8000/chat --response-path '$.response'
-  aisafe measure
   aisafe audit . --format json -o audit-report.json
   aisafe audit . --baseline audit-baseline.json --fail-on high
-  aisafe skill install --host all
-  aisafe skill diff --host all
-  aisafe decide --requests-per-day 20000 --p99-budget-ms 250 --monthly-budget-usd 300
-  aisafe hook install --host claude --yes
-  aisafe hook list
-  aisafe attest . --owner "J. Doe <risk owner>" --html
-  aisafe attest . --check --require-level 2    # CI
+  aisafe review init
+  aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor for adults"
+  aisafe evaluate http://localhost:8000/chat --response-path '$.response'
+  aisafe evaluate --transcripts conversations.jsonl
   aisafe fleet fleet.yaml --jobs 4 --proposal
+  aisafe skill install --host all
+
+Nothing here calls a model, installs anything or publishes anything. A report lists
+observations and the project's policy decision on each; it is never a certification, and
+absence of a finding is not evidence of safety.
 """
 
-
-def _lint(argv: Sequence[str]) -> int:
-    from aisafe.devtools.euaiact_lint import main as lint_main
-
-    return lint_main(list(argv))
-
-
-def _misalign(argv: Sequence[str]) -> int:
-    from aisafe.devtools.misalignment_check import main as misalign_main
-
-    return misalign_main(list(argv))
-
-
-def _init(argv: Sequence[str]) -> int:
-    from aisafe.devtools.system_card import main as init_main
-
-    return init_main(list(argv))
-
-
-def _probe(argv: Sequence[str]) -> int:
-    from aisafe.devtools.probe import main as probe_main
-
-    return probe_main(list(argv))
-
-
-def _measure(argv: Sequence[str]) -> int:
-    from aisafe.devtools.measure import main as measure_main
-
-    return measure_main(list(argv))
+_PROBE_NOTE = 'aisafe: "probe" is now "evaluate"; running `aisafe evaluate` with the same arguments'
 
 
 def _audit(argv: Sequence[str]) -> int:
-    from aisafe.devtools.audit.main import main as audit_main
+    from aisafe.audit import main as audit_main
 
     return audit_main(list(argv))
 
 
-def _skill(argv: Sequence[str]) -> int:
-    from aisafe.devtools.skill import main as skill_main
+def _review(argv: Sequence[str]) -> int:
+    from aisafe.review.cli import main as review_main
 
-    return skill_main(list(argv))
-
-
-def _decide(argv: Sequence[str]) -> int:
-    from aisafe.devtools.decide import main as decide_main
-
-    return decide_main(list(argv))
+    return review_main(list(argv))
 
 
-def _hook(argv: Sequence[str]) -> int:
-    from aisafe.devtools.hook import main as hook_main
+def _evaluate(argv: Sequence[str]) -> int:
+    from aisafe.evaluation.scenarios import main as evaluate_main
 
-    return hook_main(list(argv))
+    return evaluate_main(list(argv))
 
 
-def _attest(argv: Sequence[str]) -> int:
-    from aisafe.devtools.attest import main as attest_main
-
-    return attest_main(list(argv))
+def _probe(argv: Sequence[str]) -> int:
+    print(_PROBE_NOTE, file=sys.stderr)
+    return _evaluate(argv)
 
 
 def _fleet(argv: Sequence[str]) -> int:
@@ -139,25 +100,29 @@ def _fleet(argv: Sequence[str]) -> int:
     return fleet_main(list(argv))
 
 
+def _skill(argv: Sequence[str]) -> int:
+    from aisafe.devtools.skill import main as skill_main
+
+    return skill_main(list(argv))
+
+
 COMMANDS: dict[str, Callable[[Sequence[str]], int]] = {
-    "lint": _lint,
-    "misalign": _misalign,
-    "init": _init,
-    "probe": _probe,
-    "measure": _measure,
     "audit": _audit,
-    "skill": _skill,
-    "decide": _decide,
-    "hook": _hook,
-    "attest": _attest,
+    "review": _review,
+    "evaluate": _evaluate,
     "fleet": _fleet,
+    "skill": _skill,
+    "probe": _probe,  # hidden alias of `evaluate`; not listed in the epilog
 }
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(
         prog="aisafe",
-        description="AnyAISafe developer tools.",
+        description=(
+            "AnyAISafe: audit the prompts and algorithms of AI-enabled software for how "
+            "they influence the person using it."
+        ),
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=_EPILOG,
     )
@@ -167,17 +132,20 @@ def build_parser() -> argparse.ArgumentParser:
         action="version",
         version=f"aisafe {__version__}",
     )
+    # `metavar` keeps the hidden alias out of the usage line; the Commands block of the
+    # epilog is the list a person reads.
     p.add_argument(
         "command",
         choices=sorted(COMMANDS),
-        help="Subcommand to run",
+        metavar="command",
+        help="one of: audit, review, evaluate, fleet, skill",
     )
     # REMAINDER hands the rest through verbatim, so each tool keeps its own
     # flags, help text and pyproject-sourced defaults.
     p.add_argument(
         "args",
         nargs=argparse.REMAINDER,
-        help="Arguments passed through to the subcommand",
+        help="arguments passed through to the command",
     )
     return p
 

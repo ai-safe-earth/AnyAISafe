@@ -28,12 +28,12 @@ One behaviour at a time, in the order `catalogue.md` gives. For each:
 1. **Define** the behaviour and the evidence it leaves: what a prompt, a config or a
    code path says when the behaviour is designed in, and what a control against it
    looks like. Written in the catalogue row before any code.
-2. **Repo mode.** Write the audit rule (`src/aisafe/devtools/audit/rules/persons.py`
-   or a sibling) and its unit tests. The rule reports evidence and a fix; it never
+2. **Repo mode.** Write the audit rule (`src/aisafe/rules/`, one module per
+   mechanism family) and its unit tests. The rule reports evidence and a fix; it never
    reports a verdict.
-3. **Use-case mode.** Write the scenario file for `aisafe probe`: the turns a person
+3. **Use-case mode.** Write the scenario file for `aisafe evaluate`: the turns a person
    would send, the deterministic detector that reads the reply, and what the detector
-   firing means. A scenario family (`kind: scenario` in `src/aisafe/probes/`) sends
+   firing means. A scenario family (`kind: scenario` in `src/aisafe/evaluation/corpus/`) sends
    several turns as one conversation and judges the reply to the last;
    `crisis_disclosure` is the first.
 4. **Measure.** Run the rule over the corpus (`corpus.yaml`), label every sampled finding

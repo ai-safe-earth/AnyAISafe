@@ -2,7 +2,9 @@
 
 Thank you for looking. This page is the practical guide; `CLAUDE.md` holds the mission
 and the principles behind every change (it is written for coding agents, and everything in
-it holds for people too), and `docs/REFERENCE.md` is the full reference.
+it holds for people too); `policy/charter.md` is the ethical standard the auditor applies;
+`docs/methodology.md` explains how findings are made; `docs/REFERENCE.md` is the full
+reference.
 
 ## Setup
 
@@ -15,7 +17,8 @@ pytest -q                                          # no API keys, no network
 ```
 
 The distribution, the import name and the console script are all `aisafe`. On
-Windows set `PYTHONIOENCODING=utf-8` before running the examples or the CLIs.
+Windows set `PYTHONIOENCODING=utf-8` before running the CLI. Without an install,
+`PYTHONPATH=src python -m aisafe.cli <command>` works from the repository root.
 
 ## The gate
 
@@ -24,68 +27,64 @@ Run from the repository root; everything green before a commit:
 ```bash
 pytest -q
 ruff check . && ruff format --check .
-aisafe lint src examples --errors-only
-aisafe misalign src
-aisafe audit . --no-external --fail-on high --baseline audit-baseline.json   # must exit 0
-aisafe measure --max-p99-ms 25
-python scripts/controls_md.py --check
-python scripts/levels_md.py --check
-python scripts/sync_skill.py --check
-python scripts/bump_version.py --check
+aisafe audit . --fail-on high --baseline audit-baseline.json   # must exit 0
+python scripts/rules_md.py --check          # docs/rules.md and the skill's mechanisms.md are current
+python scripts/sync_skill.py --check        # the plugin's skill copy matches the packaged one
+python scripts/bump_version.py --check      # every version site agrees
 ```
 
 A non-zero self-audit means a new finding at `high` or above that is not in
 `audit-baseline.json`: fix it, or accept it with a reason that describes the evidence
 without quoting the literal (`aisafe audit --amend-baseline audit-baseline.json --accept
 <fingerprint>="<reason>"`). A fingerprint without a reason is a suppression, not an
-acceptance.
+acceptance, and a suppression from an older policy version is reported again.
 
 ## Conventions
 
 - `ruff format` is the formatter (line length 100, Python 3.10 target); `ruff check`
   selects `E, F, W, I`. Every module starts with `from __future__ import annotations`
-  and a `"""path/to/module.py\n---------\n"""` header. PEP 604 unions, double quotes.
+  and a `"""src/aisafe/<path>.py\n---\n"""` header. PEP 604 unions, double quotes.
 - Every JSON document the tools write starts with `"schema": "aisg/1"` and carries a
-  `kind` (`audit`, `audit-baseline`, `inventory`, `prices`, `decision`, `attestation`,
-  `attest-levels`, `hook-state`). SARIF is the one exception; its marker is in the run's
-  property bag.
-- Nothing under `aisafe.devtools` calls a model, installs anything or opens a socket; the
-  tests wrap `socket.socket` to prove it. External scanners run only if already on PATH.
-- Never a verdict. `report.BANNED_PHRASES` lists the phrases no renderer may emit and a
-  self-check runs against every template; do not spell them out in prose, point at the
-  constant. `measured_precision` is `None` on every rule and renders `[UNMEASURED]`;
-  never type a number in.
-- Generated files are regenerated, not edited: `references/controls.md` (severity,
-  mapping and leaves-open text, `scripts/controls_md.py`), `references/levels.md` (the
-  whole file, `scripts/levels_md.py`), and the plugin's skill mirror (`plugins/aisafe/skills/`, `scripts/sync_skill.py`).
-- `# aisafe-audit: ignore-file` sits only on the files that are the audit's vocabulary; a
-  real finding anywhere else goes in the baseline with a reason. The same holds for the
-  `euaiact-lint` and `misalignment-check` markers.
-- YAML presets and data files exist twice on purpose (`src/aisafe/config/` ships in the
-  wheel, `config/` is the local-dev copy); edit both, a test pins them identical.
+  `kind` (`audit`, `audit-baseline`, `inventory`, `evaluation`, `review`, `policy`,
+  `bench-case`). SARIF is the one exception; its marker is in the run's property bag.
+- `aisafe audit` and `aisafe review` call no model, install nothing and open no socket;
+  the tests wrap `socket.socket` to prove it. `aisafe evaluate` talks only to the URL you
+  name.
+- Never a verdict. `reporting.report.BANNED_PHRASES` lists the phrases no renderer may
+  emit and a self-check runs against every template; do not spell them out in prose,
+  point at the constant. `measured_precision` is `None` on every rule and renders
+  `[UNMEASURED]`; never type a number in.
+- Evidence apart from decision. A finding's `evidence_status` says what was established;
+  its `decision` says what the policy makes of it; neither is a score. A keyword match
+  alone never yields `violates_policy`.
+- Generated files are regenerated, not edited: `docs/rules.md` and the skill's
+  `references/mechanisms.md` (`scripts/rules_md.py`), the plugin's skill mirror
+  (`plugins/aisafe/skills/`, `scripts/sync_skill.py`), and the packaged policy copies
+  under `src/aisafe/policy/` (copied from `policy/`; a test pins them identical).
+- `# aisafe-audit: ignore-file` sits only on the files that are the audit's vocabulary
+  (`discovery/vocabulary.py`, the rule modules, `analysis/checks.py`); a real finding
+  anywhere else goes in the baseline with a reason.
 
 ## Adding things
 
-- **A guard**: subclass `GuardrailBase`, set `name` and `stage`, decorate it with
-  `@register_guard("name")`, wire the name into all four presets (`config/` and
-  `src/aisafe/config/`), export it from `src/aisafe/__init__.py`, add tests and a probe case
-  per detection pattern with its `seed_pattern`, teach the audit the name
-  (`discover._AISAFE_GUARD_RE`, `rules/guards._GUARD_CLASSES`), accept its AUD-801 group in
-  `audit-baseline.json` with a reason, and, when a rule names the class, add it to
-  `CLASS_SYMBOLS` and give `apply/python.md` a heading.
-- **An audit rule**: a class under `src/aisafe/devtools/audit/rules/`, a row in
-  `SUBSYSTEM_OF_RULE`, a `recommendation.package` with `leaves_open` text whenever the
-  mechanism is not `none`, a hand-written section in `references/controls.md` followed by
-  `python scripts/controls_md.py`, a positive and a negative fixture under
-  `tests/fixtures/audit/`, and `measured_precision = None`.
-- **An attestation criterion kind**: the name in `attest.CRITERION_KINDS`, an evaluator in
-  `_EVALUATORS`, a line in `attest.CRITERION_READS`, its use in both copies of
-  `attest-levels.yaml`, then `python scripts/levels_md.py` and `python scripts/sync_skill.py`.
-- **A price**: both copies of `prices.yaml`, with the date and the source URL. An
-  unverifiable figure stays out; the model then renders `unavailable` and names itself.
-- **A probe or benign case**: the family's YAML under `src/aisafe/probes/`, with its
-  `seed_pattern`; a benign case that a naive guard would flag is worth more than one that
-  nothing would.
+- **A mechanism row or a policy change**: edit `policy/charter.md` and
+  `policy/mechanisms.yaml`, bump the policy version, copy both into
+  `src/aisafe/policy/`, run `scripts/rules_md.py`, and say in `CHANGELOG.md` which
+  decisions change. Accepted findings in baselines then show as re-review.
+- **An audit rule**: a class under `src/aisafe/rules/` listed in its module's `RULES`,
+  a `version`, a `mechanism` the policy lists it under (edit `policy/mechanisms.yaml`
+  `rules:`), `references` in the grammar the registry test pins, a `recommendation` whose
+  `removes` names what it takes out of the chain, honest `known_failure_modes`,
+  `measured_precision = None`, a positive and a negative fixture under
+  `tests/fixtures/audit/` or a pair in `tests/unit/test_rules_pairs.py`, a case in
+  `bench/cases/`, then `python scripts/rules_md.py`.
+- **A vocabulary row**: `src/aisafe/discovery/vocabulary.py`, keyed `<kind>:<slug>`, added
+  to the right scan class (prompt, code, config, doc); a positive and a negative test.
+- **An evaluation scenario**: the family's YAML under `src/aisafe/evaluation/corpus/`,
+  synthetic turns written as a person would type them, a fixed detector, and the loader's
+  rule that no turn may match its own detector.
+- **A benchmark case**: `bench/cases/<id>/tree/` plus `expected.yaml` (`bench/protocol.md`);
+  it counts in the headline numbers only once a second person has set `reviewed_by`.
 
 ## Releases
 
@@ -96,5 +95,6 @@ with a required reviewer. No token exists anywhere.
 
 ## Reporting
 
-Vulnerabilities: `SECURITY.md`. A guard that misses an attack is a detection gap, not a
-vulnerability: open an issue with the payload, or add a case to the probe corpus.
+Vulnerabilities: `SECURITY.md`. A rule that misses a prompt it should have reported is a
+detection gap, not a vulnerability: open an issue with the prompt, or add a case to
+`bench/cases/`.

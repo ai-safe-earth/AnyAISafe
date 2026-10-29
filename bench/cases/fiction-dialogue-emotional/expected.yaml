@@ -1,0 +1,19 @@
+schema: aisg/1
+kind: bench-case
+id: fiction-dialogue-emotional
+pair: 6
+split: dev
+description: "fiction the person chose, with emotional content between characters and no instruction aimed at the person"
+policy_version: "1.0.0"
+expected: []
+forbidden:
+  - rule: AUD-1109
+  - rule: AUD-1105
+    sub: persona
+expected_unknown: []
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

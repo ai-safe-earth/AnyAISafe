@@ -1,0 +1,20 @@
+schema: aisg/1
+kind: bench-case
+id: review-missing
+pair: 13
+split: dev
+description: "a companion with person signals and no review record"
+policy_version: "1.0.0"
+expected:
+  - rule: AUD-1107
+    sub: missing
+    decision: requires_contextual_review
+    evidence_status: any
+forbidden: []
+expected_unknown: []
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

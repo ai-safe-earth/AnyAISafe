@@ -21,12 +21,12 @@ if str(SRC) not in sys.path:
 # `aisafe audit` fixtures: tests/fixtures/audit/<name>
 # ---------------------------------------------------------------------------
 
-import shutil
 from collections.abc import Callable
 
 import pytest
 
 AUDIT_FIXTURES = Path(__file__).resolve().parent / "fixtures" / "audit"
+BENCH_CASES = Path(__file__).resolve().parent.parent / "bench" / "cases"
 
 
 @pytest.fixture
@@ -36,50 +36,59 @@ def audit_fixture() -> Callable[[str], Path]:
 
 
 @pytest.fixture
-def py_agent(tmp_path: Path) -> Path:
-    """
-    A scratch copy of the `py_agent` fixture with `secrets.py` added.
-
-    The committed tree holds no secret-shaped literal; the two below are
-    assembled at runtime so the repo never contains one.
-    """
-    target = tmp_path / "py_agent"
-    shutil.copytree(AUDIT_FIXTURES / "py_agent", target)
-    anthropic_key = "sk-ant-" + "api03-" + "x" * 40
-    aws_key = "AKIA" + "Q" * 16
-    (target / "secrets.py").write_text(
-        f'ANTHROPIC_API_KEY = "{anthropic_key}"\nAWS_ACCESS_KEY_ID = "{aws_key}"\n',
-        encoding="utf-8",
-    )
-    return target
+def bench_case() -> Callable[[str], Path]:
+    """Real, read-only path to the `tree/` of `bench/cases/<id>`."""
+    return lambda case_id: BENCH_CASES / case_id / "tree"
 
 
 @pytest.fixture
 def audit_context() -> Callable[..., object]:
     """
-    Build an `AuditContext` for a fixture tree the way `aisafe audit` does:
-    walk -> discover -> pydeep, with every UNKNOWN item folded in.
+    Build an `AuditContext` for a tree the way `aisafe audit` does:
+    walk -> discover -> pydeep -> checks -> flows -> review records, with every
+    UNKNOWN item folded in.
 
-    `build(root, deep=True, options=None, exclude=())`. Rule tests use this so
-    each of them exercises the real discovery output rather than a hand-built
-    inventory. `options` is duck-typed (any object with `include_home`,
-    `trusted_mcp_hosts`, ... attributes); None means defaults.
+    `build(root, deep=True, options=None, exclude=(), review_record=None)`. Rule tests
+    use this so each of them exercises the real discovery output rather than a
+    hand-built inventory. `options` is duck-typed; None means defaults.
     """
-    from aisafe.devtools.audit import discover, lint_bridge, pydeep, walk
-    from aisafe.devtools.audit.model import AuditContext
+    from aisafe.analysis import checks, flows, pydeep
+    from aisafe.discovery import discover, walk
+    from aisafe.evidence.model import AuditContext, UnknownCategory, UnknownItem
+    from aisafe.review import records
 
-    def build(root: Path, *, deep: bool = True, options: object = None, exclude=()) -> AuditContext:
+    def build(
+        root: Path,
+        *,
+        deep: bool = True,
+        options: object = None,
+        exclude=(),
+        review_record: str | None = None,
+    ) -> AuditContext:
         root = Path(root)
         files, units, unknown = walk.walk(root, walk.WalkOptions(exclude=tuple(exclude)))
-        inventory, hits, facts = discover.discover(root, files, units, options)
+        inventory, hits = discover.discover(root, files, units, options)
         unknown = list(unknown) + list(inventory.unknown)
         pyfacts = None
         if deep:
             pyfacts = pydeep.analyse_unit([f for f in files if f.lang == "python"], inventory)
             unknown.extend(pyfacts.unknown)
+        # The AST's prompt literals and assemblies join the inventory's prompt rows, as
+        # `aisafe audit` does after its deep pass.
+        discover.merge_pyfacts_prompts(inventory, pyfacts)
         texts = {f.relpath: walk.read_text(f.path) for f in files if f.lang == "python"}
-        lint = lint_bridge.run_lint(files, texts)
-        return AuditContext(
+        check_facts = checks.run_checks(files, texts)
+        review = records.find_records(root, files, review_record)
+        for problem in review.errors:
+            unknown.append(
+                UnknownItem(
+                    category=UnknownCategory.RUNTIME,
+                    what="review record",
+                    why=problem,
+                    file=review.file,
+                )
+            )
+        ctx = AuditContext(
             root=root,
             inventory=inventory,
             pyfacts=pyfacts,
@@ -87,9 +96,13 @@ def audit_context() -> Callable[..., object]:
             options=options,
             unknown=unknown,
             files=files,
-            reports=list(inventory.reports),
-            config_facts=facts,
-            lint=lint,
+            evaluation=[
+                r for r in inventory.reports if getattr(r, "kind", None) in ("evaluation", "probe")
+            ],
+            checks=check_facts,
+            review=review,
         )
+        ctx.flows = flows.build_flows(ctx)
+        return ctx
 
     return build

@@ -11,27 +11,26 @@ only channel, and it is where you will hear back.
 
 ## Scope
 
-- The `aisafe` distribution, imported as `aisafe` (`aisafe.core`, `aisafe.modules`,
-  `aisafe.integrations`, `aisafe.config`).
-- The `aisafe` command line: `lint`, `misalign`, `measure`, `probe`, `init`,
-  `audit`, `skill`, `decide`, `hook`, `attest`, `fleet`.
+- The `aisafe` distribution, imported as `aisafe` (`aisafe.discovery`, `aisafe.analysis`,
+  `aisafe.evidence`, `aisafe.rules`, `aisafe.review`, `aisafe.reporting`,
+  `aisafe.evaluation`, `aisafe.policy`, `aisafe.devtools`).
+- The `aisafe` command line: `audit`, `review`, `evaluate`, `fleet`, `skill`.
 - The `ai-safety-audit` skill and its bootstrap scripts
   (`src/aisafe/skills/ai-safety-audit/scripts/` and the plugin's mirror under
-  `plugins/aisafe/skills/`).
-- The agent-host hooks (`aisafe hook`, the bootstrap `hook.sh` / `hook.ps1`) and
-  the Claude Code plugin (`.claude-plugin/`, `plugins/aisafe/`).
+  `plugins/aisafe/skills/`), and the Claude Code plugin (`.claude-plugin/`,
+  `plugins/aisafe/`).
 - The CI surface: `action.yml`, `.pre-commit-hooks.yaml` and the GitLab job
-  template `.gitlab-ci-euaiact.yml`.
+  template `.gitlab-ci-aisafe.yml`.
 
-A guard that misses an attack is a detection gap, not a vulnerability; report
-those as ordinary issues with the payload, or add a case to the probe corpus.
+A rule that misses a prompt it should have reported is a detection gap, not a
+vulnerability; report those as ordinary issues with the prompt, or add a case to
+`bench/cases/`.
 
 ## What to include
 
 - The affected version (`pip show aisafe`) or commit.
 - The command, config or input that triggers the problem, minimised.
 - What happens and what you expected; a stack trace or report excerpt if any.
-- Which external scanners were on `PATH`, if `aisafe audit` is involved.
 
 ## How releases are published
 
@@ -44,13 +43,11 @@ and that approval is not one of ours.
 
 ## What the tooling sends
 
-`aisafe audit`, `aisafe lint`, `aisafe misalign`, `aisafe decide`, `aisafe attest` and
-`aisafe hook` never send anything anywhere: no model calls, no telemetry, no
-network sockets from their processes; the hook's only child process is `git`,
-and it writes only under `.aisafe-audit/`. `aisafe fleet` clones only the URLs you
-list (through `git`), audits each with `--no-external`, and never searches for
-targets, pushes or opens a pull request. The only network use is
-by external scanners you already installed, and each one is listed with its
-`network` flag in every report. `aisafe probe` sends its fixed payload corpus to
-the URL you name and nothing else; non-loopback targets need
-`--i-have-authorization`.
+`aisafe audit`, `aisafe review` and `aisafe skill` never send anything anywhere: no
+model calls, no telemetry, no network sockets from their processes; the only child
+process is read-only `git` for commit metadata. `aisafe fleet` clones only the URLs
+you list (through `git`), audits each locally, and never searches for targets,
+pushes or opens a pull request. `aisafe evaluate` sends its fixed, synthetic
+scenarios to the URL you name and nothing else; non-loopback targets need
+`--i-have-authorization`, and `--transcripts` mode opens no socket at all. Reports
+redact secret-shaped text and can be shared only as carefully as the source they quote.

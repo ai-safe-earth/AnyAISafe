@@ -1,10 +1,11 @@
 # .github/workflows/tests.yml
 # ---------------------------------------------------------------------------
-# The test and lint gate.
+# The test, audit, lint and build gate.
 #
-# eu-ai-act-compliance.yml runs only the compliance linter, so until this
-# existed the test suite guarded nothing on push. The suite is fully mocked --
-# no API keys, no network -- so it runs anywhere.
+# The suite calls no model and opens no socket, so it runs anywhere. The
+# `audit` job exercises the built wheel, not the source tree: the console
+# script, the packaged policy, the evaluation corpus and the skill have to
+# work from the artifact alone.
 # ---------------------------------------------------------------------------
 
 name: Tests
@@ -39,26 +40,11 @@ jobs:
 
       - name: Install
         run: |
-          # Tool installs in this file are pinned to exact versions: the
-          # self-audit below (AUD-602) flags an unpinned bootstrap, and this
-          # workflow should not need a baseline entry for itself.
+          # Tool installs in this file are pinned to exact versions, so the
+          # workflow installs the same thing on every run.
           python -m pip install pip==26.1.2
           # Editable install proves the packaging works, not just the source tree.
-          # settings/otel/metrics are included because the suite covers them --
-          # without them those tests skip, and a silent skip is not a pass.
-          pip install -e ".[dev,devtools,settings,otel,metrics]"
-
-      - name: Optional deps really are installed
-        # These tests skip themselves when their extra is missing. A silent skip
-        # would look like a pass, so assert the extras are present before running.
-        run: |
-          python -c "
-          import importlib.util, sys
-          missing = [m for m in ('pydantic_settings', 'opentelemetry')
-                     if importlib.util.find_spec(m) is None]
-          sys.exit(f'optional deps missing, tests would silently skip: {missing}') if missing else None
-          print('optional deps present')
-          "
+          pip install -e ".[dev,devtools]"
 
       - name: Run tests
         run: pytest -q
@@ -67,10 +53,8 @@ jobs:
         # A test that quietly starts depending on a real provider would pass
         # locally and fail for everyone else. Fail loudly instead.
         env:
-          GROQ_API_KEY: ""
           ANTHROPIC_API_KEY: ""
           OPENAI_API_KEY: ""
-          TOGETHER_API_KEY: ""
         run: pytest -q
 
   audit:
@@ -120,40 +104,47 @@ jobs:
           fixtures="$GITHUB_WORKSPACE/tests/fixtures/audit"
           cd "$(mktemp -d)"
 
-          # py_agent: trifecta, uncapped loop, ungated tools -> findings -> 1.
-          rc=0; aisafe audit "$fixtures/py_agent" --no-external --format json -o /dev/null || rc=$?
+          # persons_companion: a companion prompt with an engagement objective, a
+          # hidden AI nature and no crisis path -> findings -> 1.
+          rc=0; aisafe audit "$fixtures/persons_companion" --format json -o /dev/null || rc=$?
           test "$rc" -eq 1
 
-          # clean_py: no finding, but --no-external leaves UNKNOWN items for
-          # the skipped scanners; --fail-on-unknown turns those into exit 1 ...
-          rc=0; aisafe audit "$fixtures/clean_py" --fail-on-unknown --no-external || rc=$?
+          # ts_agent: a TypeScript unit with a model call; the deep analysis exists for
+          # Python only, so the unit carries a `deep` UNKNOWN item, and --fail-on-unknown
+          # turns it into exit 1 ...
+          rc=0; aisafe audit "$fixtures/ts_agent" --fail-on-unknown deep || rc=$?
           test "$rc" -eq 1
 
-          # ... and without it the same tree exits 0.
-          rc=0; aisafe audit "$fixtures/clean_py" --no-external || rc=$?
+          # ... while a tree with no AI surface and no finding exits 0.
+          rc=0; aisafe audit "$fixtures/clean_py" || rc=$?
           test "$rc" -eq 0
 
       - name: Self-audit against the baseline
         # From the repo root on purpose: here [tool.aisafe-audit] supplies the
-        # exclude list (tests/ and the probe corpus hold fake keys and
-        # injection text the rules must catch elsewhere) and fail-on = high.
-        # Exit 0 means no NEW finding at high or above. Every accepted finding
-        # sits in audit-baseline.json with a reason; the terminal summary line
+        # exclude list (tests/, the evaluation corpus and the demo prompts quote
+        # the instructions the rules look for) and fail-on = high. Exit 0 means
+        # no NEW finding at high or above. Every accepted finding sits in
+        # audit-baseline.json with a reason; the terminal summary line
         # `baseline: N new, ...` says how many are not in it.
         #
         # The baseline file is scanned too (it is not excluded), so a reason
-        # there must describe the evidence without quoting the literal that
+        # there must describe the evidence without quoting the text that
         # produced it; tests/unit/test_audit_baseline.py pins that. To accept
-        # a finding: re-run with --format json, add its fingerprint to both
-        # lists with a reason, never a bare fingerprint.
+        # a finding: `aisafe audit --amend-baseline audit-baseline.json
+        # --accept <fingerprint>="<reason>"`, never a bare fingerprint.
         run: |
-          rc=0; aisafe audit . --no-external --fail-on high --baseline audit-baseline.json || rc=$?
+          rc=0; aisafe audit . --fail-on high --baseline audit-baseline.json || rc=$?
           test "$rc" -eq 0
 
       - name: Plugin's skill copy matches the packaged skill
         # plugins/aisafe/skills is a byte-identical copy of the packaged skill;
         # exit 1 lists the drifted files.
         run: python scripts/sync_skill.py --check
+
+      - name: Generated rule documents match the registry and the policy
+        # docs/rules.md and the skill's references/mechanisms.md are rendered
+        # from the rule classes and the policy; exit 1 on drift.
+        run: python scripts/rules_md.py --check
 
   lint:
     name: ruff
@@ -170,32 +161,6 @@ jobs:
       - name: ruff format --check
         run: ruff format --check .
 
-  measure:
-    name: guards stay inside their budgets
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.13"
-          cache: pip
-      - run: pip install -e ".[devtools]"
-
-      - name: Measure the default pipeline
-        # The ratchet. `aisafe measure` exits 1 when any guard breaches a
-        # threshold, so a guard that starts over-blocking or slows down fails
-        # the build instead of quietly degrading. Detection-only testing cannot
-        # catch either -- "block everything" passes an attack corpus perfectly.
-        run: aisafe measure --max-p99-ms 25
-
-      - name: Upload the measurement
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: measure-report
-          path: measure-report.json
-          retention-days: 90
-
   build:
     name: wheel builds and exposes only `aisafe`
     runs-on: ubuntu-latest
@@ -209,7 +174,7 @@ jobs:
       - run: python -m build --wheel
       - name: No top-level name collisions
         # The whole point of the src/aisafe layout: a published wheel must not
-        # claim `core`, `modules`, `config` or any other common name.
+        # claim `policy`, `rules`, `evidence` or any other common name.
         run: |
           python - <<'PY'
           import glob, sys, zipfile
@@ -221,28 +186,21 @@ jobs:
               sys.exit(f"wheel exposes more than `aisafe`: {sorted(pkgs)}")
           PY
 
-      - name: Packaged config presets are readable from the wheel
+      - name: Policy and evaluation corpus are readable from the wheel
+        # From /tmp so the imports cannot fall back to src/: the YAML files are
+        # package data and have to travel inside the artifact.
         run: |
           pip install dist/*.whl
           cd /tmp
           python -c "
-          from aisafe.config import preset_path
-          from aisafe.core.pipeline import GuardrailPipeline
-          p = preset_path('default.yaml')
-          assert p.is_file(), p
-          GuardrailPipeline.from_config(p)
-          print('packaged presets OK:', p.name)
-          "
-
-      - name: Probe corpus loads from the wheel
-        run: |
-          cd /tmp
-          python -c "
-          from aisafe.devtools.probe import load_corpus, available_families
-          cases = load_corpus(system_canary='CI-CANARY')
-          assert len(cases) >= 40, len(cases)
-          assert len(available_families()) == 7
-          print(f'{len(cases)} probe cases across {len(available_families())} families')
+          from aisafe.policy import load_policy, charter_path
+          from aisafe.evaluation.scenarios import load_corpus
+          policy = load_policy()
+          assert policy.version and len(policy.mechanisms) == 8, policy
+          assert charter_path().is_file(), charter_path()
+          cases = load_corpus(None, None, include_scenario=True)
+          assert cases, 'no evaluation cases in the wheel'
+          print(f'policy {policy.version}, {len(policy.mechanisms)} mechanisms, {len(cases)} evaluation cases')
           "
 
   action:

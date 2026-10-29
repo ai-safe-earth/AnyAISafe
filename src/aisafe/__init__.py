@@ -1,79 +1,33 @@
-"""
-__init__.py
------------
-AnyAISafe — public API surface.
+"""src/aisafe/__init__.py
+----------------------
+AnyAISafe: audit the prompts and algorithms of AI-enabled software for how they influence
+the person using it (profiling, manipulation, engineered attachment, deceptive identity,
+behavioural influence).
 
-Runtime guardrails (use in your application):
-    from aisafe import GuardrailPipeline
-    from aisafe import PIIDetector, PromptInjectionGuard
-    from aisafe import ToxicityFilter
-    from aisafe import ToolPolicyGuard, ToolPolicy
-    from aisafe import EUAIActCompliance, RiskTier
-    from aisafe import AuditLogger
+    from aisafe import run_audit, load_policy
+    from aisafe import Finding, Report, Decision, EvidenceStatus
 
-Static code analyzer (use in CI / pre-commit):
-    from aisafe import EUAIActCodeAnalyzer, ScanReport
-    from aisafe import TerminalReporter, JSONReporter, SARIFReporter
-    # or via CLI: aisafe lint src/
+Everything is imported on first use (PEP 562): `aisafe --help` and the console script pay
+for nothing they do not run. The command line is `aisafe audit|review|evaluate|fleet|skill`.
 """
+
+from __future__ import annotations
 
 import importlib
 
-from aisafe.core.base import (
-    Action,
-    CheckResult,
-    Finding,
-    GuardrailBase,
-    GuardrailStage,
-    PipelineResult,
-    Severity,
-)
-from aisafe.core.exceptions import (
-    GuardrailBlockedError,
-    GuardrailConfigError,
-    PolicyViolationError,
-)
-from aisafe.core.pipeline import GuardrailPipeline
+__version__ = "0.1.0"
 
-# Input modules
-from aisafe.modules.input.pii_detector import PIIDetector, PIIRestorer
-from aisafe.modules.input.prompt_injection import PromptInjectionGuard
-from aisafe.modules.input.rate_limiter import RateLimiter
-
-# LLM judges (the base class; concrete judges need their provider SDK)
-from aisafe.modules.llm_judges.base import LLMJudgeBase
-
-# Output modules
-from aisafe.modules.output.ai_disclosure import AIDisclosureGuard
-from aisafe.modules.output.llm_output_filter import LLMOutputFilter
-from aisafe.modules.output.manipulation import ManipulationGuard
-from aisafe.modules.output.toxicity import ToxicityFilter
-
-# Policy — static code analyzer
-from aisafe.modules.policy.code_analyzer.analyzer import EUAIActCodeAnalyzer, ScanReport
-from aisafe.modules.policy.code_analyzer.reporters import (
-    JSONReporter,
-    MarkdownReporter,
-    SARIFReporter,
-    TerminalReporter,
-)
-
-# Policy — runtime guardrails
-from aisafe.modules.policy.eu_ai_act import EUAIActCompliance, RiskTier
-from aisafe.modules.policy.nist_ai_rmf import ImpactLevel, NISTAIRMFCompliance
-
-# Processing modules
-from aisafe.modules.processing.llm_tool_filter import LLMToolFilter
-from aisafe.modules.processing.tool_policy import ToolPolicy, ToolPolicyGuard
-
-# Observability is imported on first use (PEP 562). `otel.py` pulls in the
-# OpenTelemetry SDK, about a quarter of a second that every `aisafe` CLI run and every
-# agent hook would otherwise pay before doing anything; `otel.py` still guards the
-# optional dependency itself. Guards stay eager: `@register_guard` fills the registry
-# `GuardrailPipeline.from_config` reads, and a lazy guard would be an unregistered name.
 _LAZY_ATTRIBUTES = {
-    "AuditLogger": ("aisafe.modules.observability.audit_logger", "AuditLogger"),
-    "TelemetryProvider": ("aisafe.modules.observability.otel", "TelemetryProvider"),
+    "run_audit": ("aisafe.audit", "run_audit"),
+    "AuditOptions": ("aisafe.audit", "AuditOptions"),
+    "load_policy": ("aisafe.policy", "load_policy"),
+    "Policy": ("aisafe.policy", "Policy"),
+    "Finding": ("aisafe.evidence.model", "Finding"),
+    "Report": ("aisafe.evidence.model", "Report"),
+    "Decision": ("aisafe.evidence.model", "Decision"),
+    "EvidenceStatus": ("aisafe.evidence.model", "EvidenceStatus"),
+    "ControlStatus": ("aisafe.evidence.model", "ControlStatus"),
+    "Severity": ("aisafe.evidence.model", "Severity"),
 }
 
 
@@ -91,51 +45,16 @@ def __dir__() -> list[str]:
     return sorted(set(globals()) | set(__all__))
 
 
-__version__ = "0.1.0"
 __all__ = [
-    # Pipeline
-    "GuardrailPipeline",
-    # Base types
-    "GuardrailBase",
-    "CheckResult",
-    "PipelineResult",
+    "__version__",
+    "run_audit",
+    "AuditOptions",
+    "load_policy",
+    "Policy",
     "Finding",
+    "Report",
+    "Decision",
+    "EvidenceStatus",
+    "ControlStatus",
     "Severity",
-    "Action",
-    "GuardrailStage",
-    # Exceptions
-    "GuardrailBlockedError",
-    "GuardrailConfigError",
-    "PolicyViolationError",
-    # Input
-    "PIIDetector",
-    "PIIRestorer",
-    "PromptInjectionGuard",
-    "RateLimiter",
-    # Processing
-    "ToolPolicyGuard",
-    "ToolPolicy",
-    "LLMToolFilter",
-    # Output
-    "ToxicityFilter",
-    "LLMOutputFilter",
-    "ManipulationGuard",
-    "AIDisclosureGuard",
-    # LLM judges
-    "LLMJudgeBase",
-    # Policy — runtime
-    "EUAIActCompliance",
-    "RiskTier",
-    "NISTAIRMFCompliance",
-    "ImpactLevel",
-    # Policy — static analyzer
-    "EUAIActCodeAnalyzer",
-    "ScanReport",
-    "TerminalReporter",
-    "JSONReporter",
-    "SARIFReporter",
-    "MarkdownReporter",
-    # Observability
-    "AuditLogger",
-    "TelemetryProvider",
 ]

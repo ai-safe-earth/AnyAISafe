@@ -1,0 +1,20 @@
+schema: aisg/1
+kind: bench-case
+id: prompt-concat-ordinary
+pair: 10
+split: dev
+description: "ordinary prompt concatenation of a system prompt, retrieved documents and the question"
+policy_version: "1.0.0"
+expected: []
+forbidden:
+  - rule: AUD-1101
+  - rule: AUD-1104
+  - rule: AUD-1109
+  - rule: AUD-1110
+expected_unknown: []
+labels:
+  authored_by: "the pivot session (agent-assisted), 2026-10-29"
+  authored_at: 2026-10-29
+  reviewed_by: null
+  reviewed_at: null
+  disagreement: null

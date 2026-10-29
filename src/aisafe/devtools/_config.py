@@ -1,12 +1,12 @@
-"""
-devtools/_config.py
--------------------
-Load CLI defaults from the ``[tool.euaiact-lint]`` and
-``[tool.misalignment-check]`` sections of ``pyproject.toml``.
+"""src/aisafe/devtools/_config.py
+------------------------------
+Load CLI defaults from the ``[tool.aisafe-audit]`` section of ``pyproject.toml`` (and the
+``[tool.aisafe-fleet]`` section for ``aisafe fleet``).
 
 Values loaded here are *defaults*: they are applied via
 ``ArgumentParser.set_defaults()`` before ``parse_args()``, so an explicit
-command-line flag always wins.
+command-line flag always wins. The caller names the dests that must never come from
+the file (per-invocation actions such as writing a baseline); see ``apply_tool_config``.
 
 Caveat: the boolean options are ``store_true`` flags with no ``--no-*``
 counterpart, so setting one to ``true`` in ``pyproject.toml`` cannot be
@@ -34,7 +34,7 @@ except ModuleNotFoundError:  # Python 3.10
 
 # Options argparse stores as a comma-separated string, but which are more
 # naturally written as a list in TOML.
-_LIST_AS_CSV = frozenset({"exclude", "rules", "tools", "trusted_mcp_hosts", "fail_on_unknown"})
+_LIST_AS_CSV = frozenset({"exclude", "rules", "fail_on_unknown"})
 
 # `[tool.aisafe-*]` was `[tool.aisg-*]` until the command was renamed (2026-10-20). The old
 # table is still read when the new one is absent, with a note on stderr, so a project

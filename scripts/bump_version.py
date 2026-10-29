@@ -11,11 +11,11 @@ the same string or the release gate fails.
                                                           # dated heading, run sync_skill
     python scripts/bump_version.py --changelog-section v0.1.0   # print that section
 
-Sites, in the order they are rewritten: pyproject, `aisafe.__version__`, the two legacy
-CLI `--version` strings, the SARIF reporter's tool version, the GitLab template's pin,
-then (when the files exist) the GitHub Action's default `version` input and the Claude
-Code plugin manifest. The skill's bootstrap scripts and the mirrors are pinned by
-`scripts/sync_skill.py`, which this tool runs last. Not shipped; run from the repo root.
+Sites, in the order they are rewritten: pyproject, `aisafe.__version__`, the GitLab
+template's pin, then (when the files exist) the GitHub Action's default `version` input
+and the Claude Code plugin manifest. The skill's bootstrap scripts and the plugin mirror
+are pinned by `scripts/sync_skill.py`, which this tool runs last. Not shipped; run from
+the repo root.
 """
 
 from __future__ import annotations
@@ -36,8 +36,8 @@ VERSION_RE = re.compile(r"^\d+\.\d+\.\d+(?:[-+.][0-9A-Za-z.-]+)?$")
 @dataclass(frozen=True)
 class Site:
     """One place the version string lives. `pattern` has three groups: prefix, version,
-    suffix; the version group is the only thing rewritten. `optional` sites are files
-    later waves add (the Action, the plugin manifest): absent means skipped, present
+    suffix; the version group is the only thing rewritten. `optional` sites are files a
+    checkout may lack (the Action, the plugin manifest): absent means skipped, present
     means checked."""
 
     relpath: str
@@ -51,22 +51,7 @@ class Site:
 SITES: tuple[Site, ...] = (
     Site("pyproject.toml", re.compile(r'^(version\s*=\s*")([^"]+)(")', re.M)),
     Site("src/aisafe/__init__.py", re.compile(r'^(__version__\s*=\s*")([^"]+)(")', re.M)),
-    Site("src/aisafe/devtools/euaiact_lint.py", re.compile(r'(version="euaiact-lint )([^"]+)(")')),
-    Site(
-        "src/aisafe/devtools/misalignment_check.py",
-        re.compile(r'(version="misalignment-check )([^"]+)(")'),
-    ),
-    # The SARIF driver block: `"version"` followed by the informationUri line, so the
-    # SARIF schema version two lines above (`"version": "2.1.0"`) is left alone.
-    Site(
-        "src/aisafe/modules/policy/code_analyzer/reporters.py",
-        re.compile(r'("version":\s*")([^"]+)(",\s*\n\s*"informationUri")'),
-    ),
-    Site(
-        "src/aisafe/modules/policy/code_analyzer/reporters.py",
-        re.compile(r'("semanticVersion":\s*")([^"]+)(")'),
-    ),
-    Site(".gitlab-ci-euaiact.yml", re.compile(r'^(\s*AISAFE_VERSION:\s*")([^"]+)(")', re.M)),
+    Site(".gitlab-ci-aisafe.yml", re.compile(r'^(\s*AISAFE_VERSION:\s*")([^"]+)(")', re.M)),
     Site(
         "action.yml",
         re.compile(r'(\n\s*version:\s*\n(?:[^\n]*\n)*?\s*default:\s*")([^"]+)(")'),

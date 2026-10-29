@@ -1,6 +1,7 @@
 """scripts/sync_skill.py
 ---------------------
-Pin the skill's bootstrap scripts and the plugin manifest to the package version and refresh the plugin's copy.
+Pin the skill's bootstrap scripts and the plugin manifest to the package version and refresh
+the plugin's copy.
 
 The canonical skill lives in `src/aisafe/skills/ai-safety-audit/` (shipped in the wheel);
 `plugins/aisafe/skills/ai-safety-audit/` (the Claude Code plugin's copy) is a byte-identical
@@ -8,8 +9,8 @@ mirror pinned by `tests/unit/test_skill_package.py`. This dev tool:
 
 1. reads `[project].version` from `pyproject.toml`;
 2. rewrites the `AISAFE_VERSION="..."` / `$AISAFE_VERSION = "..."` line in the six canonical
-   scripts so the bootstrap stays pinned to the release (an unpinned bootstrap is exactly
-   what AUD-602 flags in targets);
+   scripts (audit, evaluate and review, sh and ps1) so the bootstrap stays pinned to the
+   release: an unpinned bootstrap would install whatever PyPI serves on the day;
 3. pins `"version"` in `plugins/aisafe/.claude-plugin/plugin.json`;
 4. copies the canonical tree over the mirror, deleting stale mirror files.
 
@@ -42,12 +43,10 @@ PLUGIN_VERSION_LINE = re.compile(r'("version":\s*")([^"]*)(")')
 SCRIPTS = (
     "scripts/audit.sh",
     "scripts/audit.ps1",
-    "scripts/verify.sh",
-    "scripts/verify.ps1",
-    "scripts/hook.sh",
-    "scripts/hook.ps1",
-    "scripts/attest.sh",
-    "scripts/attest.ps1",
+    "scripts/evaluate.sh",
+    "scripts/evaluate.ps1",
+    "scripts/review.sh",
+    "scripts/review.ps1",
 )
 SKIP_DIRS = frozenset({"__pycache__"})
 

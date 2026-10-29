@@ -10,13 +10,14 @@
 # The step exits with the audit's own exit code (0 nothing counted, 1 a finding at or
 # above fail-on, 2 fatal), writes the JSON, SARIF and markdown documents under
 # `output-dir`, appends the markdown to the job summary and uploads the SARIF to Code
-# Scanning. Findings describe evidence; no document states a compliance verdict.
+# Scanning. Findings describe evidence and the project's policy decision; no document
+# states a compliance verdict.
 #
 # The version default is pinned to this repository's pyproject by a test; `install-from:
 # action-path` installs the checkout the action was fetched from (dogfooding and forks).
 # ---------------------------------------------------------------------------
 name: aisafe audit
-description: Static AI-safety audit of a repository (aisafe audit). Findings describe evidence; no compliance verdict.
+description: Audit the prompts and code of a repository for profiling, manipulation, engineered attachment, deceptive identity and behavioural influence over the person using it (aisafe audit). Findings describe evidence and a policy decision; no compliance verdict.
 author: AI SAFE EARTH
 branding:
   icon: shield
@@ -108,7 +109,7 @@ runs:
       run: |
         set -eu
         mkdir -p "$OUT"
-        args=("$TARGET" --no-external --fail-on "$FAIL_ON")
+        args=("$TARGET" --fail-on "$FAIL_ON")
         if [ -n "$BASELINE" ]; then args+=(--baseline "$BASELINE"); fi
         # Each call tolerates only exit 1 (findings); a fatal 2 fails the step here.
         # shellcheck disable=SC2086
@@ -159,7 +160,8 @@ runs:
             handle.write(f"new-findings={0 if new is None else new}\n")
         print(
             f"{summary['findings']} finding(s), {summary['unknown_items']} UNKNOWN item(s), "
-            f"exit {code}. Findings describe evidence; absence of a finding is not evidence of safety."
+            f"exit {code}. Findings describe evidence and a policy decision; absence of a "
+            "finding is not evidence of safety."
         )
         sys.exit(code)
         PY

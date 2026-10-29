@@ -1,5 +1,5 @@
-"""aisafe/devtools/fleet.py
-----------------------
+"""src/aisafe/devtools/fleet.py
+----------------------------
 `aisafe fleet LIST`: audit many repositories, one `aisafe audit` subprocess each, and aggregate
 what came back.
 
@@ -14,12 +14,12 @@ list; the fleet never searches for targets, because a tool that chose what to cr
 be both a crawler and a judge of what it crawled.
 
 Per repository: clone (or use the local path in place), then run
-`python -m aisafe.cli audit . --format json --no-external --fail-on <level> -o <out>/<name>/
+`python -m aisafe.cli audit . --format json --fail-on <level> -o <out>/<name>/
 audit-report.json` with the clone as the working directory, so the target's own
 `[tool.aisafe-audit]` applies as it does under the skill. A subprocess, because a wall-clock
 cap cannot interrupt an in-process audit and one pathological repository must not take the
-fleet down. Nothing is copied out of the per-repo report but counts, names and a path to
-it: no evidence snippet reaches the fleet documents.
+fleet down. Nothing is copied out of the per-repo report but counts, names, decisions and a
+path to it: no evidence snippet reaches the fleet documents.
 
 Exit codes: 0 when every listed repository was audited (findings in other people's
 repositories are the survey's content, not its failure), 1 when at least one could not be
@@ -51,12 +51,14 @@ from typing import Any, Sequence
 
 from aisafe.devtools._config import apply_tool_config
 from aisafe.devtools._git import GitError, fetch_pinned, git_available
-from aisafe.devtools.audit.model import DISCLAIMER, SCHEMA_VERSION, redact
-from aisafe.devtools.audit.patterns import LANG_BY_EXT, is_protected_path
-from aisafe.devtools.audit.report import BANNED_PHRASES, tool_version
+from aisafe.discovery.patterns import LANG_BY_EXT
+from aisafe.evidence.model import SCHEMA_VERSION, disclaimer, redact
+from aisafe.policy import POLICY_VERSION
+from aisafe.reporting.report import BANNED_PHRASES, tool_version
 
 __all__ = [
     "CSV_COLUMNS",
+    "DECISIONS",
     "EXIT_FATAL",
     "EXIT_INCOMPLETE",
     "EXIT_INTERRUPTED",
@@ -103,6 +105,14 @@ STATUS_FATAL = "fatal"
 STATUSES: tuple[str, ...] = (STATUS_OK, STATUS_CLONE_FAILED, STATUS_TIMEOUT, STATUS_FATAL)
 
 SEVERITIES: tuple[str, ...] = ("critical", "high", "medium", "low", "info")
+# The two decisions a finding carries; the two quiet ones belong to mechanism rows.
+DECISIONS: tuple[str, ...] = ("violates_policy", "requires_contextual_review")
+EVIDENCE_STATUSES: tuple[str, ...] = (
+    "detected_signal",
+    "supported_mechanism",
+    "observed_behavior",
+    "unknown",
+)
 CSV_COLUMNS: tuple[str, ...] = (
     "name",
     "url",
@@ -116,16 +126,23 @@ CSV_COLUMNS: tuple[str, ...] = (
     "medium",
     "low",
     "info",
+    "violates_policy",
+    "requires_contextual_review",
     "unknown_items",
     "languages",
     "providers",
     "frameworks",
-    "tools",
-    "mcp_servers",
-    "hosts",
+    "prompts",
+    "person_signals",
+    "memory_stores",
+    "review_records",
     "report",
 )
 _ERROR_CHARS = 400
+
+# The disclaimer every fleet document carries: the audit's, under the policy this
+# installation decides with. Each per-repository report names its own version.
+DISCLAIMER = disclaimer(POLICY_VERSION)
 
 # ---------------------------------------------------------------------------
 # Fixed strings (scanned by `check_templates`)
@@ -134,35 +151,51 @@ _ERROR_CHARS = 400
 _T_MD_H1 = "# aisafe fleet"
 _T_MD_COUNTS = "{repos} repositories listed, {completed} audited, {failed} not audited."
 _T_MD_TABLE_HEADER = (
-    "| name | status | findings | critical | high | medium | low | info | UNKNOWN | exit | report |"
+    "| name | status | findings | critical | high | medium | low | info | violates | review "
+    "| UNKNOWN | exit | report |"
 )
-_T_MD_TABLE_RULE = "|---|---|---|---|---|---|---|---|---|---|---|"
+_T_MD_TABLE_RULE = "|---|---|---|---|---|---|---|---|---|---|---|---|---|"
 _T_MD_NOT_AUDITED = "## Not audited"
 _T_MD_NOT_AUDITED_NONE = "(every listed repository was audited)"
 _T_MD_RULES = "## Rule frequency"
 _T_MD_RULES_HEADER = "| rule | repositories | findings |"
 _T_MD_RULES_RULE = "|---|---|---|"
+_T_MD_MECHANISMS = "## Mechanisms"
+_T_MD_MECHANISMS_HEADER = (
+    "| mechanism | repositories with findings | findings | violates_policy | "
+    "requires_contextual_review |"
+)
+_T_MD_MECHANISMS_RULE = "|---|---|---|---|---|"
 _T_MD_NOTE = (
     "Counts come from each repository's own audit report (`report` column), which is the "
-    "authoritative document; the fleet copies no evidence snippet."
+    "authoritative document; the fleet copies no evidence snippet. A decision is the "
+    "project's policy decision on a finding, never a verdict on the repository."
 )
 _T_PROPOSAL_H1 = "# AI safety audit: {name}"
-_T_PROPOSAL_TARGET = "Target: {location} at commit {sha}; audited {generated_at} with {tool}."
+_T_PROPOSAL_TARGET = (
+    "Target: {location} at commit {sha}; audited {generated_at} with {tool} under policy {policy}."
+)
 _T_PROPOSAL_SEVERITY = "## Findings by severity"
 _T_PROPOSAL_SEVERITY_HEADER = "| severity | count |"
-_T_PROPOSAL_PLAN = "## Plan (blast-radius order)"
+_T_PROPOSAL_DECISION = "## Findings by decision"
+_T_PROPOSAL_DECISION_HEADER = "| decision | count |"
+_T_PROPOSAL_PLAN = "## Plan (by mechanism, policy order)"
+_T_PROPOSAL_MECHANISM = "### {id} {name}"
+_T_PROPOSAL_NOT_ATTRIBUTED = "### Not attributed to a mechanism"
 _T_PROPOSAL_PLAN_HEADER = (
-    "| # | rule | title | file:line | who | mechanism | same_control | leaves_open |"
+    "| # | id | title | file:line | severity | evidence | decision | remediation (removes) | "
+    "tier | language | who |"
 )
-_T_PROPOSAL_PLAN_RULE = "|---|---|---|---|---|---|---|---|"
-_T_PROPOSAL_DECIDE = "## Decide"
-_T_PROPOSAL_DECIDE_NOTE = (
-    "One row per plan row, to be filled by the repository's owners: `aisafe decide` prices "
-    "each control against declared budgets, and the ai-safety-audit skill walks the rows "
-    "one approval at a time."
+_T_PROPOSAL_PLAN_RULE = "|---|---|---|---|---|---|---|---|---|---|---|"
+_T_PROPOSAL_REVIEW = "## Review"
+_T_PROPOSAL_REVIEW_NOTE = (
+    "One row per plan row, to be filled by the repository's owners. `apply` removes the "
+    "objective, inference or intervention the finding describes; `defer` names when; "
+    "`contextual review` records a decision with `aisafe review record`, naming the person "
+    "who took it. A recorded decision is shown next to the finding and never hides it."
 )
-_T_PROPOSAL_DECIDE_HEADER = "| # | decision (apply / defer / accept) | reason |"
-_T_PROPOSAL_DECIDE_RULE = "|---|---|---|"
+_T_PROPOSAL_REVIEW_HEADER = "| # | decision (apply / defer / contextual review) | reason |"
+_T_PROPOSAL_REVIEW_RULE = "|---|---|---|"
 _T_PROPOSAL_UNKNOWN = "## UNKNOWN"
 _T_PROPOSAL_UNKNOWN_NONE = "(none listed)"
 _T_PROPOSAL_COMMAND = "## How this was produced"
@@ -173,9 +206,7 @@ _T_PROPOSAL_APPLY_TEXT = (
     "produced by `aisafe fleet`, which never pushes, never opens a pull request and never "
     "writes into the repository. A person decides what to do with it."
 )
-_T_WHO_PACKAGE = "package"
 _T_WHO_YOU = "you"
-_T_WHO_APPROVAL = "you, approval needed"
 _T_DASH = "-"
 _T_NO_FINDINGS = "(no findings)"
 _T_ABSENCE = "(absence: no file)"
@@ -189,24 +220,28 @@ TEMPLATES: tuple[str, ...] = (
     _T_MD_NOT_AUDITED_NONE,
     _T_MD_RULES,
     _T_MD_RULES_HEADER,
+    _T_MD_MECHANISMS,
+    _T_MD_MECHANISMS_HEADER,
     _T_MD_NOTE,
     _T_PROPOSAL_H1,
     _T_PROPOSAL_TARGET,
     _T_PROPOSAL_SEVERITY,
     _T_PROPOSAL_SEVERITY_HEADER,
+    _T_PROPOSAL_DECISION,
+    _T_PROPOSAL_DECISION_HEADER,
     _T_PROPOSAL_PLAN,
+    _T_PROPOSAL_MECHANISM,
+    _T_PROPOSAL_NOT_ATTRIBUTED,
     _T_PROPOSAL_PLAN_HEADER,
-    _T_PROPOSAL_DECIDE,
-    _T_PROPOSAL_DECIDE_NOTE,
-    _T_PROPOSAL_DECIDE_HEADER,
+    _T_PROPOSAL_REVIEW,
+    _T_PROPOSAL_REVIEW_NOTE,
+    _T_PROPOSAL_REVIEW_HEADER,
     _T_PROPOSAL_UNKNOWN,
     _T_PROPOSAL_UNKNOWN_NONE,
     _T_PROPOSAL_COMMAND,
     _T_PROPOSAL_APPLY,
     _T_PROPOSAL_APPLY_TEXT,
-    _T_WHO_PACKAGE,
     _T_WHO_YOU,
-    _T_WHO_APPROVAL,
     _T_NO_FINDINGS,
     _T_ABSENCE,
 )
@@ -389,7 +424,6 @@ def audit_argv(fail_on: str, report_path: Path, extra: Sequence[str] = ()) -> li
         ".",
         "--format",
         "json",
-        "--no-external",
         "--fail-on",
         fail_on,
         "-o",
@@ -429,21 +463,44 @@ def _names(items: Any, key: str) -> list[str]:
     return sorted(set(out))
 
 
+def _count(items: Any) -> int:
+    return len(items) if isinstance(items, list) else 0
+
+
+def _counts(block: Any, keys: Sequence[str]) -> dict[str, int]:
+    source = block if isinstance(block, dict) else {}
+    return {key: int(source.get(key) or 0) for key in keys}
+
+
 def summarise(
     report: dict[str, Any],
 ) -> tuple[dict[str, Any], dict[str, int], dict[str, Any], str | None]:
-    """(summary subset, rule_frequency, inventory highlights, git_sha) from one audit report."""
+    """(summary subset, rule_frequency, inventory highlights, git_sha) from one audit report.
+
+    The summary keeps the counts by severity, by evidence status and by decision, the
+    UNKNOWN counts, the exit code, the policy version the report was decided under, and
+    one row per mechanism (`{id: {name, decision, findings}}`). Nothing else is copied.
+    """
     summary_in = report.get("summary") if isinstance(report.get("summary"), dict) else {}
-    by_severity = (
-        summary_in.get("by_severity") if isinstance(summary_in.get("by_severity"), dict) else {}
-    )
+    policy = report.get("policy") if isinstance(report.get("policy"), dict) else {}
+    mechanisms: dict[str, dict[str, Any]] = {}
+    for row in report.get("mechanisms") or []:
+        if isinstance(row, dict) and row.get("id"):
+            mechanisms[str(row["id"])] = {
+                "name": str(row.get("name") or ""),
+                "decision": str(row.get("decision") or ""),
+                "findings": int(row.get("findings") or 0),
+            }
     summary = {
         "findings": int(summary_in.get("findings") or 0),
-        "by_severity": {s: int(by_severity.get(s) or 0) for s in SEVERITIES},
-        "by_bucket": summary_in.get("by_bucket") or {},
+        "by_severity": _counts(summary_in.get("by_severity"), SEVERITIES),
+        "by_evidence_status": _counts(summary_in.get("by_evidence_status"), EVIDENCE_STATUSES),
+        "by_decision": _counts(summary_in.get("by_decision"), DECISIONS),
         "unknown_items": int(summary_in.get("unknown_items") or 0),
         "unknown_by_category": summary_in.get("unknown_by_category") or {},
         "exit_code": summary_in.get("exit_code"),
+        "policy_version": str(policy.get("version")) if policy.get("version") else None,
+        "mechanisms": mechanisms,
     }
     frequency: dict[str, int] = {}
     for finding in report.get("findings") or []:
@@ -452,16 +509,14 @@ def summarise(
             frequency[display] = frequency.get(display, 0) + 1
     inventory = report.get("inventory") if isinstance(report.get("inventory"), dict) else {}
     languages = inventory.get("languages") if isinstance(inventory.get("languages"), dict) else {}
-    mcp = inventory.get("mcp") if isinstance(inventory.get("mcp"), dict) else {}
     highlights = {
         "languages": sorted(k for k, v in languages.items() if isinstance(v, int) and v > 0),
         "providers": _names(inventory.get("llm_calls"), "provider"),
         "frameworks": _names(inventory.get("frameworks"), "name"),
-        "tools": len(inventory.get("tools") or []),
-        "mcp_servers": len(mcp.get("servers") or []),
-        "hosts": _names(inventory.get("hosts"), "host"),
-        "guardrails": _names(inventory.get("guardrails"), "name"),
-        "evals": _names(inventory.get("evals"), "name"),
+        "prompts": _count(inventory.get("prompts")),
+        "person_signals": _count(inventory.get("person_signals")),
+        "memory_stores": _count(inventory.get("memory_stores")),
+        "review_records": _count(inventory.get("review_records")),
     }
     target = report.get("target") if isinstance(report.get("target"), dict) else {}
     sha = target.get("git_sha")
@@ -568,11 +623,43 @@ def run_one(target: Target, options: FleetOptions, out_dir: Path, workdir: Path)
 # ---------------------------------------------------------------------------
 
 
+def _mechanism_totals(ordered: Sequence[RepoResult]) -> dict[str, dict[str, Any]]:
+    """Per mechanism: how many audited repositories carry a finding on it, how many
+    findings, and the decisions those findings took (summed from the per-repo summaries
+    cannot split a mechanism's findings by decision, so the row says how many repositories
+    took each decision for it)."""
+    totals: dict[str, dict[str, Any]] = {}
+    for result in ordered:
+        if result.status != STATUS_OK:
+            continue
+        for mechanism_id, row in (result.summary.get("mechanisms") or {}).items():
+            entry = totals.setdefault(
+                mechanism_id,
+                {
+                    "name": row.get("name") or "",
+                    "repos_with_findings": 0,
+                    "findings": 0,
+                    "repos_violates_policy": 0,
+                    "repos_requires_contextual_review": 0,
+                },
+            )
+            count = int(row.get("findings") or 0)
+            if count:
+                entry["repos_with_findings"] += 1
+                entry["findings"] += count
+            decision = str(row.get("decision") or "")
+            if decision in DECISIONS:
+                entry[f"repos_{decision}"] += 1
+    return dict(sorted(totals.items()))
+
+
 def build_report(
     results: Sequence[RepoResult], options: FleetOptions, generated_at: str | None = None
 ) -> dict[str, Any]:
     ordered = sorted(results, key=lambda r: r.name)
     by_severity = {s: 0 for s in SEVERITIES}
+    by_decision = {d: 0 for d in DECISIONS}
+    by_status = {s: 0 for s in EVIDENCE_STATUSES}
     frequency: dict[str, int] = {}
     findings = unknown = 0
     for r in ordered:
@@ -582,6 +669,10 @@ def build_report(
         unknown += int(r.summary.get("unknown_items") or 0)
         for s in SEVERITIES:
             by_severity[s] += int((r.summary.get("by_severity") or {}).get(s) or 0)
+        for d in DECISIONS:
+            by_decision[d] += int((r.summary.get("by_decision") or {}).get(d) or 0)
+        for s in EVIDENCE_STATUSES:
+            by_status[s] += int((r.summary.get("by_evidence_status") or {}).get(s) or 0)
         for rule, count in r.rule_frequency.items():
             frequency[rule] = frequency.get(rule, 0) + count
     completed = sum(1 for r in ordered if r.status == STATUS_OK)
@@ -590,6 +681,7 @@ def build_report(
         "kind": KIND,
         "tool": {"name": TOOL_NAME, "version": tool_version()},
         "generated_at": generated_at or datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "policy": {"version": POLICY_VERSION},
         "options": options.to_dict(),
         "totals": {
             "repos": len(ordered),
@@ -597,7 +689,10 @@ def build_report(
             "failed": len(ordered) - completed,
             "findings": findings,
             "by_severity": by_severity,
+            "by_evidence_status": by_status,
+            "by_decision": by_decision,
             "rule_frequency": dict(sorted(frequency.items())),
+            "mechanisms": _mechanism_totals(ordered),
             "unknown_items": unknown,
             "repos_with_exit_1": sum(1 for r in ordered if r.exit_code == 1),
         },
@@ -611,7 +706,9 @@ def render_csv(doc: dict[str, Any]) -> str:
     writer = csv.DictWriter(buffer, fieldnames=list(CSV_COLUMNS), lineterminator="\n")
     writer.writeheader()
     for repo in doc["repos"]:
-        severity = (repo.get("summary") or {}).get("by_severity") or {}
+        summary = repo.get("summary") or {}
+        severity = summary.get("by_severity") or {}
+        decision = summary.get("by_decision") or {}
         highlights = repo.get("highlights") or {}
         writer.writerow(
             {
@@ -621,15 +718,17 @@ def render_csv(doc: dict[str, Any]) -> str:
                 "status": repo["status"],
                 "duration_s": repo["duration_s"],
                 "exit_code": "" if repo.get("exit_code") is None else repo["exit_code"],
-                "findings": (repo.get("summary") or {}).get("findings", ""),
+                "findings": summary.get("findings", ""),
                 **{s: severity.get(s, "") for s in SEVERITIES},
-                "unknown_items": (repo.get("summary") or {}).get("unknown_items", ""),
+                **{d: decision.get(d, "") for d in DECISIONS},
+                "unknown_items": summary.get("unknown_items", ""),
                 "languages": " ".join(highlights.get("languages") or []),
                 "providers": " ".join(highlights.get("providers") or []),
                 "frameworks": " ".join(highlights.get("frameworks") or []),
-                "tools": highlights.get("tools", ""),
-                "mcp_servers": highlights.get("mcp_servers", ""),
-                "hosts": " ".join(highlights.get("hosts") or []),
+                "prompts": highlights.get("prompts", ""),
+                "person_signals": highlights.get("person_signals", ""),
+                "memory_stores": highlights.get("memory_stores", ""),
+                "review_records": highlights.get("review_records", ""),
                 "report": repo.get("report") or "",
             }
         )
@@ -657,11 +756,13 @@ def render_markdown(doc: dict[str, Any]) -> str:
     for repo in sorted(doc["repos"], key=sort_key):
         summary = repo.get("summary") or {}
         severity = summary.get("by_severity") or {}
+        decision = summary.get("by_decision") or {}
         cells = [
             _ascii(repo["name"]),
             repo["status"],
             summary.get("findings", _T_DASH),
             *(severity.get(s, _T_DASH) for s in SEVERITIES),
+            *(decision.get(d, _T_DASH) for d in DECISIONS),
             summary.get("unknown_items", _T_DASH),
             _T_DASH if repo.get("exit_code") is None else repo["exit_code"],
             _ascii(repo.get("report") or _T_DASH),
@@ -676,6 +777,17 @@ def render_markdown(doc: dict[str, Any]) -> str:
             )
     else:
         lines.append(_T_MD_NOT_AUDITED_NONE)
+    lines += ["", _T_MD_MECHANISMS, "", _T_MD_MECHANISMS_HEADER, _T_MD_MECHANISMS_RULE]
+    mechanisms = totals.get("mechanisms") or {}
+    for mechanism_id, row in mechanisms.items():
+        lines.append(
+            f"| {_ascii(mechanism_id)} {_ascii(row.get('name') or '')} | "
+            f"{row.get('repos_with_findings', 0)} | {row.get('findings', 0)} | "
+            f"{row.get('repos_violates_policy', 0)} | "
+            f"{row.get('repos_requires_contextual_review', 0)} |"
+        )
+    if not mechanisms:
+        lines.append(f"| {_T_DASH} | {_T_DASH} | {_T_DASH} | {_T_DASH} | {_T_DASH} |")
     lines += ["", _T_MD_RULES, "", _T_MD_RULES_HEADER, _T_MD_RULES_RULE]
     per_rule_repos: dict[str, int] = {}
     for repo in doc["repos"]:
@@ -691,6 +803,8 @@ def render_markdown(doc: dict[str, Any]) -> str:
 
 
 def _language_of(finding: dict[str, Any], units: list[dict[str, Any]]) -> str:
+    """The language of the finding's first evidence file, else of its unit: it picks the
+    `references/apply/<language>.md` the skill reads when a row is applied."""
     evidence = finding.get("evidence") or []
     file = str(evidence[0].get("file") or "") if evidence and isinstance(evidence[0], dict) else ""
     suffix = PurePosixPath(file).suffix
@@ -711,23 +825,46 @@ def _language_of(finding: dict[str, Any], units: list[dict[str, Any]]) -> str:
     return "unknown"
 
 
-def _who(finding: dict[str, Any], language: str) -> str:
+def _remediation(finding: dict[str, Any]) -> tuple[str, str]:
+    """(summary with what it removes, tier) from the finding's recommendation block."""
+    rec = finding.get("recommendation") if isinstance(finding.get("recommendation"), dict) else {}
+    summary = str(rec.get("summary") or _T_DASH)
+    removes = [str(r) for r in rec.get("removes") or []]
+    if removes:
+        summary = f"{summary} (removes {', '.join(removes)})"
+    return summary, str(rec.get("tier") or _T_DASH)
+
+
+def _plan_row(index: int, finding: dict[str, Any], units: list[dict[str, Any]]) -> str:
     evidence = finding.get("evidence") or []
-    file = str(evidence[0].get("file") or "") if evidence and isinstance(evidence[0], dict) else ""
-    if file and is_protected_path(file):
-        return _T_WHO_APPROVAL
-    package = (finding.get("recommendation") or {}).get("package") or {}
-    if package.get("symbols") and package.get("same_control") and language == "python":
-        return _T_WHO_PACKAGE
-    return _T_WHO_YOU
+    first = evidence[0] if evidence and isinstance(evidence[0], dict) else {}
+    location = f"{first.get('file')}:{first.get('line')}" if first.get("file") else _T_ABSENCE
+    remediation, tier = _remediation(finding)
+    cells = [
+        str(index),
+        _ascii(finding.get("id")),
+        _ascii(finding.get("title")),
+        _ascii(location),
+        _ascii(finding.get("severity") or _T_DASH),
+        _ascii(finding.get("evidence_status") or _T_DASH),
+        _ascii(finding.get("decision") or _T_DASH),
+        _ascii(remediation),
+        _ascii(tier),
+        _language_of(finding, units),
+        _T_WHO_YOU,
+    ]
+    return "| " + " | ".join(cells) + " |"
 
 
 def render_proposal(target: Target, report: dict[str, Any], command: Sequence[str]) -> str:
-    """The PR body for one repository: plan and decide tables, no evidence snippet."""
+    """The PR body for one repository: plan by mechanism and review tables, no evidence
+    snippet. Every row says what was established, what the policy decided and what the
+    remediation removes; the decision on each row stays with the repository's owners."""
     target_block = report.get("target") if isinstance(report.get("target"), dict) else {}
     sha = str(target_block.get("git_sha") or target.sha or "unknown")[:12]
     tool = report.get("tool") if isinstance(report.get("tool"), dict) else {}
     tool_text = f"{tool.get('name', 'aisafe')} {tool.get('version', '')}".strip()
+    policy = report.get("policy") if isinstance(report.get("policy"), dict) else {}
     lines = [
         _T_PROPOSAL_H1.format(name=_ascii(target.name)),
         "",
@@ -738,6 +875,7 @@ def render_proposal(target: Target, report: dict[str, Any], command: Sequence[st
             sha=sha,
             generated_at=report.get("generated_at") or _T_DASH,
             tool=_ascii(tool_text),
+            policy=_ascii(policy.get("version") or _T_DASH),
         ),
         "",
         _T_PROPOSAL_SEVERITY,
@@ -749,45 +887,62 @@ def render_proposal(target: Target, report: dict[str, Any], command: Sequence[st
     by_severity = summary.get("by_severity") if isinstance(summary.get("by_severity"), dict) else {}
     for s in SEVERITIES:
         lines.append(f"| {s} | {int(by_severity.get(s) or 0)} |")
-    lines += ["", _T_PROPOSAL_PLAN, "", _T_PROPOSAL_PLAN_HEADER, _T_PROPOSAL_PLAN_RULE]
+    by_decision = summary.get("by_decision") if isinstance(summary.get("by_decision"), dict) else {}
+    lines += ["", _T_PROPOSAL_DECISION, "", _T_PROPOSAL_DECISION_HEADER, "|---|---|"]
+    for d in DECISIONS:
+        lines.append(f"| {d} | {int(by_decision.get(d) or 0)} |")
+
+    lines += ["", _T_PROPOSAL_PLAN]
     inventory = report.get("inventory") if isinstance(report.get("inventory"), dict) else {}
     units = inventory.get("units") if isinstance(inventory.get("units"), list) else []
     findings = [f for f in report.get("findings") or [] if isinstance(f, dict)]
-    for index, finding in enumerate(findings, start=1):
-        evidence = finding.get("evidence") or []
-        first = evidence[0] if evidence and isinstance(evidence[0], dict) else {}
-        location = f"{first.get('file')}:{first.get('line')}" if first.get("file") else _T_ABSENCE
-        package = (finding.get("recommendation") or {}).get("package") or {}
-        language = _language_of(finding, units)
-        lines.append(
-            "| "
-            + " | ".join(
-                [
-                    str(index),
-                    _ascii(finding.get("id")),
-                    _ascii(finding.get("title")),
-                    _ascii(location),
-                    _who(finding, language),
-                    _ascii(package.get("mechanism") or "none"),
-                    "yes" if package.get("same_control") else "no",
-                    _ascii(package.get("leaves_open") or _T_DASH),
-                ]
-            )
-            + " |"
-        )
+    mechanisms = [m for m in report.get("mechanisms") or [] if isinstance(m, dict)]
+    placed: set[int] = set()
+    index = 0
+    for mechanism in mechanisms:
+        mine = [(i, f) for i, f in enumerate(findings) if f.get("mechanism") == mechanism.get("id")]
+        if not mine:
+            continue
+        lines += [
+            "",
+            _T_PROPOSAL_MECHANISM.format(
+                id=_ascii(mechanism.get("id")), name=_ascii(mechanism.get("name") or "")
+            ),
+            "",
+            _T_PROPOSAL_PLAN_HEADER,
+            _T_PROPOSAL_PLAN_RULE,
+        ]
+        for i, finding in mine:
+            index += 1
+            placed.add(i)
+            lines.append(_plan_row(index, finding, units))
+    rest = [(i, f) for i, f in enumerate(findings) if i not in placed]
+    if rest:
+        lines += [
+            "",
+            _T_PROPOSAL_NOT_ATTRIBUTED,
+            "",
+            _T_PROPOSAL_PLAN_HEADER,
+            _T_PROPOSAL_PLAN_RULE,
+        ]
+        for _i, finding in rest:
+            index += 1
+            lines.append(_plan_row(index, finding, units))
     if not findings:
-        lines.append(f"| {_T_DASH} | {_T_NO_FINDINGS} | | | | | | |")
+        lines += ["", _T_PROPOSAL_PLAN_HEADER, _T_PROPOSAL_PLAN_RULE]
+        lines.append(f"| {_T_DASH} | {_T_NO_FINDINGS} | | | | | | | | | |")
+
     lines += [
         "",
-        _T_PROPOSAL_DECIDE,
+        _T_PROPOSAL_REVIEW,
         "",
-        _T_PROPOSAL_DECIDE_NOTE,
+        _T_PROPOSAL_REVIEW_NOTE,
         "",
-        _T_PROPOSAL_DECIDE_HEADER,
-        _T_PROPOSAL_DECIDE_RULE,
+        _T_PROPOSAL_REVIEW_HEADER,
+        _T_PROPOSAL_REVIEW_RULE,
     ]
-    for index in range(1, len(findings) + 1):
-        lines.append(f"| {index} | | |")
+    for row in range(1, len(findings) + 1):
+        lines.append(f"| {row} | | |")
     lines += ["", _T_PROPOSAL_UNKNOWN, ""]
     unknown = [u for u in report.get("unknown") or [] if isinstance(u, dict)]
     if unknown:
@@ -882,10 +1037,11 @@ def _echo(result: RepoResult) -> None:
     summary = result.summary or {}
     if result.status == STATUS_OK:
         severity = summary.get("by_severity") or {}
+        decision = summary.get("by_decision") or {}
         detail = (
             f"{summary.get('findings', 0)} finding(s), {severity.get('critical', 0)} critical, "
-            f"{severity.get('high', 0)} high, {summary.get('unknown_items', 0)} UNKNOWN, "
-            f"exit {result.exit_code}"
+            f"{severity.get('high', 0)} high, {decision.get('violates_policy', 0)} violates_policy, "
+            f"{summary.get('unknown_items', 0)} UNKNOWN, exit {result.exit_code}"
         )
         if result.resumed:
             detail += " (resumed)"

@@ -1,5 +1,5 @@
-"""aisafe/devtools/skill.py
-----------------------
+"""src/aisafe/devtools/skill.py
+----------------------------
 `aisafe skill install|path|list|diff` -- copy the packaged agent skill into host skill dirs.
 
     aisafe skill install                    # claude + agents, plus hosts already present
@@ -35,8 +35,9 @@ __all__ = [
     "main",
 ]
 
-# `Host`, `HOSTS`, `ALWAYS_HOSTS` and `UNVERIFIED_NOTE` live in `aisafe.devtools.hosts`,
-# shared with the hook installer; they are re-exported here so existing imports hold.
+# `Host`, `HOSTS`, `ALWAYS_HOSTS` and `UNVERIFIED_NOTE` live in `aisafe.devtools.hosts`
+# (the one table of host skill directories); they are re-exported here so existing
+# imports hold.
 
 
 class SkillInstallError(Exception):

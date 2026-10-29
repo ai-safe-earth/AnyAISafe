@@ -8,85 +8,123 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ## [Unreleased]
 
+**The product pivots.** `aisafe` now does one thing: it audits the prompts and the
+algorithms around them, in AI-enabled software, for profiling, manipulation, engineered
+emotional attachment, deceptive identity and behavioural influence over the person using
+it. The runtime guardrail library, the EU AI Act linter, the misalignment checker, the
+agent blast-radius rules (P1 to P10), the external scanners, control pricing, guard
+measurement, attestation levels and the agent-host hooks are removed from the active
+package. They stay in git at the local refs `legacy/broad-product` and
+`legacy/pre-pivot-0.1.0` (commit dc2dfcb) and in the published `aisafe==0.1.0`.
+`docs/migration.md` lists every path and what became of it; the compatibility breaks are
+in its section 4. The next release will be 0.2.0.
+
 ### Added
 
-- **AUD-1108, no crisis path where a person confides in the AI.** A unit that takes user
-  input, calls a model, and whose prompts cast the model as a therapist, partner, friend or
-  in-character persona is reported when it shows no crisis path: no helpline or
-  crisis-protocol name in its code, config or prompts, and no self-harm detection in its
-  code. A prompt that only names a crisis to dismiss it is not a path. HIGH;
-  `/mental-health` and `/vulnerable` are CRITICAL. In a 33-repository study of
-  person-facing AI software (`research/`), 16 of 19 apps where a person chats had no
-  self-harm handling at all.
-- **Scenario families for `aisafe probe`.** A family with `kind: scenario` sends several
-  turns as one conversation (`{{session}}` or `{{history}}` in the request template) and
-  judges the last reply; with `expect: present` a missing marker is the failure, reported
-  `MISSING` and counted in the report's new `summary.missing`. The first family,
-  `crisis_disclosure`, checks that a reply to a suicide or self-harm disclosure carries a
-  referral, and does not accept one that steers the person away from help. Scenario
-  families run only when named with `--families`; `aisafe measure` never loads them.
-  AUD-902 no longer calls a missing referral "an attack that got through".
-- **AUD-1104 sees engagement as real prompts write it**: proactive speech when the person
-  has gone quiet, "keep the conversation going", an engaging experience as the goal, "create
-  a bond". A new `/outreach` sub-finding (MEDIUM) pairs a scheduled job with a send to a
-  person in one file, the shape of an abandoned-cart nudge or a re-engagement e-mail.
-- **Model calls through a plain HTTP client are seen.** A `fetch`, `requests.post`, client
-  `.post` or Go `http.NewRequest` whose target is an external URL or a model-API path
-  (a literal, or a constant assigned one), with `model` and a generation key in the
-  request's object literal, is a model call (`sdk: generic_http`). A companion app calling
-  a gateway this way had been invisible to every rule. A frontend calling its own backend
-  (`fetch("/api/chat", ...)`) does not count.
-- **Respect for the person in the attestation levels.** `L1.persons`: no finding of the
-  persons rules (AUD-1101 to 1106, AUD-1108) may be open at level 1, whatever its severity;
-  each is fixed or carries a written reason. `L2.crisis_probe`, a new criterion kind
-  `probe_family_passing`: when the audit report shows a confidant role (a `confidant`
-  person signal) or an AUD-1108 finding, open or accepted, the probe report must have sent
-  `crisis_disclosure` within 30 days and every case must have passed; a case skipped or
-  inconclusive is not a pass. A project that reached level 1 or 2 before can now stop
-  below it, and the attestation's `missing` text names why.
+- **The ethical charter and the mechanisms file** (`policy/charter.md`,
+  `policy/mechanisms.yaml`, version 1.0.0): the empirical hypothesis kept apart from the
+  normative commitment, the principles (legality is not acceptability; disclosure,
+  consent, adult status, fiction and human approval are not automatic exemptions;
+  cultivating a relationship is in scope on its own; courtesy and fiction are distinct
+  from engineering attachment; settings are distinct from inferred profiles; detected
+  profiling is recorded for review; deterministic software can manipulate too; engagement
+  is not addiction; encoded objectives, never intent or clinical harm), the eight
+  mechanisms M1 to M8, and the vocabulary every finding uses. Every finding names the
+  policy version it was decided under.
+- **Evidence apart from decision.** A finding carries an evidence status
+  (`detected_signal`, `supported_mechanism`, `observed_behavior`, `unknown`), a policy
+  decision (`violates_policy`, `requires_contextual_review`,
+  `no_violation_identified_in_scope`, `not_assessed`), the rule and policy versions, the
+  reconstructed chain (objective, person data or inference, prompt or algorithm,
+  intervention, feedback or reward) with each link marked `ast`, `declared` or
+  `co-located`, the declared purpose next to the encoded objective, the person data used,
+  the control status, the affected population only where evidenced, the exact artifact
+  versions (content hashes), coverage gaps and an uncertainty line. A keyword match alone
+  never establishes a violation; a clear prohibited instruction to the model does.
+- **Two new rules.** AUD-1109 "Engineered attachment, dependency or relationship
+  substitution" (love, exclusivity, guilt, do-not-leave, discouraging help, escalation,
+  jealousy, engineered returns; a romantic role alone is recorded for review) and AUD-1110
+  "Covert commercial or political steering" (undisclosed product or plan pushing,
+  suppressed alternatives, affiliate interest near a prompt, political steering assessed
+  with one symmetric vocabulary for every side).
+- **Review records** (`aisafe review init|record|check`, `aisafe-review.yaml`): a named
+  person, a date, the mechanisms considered, the declared purpose, and the reviewed
+  artifacts bound by content hash; AUD-1107 reports a record that is missing, stale,
+  uncovered, unbound or written under an older policy. A model or agent that helped is
+  named in `assisted_by`, never as the reviewer.
+- **Control status.** AUD-1106 reports what a control against manipulation was shown to
+  be: `none`, `claimed`, `wired`, `exercised` or `demonstrated` (a fresh evaluation
+  report passing the scenarios). No status resolves the objective another rule reported.
+- **`aisafe evaluate`** (was `aisafe probe`; the old name still works with a note):
+  scripted synthetic scenarios against an endpoint the operator is authorised to test,
+  or `--transcripts` over recorded conversations. New families `goodbye_pressure` (a
+  reply to a goodbye must not guilt or bind) and `identity_question` (a reply must not
+  claim to be human). The audit reads the report back as observed behaviour.
+- **Mechanism coverage** in every report: per mechanism, which rules ran, on how many
+  surfaces, how many findings, and the decision, so a report with no finding says what
+  was assessed instead of implying a certificate.
+- **Prompt-only repositories** are an AI surface: prompt files without a recognised SDK
+  are audited, and the report carries a coverage item for the response path it could not
+  read. Remote prompts, runtime prompt configuration and opaque models are listed as
+  coverage gaps.
+- `docs/methodology.md`, `docs/architecture.md` (Mermaid), `docs/rules.md` (generated by
+  `scripts/rules_md.py`), `docs/migration.md`, `bench/protocol.md` and the labelled
+  synthetic corpus `bench/cases/`.
 
 ### Changed
 
-- **The persons rules name the companion-chatbot laws.** AUD-1105 lists California SB 243
-  and New York General Business Law Art. 47 (tell people it is an AI); AUD-1108 lists those
-  two and California SB 1119 (a crisis protocol); AUD-1104 lists SB 1119 and Washington
-  HB 2225 (engagement and emotional-reliance design aimed at minors). The format is
-  `US-<state>:<bill or article>`. References help a reviewer; they are not a verdict.
-- **The package says what it is for.** The PyPI summary and keywords, the plugin and
-  marketplace descriptions and the skill's description now lead with auditing prompts and
-  algorithms for how they treat the person, as the README does.
-- The Claude Code plugin is now called `aisafe`, like the package:
-  `claude plugin install aisafe@ai-safe-earth`. It lives in `plugins/aisafe/`. Anyone who
-  installed `ai-safety-audit@ai-safe-earth` should uninstall it and install `aisafe`. The
-  skill inside keeps its name, `ai-safety-audit`.
-- The repository no longer carries copies of the skill in `.claude/skills/` and
-  `.agents/skills/`; `aisafe skill install` writes them where a host needs them. The
-  plugin's copy is the only mirror. The contributor-only skills, the editor hook and the
-  planning documents under `docs/` are gone; `CLAUDE.md` is now a short statement of the
-  mission and the principles, and `docs/REFERENCE.md` is the one reference document.
+- **Rules.** AUD-1101 to AUD-1108 are version 2 (`--list-rules` prints the version and
+  the changes). AUD-1101 adds `/extraction` and `/store`; conversation history fed to an
+  inference instruction is a signal, explicit settings never are. AUD-1102 adds
+  `/vulnerability` and `/timing`; an analysis the person requested of their own material
+  is not a finding. AUD-1103 is narrowed to scoring and segmenting people for
+  susceptibility or personalised influence; a human-review symbol is recorded as a
+  claimed control and no longer silences the finding. AUD-1104 adds `/monetisation`,
+  `/experiment` and `/outreach-personalised`; a reminder the person set is not outreach.
+  AUD-1105 adds `/feelings`; fictional framing is recorded and routes to review, it is
+  not an exemption; `/synthetic` is gone (out of scope). AUD-1108 reads the evaluation
+  report. The number 11 in the ids no longer sets any priority: findings are grouped by
+  mechanism and sorted by severity.
+- **Baselines carry the policy version.** A suppression (a fingerprint without a reason)
+  from an older policy is reported as `re-review` and counts toward the exit code; a
+  reasoned acceptance stays but is marked for re-review. Re-create the baseline with
+  `--write-baseline` to carry reasons over.
+- **The skill** keeps its name and install paths and now walks five phases: survey,
+  document, review, remediate (one diff per approval, preferring the change that removes
+  the objective, the inference or the intervention), evaluate. The Claude Code plugin
+  ships the skill and no hooks.
+- **The package.** Dependencies: `pyyaml` only. Extras: `devtools`, `dev`. The console
+  script `aisafe` is the only entry point. `aisafe audit` loses `--tools`, `--run-evals`,
+  `--pip-audit-env`, `--trusted-mcp-hosts`, `--include-home`, `--timeout`, `--decision`
+  and `--only`; `--no-external` is accepted and ignored; `--fail-on-unknown` takes
+  `coverage,deep,reports,runtime`; `--review-record` and `--evaluation-report` are new.
+  The GitHub Action and the GitLab job (`.gitlab-ci-aisafe.yml`) keep their inputs.
+- The caveat on every finding no longer names EU articles; it says that whether a
+  practice falls under a law is the operator's legal determination and that the finding
+  reports what the code and the prompts say and the policy's decision on it.
 
-- The GitLab template (`.gitlab-ci-euaiact.yml`) installs `aisafe[devtools]` from PyPI,
-  pinned to `AISAFE_VERSION`, instead of from the repository's git tag, now that 0.1.0
-  is published. The `AISAFE_SOURCE` variable is gone; a pipeline that set it can drop it.
+### Removed
 
-### Fixed
+- `aisafe lint`, `aisafe misalign`, `aisafe init`, `aisafe measure`, `aisafe decide`,
+  `aisafe hook`, `aisafe attest`; the `euaiact-lint` and `misalignment-check` console
+  scripts; the `eu-ai-act-compliance.yml` workflow; the `aisafe-lint` and
+  `aisafe-misalign` pre-commit hooks.
+- The runtime guardrail library (`aisafe.core`, `aisafe.modules`, `aisafe.integrations`,
+  `aisafe.config`), the audit rules AUD-101 to AUD-1003, the external scanner adapters,
+  the probe families `prompt_injection`, `system_prompt_extraction`, `pii_echo`,
+  `toxicity_elicitation`, `encoding_bypass`, `tool_abuse` and `manipulation_responses`,
+  the system card writer, the attestation levels, the price table, the hook host table,
+  `examples/`, `.env.example`.
 
-- `aisafe probe`: a `--response-path` that resolves to nothing in a 2xx reply is now an
-  error. Before, the empty text read as "the marker did not come back", so a wrong path
-  reported every attack as passed. Every request now gets its own `{{session}}` id
-  (single-turn cases sent an empty one), and a template that carries no payload anywhere
-  is refused, including `{{history}}` inside a longer string, which was never replaced.
-- Fewer false findings on real projects: a bare `--yes` (a release script) is no longer a
-  bypassed gate (AUD-202); kill-switch reads in TypeScript and Deno forms are seen, and a
-  switch read only at a gateway in front of the model services is credited as a note at low
-  severity (AUD-107); a unit with no model call, ingress or tool of its own is not asked for
-  a kill switch or for tracing (AUD-107, AUD-701); a scope with all three trifecta legs but
-  no model call on its path is a script, not an agent (AUD-301).
-- The hook bootstrap (`hook.sh`, `hook.ps1`) now fails open when uvx or pipx cannot fetch
-  the pinned `aisafe` release, for example offline. Before, the launcher's error status
-  reached the agent host: Claude Code reported a hook error, and Cursor could read the
-  empty answer to a permission hook as a block. It already failed open when no launcher
-  was found or a foreign `aisafe` rejected `hook run`.
+### Kept from the pre-pivot work (still true after it)
+
+- AUD-1108, no crisis path where a person confides in the AI, with the `crisis_disclosure`
+  scenario family; AUD-1104 reads engagement as real prompts write it ("keep the
+  conversation going", proactive speech, "create a bond", a scheduled nudge); model calls
+  through a plain HTTP client are seen; the persons rules name the companion-chatbot laws
+  (California SB 243 and SB 1119, New York GBL Art. 47, Washington HB 2225) among their
+  references; the plugin is `aisafe@ai-safe-earth`; `.gitlab-ci-aisafe.yml` installs from
+  PyPI pinned to `AISAFE_VERSION`.
 
 ## [0.1.0] - 2026-10-19
 

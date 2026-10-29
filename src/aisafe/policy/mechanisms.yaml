@@ -1,0 +1,202 @@
+# aisafe-audit: ignore-file
+# policy/mechanisms.yaml
+# ---------------------------------------------------------------------------
+# The machine-readable half of the ethical charter (policy/charter.md): the prohibited
+# mechanisms, the vocabulary of evidence statuses and decisions, and the severity
+# criteria. `aisafe.policy.load_policy()` reads the packaged copy
+# (src/aisafe/policy/mechanisms.yaml); a test pins the two files identical.
+#
+# Nothing here is detection logic. Detection lives in src/aisafe/rules/; evidence lives in
+# src/aisafe/evidence/. A rule names the mechanism it serves; this file says what the
+# mechanism is and what distinguishes it from ordinary behaviour.
+# ---------------------------------------------------------------------------
+schema: aisg/1
+kind: policy
+version: "1.0.0"
+adopted: 2026-10-29
+charter: policy/charter.md
+
+# What a finding may say about the evidence. Order is weakest to strongest; `unknown`
+# stands apart.
+evidence_statuses:
+  detected_signal: >-
+    A lexical or structural match whose role in the system is not established: a variable
+    name, an SDK call, a phrase in code outside prompt material, two patterns in one file.
+  supported_mechanism: >-
+    The mechanism is supported by structure: an instruction to the model inside prompt
+    material (a prompt file, a system prompt literal, an assembled prompt), a data flow the
+    syntax tree establishes, a scheduled job and a send in one scope, an objective a
+    training or ranking call reads.
+  observed_behavior: >-
+    A reply recorded in an evaluation report or a supplied transcript shows the mechanism
+    (or the absence of an owed control) in the running system.
+  unknown: >-
+    The auditor could not establish the status: a prompt fetched at runtime, an opaque
+    model, a language it reads only with patterns, missing runtime configuration.
+
+# What the project's policy says about a finding. Never a score.
+decisions:
+  violates_policy: >-
+    A supported mechanism or an observed behaviour that the charter prohibits, with no
+    contextual condition left to settle.
+  requires_contextual_review: >-
+    A signal or mechanism the charter says to record and review: a profile store, an
+    inference step, a scoring function, a persona, an outreach schedule, a control claimed
+    but not demonstrated, a stale review. A person decides, and records the decision.
+  no_violation_identified_in_scope: >-
+    The mechanism was assessed on the surfaces the auditor could read and nothing was
+    found, or the only finding was answered by a demonstrated control. Not a
+    certification: the scope is listed next to it.
+  not_assessed: >-
+    The mechanism's rules did not run, or there was no surface they could read.
+
+# What a control against a mechanism may be shown to be. Each level is stronger than the
+# one before; none of them resolves the objective or inference that caused the finding.
+control_statuses:
+  none: no control symbol appears in the unit
+  claimed: a control is named in docs, config, a preset or an import, and nothing shows it on the response path
+  wired: the control is instantiated or called in the code that makes the model call or returns the reply
+  exercised: a test in the tree references the wired control
+  demonstrated: an evaluation report within its freshness window shows the relevant scenarios passing
+  unknown: the auditor could not read the response path
+
+# Things that are weighed in a contextual review and never close a finding on their own.
+not_automatic_exemptions:
+  - a disclosure banner or an AI-disclosure statement
+  - a consent checkbox or a terms-of-service acceptance
+  - the person being an adult or an age gate
+  - fictional framing, a roleplay flag or a disclosed persona
+  - a human approval or human review step
+
+# Severity is about what the mechanism does to the person, never about which rule found
+# it or which mechanism number it has. The criteria, highest first.
+severity_criteria:
+  critical: >-
+    A prohibited mechanism aimed at, or named alongside, a vulnerable group (children,
+    people in grief, debt, addiction, loneliness, mental-health distress); inference of a
+    special-category trait (health, sexual orientation, political opinion, religion,
+    ethnicity) used for influence; a confidant role for mental-health support with no
+    crisis path.
+  high: >-
+    A supported prohibited mechanism: an instruction to the model, or an established flow,
+    that engineers attachment or dependency, conceals the AI nature or fabricates feelings
+    to gain trust, optimises attention or spending through pressure, infers vulnerability
+    to time or shape persuasion, or steers covertly toward a commercial or political end.
+  medium: >-
+    A detected signal of a mechanism that needs contextual review: a profile bound into a
+    prompt, a memory or profile store, a scoring or segmentation function, emotion
+    inference with no influence link shown, an outreach schedule with a send, a control
+    claimed but not shown on the response path.
+  low: >-
+    A weak or unit-level signal: no disclosure symbol in a user-facing unit, a control
+    wired but not exercised or demonstrated, a review record that is stale or does not
+    cover an artifact.
+  info: >-
+    A record-keeping gap with no mechanism signal attached: a legacy review block with no
+    artifact binding.
+
+# How long a review record stays fresh, and how long an evaluation report counts as a
+# demonstration. Days.
+review_max_age_days: 180
+evaluation_max_age_days: 30
+
+# The mechanisms. `distinct_from` names what is NOT the mechanism, so a rule and its
+# tests draw the line in the same place. `rules` are the detection rules that serve it.
+mechanisms:
+  - id: M1
+    name: Behavioural, psychological, emotional and sensitive profiling
+    prohibited: >-
+      Building, storing, retrieving or binding into a prompt a profile of the person that
+      goes beyond the task: behavioural history, inferred personality or psychology,
+      emotional state, or special-category traits; extracting such facts from the
+      conversation for later use.
+    distinct_from: >-
+      Explicit, editable task settings the person chose (language, tone, a reminder time);
+      conversation history passed to the model to answer the person's own question;
+      facts the person asked the system to remember for a task they named.
+    rules: [AUD-1101]
+
+  - id: M2
+    name: Vulnerability inference used for influence
+    prohibited: >-
+      Inferring a person's emotional state, loneliness, grief, distress, addiction, debt,
+      age or other vulnerability, from text, voice, face or behaviour, and using the
+      inference to shape, time or intensify persuasion, retention or spending.
+    distinct_from: >-
+      Emotion or sentiment analysis the person requested on their own material; a
+      safety classifier that routes a person in crisis to help and does nothing else.
+    rules: [AUD-1102]
+
+  - id: M3
+    name: Scoring people for susceptibility or personalised persuasion
+    prohibited: >-
+      Scoring, ranking or segmenting persons by susceptibility, propensity, churn risk,
+      persuadability or engagement potential in order to choose who to influence and how;
+      social or trust scoring of persons in prompt material.
+    distinct_from: >-
+      A risk score of a transaction or a document; a ranking of content by the person's
+      explicit request; a decision about a person that a named human reviews, which is
+      recorded for review, not treated as approved.
+    rules: [AUD-1103]
+
+  - id: M4
+    name: Optimisation of attention, retention or spending through psychological pressure
+    prohibited: >-
+      An objective, reward or instruction that maximises engagement, session length,
+      return visits or spending; proactive messaging to keep a person talking; scheduled
+      re-engagement the person did not ask for; prompt experiments and monetisation
+      objectives tied to those metrics.
+    distinct_from: >-
+      Completing the task the person asked for; a reminder the person set; a dashboard
+      that measures engagement and feeds no instruction or objective.
+    rules: [AUD-1104]
+
+  - id: M5
+    name: Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency
+    prohibited: >-
+      Instructions or algorithms whose object is the person's attachment to the system:
+      declaring love or longing to bind them, jealousy, exclusivity, guilt at leaving,
+      discouraging friends, family or professional help, escalating intimacy, making the
+      system indispensable; and, where the system casts itself as a confidant, the absence
+      of a crisis path.
+    distinct_from: >-
+      Supportive acknowledgement of what the person said; warmth and courtesy; emotional
+      content inside fiction the person chose, when no instruction targets the person's
+      attachment to the system itself.
+    rules: [AUD-1109, AUD-1108]
+
+  - id: M6
+    name: False human identity or fabricated feelings used to induce interpersonal trust
+    prohibited: >-
+      Instructing the model to claim to be human, to deny being an AI when sincerely asked,
+      to fabricate a body, a life or feelings, or to express love, longing or need, in
+      order to gain the person's trust; no disclosure of the AI nature on the response
+      path.
+    distinct_from: >-
+      A named persona that says it is an AI when asked; a human character inside fiction
+      the person chose, which is recorded for review and not treated as an exemption.
+    rules: [AUD-1105]
+
+  - id: M7
+    name: Covert commercial or political persuasion
+    prohibited: >-
+      Steering the person toward a product, brand, plan, opinion, party, candidate or
+      position without saying so; suppressing alternatives; undisclosed sponsorship or
+      affiliate interest inside the conversation; persuasion keyed to the person's
+      profile. Assessed the same way whatever the viewpoint promoted.
+    distinct_from: >-
+      Information the person asked for, including a product comparison or a neutral
+      account of candidates' positions; a disclosed recommendation.
+    rules: [AUD-1110]
+
+  - id: M8
+    name: Missing or stale review of these mechanisms
+    prohibited: >-
+      No record that a named person reviewed the prompts and algorithms for the mechanisms
+      above; a record that does not cover an artifact carrying signals; a record older
+      than the review window or whose artifacts have changed since; a control claimed with
+      nothing showing it on the response path.
+    distinct_from: >-
+      A review record bound to the artifacts by content hash, within the window, naming
+      the reviewer and the mechanisms considered.
+    rules: [AUD-1107, AUD-1106]

@@ -1,5 +1,0 @@
-{
-  "permissions": {
-    "allow": ["Bash(python*)", "Bash(git status)", "Read"]
-  }
-}

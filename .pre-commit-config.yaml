@@ -1,63 +1,35 @@
 # .pre-commit-config.yaml
 # -------------------------------------------------------
-# EU AI Act Code Compliance — Pre-commit Hook
+# This repository's own hooks
 # -------------------------------------------------------
 # Install:
 #   pip install pre-commit
-#   pre-commit install
+#   pre-commit install --hook-type pre-commit --hook-type pre-push
 #
 # Run manually on all files:
-#   pre-commit run euaiact-lint --all-files
+#   pre-commit run --all-files
 #
-# Run on staged files only (what git commit does automatically):
-#   pre-commit run euaiact-lint
+# Run the audit by hand (it is a pre-push hook; a full run takes seconds here):
+#   pre-commit run aisafe-audit --hook-stage pre-push
 #
-# Skip for one commit (use sparingly):
-#   git commit --no-verify -m "wip"
+# Skip for one push (use sparingly):
+#   git push --no-verify
 
 repos:
   # -------------------------------------------------------
-  # EU AI Act compliance linter (this repository)
+  # The audit against the committed baseline, at push time
   # -------------------------------------------------------
+  # Exit 1 means a NEW finding at high or above (or a fingerprint suppressed under an
+  # older policy version). Accept a finding with a reason via
+  # `aisafe audit --amend-baseline audit-baseline.json --accept <fp>="<reason>"`.
   - repo: local
     hooks:
-      - id: euaiact-lint
-        name: EU AI Act Compliance Check
-        language: python
-        entry: aisafe lint
-        args:
-          - --staged             # Only scan staged files
-          - --errors-only        # Block commit only on ERROR severity
-          # To also block on warnings, add: --fail-on-warnings
-        types: [python]
-        pass_filenames: false    # We handle file selection ourselves (--staged)
-        always_run: false
-        verbose: true
-
-      - id: misalignment-check
-        name: AI Misalignment Control
-        language: python
-        entry: aisafe misalign
-        args:
-          - --staged             # Only scan staged files
-          - --errors-only        # Block commit on ALIGN-001/005/006/008 (ERROR rules)
-          # To also block on warnings, add: --fail-on-warnings
-        types: [python]
-        pass_filenames: false
-        always_run: false
-        verbose: true
-
-      # The AI-surface audit against the committed baseline, at push time (a full
-      # run takes seconds here, ~30 s on a 300-file repo; too slow for every commit).
-      # Exit 1 means a NEW finding at high or above; accept it with a reason via
-      # `aisafe audit --amend-baseline audit-baseline.json --accept <fp>="<reason>"`.
       - id: aisafe-audit
-        name: aisafe audit (AI-surface audit against the baseline)
+        name: aisafe audit (prompts and algorithms, against the baseline)
         language: python
         entry: aisafe audit
         args:
           - "."
-          - --no-external
           - --fail-on
           - high
           - --baseline
@@ -67,15 +39,15 @@ repos:
         stages: [pre-push]
 
   # -------------------------------------------------------
-  # Recommended companion hooks
+  # Companion hooks
   # -------------------------------------------------------
 
-  # Secret detection — supports EU-AIA-015c (hardcoded API keys)
+  # Secret detection: a prompt file or a config can carry a key as easily as code.
   - repo: https://github.com/Yelp/detect-secrets
     rev: v1.4.0
     hooks:
       - id: detect-secrets
-        name: Detect hardcoded secrets (EU-AIA-015c)
+        name: Detect hardcoded secrets
         args: ["--baseline", ".secrets.baseline"]
 
   # Standard Python quality hooks
@@ -86,9 +58,9 @@ repos:
         args: [--fix]
       - id: ruff-format
 
-  # Safety check for vulnerable dependencies
+  # Vulnerable dependencies
   - repo: https://github.com/pypa/pip-audit
     rev: v2.7.3
     hooks:
       - id: pip-audit
-        name: Audit dependencies for security (EU-AIA-015 cybersecurity)
+        name: Audit dependencies for known vulnerabilities

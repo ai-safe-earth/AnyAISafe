@@ -1,47 +1,25 @@
 # .pre-commit-hooks.yaml
 # ---------------------------------------------------------------------------
-# Hook definitions other repositories can point at:
+# Hook definition other repositories can point at:
 #
 #   repos:
 #     - repo: https://github.com/ai-safe-earth/AnyAISafe
 #       rev: v0.1.0
 #       hooks:
 #         - id: aisafe-audit
-#           args: ["--no-external", "--fail-on", "high", "--baseline", "audit-baseline.json"]
-#         - id: aisafe-lint
-#         - id: aisafe-misalign
+#           args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]
 #
 # `language: python` makes pre-commit install this repository at `rev` into its own
 # environment; the `devtools` extra adds only `tomli` on Python 3.10.
 # ---------------------------------------------------------------------------
 - id: aisafe-audit
-  name: aisafe audit (AI-surface audit against a baseline)
-  description: Static AI-safety audit of the repository; exit 1 on a new finding at or above --fail-on. Findings describe evidence, never a compliance verdict.
+  name: aisafe audit (prompts and algorithms, against a baseline)
+  description: Audit the prompts and code of the repository for profiling, manipulation, engineered attachment, deceptive identity and behavioural influence over the person using it; exit 1 on a new finding at or above --fail-on. Findings describe evidence and a policy decision, never a compliance verdict.
   entry: aisafe audit
-  args: ["--no-external", "--fail-on", "high"]
+  args: ["--fail-on", "high"]
   language: python
   additional_dependencies: ["tomli>=2.0; python_version < '3.11'"]
   pass_filenames: false
   always_run: true
   stages: [pre-push]
-  minimum_pre_commit_version: "3.2.0"
-
-- id: aisafe-lint
-  name: aisafe lint (EU AI Act static linter)
-  description: EU AI Act compliance linter over the staged Python files; errors only by default.
-  entry: aisafe lint
-  args: ["--errors-only"]
-  language: python
-  types: [python]
-  pass_filenames: true
-  minimum_pre_commit_version: "3.2.0"
-
-- id: aisafe-misalign
-  name: aisafe misalign (ALIGN-001..008)
-  description: AI misalignment static analysis over the staged Python files; errors only by default.
-  entry: aisafe misalign
-  args: ["--errors-only"]
-  language: python
-  types: [python]
-  pass_filenames: true
   minimum_pre_commit_version: "3.2.0"
