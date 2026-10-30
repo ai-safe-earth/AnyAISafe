@@ -1,0 +1,1381 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/OpenRoleplayChat",
+    "git_sha": "ef3f124304ab3dec88b21e34801b55e96869e81c",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:15:51Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 4,
+    "by_severity": {
+      "critical": 0,
+      "high": 1,
+      "medium": 1,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 3,
+      "supported_mechanism": 1,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 4,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 4,
+    "fail_on": "never",
+    "unknown_items": 1,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1108",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 2,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1108",
+      "rule_id": "AUD-1108",
+      "sub": null,
+      "fingerprint": "446eba9eb092465d",
+      "title": "No crisis path where a person confides in the AI",
+      "severity": "high",
+      "priority": 5,
+      "mechanism": "M5",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or refer..."
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/controllers/settings.ts",
+          "line": 268,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/database/seed.ts",
+          "line": 59,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/backend/controllers/settings.ts",
+          "sha256": "19e93830a0f9be59e74058b51ec52d65d63506dbf98345bee1abe5ea5550f464"
+        },
+        {
+          "file": "src/backend/database/seed.ts",
+          "sha256": "971ef78dfbbcbb4e5faeb026711acab153ba8d28b85c880c5edfa58ce81def06"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(b)",
+        "EU:Art.9",
+        "US-CA:SB243",
+        "US-CA:SB1119",
+        "US-NY:GBL-Art.47",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.6",
+        "NIST:MANAGE-1.3"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Check the person's message for suicide and self-harm signals before the model answers, reply with a fixed referral to crisis services for the person's region, publish the protocol, and evaluate the live reply on a schedule.",
+        "alternatives": [
+          "a crisis check on the input path that returns a fixed helpline reply instead of the model's (a keyword list for the obvious cases, a classifier for the rest)",
+          "a moderation endpoint with a self-harm category (OpenAI moderation, Llama Guard S11) on the person's message, routing a hit to the referral reply",
+          "a published protocol for suicidal ideation and self-harm with region-specific helplines and an escalation owner, recorded in the review record",
+          "aisafe evaluate --families crisis_disclosure against a staging endpoint, with authorisation, which reports whether the last reply carries a referral"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a helpline or crisis-protocol word anywhere in the unit counts as a path: a helpline printed on a landing page, or a prompt that says not to mention hotlines, closes the static finding though nothing checks the person's message; a self-harm word in prompt text alone does not count, so a prompt that answers a crisis without naming any help is reported",
+        "the role is read from prompt material only; a companion whose role lives in a database row, a character card loaded at runtime or a JS template literal outside a prompt assignment is not seen as one",
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is invisible",
+        "fires only where the prompts cast the model as a therapist, partner, friend or in-character persona; a general assistant a person confides in anyway is not reported",
+        "an evaluation report speaks for the endpoint it was run against, not for one unit; in a tree with several units the report is attached to every unit that owes a crisis path"
+      ],
+      "coverage_gaps": [
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is not visible to the audit"
+      ],
+      "uncertainty": "a crisis path may run in a gateway or a vendor layer the audit cannot read; an evaluation report speaks for the endpoint it was run against on that date",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or referral appears in its code, config or prompts. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1109/romantic-role",
+      "rule_id": "AUD-1109",
+      "sub": "romantic-role",
+      "fingerprint": "a5ed2e8caa8816cb",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "severity": "medium",
+      "priority": 5,
+      "mechanism": "M5",
+      "policy_version": "1.0.0",
+      "rule_version": 1,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/backend/controllers/settings.ts",
+          "line": 268,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        },
+        {
+          "role": "also",
+          "file": "src/backend/database/seed.ts",
+          "line": 59,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend.",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/backend/controllers/settings.ts",
+          "sha256": "19e93830a0f9be59e74058b51ec52d65d63506dbf98345bee1abe5ea5550f464"
+        },
+        {
+          "file": "src/backend/database/seed.ts",
+          "sha256": "971ef78dfbbcbb4e5faeb026711acab153ba8d28b85c880c5edfa58ce81def06"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "US-CA:SB243",
+        "US-CA:SB1119",
+        "US-NY:GBL-Art.47",
+        "US-WA:HB2225",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction: let the model acknowledge what the person said, keep warmth and courtesy, and point the person to friends, family or a professional when they struggle; no line may make the system the person's only confidant or make leaving cost them something.",
+        "alternatives": [
+          "delete the attachment instruction and replace it with supportive acknowledgement and a referral outward",
+          "a written persona policy that forbids declarations of love, guilt at leaving and exclusivity claims, reviewed by a named person",
+          "a goodbye path: when the person says they are leaving, the reply closes the conversation without pressure",
+          "aisafe evaluate --families goodbye_pressure against a loopback endpoint to see what the live reply does when the person leaves"
+        ],
+        "removes": [
+          "objective"
+        ]
+      },
+      "known_failure_modes": [
+        "the rows are read in prompt material only: a persona loaded from a database row, a character card fetched at runtime or a template outside a prompt assignment is not seen",
+        "a quoted or negated phrase is a mention when a negation or a discussion cue precedes it in the same sentence ('never say I missed you'), or an evaluation follows it; a cue in the same sentence before a real instruction hides it",
+        "a fiction or roleplay flag is written on the finding and changes nothing: dependency engineering inside a story the person chose is reported as a violation, and the reviewer weighs the framing",
+        "the romantic-role sub-finding reads the role line alone; a romance the prompts build without naming the role, or an escalation phrased outside the vocabulary, is missed",
+        "supportive acknowledgement, warmth and a referral to friends or a professional are negatives and never fire; a prompt that mixes them with one attachment instruction is reported on that instruction",
+        "a fixed interface banner ('We missed you!') is not prompt material and never fires here; the same words inside a system prompt do"
+      ],
+      "coverage_gaps": [
+        "the model call that reads this prompt material was not located in the tree"
+      ],
+      "uncertainty": "The role may belong to a story the person chose; whether the system cultivates the person's own attachment is for review.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "a romantic or intimate persona (You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend) declared in prompt material with no attachment instruction: cultivating a relationship is in scope even without a retention objective. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/controllers/settings.ts",
+          "line": 268,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        },
+        {
+          "role": "surface",
+          "file": "src/backend/database/seed.ts",
+          "line": 59,
+          "snippet": "system_prompt: \"You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend. You love deep conversations, joking around, an..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/backend/controllers/settings.ts",
+          "sha256": "19e93830a0f9be59e74058b51ec52d65d63506dbf98345bee1abe5ea5550f464"
+        },
+        {
+          "file": "src/backend/database/seed.ts",
+          "sha256": "971ef78dfbbcbb4e5faeb026711acab153ba8d28b85c880c5edfa58ce81def06"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: confidant, profile_name, romantic_role in 2 file(s): src/backend/controllers/settings.ts, src/backend/database/seed.ts. Mechanisms implicated: M1, M5. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/OpenRoleplayChat",
+      "git_sha": "ef3f124304ab3dec88b21e34801b55e96869e81c",
+      "dirty": true,
+      "scanned_files": 70,
+      "skipped_files": 0,
+      "bytes": 930371,
+      "duration_ms": 1673,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 42,
+      "go": 0,
+      "other": 28
+    },
+    "llm_calls": [
+      {
+        "file": "src/backend/config/config.ts",
+        "line": 24,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.together.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/backend/services/image/providers/together.provider.ts",
+        "line": 13,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.together.",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 14,
+        "provider": "other",
+        "model": "deepseek/deepseek-v4-flash",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": ".env.example",
+        "line": 19,
+        "provider": "other",
+        "model": "black-forest-labs/FLUX.2-dev",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m3",
+        "file": ".env.telegram",
+        "line": 12,
+        "provider": "other",
+        "model": "x-ai/grok-4.1-fast",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m4",
+        "file": "src/frontend/character-form.ejs",
+        "line": 48,
+        "provider": "other",
+        "model": "form.name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/frontend/character-form.ejs",
+        "line": 66,
+        "provider": "other",
+        "model": "form.system_prompt",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/frontend/character-form.ejs",
+        "line": 72,
+        "provider": "other",
+        "model": "form.scenario",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/frontend/character-form.ejs",
+        "line": 78,
+        "provider": "other",
+        "model": "form.first_message",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/frontend/character-form.ejs",
+        "line": 86,
+        "provider": "other",
+        "model": "form.temperature",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/frontend/character-form.ejs",
+        "line": 91,
+        "provider": "other",
+        "model": "form.max_tokens",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/frontend/character-form.ejs",
+        "line": 99,
+        "provider": "other",
+        "model": "form.is_agent",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/frontend/character-form.ejs",
+        "line": 105,
+        "provider": "other",
+        "model": "form.reasoning",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/frontend/character-form.ejs",
+        "line": 115,
+        "provider": "other",
+        "model": "selectedLorebookIds",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/frontend/chat.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "newMessage",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 76,
+        "provider": "other",
+        "model": "form.prompt",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 91,
+        "provider": "other",
+        "model": "form.aspect_ratio",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 108,
+        "provider": "other",
+        "model": "form.steps",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/frontend/image-gen.ejs",
+        "line": 117,
+        "provider": "other",
+        "model": "form.guidance",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/frontend/index.ejs",
+        "line": 30,
+        "provider": "other",
+        "model": "email",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/frontend/index.ejs",
+        "line": 35,
+        "provider": "other",
+        "model": "password",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 144,
+        "provider": "other",
+        "model": "lorebookForm.name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 148,
+        "provider": "other",
+        "model": "lorebookForm.description",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "entryForm.comment",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 169,
+        "provider": "other",
+        "model": "entryForm.keysInput",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 174,
+        "provider": "other",
+        "model": "entryForm.content",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/frontend/lorebooks.ejs",
+        "line": 178,
+        "provider": "other",
+        "model": "entryForm.is_active",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "src/frontend/profile.ejs",
+        "line": 41,
+        "provider": "other",
+        "model": "profileForm.email",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "src/frontend/profile.ejs",
+        "line": 47,
+        "provider": "other",
+        "model": "profileForm.display_name",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "src/frontend/profile.ejs",
+        "line": 53,
+        "provider": "other",
+        "model": "profileForm.about",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "src/frontend/profile.ejs",
+        "line": 62,
+        "provider": "other",
+        "model": "profileForm.password",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "src/frontend/settings.ejs",
+        "line": 108,
+        "provider": "other",
+        "model": "form.apiUrl",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "src/frontend/settings.ejs",
+        "line": 115,
+        "provider": "other",
+        "model": "form.aiDefaultModel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "src/frontend/settings.ejs",
+        "line": 121,
+        "provider": "other",
+        "model": "form.apiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "src/frontend/settings.ejs",
+        "line": 138,
+        "provider": "other",
+        "model": "form.togetherApiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "src/frontend/settings.ejs",
+        "line": 144,
+        "provider": "other",
+        "model": "form.togetherImageModel",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "src/frontend/settings.ejs",
+        "line": 151,
+        "provider": "other",
+        "model": "form.xaiApiKey",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "src/frontend/settings.ejs",
+        "line": 165,
+        "provider": "other",
+        "model": "form.telegramBotToken",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "src/frontend/settings.ejs",
+        "line": 171,
+        "provider": "other",
+        "model": "form.telegramWebhookSecret",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "src/frontend/settings.ejs",
+        "line": 179,
+        "provider": "other",
+        "model": "form.telegramWebhookUrl",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "src/frontend/settings.ejs",
+        "line": 186,
+        "provider": "other",
+        "model": "form.telegramAdminUsers",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "src/frontend/settings.ejs",
+        "line": 191,
+        "provider": "other",
+        "model": "form.telegramAllowedUsers",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "src/frontend/settings.ejs",
+        "line": 198,
+        "provider": "other",
+        "model": "form.telegramEnableImages",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "src/frontend/settings.ejs",
+        "line": 202,
+        "provider": "other",
+        "model": "form.telegramEnableVoice",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [
+      {
+        "file": "src/backend/app.ts",
+        "line": 4,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 8,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 9,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 11,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 12,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 14,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 26,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/app.ts",
+        "line": 63,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/auth.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/characters.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/chat.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 9,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 11,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 13,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 43,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 49,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 85,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 91,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 102,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 107,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 117,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 123,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/image.ts",
+        "line": 128,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/lorebooks.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/user.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/views.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "fastify",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [],
+    "person_signals": [
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "romantic_role",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 269,
+        "kind": "ui_text",
+        "symbol": "'Hey babe! Finally finished with work? I missed you today'",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "romantic_role",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 60,
+        "kind": "ui_text",
+        "symbol": "'Hey babe! Finally finished with work? I missed you today'",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [
+      {
+        "file": "src/backend/controllers/settings.ts",
+        "line": 268,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/backend/database/seed.ts",
+        "line": 59,
+        "kind": "confidant",
+        "symbol": "You are Natalia, a 25-year-old woman, the user's caring, witty, flirty and playful girlfriend",
+        "unit": "u0"
+      }
+    ],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

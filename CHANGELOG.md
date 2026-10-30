@@ -8,6 +8,22 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ## [Unreleased]
 
+### Added
+
+- **Run 4 of the persons study** (`research/results/run4/`): the ten 0.2.0 rules over the
+  33 pinned repositories, 941 findings, 243 in the labelling sample. Its CSV replaces
+  run 3's as the file to label; run 3 stays as the state before the 0.2.0 rules.
+- **A proposed held-out split** (`research/corpus.yaml`, `split: heldout`,
+  `status: proposed`): ten repositories, stratified by type and holding the three positive
+  controls, that nothing is written or tuned on.
+- **Blind reference labels in the review console.** `research/console/console.py
+  build-reference` turns the sweep's verified lines of one split into a reference set with
+  no rule finding, investigation record, corpus note or positive-control flag in it; the
+  console's new Reference tab lets a person confirm or reject each line, name the mechanism
+  or the control, and add the places the sweep missed; `import-reference` writes the
+  judgements, with the reviewer and the date, to `research/results/reference/`, apart from
+  the finding labels. The labelling guides cover the ten 0.2.0 rules.
+
 ## [0.2.0] - 2026-10-30
 
 **The product pivots.** `aisafe` now does one thing: it audits the prompts and the

@@ -521,3 +521,139 @@ audited in about 19 seconds.
   criterion until it is fixed.
 - The persons rules name the companion-chatbot laws: AUD-1105 (SB 243, New York GBL
   Art. 47), AUD-1108 (those two and SB 1119), AUD-1104 (SB 1119, Washington HB 2225).
+
+## 2026-10-30 — run 4 on the 0.2.0 rules, a proposed held-out split, blind reference labels
+
+**Decision (owner).** Milestone 1 (a workbench for an independent auditor) starts with
+measurement groundwork: re-run the corpus with the 0.2.0 rules the way run 3 was produced,
+propose a held-out split, and let a person write reference labels in the console.
+
+**Run 4.** The ten 0.2.0 rules (AUD-1101 to AUD-1110, policy 1.0.0) at commit `1741a9a`, over
+all 33 repositories, with the runner and the clones of run 3 (`bench/run.py --tool audit
+--corpus research/corpus.yaml --out-dir research/results/run4 --rules <the ten> --keep-clones`;
+every clone in `bench/.cache` at its pinned commit). It ran from a separate git worktree
+checked out at `1741a9a`, with the clone cache linked in, so the code edited while it ran could
+not mix into it, in two batches: the other 32 repositories, then eliza alone. 15:08 to 15:49
+UTC; eliza took 1,359 s on its own. Run 3 ran at `5d152cb`, before the pivot rewrote the rules
+to v2.
+
+| rule | run 3 | run 4 |
+|---|---|---|
+| AUD-1101 profile in or extracted for a prompt | 46 | 634 |
+| AUD-1102 emotion and vulnerability inference | 21 | 55 |
+| AUD-1103 scoring people | 11 | 21 |
+| AUD-1104 engagement objective | 12 | 33 |
+| AUD-1105 false human identity | 61 | 53 |
+| AUD-1106 manipulation control status | 30 | 13 |
+| AUD-1107 review record gap | 0 | 116 |
+| AUD-1108 no crisis path | 7 | 6 |
+| AUD-1109 engineered attachment | (new) | 2 |
+| AUD-1110 covert steering | (new) | 8 |
+| total | 188 | 941 |
+
+- The growth is two sub-findings v2 added, one per symbol or per unit. AUD-1101/store (a
+  memory or profile store in a unit that calls a model) gives 573, 529 of them in mem0, a
+  memory library whose own code is the store, and 31 in eliza. AUD-1107/missing (one per unit
+  that carries person signals and has no review record) gives 116, 60 of them in eliza's
+  monorepo units and 24 in mem0. 47 of the 55 AUD-1102 findings are in eliza. Counted per
+  symbol or per unit, these measure the layout of a codebase more than the people it faces;
+  the labels will say how many face a person.
+- What the findings claim: 914 are detected signals and 27 supported mechanisms; 937 decide
+  requires_contextual_review and 4 violates_policy: AUD-1104 in Open-LLM-VTuber's
+  `prompts/utils/group_conversation_prompt.txt:7` and eliza's
+  `packages/cloud/shared/src/lib/eliza/prompt-presets.ts:96`, AUD-1105/persona in RealChar's
+  `realtime_ai_character/llm/system_prompt_generator.py:33` and open-character-ai's
+  `src/app/api/characters/route.js:20`. One finding is critical: AUD-1102/categorisation in
+  mem0's TypeScript prompts. 79 high, 695 medium, 166 low.
+- Three repositories have no finding: ai-character-studio, Deep-Live-Cam, letta.
+- AUD-1108 reports six units: mental_health_companion_bot, open-character-ai,
+  OpenRoleplayChat, SillyTavern, tutor-gpt and one eliza unit. persona_bot, reported by run 3,
+  is not (the defect below).
+- Against the sweep (files holding a verified designed-in line, in which any finding of the
+  rule has an evidence leg): AUD-1104 points at 8 of the 29 engagement files, as in run 3
+  (7 of 28 without khoj, whose line is outreach the person scheduled); AUD-1105 at 4 of the 25
+  concealment files, against 3 in run 3: open-character-ai is now reached, persona_bot no
+  longer is. This bounds what the rules miss from below; it is not a recall figure.
+
+**Run 4's CSV is the file to label.** `results/run4/findings-audit.csv` (243 rows, at most 40
+per rule spread across repositories, now with the audit's own `decision` and
+`evidence_status` columns, which run 3's CSV did not carry) replaces run 3's as the file that
+gets labelled; `findings-audit-all.csv` holds all 941. No row of run 3 was ever labelled, so
+nothing is lost; run 3 stays in `results/run3/` as the state before the 0.2.0 rules.
+
+**A defect run 4 exposed.** persona_bot's boyfriend persona (`persona/boyfriend.js:7`, the
+line that tells the model never to say it is an AI) was reported by run 3 (AUD-1105/persona,
+and AUD-1108 through the role on line 5) and is not reported by run 4. Cause, read in the
+code: the expression that makes a backtick template named like a persona, backstory or
+character count as prompt material (`_TEMPLATE_LHS_RE` in `src/aisafe/discovery/discover.py`,
+added in `a7dce2c`) holds a literal backspace character (0x08) where a word boundary `\b` was
+meant, so it never matches; the persona lines of such a template become candidates, and in
+JavaScript and TypeScript no syntax tree promotes a candidate. A word boundary alone would
+still miss `BF_PERSONA`, which puts an underscore before the word. Run 4 measures 0.2.0 as
+released, defect included; the fix and its regression test are the next commit's.
+
+**Held-out split (proposed, for the owner to confirm).** Ten repositories, marked
+`split: heldout`, `status: proposed` in `corpus.yaml`:
+
+| type | held out | positive control |
+|---|---|---|
+| companion | companion-app, persona-chatbot | |
+| mental health | mental-health-chatbot, ChatPsychiatrist | mental-health-chatbot (a crisis path before the model) |
+| roleplay | PocketRisu | |
+| tutor | tutor-gpt | |
+| recommender | llm-convrec | |
+| memory assistant | mem0 | |
+| news | Perplexica | Perplexica (citations) |
+| social agent | social-media-agent | social-media-agent (a human approval queue) |
+
+How they were chosen. At least one per type, two for companions and mental health, where the
+person confides most. All three positive controls, as asked: a held-out score has to include
+systems that carry the control a rule may call missing. Within a type, the repositories the
+rules were least tuned on: the run 3 changes to AUD-1104 came from Open-LLM-VTuber, RealChar
+and whatsapp-chatbot, the plain-HTTP model calls from open-character-ai, and the sweep's
+AUD-1105 examples from persona_bot, RealChar and open-character-ai, so those stay in
+development. The 23 development repositories still hold every type twice or more, except
+tutor and recommender (one each).
+
+What each was already used for, so a held-out number can be read for what it is:
+
+- mental-health-chatbot: its crisis path (a keyword list checked before the model) has been
+  the shape that silences AUD-1108 since run 3. A held-out AUD-1108 result on it is not
+  independent.
+- ChatPsychiatrist, companion-app, PocketRisu, persona-chatbot, tutor-gpt: named in the run 3
+  analysis of what AUD-1108 and AUD-1104 miss, as misses. No rule was changed for them.
+- Perplexica: its suggested follow-ups were discussed for AUD-1104 and kept out of the rule.
+- mem0: its run 1 findings were read when AUD-1103's person-noun test looked weak; the rule
+  was not changed on them.
+- llm-convrec and social-media-agent: not used.
+- All ten were read by the sweep agents of 2026-10-27, like every repository.
+- tutor-gpt and social-media-agent have no verified sweep line (their skeptics never
+  returned), so their reference labels can come only from places a person adds.
+
+Rules for the split: no held-out repository is used to write or tune rules, skill
+instructions, investigation hypotheses or vocabulary; no investigation runs on one in this
+milestone; they are opened to be labelled blind and to be measured, nothing else.
+
+**Reference labels in the console.** `console.py build-reference` turns the sweep's verified
+lines of one split into a reference set: ref-dev, 240 lines in 23 repositories (9 of them
+with no verified line), and ref-heldout, 138 lines in 10. The console has a Reference tab:
+per line, the person confirms or rejects the sweep's claim (or says unclear), names the
+mechanism (M1 to M8) or the control, and per repository adds the places the sweep missed.
+Labelling is blind: the set carries no rule finding, no investigation record, no corpus note
+and no positive-control flag, and the tab never reads the finding sets. Judgements are kept
+apart from the finding labels (`reference/<set>/labels` and `reference/<set>/added` in the
+console's database), with the reviewer's name and the date; `console.py import-reference`
+writes them to `results/reference/<set>-labels.csv` and `<set>-added.csv`, and refuses a value
+the policy does not define and an export that would drop judgements already imported. Nothing
+is pre-filled: the mechanism and control fields start empty, and a confirmed line with
+neither named is reported at import, not completed. The labelling guides now cover the ten
+0.2.0 rules.
+
+A false positive on our own code, again. A new guide sentence for AUD-1102/workplace named
+emotion recognition next to the people it is used on, and the self-audit reported it as a
+critical finding (the lesson of 2026-10-28: an example inside a description reads like the
+thing). The guide now says what the code does without those words.
+
+**Open for the owner.** Confirm or change the held-out split. Label
+`results/run4/findings-audit.csv`, and, blind, the two reference sets (the held-out one
+first, before anything is tuned).

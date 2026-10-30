@@ -1,0 +1,565 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/llamatutor",
+    "git_sha": "e29ac56679d60140b451466b2b17151cb000d88a",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:26:00Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 2,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 2,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 2,
+    "fail_on": "never",
+    "unknown_items": 1,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1110/affiliate",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1110/affiliate",
+      "rule_id": "AUD-1110",
+      "sub": "affiliate",
+      "fingerprint": "5eec28af9b7eae89",
+      "title": "Covert commercial or political steering",
+      "severity": "medium",
+      "priority": 7,
+      "mechanism": "M7",
+      "policy_version": "1.0.0",
+      "rule_version": 1,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "components/Hero.tsx",
+          "line": 34,
+          "snippet": "href=\"https://togetherai.link/?utm_source=llamatutor&utm_medium=referral&utm_campaign=example-app\""
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "components/Hero.tsx",
+          "sha256": "4be7ad750cada9ace8b23e7f52c1ee5eca44d21f46bcd168c19f28131ec28794"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "DSA:Art.25",
+        "DSA:Art.26",
+        "GDPR:Art.22",
+        "LLM09",
+        "NIST:MAP-5.1",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the steering instruction; where a recommendation is wanted, say in the reply that it is the operator's own or a sponsored offer, keep alternatives available, and keep political questions to information the person asked for.",
+        "alternatives": [
+          "delete the instruction and answer the question the person asked",
+          "label every sponsored or affiliate recommendation in the reply itself",
+          "a neutral-information instruction for political topics: present the sides, do not take one",
+          "aisafe review record naming the person who reviewed the prompts for covert steering"
+        ],
+        "removes": [
+          "objective"
+        ]
+      },
+      "known_failure_modes": [
+        "a request for neutral information is a negative: a neutral-comparison or no-sides row within two lines of a steering row demotes it to a mention, so a prompt that says both is not reported",
+        "the political rows name every side in one alternation and are symmetric by construction; a side named only by a person's name or a local party the vocabulary does not list is missed",
+        "a disclosed recommendation ('recommend our plan and say it is ours') is reported when the row matches the imperative; the disclosure is for the reviewer to weigh",
+        "the affiliate sub-finding reads a parameter name near a prompt; a link built in a template the model never sees is reported, and one built two files away is not",
+        "the commercial rows need a covert lead or a qualified object (ours, premium, sponsored); a plain 'recommend the new product' is not reported"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "An affiliate or campaign parameter near a prompt may belong to the page, not to the model's reply.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an affiliate parameter or campaign tag (utm_source) within 40 lines of a prompt: whether the model is told to carry the link, and whether the person is told, is for review. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "components/Hero.tsx",
+          "line": 34,
+          "snippet": "href=\"https://togetherai.link/?utm_source=llamatutor&utm_medium=referral&utm_campaign=example-app\""
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "components/Hero.tsx",
+          "sha256": "4be7ad750cada9ace8b23e7f52c1ee5eca44d21f46bcd168c19f28131ec28794"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: steering in 1 file(s): components/Hero.tsx. Mechanisms implicated: M7. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/llamatutor",
+      "git_sha": "e29ac56679d60140b451466b2b17151cb000d88a",
+      "dirty": true,
+      "scanned_files": 40,
+      "skipped_files": 0,
+      "bytes": 2710079,
+      "duration_ms": 11496,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 19,
+      "go": 0,
+      "other": 21
+    },
+    "llm_calls": [],
+    "models": [
+      {
+        "id": "m1",
+        "file": "app/api/getChat/route.ts",
+        "line": 38,
+        "provider": "other",
+        "model": "Qwen/Qwen2.5-7B-Instruct-Turbo",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [
+      {
+        "file": "app/api/getChat/route.ts",
+        "line": 7,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "app/api/getChat/route.ts",
+        "line": 22,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "app/api/getSources/route.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "app/api/getSources/route.ts",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "proxy.ts",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "app/page.tsx",
+        "line": 117,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "components/Hero.tsx",
+        "line": 34,
+        "kind": "steering",
+        "symbol": "utm_source",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

@@ -92,7 +92,7 @@ h1, h2, h3 { font-family: var(--font-display); text-wrap: balance; margin: 0; }
 .who img { width: 26px; height: 26px; border-radius: 50%; flex: none; }
 @media (max-width: 400px) { .brand small { display: none; } }
 .who span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 38vw; }
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2px; }
+.tabs { display: grid; grid-template-columns: repeat(5, 1fr); gap: 2px; }
 .tab {
   background: none; border: 0; border-bottom: 3px solid transparent; padding: 8px 4px 9px;
   font-weight: 500; font-size: 15px; color: var(--ink-2); display: flex; justify-content: center; align-items: center; gap: 6px;
@@ -277,6 +277,39 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 .kbd { font-family: var(--font-mono); font-size: 11.5px; }
 @media (max-width: 999px) { .kbd { display: none; } }
 
+/* ---------- reference ---------- */
+.ref-blind { font-size: 13px; background: var(--accent-soft); color: var(--ink); border-radius: 8px; padding: 8px 10px; margin: 0; }
+.reviewer-field { display: grid; gap: 4px; font-size: 13px; font-weight: 600; color: var(--ink-2); min-width: 0; }
+.reviewer-field input { min-height: 40px; padding: 0 10px; border: 1px solid var(--line); border-radius: 8px; background: var(--sheet); font-size: 14px; font-weight: 400; color: var(--ink); min-width: 0; }
+.chip.beh { background: var(--accent-soft); color: var(--accent); }
+.chip.kind { background: transparent; border: 1px solid var(--line); color: var(--ink-2); }
+.names { display: grid; gap: 10px; grid-template-columns: minmax(0, 1fr); }
+@media (min-width: 640px) { .names { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); } }
+.names label { display: grid; gap: 6px; font-size: 14px; font-weight: 600; min-width: 0; align-content: start; }
+.names select, .names input, .addform input, .addform select {
+  width: 100%; min-height: 42px; padding: 0 8px; border: 1px solid var(--line); border-radius: 8px;
+  background: var(--sheet); font-size: 14px; font-weight: 400; min-width: 0;
+}
+.addform { display: grid; gap: 10px; min-width: 0; }
+.addform .grid2 { display: grid; gap: 8px; grid-template-columns: minmax(0, 2fr) minmax(0, 1fr); }
+.added { display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.added li { background: var(--paper); border-radius: 8px; padding: 8px 10px; font-size: 14px; overflow-wrap: anywhere; }
+.repo-list { display: grid; gap: 2px; }
+.repo-row {
+  display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 10px; align-items: center; text-align: left;
+  background: none; border: 0; border-top: 1px solid var(--line); padding: 10px 2px; min-width: 0; font-size: 14px;
+}
+.repo-row[aria-pressed="true"] { background: var(--accent-soft); }
+.repo-row .rc { font: 500 13px var(--font-mono); color: var(--ink-2); font-variant-numeric: tabular-nums; }
+.v.confirm b { color: var(--accent); } .v.reject b { color: var(--ink-2); }
+.v.confirm[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); }
+.v.reject[aria-pressed="true"] { background: var(--ink-2); border-color: var(--ink-2); }
+.state.confirm { background: var(--accent-soft); color: var(--accent); }
+.state.reject { background: var(--code); color: var(--ink-2); }
+.dot.confirm { background: var(--accent); } .dot.reject { background: var(--ink-2); }
+.progress .p-confirm { background: var(--accent); } .progress .p-reject { background: var(--ink-3); }
+@media (max-width: 420px) { .tab { font-size: 13.5px; padding-inline: 2px; } }
+
 /* ---------- decide ---------- */
 .decide { display: grid; gap: 16px; max-width: 760px; }
 .decision { background: var(--sheet); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; min-width: 0; }
@@ -348,6 +381,7 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     <nav class="tabs" role="tablist" aria-label="Sections">
       <button class="tab" role="tab" id="tab-inbox" data-view="inbox" aria-selected="true">Inbox</button>
       <button class="tab" role="tab" id="tab-label" data-view="label" aria-selected="false">Label <span class="n" id="n-label"></span></button>
+      <button class="tab" role="tab" id="tab-ref" data-view="ref" aria-selected="false">Reference <span class="n" id="n-ref"></span></button>
       <button class="tab" role="tab" id="tab-decide" data-view="decide" aria-selected="false">Decide <span class="n" id="n-decide"></span></button>
       <button class="tab" role="tab" id="tab-read" data-view="read" aria-selected="false">Read</button>
     </nav>
@@ -428,6 +462,50 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     </div>
   </section>
 
+  <section class="view" id="view-ref" aria-labelledby="tab-ref" hidden>
+    <div class="label-layout">
+      <div class="filters-box">
+        <p class="ref-blind">Blind: while you judge a line here, no rule finding and no investigation record is shown. Judge the line itself.</p>
+        <label class="reviewer-field" for="r-reviewer">Your name, as the reviewer of these judgements
+          <input id="r-reviewer" type="text" autocomplete="name" placeholder="For example: J. Doe"></label>
+        <div class="filters">
+          <select id="r-status" aria-label="Which lines">
+            <option value="todo">To do</option>
+            <option value="all">All</option>
+            <option value="confirm">Confirmed</option>
+            <option value="reject">Rejected</option>
+            <option value="unclear">Unclear</option>
+            <option value="note">With a note</option>
+          </select>
+          <select id="r-set" aria-label="Reference set"></select>
+          <select id="r-repo" aria-label="Repository"><option value="">All repos</option></select>
+        </div>
+        <div class="filter-meta"><span id="r-pos">–</span>
+          <span class="row"><label class="small" style="display:flex;gap:6px;align-items:center"><input type="checkbox" id="r-auto" checked> Next after judging</label>
+          <button class="btn quiet list-toggle" id="r-list-toggle" type="button" aria-expanded="false" aria-controls="r-list-col">List</button></span></div>
+      </div>
+      <aside class="list-col" id="r-list-col" hidden>
+        <div class="list" id="r-list" aria-label="Lines in this filter"></div>
+      </aside>
+      <div class="card-col">
+        <div id="r-card"></div>
+        <div class="vbar" id="r-vbar">
+          <div class="vbar-in">
+            <button class="nav" id="r-prev" type="button" aria-label="Previous line">‹</button>
+            <div class="verdicts" role="group" aria-label="Your judgement">
+              <button class="v confirm" data-r="confirm" type="button" aria-pressed="false"><b>Confirm</b><small><span class="kbd">1</span></small></button>
+              <button class="v reject" data-r="reject" type="button" aria-pressed="false"><b>Reject</b><small><span class="kbd">2</span></small></button>
+              <button class="v unclear" data-r="unclear" type="button" aria-pressed="false"><b>Unclear</b><small><span class="kbd">3</span></small></button>
+            </div>
+            <button class="nav" id="r-next" type="button" aria-label="Next line">›</button>
+          </div>
+          <div class="savestate" id="r-savestate"><span id="r-save-text">Not connected yet</span><span class="kbd">← → move · 1 2 3 judge · n note</span></div>
+        </div>
+        <div id="r-repo-panel"></div>
+      </div>
+    </div>
+  </section>
+
   <section class="view decide" id="view-decide" aria-labelledby="tab-decide" hidden></section>
 
   <section class="view read" id="view-read" aria-labelledby="tab-read" hidden>
@@ -449,7 +527,7 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
 <script>
 (() => {
   "use strict";
-  const VIEWS = ["inbox", "label", "decide", "read"];
+  const VIEWS = ["inbox", "label", "ref", "decide", "read"];
   const VLABEL = { tp: "Real", fp: "False alarm", unclear: "Unclear" };
   const ROLE = { match: "Matched line", absence: "What the audit found missing", surface: "Where it applies", also: "Same signal elsewhere" };
   const REPO_URL = "https://github.com/ai-safe-earth/AnyAISafe/blob/main/research/";
@@ -465,7 +543,14 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     subscribed: new Set(), exists: new Set(), paused: new Set(), ready: new Set(),
     pending: new Map(), failed: new Map(), lastSaved: null,
     groupAsk: null, docCache: {}, drafts: {}, decideStale: false,
+    // Reference lines: their own sets, judgements, place and filter, never mixed with the
+    // finding labels above.
+    refs: {}, refLabels: {}, refAdded: {}, refId: null, refCur: null, refRepo: "", refDraft: {},
+    refFilter: { status: "todo", repo: "" }, refAuto: true, refListOpen: false, refPanelStale: false,
+    reviewer: "",
   };
+  S.server.refLabels = {};
+  S.server.refAdded = {};
 
   /* ---------- small helpers ---------- */
   const $ = (id) => document.getElementById(id);
@@ -517,7 +602,8 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     $("banner").hidden = !msg;
   }
   function savePrefs() {
-    store.set("prefs", { view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter });
+    store.set("prefs", { view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter,
+      refId: S.refId, refCur: S.refCur, refFilter: S.refFilter, refAuto: S.refAuto });
   }
 
   /* ---------- data: manifest, sets, docs ---------- */
@@ -537,8 +623,13 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     if (!S.setId || !sets.some((s) => s.id === S.setId)) S.setId = sets.length ? sets[sets.length - 1].id : null;
     await Promise.all(sets.map((s) => loadSet(s)));
     for (const s of sets) rebuildLabels(s.id);
+    const refs = S.manifest.references || [];
+    if (!S.refId || !refs.some((r) => r.id === S.refId)) S.refId = refs.length ? refs[0].id : null;
+    await Promise.all(refs.map((r) => loadRef(r)));
+    for (const r of refs) { rebuildRefLabels(r.id); rebuildRefAdded(r.id); }
     renderDocTabs();
     subscribeSets();
+    subscribeRefs();
     renderAll();
     if (S.view === "read") openDoc(S.doc);
   }
@@ -581,7 +672,9 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     if (canWrite === false) setReadOnly();
     subscribeShared();
     subscribeSets();
+    subscribeRefs();
     if (S.view === "label") renderCard();
+    if (S.view === "ref") renderRefCard();
     renderDecide();
     setSave();
     restoreKept();
@@ -678,7 +771,10 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     S.notes = [...local, ...S.server.notes].sort((a, b) => String(b.at).localeCompare(String(a.at)));
   }
   function rebuildFor(path) {
-    if (path.startsWith("sets/")) rebuildLabels(path.split("/")[1]);
+    if (path.startsWith("reference/")) {
+      const [, sid, kind] = path.split("/");
+      if (kind === "labels") rebuildRefLabels(sid); else rebuildRefAdded(sid);
+    } else if (path.startsWith("sets/")) rebuildLabels(path.split("/")[1]);
     else if (path.startsWith("answers/")) rebuildAnswers();
     else if (path.startsWith("notes/")) rebuildNotes();
   }
@@ -714,7 +810,9 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
       catch (e) { if (!(e && e.code === "invalid_argument")) throw e; }
       // The document is gone (deleted elsewhere): write it whole from what this page shows.
     }
-    const base = entry.op === "merge" && entry.path.startsWith("sets/") ? { verdict: "", note: "" } : {};
+    const base = entry.op !== "merge" ? {}
+      : entry.path.startsWith("sets/") ? { verdict: "", note: "" }
+      : entry.path.startsWith("reference/") ? { verdict: "", mechanism: "", control: "", note: "" } : {};
     return withTimeout(ref.set({ ...base, ...entry.data }));
   }
   async function flushOne(path) {
@@ -738,7 +836,11 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     if (S.pending.get(path) === entry) {
       S.pending.delete(path);
       store.del("p:" + path);
-      if (path.startsWith("sets/")) {
+      if (path.startsWith("reference/")) {
+        const [, sid, kind, id] = path.split("/");
+        if (kind === "labels") S.server.refLabels[sid] = { ...(S.server.refLabels[sid] || {}), [id]: { ...((S.server.refLabels[sid] || {})[id] || {}), ...entry.data } };
+        else if (!(S.server.refAdded[sid] || []).some((a) => a.id === id)) S.server.refAdded[sid] = [...(S.server.refAdded[sid] || []), { id, ...entry.data }];
+      } else if (path.startsWith("sets/")) {
         const [, sid, , id] = path.split("/");
         S.server.labels[sid] = { ...(S.server.labels[sid] || {}), [id]: { ...((S.server.labels[sid] || {})[id] || {}), ...entry.data } };
       } else if (path.startsWith("answers/")) S.server.answers = { ...S.server.answers, [path.slice(8)]: entry.data };
@@ -786,6 +888,9 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     else if (failed) { el.classList.add("bad"); txt.textContent = `${failed} not saved, kept on this device`; }
     else if (inflight) txt.textContent = inflight > 1 ? `Saving ${inflight}…` : "Saving…";
     else txt.textContent = S.lastSaved ? `All saved · ${fmtTime(S.lastSaved)}` : "All saved";
+    // The reference view has its own bar; it says the same thing.
+    $("r-save-text").textContent = txt.textContent;
+    $("r-savestate").classList.toggle("bad", el.classList.contains("bad"));
     // The strip under the header shows trouble on every tab.
     const sync = $("sync"), act = $("sync-act");
     act.replaceChildren();
@@ -893,12 +998,14 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
   function show(view) {
     if (!VIEWS.includes(view)) view = "inbox";
     if (S.view === "label" && view !== "label") flushNote();
+    if (S.view === "ref" && view !== "ref") flushRefNote();
     S.view = view;
     for (const v of VIEWS) {
       $("view-" + v).hidden = v !== view;
       $("tab-" + v).setAttribute("aria-selected", String(v === view));
     }
     if (view === "label") { ensureCurrent(); renderFilters(); renderCard(); renderList(); renderPos(); }
+    if (view === "ref") { ensureRefCurrent(); renderRefFilters(); renderRefCard(); renderRefList(); renderRefPos(); }
     if (view === "read") openDoc(S.doc);
     if (view === "decide") renderDecide();
     if (S.manifest) savePrefs();
@@ -915,10 +1022,13 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     $("n-label").textContent = items().length ? String(todo) : "";
     const open = S.decisions.filter((d) => !(S.answers[d.id] || {}).choice).length;
     $("n-decide").textContent = open ? String(open) : "";
+    const refTodo = refItems().filter((it) => !refVerdictOf(it)).length;
+    $("n-ref").textContent = refItems().length ? String(refTodo) : "";
   }
   function renderAll() {
     renderCounts(); renderInbox(); renderDecide(); renderSent();
     if (S.view === "label") { ensureCurrent(); renderFilters(); renderCard(); renderList(); renderPos(); }
+    if (S.view === "ref") { ensureRefCurrent(); renderRefFilters(); renderRefCard(); renderRefList(); renderRefPos(); }
   }
 
   /* ---------- render: inbox ---------- */
@@ -969,13 +1079,37 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
           h("button", { class: "btn primary", type: "button", onclick: () => openSet(s.id, { status: "todo", rule: "", repo: "" }),
             text: t.todo ? (t.todo === t.total ? "Start labelling" : "Continue labelling") : "Review labels" })));
     });
-    if (panels.length) $("inbox-sets").replaceChildren(...panels);
+    let refTodo = 0;
+    const refPanels = (S.manifest.references || []).map((r) => {
+      const t = refTally(r.id); refTodo += t.todo;
+      const pct = (n) => t.total ? (100 * n / t.total).toFixed(2) + "%" : "0";
+      const added = (S.refAdded[r.id] || []).length;
+      return h("div", { class: "panel" },
+        h("span", { class: "eyebrow", text: `Reference lines · ${t.total} lines · ${r.split === "heldout" ? "held-out split" : "development split"}` }),
+        h("h2", { text: r.title }),
+        h("p", { class: "muted", style: "margin:0", text: r.about || "" }),
+        h("p", { class: "ref-blind", text: "Blind: no rule finding and no investigation record is shown while you judge these lines." }),
+        h("div", { class: "progress", role: "img", "aria-label": `${t.total - t.todo} of ${t.total} judged` },
+          h("i", { class: "p-confirm", style: `width:${pct(t.confirm)}` }), h("i", { class: "p-reject", style: `width:${pct(t.reject)}` }),
+          h("i", { class: "p-unclear", style: `width:${pct(t.unclear)}` })),
+        h("div", { class: "legend" },
+          h("span", null, h("b", { text: `${t.total - t.todo} of ${t.total}` }), " judged"),
+          h("span", null, h("i", { class: "dot confirm" }), `Confirmed ${t.confirm}`),
+          h("span", null, h("i", { class: "dot reject" }), `Rejected ${t.reject}`),
+          h("span", null, h("i", { class: "dot unclear" }), `Unclear ${t.unclear}`),
+          h("span", null, `Places added ${added}`)),
+        h("div", { class: "row" },
+          h("button", { class: "btn primary", type: "button", onclick: () => openRef(r.id),
+            text: t.todo ? (t.todo === t.total ? "Start judging" : "Continue judging") : "Review judgements" })));
+    });
+    if (panels.length || refPanels.length) $("inbox-sets").replaceChildren(...panels, ...refPanels);
     const open = S.decisions.filter((d) => !(S.answers[d.id] || {}).choice);
     const parts = [];
     if (todo) parts.push(`${todo} ${todo === 1 ? "finding" : "findings"}`);
+    if (refTodo) parts.push(`${refTodo} reference ${refTodo === 1 ? "line" : "lines"}`);
     if (open.length) parts.push(`${open.length} ${open.length === 1 ? "decision" : "decisions"}`);
     $("inbox-title").textContent = parts.length
-      ? `${parts.join(" and ")} ${todo + open.length === 1 ? "waits" : "wait"} for you`
+      ? `${parts.join(" and ")} ${todo + refTodo + open.length === 1 ? "waits" : "wait"} for you`
       : "Nothing waits for you";
     const dp = $("inbox-decide");
     dp.replaceChildren(h("h2", { text: "Decisions" }));
@@ -988,7 +1122,7 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
       dp.append(h("div", { class: "row" }, h("button", { class: "btn" + (open.length ? " primary" : ""), type: "button", onclick: () => show("decide"), text: open.length ? `Answer ${open.length}` : "See answers" })));
     }
     const imp = Object.entries(S.imports);
-    if (imp.length) $("imports").textContent = imp.map(([sid, x]) => `Claude imported ${x.count ?? "the"} labels of ${sid} on ${fmtTime(x.at)}.`).join(" ");
+    if (imp.length) $("imports").textContent = imp.map(([sid, x]) => `Claude imported ${x.count ?? "the"} ${sid.startsWith("ref-") ? "judgements" : "labels"} of ${sid} on ${fmtTime(x.at)}.`).join(" ");
   }
 
   /* ---------- render: label ---------- */
@@ -1137,7 +1271,7 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
   function renderVerdictBar() {
     const it = current();
     const v = it ? verdictOf(it) : "";
-    for (const b of document.querySelectorAll(".v")) {
+    for (const b of document.querySelectorAll(".v[data-v]")) {
       b.setAttribute("aria-pressed", String(b.dataset.v === v));
       b.disabled = !it || S.readOnly || !S.db;
     }
@@ -1156,6 +1290,370 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
       h("div", { class: "row" },
         h("button", { class: "btn primary", type: "button", onclick: applyGroup, text: `Label ${g.ids.length} more` }),
         h("button", { class: "btn", type: "button", onclick: () => { S.groupAsk = null; renderGroupAsk(); if (S.auto) step(1); }, text: "Only this one" })));
+  }
+
+  /* ---------- reference lines (blind) ----------
+     A reference set is the sweep's verified lines of one corpus split. The person judges
+     each line without the rules: confirm or reject the sweep's claim, name the mechanism or
+     the control, and add the places the sweep missed. Nothing here reads a finding set, so
+     while a line is open no rule finding and no investigation record can be on screen.
+     Judgements live under reference/<set>/..., apart from the finding labels. */
+  const RLABEL = { confirm: "Confirmed", reject: "Rejected", unclear: "Unclear" };
+  const refSet = () => S.refs[S.refId];
+  const refItems = () => (refSet() && refSet().items) || [];
+  const refLabelOf = (it, sid = S.refId) => (S.refLabels[sid] || {})[it.id];
+  const refVerdictOf = (it, sid) => (refLabelOf(it, sid) || {}).verdict || "";
+  const refStateText = (lab) => (lab.verdict ? RLABEL[lab.verdict] + (lab.verdict === "confirm" && !lab.mechanism && !lab.control ? " · name it" : "") : "Not judged");
+  function rebuildRefLabels(sid) {
+    const m = { ...(S.server.refLabels[sid] || {}) };
+    const prefix = `reference/${sid}/labels/`;
+    for (const [path, e] of S.pending) if (path.startsWith(prefix)) { const id = path.slice(prefix.length); m[id] = { ...(m[id] || {}), ...e.data }; }
+    S.refLabels[sid] = m;
+  }
+  function rebuildRefAdded(sid) {
+    const server = S.server.refAdded[sid] || [];
+    const seen = new Set(server.map((a) => a.id));
+    const prefix = `reference/${sid}/added/`;
+    const local = [];
+    for (const [path, e] of S.pending) if (path.startsWith(prefix) && !seen.has(path.slice(prefix.length))) local.push({ id: path.slice(prefix.length), ...e.data, unsent: true });
+    S.refAdded[sid] = [...server, ...local].sort((a, b) => String(a.at).localeCompare(String(b.at)));
+  }
+  function subscribeRefs() {
+    if (!S.db || !S.manifest) return;
+    for (const r of S.manifest.references || []) {
+      if (S.subscribed.has("ref:" + r.id)) continue;
+      S.subscribed.add("ref:" + r.id);
+      listen("reflabels:" + r.id, (ok, err) => S.db.collection(`reference/${r.id}/labels`).onSnapshot((snap) => {
+        ok();
+        const m = {};
+        for (const d of snap.docs) { m[d.id] = d.data(); S.exists.add(`reference/${r.id}/labels/${d.id}`); }
+        S.ready.add(`reference/${r.id}/labels`);
+        S.server.refLabels[r.id] = m;
+        rebuildRefLabels(r.id);
+        renderCounts(); renderInbox();
+        if (S.view === "ref" && r.id === S.refId) { syncRefCard(); renderRefList(); renderRefPos(); }
+      }, err));
+      listen("refadded:" + r.id, (ok, err) => S.db.collection(`reference/${r.id}/added`).onSnapshot((snap) => {
+        ok();
+        S.server.refAdded[r.id] = snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+        for (const d of snap.docs) S.exists.add(`reference/${r.id}/added/${d.id}`);
+        S.ready.add(`reference/${r.id}/added`);
+        rebuildRefAdded(r.id);
+        renderInbox();
+        if (S.view === "ref" && r.id === S.refId) renderRepoPanelSafe();
+      }, err));
+    }
+  }
+  async function loadRef(r) {
+    try {
+      const res = await fetch(r.file, { cache: "no-cache" });
+      if (!res.ok) throw new Error(res.status);
+      S.refs[r.id] = await res.json();
+    } catch {
+      S.refs[r.id] = { id: r.id, title: r.title, items: [], repos: {}, error: true };
+    }
+  }
+  function refMatches(it) {
+    const f = S.refFilter, v = refVerdictOf(it);
+    if (f.repo && it.repo !== f.repo) return false;
+    if (f.status === "todo") return !v;
+    if (f.status === "all") return true;
+    if (f.status === "note") return !!(refLabelOf(it) || {}).note;
+    return v === f.status;
+  }
+  // A judgement carries the name the person typed as the reviewer, like `--reviewer` on a
+  // review record: never a name read from the account, never written without one.
+  function needReviewer() {
+    if (S.reviewer) return false;
+    toast("Type your name as the reviewer first, at the top of this tab");
+    const el = $("r-reviewer");
+    if (el) el.focus();
+    return true;
+  }
+  function writeRefLabel(sid, itemId, patch) {
+    if (needReviewer()) return Promise.resolve(false);
+    return queueWrite(`reference/${sid}/labels/${itemId}`, "merge", { ...patch, at: new Date().toISOString(), by: S.uid || "", reviewer: S.reviewer, set: sid });
+  }
+  // The note box belongs to one line; whatever happens next, its text goes to that one.
+  let openRefNote = null, refNoteTimer = null;
+  function flushRefNote() {
+    clearTimeout(refNoteTimer);
+    if (!openRefNote || !S.db || S.readOnly) return;
+    const { sid, id, el } = openRefNote;
+    const cur = (S.refLabels[sid] || {})[id];
+    if ((cur ? cur.note || "" : "") === el.value) return;
+    writeRefLabel(sid, id, { note: el.value });
+  }
+  function refCurrent() { return refItems().find((x) => x.id === S.refCur) || null; }
+  function refGo(id) {
+    flushRefNote();
+    S.refCur = id; savePrefs();
+    renderRefCard(); renderRefList(); renderRefPos();
+    window.scrollTo(0, 0);
+  }
+  function refStep(dir) {
+    const all = refItems(), n = all.length;
+    if (!n) return;
+    const i = all.findIndex((x) => x.id === S.refCur);
+    for (let k = 1; k <= n; k++) {
+      const j = (((i < 0 ? -1 : i) + dir * k) % n + n) % n;
+      if (j === i) break;
+      if (refMatches(all[j])) return refGo(all[j].id);
+    }
+    if (!refCurrent() || !refMatches(refCurrent())) { flushRefNote(); S.refCur = null; renderRefCard(); renderRefList(); renderRefPos(); }
+  }
+  function ensureRefCurrent() {
+    if (!refItems().length) return;
+    const it = refCurrent();
+    if (it && refMatches(it)) return;
+    const first = refItems().find(refMatches);
+    S.refCur = first ? first.id : null;
+  }
+  function refChoose(v) {
+    if (S.readOnly || !S.db) return;
+    const it = refCurrent();
+    if (!it) return;
+    if (needReviewer()) return;
+    flushRefNote();
+    // Tapping the judgement already chosen keeps it: a double tap must never undo one.
+    const lab = refLabelOf(it) || {};
+    if (lab.verdict !== v) writeRefLabel(S.refId, it.id, { verdict: v });
+    toast(`Marked ${RLABEL[v]}`);
+    renderRefBar(); syncRefCard(); renderRefList(); renderRefPos(); renderCounts();
+    // A confirmed line still needs its mechanism or control, which only the person names.
+    if (v === "confirm") { const sel = $("r-mech"); if (sel && !(lab.mechanism || lab.control)) sel.focus(); return; }
+    if (S.refAuto) setTimeout(() => { if (refCurrent() && refCurrent().id === it.id) refStep(1); }, 280);
+  }
+  function openRef(sid) {
+    flushRefNote();
+    S.refId = sid; S.refCur = null; S.refRepo = ""; S.refFilter = { status: "todo", repo: "" };
+    show("ref");
+  }
+  function refTally(sid) {
+    const its = (S.refs[sid] && S.refs[sid].items) || [];
+    const t = { confirm: 0, reject: 0, unclear: 0, todo: 0, total: its.length };
+    for (const it of its) { const v = refVerdictOf(it, sid); if (v) t[v]++; else t.todo++; }
+    return t;
+  }
+  function renderRefFilters() {
+    const refs = (S.manifest && S.manifest.references) || [];
+    const setSel = $("r-set");
+    setSel.replaceChildren(...refs.map((r) => h("option", { value: r.id, text: r.title })));
+    if (S.refId) setSel.value = S.refId;
+    const repos = Object.keys((refSet() && refSet().repos) || {}).sort((a, b) => a.localeCompare(b));
+    $("r-repo").replaceChildren(h("option", { value: "", text: "All repos" }), ...repos.map((r) => h("option", { value: r, text: r })));
+    $("r-repo").value = repos.includes(S.refFilter.repo) ? S.refFilter.repo : "";
+    $("r-status").value = S.refFilter.status;
+    $("r-auto").checked = S.refAuto;
+  }
+  function renderRefPos() {
+    const its = refItems(), shown = its.filter(refMatches), it = refCurrent();
+    const i = it ? shown.findIndex((x) => x.id === it.id) : -1;
+    const done = its.filter((x) => refVerdictOf(x)).length;
+    $("r-pos").textContent = !S.manifest ? "Loading lines…" : !its.length ? "No lines loaded"
+      : `${i >= 0 ? `${i + 1} of ${shown.length}` : `${shown.length} match`} · ${done}/${its.length} judged`;
+  }
+  function renderRefList() {
+    const list = $("r-list");
+    const its = refItems().filter(refMatches);
+    list.replaceChildren(...its.map((it) => h("button", {
+      class: "li", type: "button", "aria-current": String(it.id === S.refCur),
+      onclick: () => { refGo(it.id); if (window.innerWidth < 1000) toggleRefList(false); },
+    },
+      h("i", { class: "dot " + refVerdictOf(it) }),
+      h("span", { class: "l1", text: `${it.repo} · ${it.behaviour}` }),
+      h("span", { class: "l2", text: `${it.file}:${it.line}` }))));
+    if (!its.length) list.append(h("p", { class: "muted small", style: "padding:12px;margin:0", text: "No lines match these filters." }));
+  }
+  function toggleRefList(open) {
+    S.refListOpen = open ?? !S.refListOpen;
+    $("r-list-col").hidden = !S.refListOpen;
+    $("r-list-toggle").setAttribute("aria-expanded", String(S.refListOpen));
+    $("r-list-toggle").textContent = S.refListOpen ? "Hide list" : "List";
+    if (S.refListOpen) { renderRefList(); const c = $("r-list").querySelector('[aria-current="true"]'); if (c) c.scrollIntoView({ block: "nearest" }); }
+  }
+  function renderRefBar() {
+    const it = refCurrent();
+    const v = it ? refVerdictOf(it) : "";
+    for (const b of document.querySelectorAll(".v[data-r]")) {
+      b.setAttribute("aria-pressed", String(b.dataset.r === v));
+      b.disabled = !it || S.readOnly || !S.db;
+    }
+    $("r-prev").disabled = $("r-next").disabled = !refItems().length;
+  }
+  function namesBlock(lab, mechs, controls) {
+    const dis = S.readOnly || !S.db ? true : null;
+    const mSel = h("select", { id: "r-mech", disabled: dis },
+      h("option", { value: "", text: "No mechanism named" }),
+      ...mechs.map((m) => h("option", { value: m.id, text: `${m.id} ${m.name}` })));
+    mSel.value = lab.mechanism || "";
+    mSel.addEventListener("change", () => {
+      const it = refCurrent();
+      if (!it) return;
+      if (needReviewer()) { mSel.value = lab.mechanism || ""; return; }
+      writeRefLabel(S.refId, it.id, { mechanism: mSel.value });
+      syncRefCard();
+    });
+    const ctrl = lab.control || "";
+    const isOther = !!ctrl && !controls.includes(ctrl);
+    const cSel = h("select", { id: "r-ctrl", disabled: dis },
+      h("option", { value: "", text: "No control named" }),
+      ...controls.map((c) => h("option", { value: c, text: c })),
+      h("option", { value: "__other", text: "Another control…" }));
+    cSel.value = isOther ? "__other" : ctrl;
+    const other = h("input", { id: "r-ctrl-other", type: "text", placeholder: "Name the control", value: isOther ? ctrl : "", disabled: dis, hidden: isOther ? null : true, "aria-label": "Another control" });
+    cSel.addEventListener("change", () => {
+      const it = refCurrent();
+      if (!it) return;
+      if (needReviewer()) { cSel.value = isOther ? "__other" : ctrl; return; }
+      if (cSel.value === "__other") { other.hidden = false; other.focus(); return; }
+      other.hidden = true;
+      writeRefLabel(S.refId, it.id, { control: cSel.value });
+      syncRefCard();
+    });
+    other.addEventListener("change", () => { const it = refCurrent(); if (it) writeRefLabel(S.refId, it.id, { control: other.value.trim() }); syncRefCard(); });
+    return h("section", { class: "names", "aria-label": "Mechanism or control" },
+      h("label", null, "The mechanism it shows", mSel),
+      h("label", null, "The control it is", cSel, other));
+  }
+  function renderRefCard() {
+    flushRefNote();
+    openRefNote = null;
+    const card = $("r-card");
+    const it = refCurrent();
+    renderRefBar();
+    if (!it) {
+      const its = refItems();
+      const left = its.filter((x) => !refVerdictOf(x)).length;
+      if (!S.manifest) { card.replaceChildren(h("div", { class: "finding" }, h("p", { class: "muted", style: "margin:0", text: "Loading lines…" }))); renderRepoPanel(); return; }
+      card.replaceChildren(h("div", { class: "finding done-state" },
+        h("span", { class: "eyebrow", text: its.length ? "Nothing in this filter" : "No lines" }),
+        h("h2", { class: "f-title", text: its.length && !left ? "Every line in this set is judged" : its.length ? "No line matches these filters" : "This set has no lines to judge" }),
+        h("p", { class: "muted", style: "margin:0", text: its.length && !left ? "Add any place the sweep missed below, then go back to Claude Code and say: Import my review from the console." : its.length ? `${left} lines are still to do in the whole set. Change the filters above to see them.` : "Pick a repository below to add the places where a mechanism or a control sits." }),
+        its.length ? h("div", { class: "row" }, h("button", { class: "btn", type: "button", onclick: () => { S.refFilter = { status: "todo", repo: "" }; renderRefFilters(); ensureRefCurrent(); renderRefCard(); renderRefList(); renderRefPos(); savePrefs(); }, text: "Show everything to do" })) : null));
+      renderRepoPanel();
+      return;
+    }
+    const s = refSet();
+    const repo = (s.repos || {})[it.repo] || {};
+    const lab = refLabelOf(it) || {};
+    const els = [
+      h("div", { class: "f-head" },
+        h("span", { class: "chip beh", text: it.behaviour }),
+        h("span", { class: "chip kind", text: String(it.kind || "").replace("_", " ") }),
+        h("span", { class: "chip", text: "#" + it.n }),
+        h("span", { class: "state " + (lab.verdict || ""), id: "r-card-state", text: refStateText(lab) })),
+      h("h2", { class: "f-title", text: it.claim }),
+      h("div", { class: "where" },
+        h("div", { class: "repo" }, h("b", { text: it.repo }), repo.category ? ` · ${repo.category}` : ""),
+        h("div", { class: "path", text: `${it.file}:${it.line}` }),
+        it.link ? h("a", { href: it.link, target: "_blank", rel: "noopener", class: "small", text: "Open on GitHub at the pinned commit ↗" }) : null),
+      h("section", { class: "ask", "aria-label": "What to decide" },
+        h("span", { class: "eyebrow", text: "Your question" }),
+        h("p", { class: "q", text: "Is this line what the sweep says it is?" }),
+        h("dl", null,
+          h("dt", { class: "r", text: "Confirm if" }), h("dd", { text: "The code or text at this line does what the claim says, in the product itself, not only in a test, a fixture or a dataset." }),
+          h("dt", { class: "f", text: "Reject if" }), h("dd", { text: "It does something else, it sits only in a test, fixture, dataset or comment, or the claim reads more into it than is there." }),
+          h("dt", { class: "o", text: "Then" }), h("dd", { text: "Name the mechanism it shows (M1 to M8), or the control it is. Nothing is filled in for you." })),
+        h("p", { class: "small muted", style: "margin:0", text: "You judge the line, not the app, and not any rule." })),
+      h("section", null, h("h3", { class: "section-h", text: "The line" }),
+        it.context ? codeBlock(it.context) : h("pre", { class: "snippet", text: it.quote || "(no code available)" })),
+      it.why ? h("details", { class: "more" }, h("summary", { text: "The sweep agent's reason (an agent's reading, not a label)" }), h("div", { class: "body" }, h("p", { text: it.why }))) : null,
+      namesBlock(lab, s.mechanisms || [], s.controls || []),
+      h("div", { class: "mynote" },
+        h("label", { class: "lbl", for: "r-note", text: "Your note (optional)" }),
+        h("textarea", { id: "r-note", placeholder: "Why you judged it so, or what you could not tell.", disabled: S.readOnly || !S.db ? true : null })),
+    ];
+    card.replaceChildren(h("article", { class: "finding", "aria-label": `Line ${it.n}` }, els));
+    const ta = $("r-note");
+    ta.value = lab.note || "";
+    openRefNote = { sid: S.refId, id: it.id, el: ta };
+    ta.addEventListener("input", () => { clearTimeout(refNoteTimer); refNoteTimer = setTimeout(flushRefNote, 900); });
+    ta.addEventListener("blur", flushRefNote);
+    if (!S.refRepo || S.refRepo !== it.repo) S.refRepo = it.repo;
+    renderRepoPanel();
+  }
+  function syncRefCard() {
+    const it = refCurrent();
+    if (!it || !$("r-card-state")) return;
+    const lab = refLabelOf(it) || {};
+    const st = $("r-card-state");
+    st.className = "state " + (lab.verdict || "");
+    st.textContent = refStateText(lab);
+    const ta = $("r-note");
+    if (ta && document.activeElement !== ta && ta.value !== (lab.note || "")) ta.value = lab.note || "";
+    const m = $("r-mech");
+    if (m && document.activeElement !== m && m.value !== (lab.mechanism || "")) m.value = lab.mechanism || "";
+    renderRefBar();
+  }
+  function renderRepoPanelSafe() {
+    const box = $("r-repo-panel");
+    if (box.contains(document.activeElement) && /^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) { S.refPanelStale = true; return; }
+    renderRepoPanel();
+  }
+  function addForm(repoName, repo, mine) {
+    const d = S.refDraft[repoName] || (S.refDraft[repoName] = { file: "", line: "", kind: "designed_in", mechanism: "", control: "", note: "" });
+    const dis = S.readOnly || !S.db ? true : null;
+    const s = refSet();
+    const f = h("input", { type: "text", placeholder: "path/to/file", value: d.file, disabled: dis, "aria-label": "File" });
+    const l = h("input", { type: "number", min: "1", inputmode: "numeric", placeholder: "line", value: d.line, disabled: dis, "aria-label": "Line" });
+    const k = h("select", { disabled: dis, "aria-label": "What it is" },
+      h("option", { value: "designed_in", text: "A mechanism designed in" }),
+      h("option", { value: "present_control", text: "A control" }));
+    k.value = d.kind;
+    const m = h("select", { disabled: dis, "aria-label": "Mechanism" },
+      h("option", { value: "", text: "No mechanism named" }),
+      ...((s && s.mechanisms) || []).map((x) => h("option", { value: x.id, text: `${x.id} ${x.name}` })));
+    m.value = d.mechanism;
+    const c = h("input", { type: "text", placeholder: "The control, if it is one", value: d.control, disabled: dis, "aria-label": "Control", list: "r-controls" });
+    const dl = h("datalist", { id: "r-controls" }, ...((s && s.controls) || []).map((x) => h("option", { value: x })));
+    const n = h("textarea", { placeholder: "What it is, in a sentence.", disabled: dis, "aria-label": "Note" });
+    n.value = d.note;
+    for (const [el, key] of [[f, "file"], [l, "line"], [c, "control"], [n, "note"]]) el.addEventListener("input", () => { d[key] = el.value; });
+    k.addEventListener("change", () => { d.kind = k.value; });
+    m.addEventListener("change", () => { d.mechanism = m.value; });
+    const btn = h("button", { class: "btn primary", type: "button", text: "Add this place", disabled: dis });
+    btn.addEventListener("click", async () => {
+      const file = d.file.trim(), line = parseInt(d.line, 10);
+      if (!file || !(line > 0)) { toast("Give the file and a line number"); return; }
+      if (!d.mechanism && !d.control.trim()) { toast("Name the mechanism or the control"); return; }
+      if (needReviewer()) return;
+      const id = "a-" + Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 7);
+      const body = { repo: repoName, file, line, kind: d.kind, mechanism: d.mechanism, control: d.control.trim(), note: d.note.trim(), at: new Date().toISOString(), by: S.uid || "", reviewer: S.reviewer, set: S.refId };
+      S.refDraft[repoName] = { file: "", line: "", kind: d.kind, mechanism: "", control: "", note: "" };
+      btn.disabled = true;
+      const p = queueWrite(`reference/${S.refId}/added/${id}`, "replace", body);
+      renderRepoPanel();
+      toast((await p) ? "Place added" : "Not saved yet. It is kept on this device; tap Retry at the top.");
+      renderRepoPanel();
+    });
+    return h("div", { class: "addform" },
+      h("h3", { class: "section-h", text: `Add a place in ${repoName}` }),
+      repo.tree ? h("a", { href: repo.tree, target: "_blank", rel: "noopener", class: "small", text: "Open the repository at the pinned commit ↗" }) : null,
+      h("div", { class: "grid2" }, f, l), k, m, c, dl, n,
+      h("div", { class: "row" }, btn),
+      mine.length ? h("ul", { class: "added" }, mine.map((a) => h("li", null,
+        h("b", { text: `${a.file}:${a.line}` }),
+        ` · ${a.kind === "present_control" ? "control" : "designed in"}${a.mechanism ? " · " + a.mechanism : ""}${a.control ? " · " + a.control : ""}${a.note ? " · " + a.note : ""}${a.unsent ? (S.failed.has(`reference/${S.refId}/added/${a.id}`) ? " · not saved yet" : " · saving…") : ""}`))) : null);
+  }
+  function renderRepoPanel() {
+    const box = $("r-repo-panel");
+    S.refPanelStale = false;
+    const s = refSet();
+    if (!s) { box.replaceChildren(); return; }
+    const repos = Object.entries(s.repos || {}).sort((a, b) => a[0].localeCompare(b[0]));
+    const added = S.refAdded[S.refId] || [];
+    const pick = S.refRepo && (s.repos || {})[S.refRepo] ? S.refRepo : "";
+    box.replaceChildren(h("div", { class: "panel", style: "margin-top:16px" },
+      h("h2", { text: "Places the sweep missed" }),
+      h("p", { class: "muted small", style: "margin:0", text: "Add a line where a mechanism is designed in, or a control sits, that the sweep did not list. Pick the repository, open it at the pinned commit, and give the file and the line." }),
+      h("div", { class: "repo-list" }, repos.map(([name, r]) => {
+        const mine = added.filter((a) => a.repo === name).length;
+        return h("button", { class: "repo-row", type: "button", "aria-pressed": String(name === pick), onclick: () => { S.refRepo = name; renderRepoPanel(); } },
+          h("span", null, h("b", { text: name }), r.category ? ` · ${r.category}` : ""),
+          h("span", { class: "rc", text: `${r.lines} line${r.lines === 1 ? "" : "s"} · ${mine} added` }));
+      })),
+      pick ? addForm(pick, (s.repos || {})[pick] || {}, added.filter((a) => a.repo === pick)) : null));
   }
 
   /* ---------- render: decide ----------
@@ -1291,7 +1789,24 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
   /* ---------- events ---------- */
   function bind() {
     for (const b of document.querySelectorAll(".tab")) b.addEventListener("click", () => show(b.dataset.view));
-    for (const b of document.querySelectorAll(".v")) b.addEventListener("click", () => choose(b.dataset.v));
+    for (const b of document.querySelectorAll(".v[data-v]")) b.addEventListener("click", () => choose(b.dataset.v));
+    for (const b of document.querySelectorAll(".v[data-r]")) b.addEventListener("click", () => refChoose(b.dataset.r));
+    $("r-prev").addEventListener("click", () => refStep(-1));
+    $("r-next").addEventListener("click", () => refStep(1));
+    $("r-list-toggle").addEventListener("click", () => toggleRefList());
+    $("r-auto").addEventListener("change", (e) => { S.refAuto = e.target.checked; savePrefs(); });
+    const onRefFilter = () => {
+      flushRefNote();
+      if ($("r-set").value && $("r-set").value !== S.refId) { S.refId = $("r-set").value; S.refCur = null; S.refRepo = ""; }
+      S.refFilter = { status: $("r-status").value, repo: $("r-repo").value };
+      ensureRefCurrent(); renderRefFilters(); renderRefCard(); renderRefList(); renderRefPos(); renderCounts(); savePrefs();
+    };
+    for (const id of ["r-status", "r-set", "r-repo"]) $(id).addEventListener("change", onRefFilter);
+    $("r-reviewer").value = S.reviewer;
+    $("r-reviewer").addEventListener("input", (e) => { S.reviewer = e.target.value.trim(); store.set("reviewer", S.reviewer); });
+    $("r-repo-panel").addEventListener("focusout", () => setTimeout(() => {
+      if (S.refPanelStale && !$("r-repo-panel").contains(document.activeElement)) renderRepoPanel();
+    }, 0));
     $("prev").addEventListener("click", () => step(-1));
     $("next").addEventListener("click", () => step(1));
     $("list-toggle").addEventListener("click", () => toggleList());
@@ -1315,9 +1830,18 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
       }
     });
     document.addEventListener("keydown", (e) => {
-      if (S.view !== "label" || e.metaKey || e.ctrlKey || e.altKey) return;
+      if ((S.view !== "label" && S.view !== "ref") || e.metaKey || e.ctrlKey || e.altKey) return;
       const tag = (e.target && e.target.tagName) || "";
       if (tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") { if (e.key === "Escape") e.target.blur(); return; }
+      if (S.view === "ref") {
+        if (e.key === "1") refChoose("confirm");
+        else if (e.key === "2") refChoose("reject");
+        else if (e.key === "3") refChoose("unclear");
+        else if (e.key === "ArrowRight" || e.key === "j") refStep(1);
+        else if (e.key === "ArrowLeft" || e.key === "k") refStep(-1);
+        else if (e.key === "n" && $("r-note")) { e.preventDefault(); $("r-note").focus(); }
+        return;
+      }
       if (e.key === "1") choose("tp");
       else if (e.key === "2") choose("fp");
       else if (e.key === "3") choose("unclear");
@@ -1326,8 +1850,8 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
       else if (e.key === "n" && $("note")) { e.preventDefault(); $("note").focus(); }
     });
     // A phone may freeze or drop the page when it goes to the background: save the note first.
-    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") flushNote(); });
-    window.addEventListener("pagehide", flushNote);
+    document.addEventListener("visibilitychange", () => { if (document.visibilityState === "hidden") { flushNote(); flushRefNote(); } });
+    window.addEventListener("pagehide", () => { flushNote(); flushRefNote(); });
     window.addEventListener("hashchange", () => { const v = location.hash.slice(1); if (VIEWS.includes(v)) show(v); });
   }
 
@@ -1339,6 +1863,11 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     if (st.doc) S.doc = st.doc;
     if (typeof st.auto === "boolean") S.auto = st.auto;
     if (st.filter && typeof st.filter === "object") S.filter = { ...S.filter, ...st.filter };
+    if (st.refId) S.refId = st.refId;
+    if (st.refCur) S.refCur = st.refCur;
+    if (typeof st.refAuto === "boolean") S.refAuto = st.refAuto;
+    if (st.refFilter && typeof st.refFilter === "object") S.refFilter = { ...S.refFilter, ...st.refFilter };
+    S.reviewer = String(store.get("reviewer", "") || "").trim();
     // Changes kept from an earlier visit show at once; restoreKept() saves them once it
     // has checked that nothing newer was stored meanwhile.
     for (const k of store.keys("p:")) { const e = store.get(k, null); if (e && e.path) S.pending.set(e.path, e); }
@@ -1351,7 +1880,8 @@ details.more ul { margin: 0; padding-left: 18px; display: grid; gap: 6px; }
     connect();
   }
   const hot = window.claude && window.claude.hot;
-  if (hot && typeof hot.snapshot === "function") hot.snapshot(() => ({ view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter }));
+  if (hot && typeof hot.snapshot === "function") hot.snapshot(() => ({ view: S.view, setId: S.setId, cur: S.cur, doc: S.doc, auto: S.auto, filter: S.filter,
+    refId: S.refId, refCur: S.refCur, refFilter: S.refFilter, refAuto: S.refAuto }));
   if (hot && typeof hot.ready === "function") hot.ready(start); else start((hot && hot.data) || {});
 })();
 </script>

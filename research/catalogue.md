@@ -102,21 +102,24 @@ Owner's order, 2026-10-26. Each step: define, rule, scenario, measure, log.
 
 ## Measurement record
 
-Run 3 (2026-10-27, commit `5d152cb`, eight rules) is the current measurement: 188
-findings, 161 in the labelling sample (`results/run3/findings-audit.csv`), 0 labelled.
-Runs 1 and 2 (2026-10-26, seven rules, 168 findings) are kept in `results/` as the
-before-state. See `log.md` for both.
+Run 4 (2026-10-30, commit `1741a9a`, the ten 0.2.0 rules) is the current measurement: 941
+findings, 243 in the labelling sample (`results/run4/findings-audit.csv`), 0 labelled.
+Run 3 (2026-10-27, commit `5d152cb`, eight rules before the pivot, 188 findings) and runs
+1 and 2 (2026-10-26, seven rules, 168 findings) are kept as the before-state. See
+`log.md` for each. Ten repositories are a proposed held-out split (`corpus.yaml`).
 
 | rule | rows | corpus commit set | run | findings | sampled | labelled | precision |
 |---|---|---|---|---|---|---|---|
-| AUD-1101 | 28 | 2026-10-26 | run 3, 33/33 | 46 | 40 | 0 | UNMEASURED |
-| AUD-1102 | 29 | 2026-10-26 | run 3, 33/33 | 21 | 21 | 0 | UNMEASURED |
-| AUD-1103 | 37 | 2026-10-26 | run 3, 33/33 | 11 | 11 | 0 | UNMEASURED |
-| AUD-1104 | 1-4 | 2026-10-26 | run 3, 33/33 | 12 (6 /outreach) | 12 | 0 | UNMEASURED |
-| AUD-1105 | 18 | 2026-10-26 | run 3, 33/33 | 61 | 40 | 0 | UNMEASURED |
-| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | run 3, 33/33 | 30 | 30 | 0 | UNMEASURED |
-| AUD-1107 | (process) | 2026-10-26 | run 3, 33/33 | 0 | 0 | 0 | UNMEASURED (never fired) |
-| AUD-1108 | 7 | 2026-10-26 | run 3, 33/33 | 7 | 7 | 0 | UNMEASURED |
+| AUD-1101 | 28 | 2026-10-26 | run 4, 33/33 | 634 (573 /store) | 40 | 0 | UNMEASURED |
+| AUD-1102 | 29 | 2026-10-26 | run 4, 33/33 | 55 | 40 | 0 | UNMEASURED |
+| AUD-1103 | 37 | 2026-10-26 | run 4, 33/33 | 21 | 21 | 0 | UNMEASURED |
+| AUD-1104 | 1-4 | 2026-10-26 | run 4, 33/33 | 33 (6 /outreach) | 33 | 0 | UNMEASURED |
+| AUD-1105 | 18 | 2026-10-26 | run 4, 33/33 | 53 | 40 | 0 | UNMEASURED |
+| AUD-1106 | 5, 6, 9, 10 | 2026-10-26 | run 4, 33/33 | 13 | 13 | 0 | UNMEASURED |
+| AUD-1107 | (process) | 2026-10-26 | run 4, 33/33 | 116 (all /missing) | 40 | 0 | UNMEASURED |
+| AUD-1108 | 7 | 2026-10-26 | run 4, 33/33 | 6 | 6 | 0 | UNMEASURED |
+| AUD-1109 | 4, 5, 6 | 2026-10-26 | run 4, 33/33 | 2 | 2 | 0 | UNMEASURED |
+| AUD-1110 | 12, 14, 26 | 2026-10-26 | run 4, 33/33 | 8 | 8 | 0 | UNMEASURED |
 
 ## Reference set from the sweep (recall side)
 
@@ -127,9 +130,9 @@ skeptics. Verified lines only; 195 lines are still unverified and not counted.
 | row | behaviour | repos with the behaviour designed in | repos with a control | rule today | rule points at |
 |---|---|---|---|---|---|
 | 7 | no crisis protocol | 16 of 19 person-facing repos have no crisis handling | 3 (1 before the model) | AUD-1108 | 5 of the 12 companion, roleplay and mental-health repos without one; 0 of the 2 with one |
-| 1-4 | engagement design | 8 (khoj tagged, read as person-scheduled) | 5, all narrow | AUD-1104 | 0 of 28 files before, 7 of 28 after (run 3) |
+| 1-4 | engagement design | 8 (khoj tagged, read as person-scheduled) | 5, all narrow | AUD-1104 | 0 of 28 files before, 7 of 28 after (run 3), 7 of 28 (run 4) |
 | 13 | sycophancy instruction | 4 (2 are "validate feelings", which may not belong) | 6 | none | (no rule) |
-| 18, 21 | AI concealment, impersonation of real people | 9 | 18 | AUD-1105 persona | 3 of 25 files |
+| 18, 21 | AI concealment, impersonation of real people | 9 | 18 | AUD-1105 persona | 3 of 25 files (run 3), 4 of 25 (run 4) |
 | 32 | memory about the person | 19 | 18 | none | (no rule) |
 
 "Rule points at" counts files where the rule has an evidence leg, over files with a

@@ -20,8 +20,17 @@
 # refresh, re-run that command and update `sha`; never edit by hand.
 # `branch` is provenance only; the harness fetches `sha`.
 #
-# Run:  python bench/run.py --tool audit --corpus research/corpus.yaml \
-#           --out-dir research/results --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107
+# Split: `split: heldout` marks the ten repositories proposed on 2026-10-30 as the
+# held-out split (research/log.md, 2026-10-30, explains the choice); `status: proposed`
+# says the owner has not confirmed it yet. Every entry without `split` is the development
+# split. Held-out repositories are never used to write or tune rules, skill instructions,
+# investigation hypotheses or vocabulary, and no investigation runs on them while the
+# split stands; they are opened only to label them blind and to measure.
+#
+# Run (run 4, the 0.2.0 rules):
+#       python bench/run.py --tool audit --corpus research/corpus.yaml \
+#           --out-dir research/results/run4 --keep-clones \
+#           --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107,AUD-1108,AUD-1109,AUD-1110
 # ---------------------------------------------------------------------
 
 corpus_resolved: 2026-10-26
@@ -33,6 +42,8 @@ repos:
     sha: a50c9371816440196049cca0eba9b1373341600e
     branch: main
     category: companion
+    split: heldout
+    status: proposed
     note: "The reference 'AI companion' template: persona prompts, per-user memory (Pinecone/Upstash), Clerk accounts."
 
   - name: RealChar
@@ -65,6 +76,8 @@ repos:
     sha: 5a78ede180a070fdefd4cae42651542554b0b0bd
     branch: main
     category: companion
+    split: heldout
+    status: proposed
     note: "Small Telegram avatar bot: short-term history plus long-term fact memory about the person in PostgreSQL."
 
   # ---- roleplay and character platforms --------------------------------
@@ -82,6 +95,8 @@ repos:
     sha: 5da95f713a610219ddcf6c13de8779c52018196d
     branch: main
     category: roleplay
+    split: heldout
+    status: proposed
     note: "Self-hosted roleplay platform forked from RisuAI; many providers, all data in one SQLite file."
 
   - name: OpenRoleplayChat
@@ -115,6 +130,8 @@ repos:
     sha: 25c8f9455ac7c39c24f1e1b26f8d8160a5ab1069
     branch: main
     category: mental-health
+    split: heldout
+    status: proposed
     positive_control: true
     note: "Regex crisis detection runs BEFORE the model and returns helplines: the control row 7 of the catalogue asks for."
 
@@ -132,6 +149,8 @@ repos:
     sha: 7d131fae7f797e965ac19413a29722f236a29d5b
     branch: master
     category: mental-health
+    split: heldout
+    status: proposed
     note: "Counselling model fine-tuned on instruction data; no documented crisis path."
 
   - name: mental_health_companion_bot
@@ -157,6 +176,8 @@ repos:
     sha: 26cdefb46600c0fa5953c4b5ee5003c125539fc4
     branch: main
     category: memory
+    split: heldout
+    status: proposed
     note: "Memory layer storing user facts across sessions; also in bench/corpus.yaml at an older commit."
 
   - name: khoj
@@ -182,6 +203,8 @@ repos:
     sha: 5702c9a454dfc10fdddbf49d02d645c0b623d360
     branch: main
     category: recommender
+    split: heldout
+    status: proposed
     note: "Conversational recommender with an explicit user-preference state in the prompt."
 
   # ---- news and answers ----------------------------------------------------
@@ -207,6 +230,8 @@ repos:
     sha: 348feca3e378fb4157b217724ed508dc707f853f
     branch: master
     category: news
+    split: heldout
+    status: proposed
     positive_control: true
     note: "Answer engine that cites its sources on every answer: the grounding control of catalogue row 23."
 
@@ -250,6 +275,8 @@ repos:
     sha: 53e93f2c6cd5933e6b1f820b70de12036784cc40
     branch: main
     category: social-agent
+    split: heldout
+    status: proposed
     positive_control: true
     note: "Drafts posts with a human approval step before anything is published."
 
@@ -260,6 +287,8 @@ repos:
     sha: 5c2f92416c042fae89ef7b957b4076418b39c26f
     branch: main
     category: tutor
+    split: heldout
+    status: proposed
     note: "Tutor that models the learner's mind (theory of mind) and keeps a profile of the student."
 
   - name: llamatutor

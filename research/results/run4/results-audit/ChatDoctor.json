@@ -1,0 +1,1316 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatDoctor",
+    "git_sha": "e77bd7ebafbffb6d82be3410cd0d4ebebe75a516",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:26:12Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 1,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 2,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 2,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 2,
+    "fail_on": "never",
+    "unknown_items": 1,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1104/experiment",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1104/experiment",
+      "rule_id": "AUD-1104",
+      "sub": "experiment",
+      "fingerprint": "d839c156099447d8",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "severity": "medium",
+      "priority": 4,
+      "mechanism": "M4",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "format_dataset.csv",
+          "line": 269,
+          "snippet": "267,Adrenal cancer,\"['Skin rash', 'Dizziness', 'Cough', 'Diaper rash', 'Sweating', 'Chills', 'Diminished hearing', 'Nosebleed']\",\"The term adrenal tumor can ..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "267,Adrenal cancer,\"['Skin rash', 'Dizziness', 'Cough', 'Diaper rash', 'Sweating', 'Chills', 'Diminished hearing', 'Nosebleed']\",\"The term adrenal tumor can ...",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "format_dataset.csv",
+          "sha256": "d1fdcdd2c20fb80e446af788aef92d470595aa51c88743af71ce8c0f2a5b9e4b"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "US-CA:SB1119",
+        "US-WA:HB2225",
+        "DSA:Art.25",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Rewrite the objective as task completion and the person's own stated goals; remove streak, scarcity and variable-reward mechanics from the model's instructions; send only messages the person asked for, at the time they chose; measure prompt experiments by task outcomes and tell participants.",
+        "alternatives": [
+          "rewrite the prompt objective as task completion and the person's stated goals",
+          "remove streak, scarcity and variable-reward mechanics from the LLM-facing instructions",
+          "replace scheduled re-engagement with reminders the person sets and can switch off",
+          "measure prompt experiments by task outcomes, with a notice to participants",
+          "an independent review of ranking and reward objectives, recorded with aisafe review record"
+        ],
+        "removes": [
+          "objective",
+          "intervention",
+          "feedback"
+        ]
+      },
+      "known_failure_modes": [
+        "a product-analytics dashboard that computes engagement is not an objective: the rule needs an imperative (maximise, keep, increase) or an objective assignment",
+        "the vulnerable sub-finding rests on two regex co-occurrences in one file or prompt literal; a reading app for children with a streak feature is reported CRITICAL, and the finding says what co-occurred",
+        "a prompt that discusses engagement tactics in order to avoid them is a mention when a negation or a discussion cue precedes the phrase in the same sentence, or an evaluation (dangerous, not recommended) follows it; without one it is reported, and a cue in the same sentence before a real instruction hides it",
+        "the outreach sub-finding pairs a schedule and a send in one file: an alert to an operator's own channel is reported too, a schedule in one file with the send in another (a job queue) is not paired, and a send chosen by the person's state with no scheduler in its file is not reported here",
+        "a reminder the person set silences the outreach sub-finding for the whole file, including a second, unrelated send in that file",
+        "the monetisation imperative reads any prompt material: a sales assistant told to improve sales is reported, and whether the pressure lands on the person in the conversation is for review",
+        "whether an objective variable feeds a training or ranking call is read from one function's text; a variable passed through a dict or a second module stays a detected signal",
+        "an experiment is read from a variant flag near a prompt and a metric word in the same unit; an experiment framework that hides both behind a client call is missed"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "The metric may measure something other than the prompt variants, and participants may have been told elsewhere.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an experiment on prompt variants (treatment) measured by Conversion, Retention, conversion; whether participants were told is not visible in code. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "format_dataset.csv",
+          "line": 3,
+          "snippet": "1,Vocal cord polyp,\"['Hoarse voice', 'Sore throat', 'Difficulty speaking', 'Cough', 'Nasal congestion', 'Throat swelling', 'Diminished hearing', 'Lump in thr..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "format_dataset.csv",
+          "sha256": "d1fdcdd2c20fb80e446af788aef92d470595aa51c88743af71ce8c0f2a5b9e4b"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: experiment in 1 file(s): format_dataset.csv. Mechanisms implicated: M4. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "2 file(s) over the 2097152 byte limit not read: alpaca_data.json, chatdoctor5k.json",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatDoctor",
+      "git_sha": "e77bd7ebafbffb6d82be3410cd0d4ebebe75a516",
+      "dirty": true,
+      "scanned_files": 23,
+      "skipped_files": 0,
+      "bytes": 1146228,
+      "duration_ms": 4359,
+      "oversize_files": 2
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "requirements.txt",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 9,
+      "typescript": 0,
+      "go": 0,
+      "other": 14
+    },
+    "llm_calls": [
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 29,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 74,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 100,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "utils.py",
+        "line": 11,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m4"
+      },
+      {
+        "file": "utils.py",
+        "line": 13,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m4"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 30,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 75,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 101,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "utils.py",
+        "line": 43,
+        "provider": "other",
+        "model": "text-davinci-003",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "llama_index",
+        "file": "Autonomous_ChatDoctor_Wikipedia/wiki_reader.py",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "llama_index",
+        "file": "Autonomous_ChatDoctor_csv/csv_reader.py",
+        "line": 2,
+        "unit": "u0"
+      }
+    ],
+    "ingress": [],
+    "prompts": [
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 24,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 27,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 69,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 72,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 95,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "Autonomous_ChatGPT_API/chat_openai.py",
+        "line": 98,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "train_lora.py",
+        "line": 300,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "train_lora.py",
+        "line": 311,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "format_dataset.csv",
+        "line": 3,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 16,
+        "kind": "experiment",
+        "symbol": "conversion",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 38,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 51,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 66,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 69,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 79,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 84,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 87,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 101,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 114,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 129,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 138,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 148,
+        "kind": "experiment",
+        "symbol": "Conversion",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 163,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 169,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 193,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 198,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 199,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 203,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 205,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 206,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 209,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 221,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 231,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 243,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 244,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 269,
+        "kind": "experiment",
+        "symbol": "treatment (",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 289,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 307,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 308,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 313,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 314,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 333,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 337,
+        "kind": "experiment",
+        "symbol": "treatment (",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 340,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 349,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 357,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 362,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 375,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 377,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 381,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 400,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 412,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 414,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 433,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 436,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 442,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 443,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 448,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 449,
+        "kind": "experiment",
+        "symbol": "conversion",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 457,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 465,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 469,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 470,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 473,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 477,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 479,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 500,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 501,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 505,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 519,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 524,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 532,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 545,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 558,
+        "kind": "experiment",
+        "symbol": "Conversion",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 561,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 567,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 592,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 595,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 596,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 599,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 608,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 621,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 626,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 637,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 642,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 654,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 668,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 670,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 682,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 687,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 705,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 721,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 750,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 755,
+        "kind": "experiment",
+        "symbol": "system (PNS). The PNS nerves connect your brain and spinal cord with the rest of your body. Damage to these nerves makes it hard for them to transmit signals. As a result, your muscles have trouble responding to your brain. No one knows what causes the syndrome. Sometimes it is triggered by an infection, surgery or a vaccination. The first symptom is usually weakness or a tingling feeling in your legs. The feeling can spread to your upper body. In severe cases, you become almost paralyzed. This is life-threatening. You might need a respirator to breathe. Symptoms usually worsen over a period of weeks, then stabilize. Most people recover. Recovery can take a few weeks to a few years. Treatment",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 762,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 767,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 772,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 777,
+        "kind": "experiment",
+        "symbol": "Retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 792,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      },
+      {
+        "file": "format_dataset.csv",
+        "line": 795,
+        "kind": "experiment",
+        "symbol": "retention",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

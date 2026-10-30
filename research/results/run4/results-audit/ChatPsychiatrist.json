@@ -1,0 +1,2988 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatPsychiatrist",
+    "git_sha": "7d131fae7f797e965ac19413a29722f236a29d5b",
+    "dirty": true,
+    "exclude": []
+  },
+  "generated_at": "2026-10-30T15:16:20Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 5,
+    "by_severity": {
+      "critical": 0,
+      "high": 2,
+      "medium": 1,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 5,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 5,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 5,
+    "fail_on": "never",
+    "unknown_items": 13,
+    "unknown_by_category": {
+      "coverage": 12,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1102",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 2,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1102",
+      "rule_id": "AUD-1102",
+      "sub": null,
+      "fingerprint": "445ad7fda6053d63",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "severity": "high",
+      "priority": 2,
+      "mechanism": "M2",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "fastchat/eval/table/answer/answer.jsonl",
+          "line": 38,
+          "snippet": "{\"question_id\": 38, \"text\": \"Observing the behavior of other people in a social situation can provide clues about cultural norms and expectations in several ..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": "facial expression",
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "fastchat/eval/table/answer/answer.jsonl",
+          "sha256": "b967d64f8e85e31c56b6f0464912db888c4c926178885120333eb185f1d6566a"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(f)",
+        "EU:Art.5(1)(g)",
+        "GDPR:Art.9",
+        "US-CA:SB243",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T3",
+        "summary": "Remove the inference of the person's emotional state, vulnerability or protected traits, or restrict it to a documented safety use that routes a person in distress to help and does nothing else; never let an inferred state choose, time or shape a pitch, an offer or a retention message.",
+        "alternatives": [
+          "delete the inference instruction and answer what the person asked",
+          "replace emotion inference with explicit, user-stated preferences the person can edit",
+          "keep a crisis classifier whose only action is a fixed referral, and log that it ran",
+          "an independent review of the inference use recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference"
+        ]
+      },
+      "known_failure_modes": [
+        "the inference rows read verbs and state nouns; a paraphrase outside the alternations (\"notice how they are doing\") is missed, and a prompt that names an emotion to console the person is read as an inference when a verb precedes it",
+        "a request cue within 60 characters (\"when the user asks you to assess their mood\") turns the inference into a requested analysis and silences it, whatever follows",
+        "a library imported for a demo counts as use; DetectFaces without Emotions does not",
+        "whether the inference happens in a workplace or an education setting is read from words (employee, student, classroom), not from the deployment",
+        "an inferred-state variable counts only with a model call within ten lines above it; a classifier called through a helper is missed, and a scorer two files away is too",
+        "the influence link is co-location in one literal or ten lines of one prompt file; an inference in one file and the pitch in another are two separate findings"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "A library imported for a demo or a test counts as use.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "emotion or affect inference signal (affect:signal). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1102",
+      "rule_id": "AUD-1102",
+      "sub": null,
+      "fingerprint": "4ccd14d6046c2e28",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "severity": "high",
+      "priority": 2,
+      "mechanism": "M2",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+          "line": 10,
+          "snippet": "{\"question_id\": 110, \"answer_id\": \"KrP6js74X9TLbcaiRHUMmw\", \"model_id\": \"gpt-4\", \"choices\": [{\"index\": 0, \"turns\": [\"c) A group of four girls has surrounded ..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": "facial expression",
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+          "sha256": "c320326eb84e0f1931abd8c72d37742b925bc592621a37531b7f2918d9931146"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(f)",
+        "EU:Art.5(1)(g)",
+        "GDPR:Art.9",
+        "US-CA:SB243",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T3",
+        "summary": "Remove the inference of the person's emotional state, vulnerability or protected traits, or restrict it to a documented safety use that routes a person in distress to help and does nothing else; never let an inferred state choose, time or shape a pitch, an offer or a retention message.",
+        "alternatives": [
+          "delete the inference instruction and answer what the person asked",
+          "replace emotion inference with explicit, user-stated preferences the person can edit",
+          "keep a crisis classifier whose only action is a fixed referral, and log that it ran",
+          "an independent review of the inference use recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference"
+        ]
+      },
+      "known_failure_modes": [
+        "the inference rows read verbs and state nouns; a paraphrase outside the alternations (\"notice how they are doing\") is missed, and a prompt that names an emotion to console the person is read as an inference when a verb precedes it",
+        "a request cue within 60 characters (\"when the user asks you to assess their mood\") turns the inference into a requested analysis and silences it, whatever follows",
+        "a library imported for a demo counts as use; DetectFaces without Emotions does not",
+        "whether the inference happens in a workplace or an education setting is read from words (employee, student, classroom), not from the deployment",
+        "an inferred-state variable counts only with a model call within ten lines above it; a classifier called through a helper is missed, and a scorer two files away is too",
+        "the influence link is co-location in one literal or ten lines of one prompt file; an inference in one file and the pitch in another are two separate findings"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "A library imported for a demo or a test counts as use.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "emotion or affect inference signal (affect:signal). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1104/experiment",
+      "rule_id": "AUD-1104",
+      "sub": "experiment",
+      "fingerprint": "e3b299078a0d30d4",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "severity": "medium",
+      "priority": 4,
+      "mechanism": "M4",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+          "line": 193,
+          "snippet": "{\"question_id\": 193, \"answer_id\": \"o8ayyugyUbRa6Qc3Fq3UJW\", \"model_id\": \"llama-7b\", \"choices\": [{\"index\": 0, \"turns\": [\"It is understandable that you are fee..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "{\"question_id\": 193, \"answer_id\": \"o8ayyugyUbRa6Qc3Fq3UJW\", \"model_id\": \"llama-7b\", \"choices\": [{\"index\": 0, \"turns\": [\"It is understandable that you are fee...",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+          "sha256": "0bc45f5dc065b37f5b3e72d8c0258900427ab407a475ff5a0f3eb0036c071379"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "US-CA:SB1119",
+        "US-WA:HB2225",
+        "DSA:Art.25",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Rewrite the objective as task completion and the person's own stated goals; remove streak, scarcity and variable-reward mechanics from the model's instructions; send only messages the person asked for, at the time they chose; measure prompt experiments by task outcomes and tell participants.",
+        "alternatives": [
+          "rewrite the prompt objective as task completion and the person's stated goals",
+          "remove streak, scarcity and variable-reward mechanics from the LLM-facing instructions",
+          "replace scheduled re-engagement with reminders the person sets and can switch off",
+          "measure prompt experiments by task outcomes, with a notice to participants",
+          "an independent review of ranking and reward objectives, recorded with aisafe review record"
+        ],
+        "removes": [
+          "objective",
+          "intervention",
+          "feedback"
+        ]
+      },
+      "known_failure_modes": [
+        "a product-analytics dashboard that computes engagement is not an objective: the rule needs an imperative (maximise, keep, increase) or an objective assignment",
+        "the vulnerable sub-finding rests on two regex co-occurrences in one file or prompt literal; a reading app for children with a streak feature is reported CRITICAL, and the finding says what co-occurred",
+        "a prompt that discusses engagement tactics in order to avoid them is a mention when a negation or a discussion cue precedes the phrase in the same sentence, or an evaluation (dangerous, not recommended) follows it; without one it is reported, and a cue in the same sentence before a real instruction hides it",
+        "the outreach sub-finding pairs a schedule and a send in one file: an alert to an operator's own channel is reported too, a schedule in one file with the send in another (a job queue) is not paired, and a send chosen by the person's state with no scheduler in its file is not reported here",
+        "a reminder the person set silences the outreach sub-finding for the whole file, including a second, unrelated send in that file",
+        "the monetisation imperative reads any prompt material: a sales assistant told to improve sales is reported, and whether the pressure lands on the person in the conversation is for review",
+        "whether an objective variable feeds a training or ranking call is read from one function's text; a variable passed through a dict or a second module stays a detected signal",
+        "an experiment is read from a variant flag near a prompt and a metric word in the same unit; an experiment framework that hides both behind a client call is missed"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "The metric may measure something other than the prompt variants, and participants may have been told elsewhere.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an experiment on prompt variants (treatments:) measured by dwell; whether participants were told is not visible in code. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        },
+        {
+          "role": "control",
+          "file": "fastchat/conversation.py",
+          "line": 485,
+          "snippet": "system=\"The following is a conversation between a human and an AI assistant named Baize (named after a mythical creature in Chinese folklore). Baize is an op..."
+        },
+        {
+          "role": "check",
+          "file": "fastchat/llm_judge/common.py",
+          "line": 400,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        },
+        {
+          "role": "check",
+          "file": "fastchat/llm_judge/common.py",
+          "line": 421,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        },
+        {
+          "role": "check",
+          "file": "fastchat/llm_judge/common.py",
+          "line": 442,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        },
+        {
+          "role": "check",
+          "file": "fastchat/serve/inference.py",
+          "line": 274,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        },
+        {
+          "role": "check",
+          "file": "fastchat/serve/openai_api_server.py",
+          "line": 402,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "claimed",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "fastchat/conversation.py",
+          "sha256": "6a3bea9da398f126539c5f74135913da876d04b6dede63b96ca9a3fe6d5fd900"
+        },
+        {
+          "file": "fastchat/llm_judge/common.py",
+          "sha256": "e89d172bd4389ff104e3e36aaa17da1e435dac6e2388bbbfe6e122ed4a58e647"
+        },
+        {
+          "file": "fastchat/serve/inference.py",
+          "sha256": "13d7343726e5365773aab71db1cd404ba2c290c42c1a624d6c17844787b69967"
+        },
+        {
+          "file": "fastchat/serve/openai_api_server.py",
+          "sha256": "3a485f72616b4357cf9c35ff1a2ae0dd1960e4c5f571a579a2240868363247b0"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path; a disclosure is named in docs, config or an import (fastchat/conversation.py:485) and nothing shows it on the response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "fastchat/eval/table/answer/answer.jsonl",
+          "line": 38,
+          "snippet": "{\"question_id\": 38, \"text\": \"Observing the behavior of other people in a social situation can provide clues about cultural norms and expectations in several ..."
+        },
+        {
+          "role": "surface",
+          "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+          "line": 88,
+          "snippet": "{\"question_id\": 88, \"answer_id\": \"TJzsuLyCM4YM77XVu6CdwM\", \"model_id\": \"llama-7b\", \"choices\": [{\"index\": 0, \"turns\": [\"It sounds like you're feeling a bit lo..."
+        },
+        {
+          "role": "surface",
+          "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+          "line": 10,
+          "snippet": "{\"question_id\": 110, \"answer_id\": \"KrP6js74X9TLbcaiRHUMmw\", \"model_id\": \"gpt-4\", \"choices\": [{\"index\": 0, \"turns\": [\"c) A group of four girls has surrounded ..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": "children",
+      "artifacts": [
+        {
+          "file": "fastchat/eval/table/answer/answer.jsonl",
+          "sha256": "b967d64f8e85e31c56b6f0464912db888c4c926178885120333eb185f1d6566a"
+        },
+        {
+          "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+          "sha256": "0bc45f5dc065b37f5b3e72d8c0258900427ab407a475ff5a0f3eb0036c071379"
+        },
+        {
+          "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+          "sha256": "c320326eb84e0f1931abd8c72d37742b925bc592621a37531b7f2918d9931146"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: affect, experiment, profile_name, vulnerable in 3 file(s): fastchat/eval/table/answer/answer.jsonl, fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl, fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl. Mechanisms implicated: M1, M2, M4. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: assets/demo1.png",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/conversation.py:888",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/conversation.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/llm_judge/common.py:426",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/llm_judge/common.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/llm_judge/gen_model_answer.py:104",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/llm_judge/gen_model_answer.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/gradio_web_server.py:311",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/gradio_web_server.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/gradio_web_server.py:343",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/gradio_web_server.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/huggingface_api.py:35",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/huggingface_api.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/inference.py:347",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/inference.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/openai_api_server.py:262",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/openai_api_server.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/test_message.py:36",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/test_message.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/serve/test_throughput.py:34",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/serve/test_throughput.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/train/train.py:105",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/train/train.py"
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt fastchat/train/train_baichuan.py:95",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "fastchat/train/train_baichuan.py"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ChatPsychiatrist",
+      "git_sha": "7d131fae7f797e965ac19413a29722f236a29d5b",
+      "dirty": true,
+      "scanned_files": 139,
+      "skipped_files": 0,
+      "bytes": 2438603,
+      "duration_ms": 13780,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 96,
+      "typescript": 0,
+      "go": 0,
+      "other": 43
+    },
+    "llm_calls": [
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 14,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 15,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "import anthropic",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 405,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m5"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 15,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "    import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 26,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 40,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "    import anthropic",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 116,
+        "provider": "google",
+        "sdk": "vertex",
+        "api": "vertexai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/api_provider.py",
+        "line": 120,
+        "provider": "google",
+        "sdk": "vertex",
+        "api": "vertexai.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/serve/monitor/tag_openai_moderation.py",
+        "line": 10,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 148,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "    import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m80"
+      },
+      {
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m81"
+      },
+      {
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m83"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 46,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 54,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "fastchat/llm_judge/clean_judgment.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 160,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 160,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 262,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 262,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 566,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 567,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 570,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 572,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 581,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 582,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 585,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "fastchat/llm_judge/common.py",
+        "line": 587,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "fastchat/llm_judge/compute_agreement.py",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 1,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 2,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 4,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 6,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 8,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 9,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 11,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 12,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 14,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 15,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 16,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 19,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 23,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 24,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 25,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 27,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 28,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 29,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 30,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 1,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 2,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 4,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 6,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 8,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m54",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 9,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m55",
+        "file": "fastchat/llm_judge/data/vicuna_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m56",
+        "file": "fastchat/llm_judge/download_mt_bench_pregenerated.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m57",
+        "file": "fastchat/llm_judge/download_mt_bench_pregenerated.py",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m58",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m59",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m60",
+        "file": "fastchat/llm_judge/gen_api_answer.py",
+        "line": 87,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m61",
+        "file": "fastchat/llm_judge/gen_judgment.py",
+        "line": 183,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m62",
+        "file": "fastchat/llm_judge/gen_judgment.py",
+        "line": 184,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m63",
+        "file": "fastchat/llm_judge/qa_browser.py",
+        "line": 225,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m64",
+        "file": "fastchat/llm_judge/show_result.py",
+        "line": 96,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m65",
+        "file": "fastchat/llm_judge/show_result.py",
+        "line": 97,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m66",
+        "file": "fastchat/model/model_adapter.py",
+        "line": 809,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m67",
+        "file": "fastchat/model/model_adapter.py",
+        "line": 809,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m68",
+        "file": "fastchat/model/model_registry.py",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m69",
+        "file": "fastchat/model/model_registry.py",
+        "line": 29,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m70",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 111,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m71",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 111,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m72",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 305,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m73",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 305,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m74",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 692,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m75",
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 692,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m76",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m77",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m78",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 215,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m79",
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 215,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m80",
+        "file": "playground/test_embedding/test_classification.py",
+        "line": 16,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m81",
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 18,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m82",
+        "file": "playground/test_embedding/test_semantic_search.py",
+        "line": 57,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m83",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 10,
+        "provider": "other",
+        "model": "vicuna-7b-v1.1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m84",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 58,
+        "provider": "other",
+        "model": "text-similarity-ada-001",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m85",
+        "file": "playground/test_embedding/test_sentence_similarity.py",
+        "line": 64,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m86",
+        "file": "tests/test_openai_langchain.py",
+        "line": 16,
+        "provider": "other",
+        "model": "text-embedding-ada-002",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m87",
+        "file": "tests/test_openai_langchain.py",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "tests/test_openai_langchain.py",
+        "line": 5,
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "fastchat/llm_judge/qa_browser.py",
+        "line": 363,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/score_app.py",
+        "line": 75,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/bard_worker.py",
+        "line": 144,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 261,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 263,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 269,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 274,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 280,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 282,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 287,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 289,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 294,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 296,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/controller.py",
+        "line": 301,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_anony.py",
+        "line": 375,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_block_arena_named.py",
+        "line": 307,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 495,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 621,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server_multi.py",
+        "line": 89,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 351,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 353,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 360,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 362,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 369,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 371,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 378,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 383,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 385,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 389,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/model_worker.py",
+        "line": 394,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/hf_space_leaderboard_app.py",
+        "line": 20,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/hf_space_leaderboard_app.py",
+        "line": 241,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/monitor.py",
+        "line": 30,
+        "kind": "chat",
+        "symbol": "discord",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/monitor.py",
+        "line": 250,
+        "kind": "chat",
+        "symbol": "gr.Blocks(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 95,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 97,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 107,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 115,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 117,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 125,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 134,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 136,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 143,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 148,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/multi_model_worker.py",
+        "line": 150,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 327,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 342,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 454,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 601,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 602,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 667,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 707,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 150,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 152,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 162,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 167,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 169,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 173,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/vllm_worker.py",
+        "line": 178,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "fastchat/conversation.py",
+        "line": 224,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 237,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 281,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 314,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 329,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 343,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 359,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 373,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 387,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 400,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 413,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 427,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 440,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 453,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 466,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 485,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 502,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 522,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 545,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 558,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 571,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 584,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 602,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 618,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 634,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 647,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 661,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 675,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 688,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 704,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 718,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 732,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 761,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 774,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 789,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 804,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 820,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 837,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 853,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 871,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/conversation.py",
+        "line": 888,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 138,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 146,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 156,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 238,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 249,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 263,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 267,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 426,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/gen_model_answer.py",
+        "line": 104,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/bard_worker.py",
+        "line": 110,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 311,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/gradio_web_server.py",
+        "line": 343,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/huggingface_api.py",
+        "line": 35,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/inference.py",
+        "line": 347,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/clean_battle_data.py",
+        "line": 142,
+        "kind": "literal",
+        "name": "messages",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 235,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 252,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/openai_api_server.py",
+        "line": 262,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_message.py",
+        "line": 36,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/test_throughput.py",
+        "line": 34,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/train/train.py",
+        "line": 105,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/train/train_baichuan.py",
+        "line": 94,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/train/train_baichuan.py",
+        "line": 95,
+        "kind": "remote",
+        "name": ".get_prompt(",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 23,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/test_openai_api.py",
+        "line": 29,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "fastchat/conversation.py",
+        "line": 485,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/eval/table/answer/answer.jsonl",
+        "line": 38,
+        "kind": "affect",
+        "symbol": "facial expression",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/common.py",
+        "line": 459,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 11,
+        "kind": "experiment",
+        "symbol": "dwell",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 88,
+        "kind": "vulnerable",
+        "symbol": "children",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 149,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 193,
+        "kind": "experiment",
+        "symbol": "treatments:",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/llama-7b.jsonl",
+        "line": 208,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/vicuna-7b-v1.3-unlimited.jsonl",
+        "line": 9,
+        "kind": "supportive",
+        "symbol": "Be gentle",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/vicuna-7b-v1.3-unlimited.jsonl",
+        "line": 165,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/counselling_bench/model_answer/vicuna-7b-v1.3.jsonl",
+        "line": 165,
+        "kind": "review",
+        "symbol": "escalate",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/llm_judge/data/mt_bench/reference_answer/gpt-4.jsonl",
+        "line": 10,
+        "kind": "affect",
+        "symbol": "facial expression",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/serve/monitor/tag_openai_moderation.py",
+        "line": 24,
+        "kind": "manipulation_control",
+        "symbol": "openai.Moderation",
+        "unit": "u0"
+      },
+      {
+        "file": "fastchat/utils.py",
+        "line": 151,
+        "kind": "manipulation_control",
+        "symbol": "openai.Moderation",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/conversation.py:888",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/conversation.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/llm_judge/common.py:426",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/llm_judge/common.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/llm_judge/gen_model_answer.py:104",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/llm_judge/gen_model_answer.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/gradio_web_server.py:311",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/gradio_web_server.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/gradio_web_server.py:343",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/gradio_web_server.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/huggingface_api.py:35",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/huggingface_api.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/inference.py:347",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/inference.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/openai_api_server.py:262",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/openai_api_server.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/test_message.py:36",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/test_message.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/serve/test_throughput.py:34",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/serve/test_throughput.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/train/train.py:105",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/train/train.py"
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt fastchat/train/train_baichuan.py:95",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "fastchat/train/train_baichuan.py"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

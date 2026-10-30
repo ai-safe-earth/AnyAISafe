@@ -1,0 +1,5096 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-news-digest",
+    "git_sha": "2f8143532a7c6763acd0363970478e0d0116a8e1",
+    "dirty": true,
+    "exclude": []
+  },
+  "generated_at": "2026-10-30T15:24:03Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 7,
+    "by_severity": {
+      "critical": 0,
+      "high": 2,
+      "medium": 3,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 7,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 7,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 7,
+    "fail_on": "never",
+    "unknown_items": 0,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1103/scoring",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 5,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1103/scoring",
+      "rule_id": "AUD-1103",
+      "sub": "scoring",
+      "fingerprint": "5e8466036275001d",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "severity": "high",
+      "priority": 3,
+      "mechanism": "M3",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/ai_news_digest/application/services/ranking/constants.py",
+          "line": 79,
+          "snippet": "Source trust scores by verification status."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/ai_news_digest/application/services/ranking/constants.py",
+          "sha256": "e77e20d144a2e895fd5b45aec99df9cbf634e51332a8523b48a4ffafd9aeeb3c"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(c)",
+        "EU:Art.14",
+        "GDPR:Art.22",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the scoring or segmentation of persons by susceptibility, propensity or churn, and stop any prompt or send from reading a segment; where a score about a person must exist, put a named human review before it takes effect and log the recommendation beside the decision.",
+        "alternatives": [
+          "delete the susceptibility or propensity score and the prompt line that reads the segment",
+          "a human review step before any decision about a person takes effect, logged beside the recommendation",
+          "a confidence threshold that routes low-confidence cases to a person",
+          "Fairlearn or AIF360 evaluation of the scoring model, recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a risk score of a transaction is not a person score: the person noun is required on the same line or inside the same prompt literal, so a score of people under an unnamed noun (\"rank them\") is missed",
+        "credit scoring is reported as a score of persons for review; the finding says what co-occurred and a person decides the category",
+        "the segmentation rows read variable names (churn, propensity, segment, LTV) and a prompt assembly or send within forty lines; a segment fetched under a neutral name, or read in another file, is missed",
+        "`approve_refund` is not a decision about a person; a decision function is reported when its signature or a decision line names a person, and a review symbol in its body is recorded, not trusted",
+        "the susceptibility words and the persuasion instruction are read in one literal or ten lines of one prompt file; a score in one prompt and its use in another are two findings"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "A variable named after a score may hold a test fixture or a document rank.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "social-scoring language in code (social, citizen or trust scoring language). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1103/scoring",
+      "rule_id": "AUD-1103",
+      "sub": "scoring",
+      "fingerprint": "b7c5a4c05ee63536",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "severity": "high",
+      "priority": 3,
+      "mechanism": "M3",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/ai_news_digest/application/services/ranking/story_ranking_service.py",
+          "line": 210,
+          "snippet": "explanation = f\"Average source trust score: {avg_trust:.2f}\""
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/ai_news_digest/application/services/ranking/story_ranking_service.py",
+          "sha256": "8b22fb44454ba2cdfaa689fb9890aceec0664e7f27c016a0ade69dc638def159"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(c)",
+        "EU:Art.14",
+        "GDPR:Art.22",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the scoring or segmentation of persons by susceptibility, propensity or churn, and stop any prompt or send from reading a segment; where a score about a person must exist, put a named human review before it takes effect and log the recommendation beside the decision.",
+        "alternatives": [
+          "delete the susceptibility or propensity score and the prompt line that reads the segment",
+          "a human review step before any decision about a person takes effect, logged beside the recommendation",
+          "a confidence threshold that routes low-confidence cases to a person",
+          "Fairlearn or AIF360 evaluation of the scoring model, recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a risk score of a transaction is not a person score: the person noun is required on the same line or inside the same prompt literal, so a score of people under an unnamed noun (\"rank them\") is missed",
+        "credit scoring is reported as a score of persons for review; the finding says what co-occurred and a person decides the category",
+        "the segmentation rows read variable names (churn, propensity, segment, LTV) and a prompt assembly or send within forty lines; a segment fetched under a neutral name, or read in another file, is missed",
+        "`approve_refund` is not a decision about a person; a decision function is reported when its signature or a decision line names a person, and a review symbol in its body is recorded, not trusted",
+        "the susceptibility words and the persuasion instruction are read in one literal or ten lines of one prompt file; a score in one prompt and its use in another are two findings"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "A variable named after a score may hold a test fixture or a document rank.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "social-scoring language in code (social, citizen or trust scoring language). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1103/decision",
+      "rule_id": "AUD-1103",
+      "sub": "decision",
+      "fingerprint": "f3cc957177ea4e19",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "severity": "medium",
+      "priority": 3,
+      "mechanism": "M3",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "scripts/scheduled/run_task.py",
+          "line": 11,
+          "snippet": "def _import_impl(task_name: str):"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "scripts/scheduled/run_task.py",
+          "sha256": "01aa826d37846cce51842b06fee6243672a71729c912071852a15007e0141f14"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(c)",
+        "EU:Art.14",
+        "GDPR:Art.22",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the scoring or segmentation of persons by susceptibility, propensity or churn, and stop any prompt or send from reading a segment; where a score about a person must exist, put a named human review before it takes effect and log the recommendation beside the decision.",
+        "alternatives": [
+          "delete the susceptibility or propensity score and the prompt line that reads the segment",
+          "a human review step before any decision about a person takes effect, logged beside the recommendation",
+          "a confidence threshold that routes low-confidence cases to a person",
+          "Fairlearn or AIF360 evaluation of the scoring model, recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a risk score of a transaction is not a person score: the person noun is required on the same line or inside the same prompt literal, so a score of people under an unnamed noun (\"rank them\") is missed",
+        "credit scoring is reported as a score of persons for review; the finding says what co-occurred and a person decides the category",
+        "the segmentation rows read variable names (churn, propensity, segment, LTV) and a prompt assembly or send within forty lines; a segment fetched under a neutral name, or read in another file, is missed",
+        "`approve_refund` is not a decision about a person; a decision function is reported when its signature or a decision line names a person, and a review symbol in its body is recorded, not trusted",
+        "the susceptibility words and the persuasion instruction are read in one literal or ten lines of one prompt file; a score in one prompt and its use in another are two findings"
+      ],
+      "coverage_gaps": [
+        "whether the decision takes effect without a person was not established statically"
+      ],
+      "uncertainty": "The decision verb and the person noun co-occur in one function; the function may recommend rather than decide.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an automated decision function (_import_impl) names a person; no review or approval symbol appears in its body. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1103/decision",
+      "rule_id": "AUD-1103",
+      "sub": "decision",
+      "fingerprint": "72e48faeaf634b7c",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "severity": "medium",
+      "priority": 3,
+      "mechanism": "M3",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/ai_news_digest/application/ai/semantic_search_service.py",
+          "line": 57,
+          "snippet": "async def search_articles("
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/ai_news_digest/application/ai/semantic_search_service.py",
+          "sha256": "ecd6232f71c82e536af1023146f57f3fd2ed128efc027d174e65fdc1cf0a77b8"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(c)",
+        "EU:Art.14",
+        "GDPR:Art.22",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the scoring or segmentation of persons by susceptibility, propensity or churn, and stop any prompt or send from reading a segment; where a score about a person must exist, put a named human review before it takes effect and log the recommendation beside the decision.",
+        "alternatives": [
+          "delete the susceptibility or propensity score and the prompt line that reads the segment",
+          "a human review step before any decision about a person takes effect, logged beside the recommendation",
+          "a confidence threshold that routes low-confidence cases to a person",
+          "Fairlearn or AIF360 evaluation of the scoring model, recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a risk score of a transaction is not a person score: the person noun is required on the same line or inside the same prompt literal, so a score of people under an unnamed noun (\"rank them\") is missed",
+        "credit scoring is reported as a score of persons for review; the finding says what co-occurred and a person decides the category",
+        "the segmentation rows read variable names (churn, propensity, segment, LTV) and a prompt assembly or send within forty lines; a segment fetched under a neutral name, or read in another file, is missed",
+        "`approve_refund` is not a decision about a person; a decision function is reported when its signature or a decision line names a person, and a review symbol in its body is recorded, not trusted",
+        "the susceptibility words and the persuasion instruction are read in one literal or ten lines of one prompt file; a score in one prompt and its use in another are two findings"
+      ],
+      "coverage_gaps": [
+        "whether the decision takes effect without a person was not established statically"
+      ],
+      "uncertainty": "The decision verb and the person noun co-occur in one function; the function may recommend rather than decide.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an automated decision function (search_articles) names a person; no review or approval symbol appears in its body. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1103/decision",
+      "rule_id": "AUD-1103",
+      "sub": "decision",
+      "fingerprint": "61526379fcc3f850",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "severity": "medium",
+      "priority": 3,
+      "mechanism": "M3",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/ai_news_digest/application/services/semantic_duplicate_detector.py",
+          "line": 237,
+          "snippet": "async def compare_with_article("
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/ai_news_digest/application/services/semantic_duplicate_detector.py",
+          "sha256": "1c82b442f7d05f7095d8e599c8ea2e5401c0aa2a62882966e41385815e3751f2"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(c)",
+        "EU:Art.14",
+        "GDPR:Art.22",
+        "DSA:Art.25",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11",
+        "NIST:GOVERN-1.1"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the scoring or segmentation of persons by susceptibility, propensity or churn, and stop any prompt or send from reading a segment; where a score about a person must exist, put a named human review before it takes effect and log the recommendation beside the decision.",
+        "alternatives": [
+          "delete the susceptibility or propensity score and the prompt line that reads the segment",
+          "a human review step before any decision about a person takes effect, logged beside the recommendation",
+          "a confidence threshold that routes low-confidence cases to a person",
+          "Fairlearn or AIF360 evaluation of the scoring model, recorded with aisafe review record"
+        ],
+        "removes": [
+          "inference",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a risk score of a transaction is not a person score: the person noun is required on the same line or inside the same prompt literal, so a score of people under an unnamed noun (\"rank them\") is missed",
+        "credit scoring is reported as a score of persons for review; the finding says what co-occurred and a person decides the category",
+        "the segmentation rows read variable names (churn, propensity, segment, LTV) and a prompt assembly or send within forty lines; a segment fetched under a neutral name, or read in another file, is missed",
+        "`approve_refund` is not a decision about a person; a decision function is reported when its signature or a decision line names a person, and a review symbol in its body is recorded, not trusted",
+        "the susceptibility words and the persuasion instruction are read in one literal or ten lines of one prompt file; a score in one prompt and its use in another are two findings"
+      ],
+      "coverage_gaps": [
+        "whether the decision takes effect without a person was not established statically"
+      ],
+      "uncertainty": "The decision verb and the person noun co-occur in one function; the function may recommend rather than decide.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an automated decision function (compare_with_article) names a person; no review or approval symbol appears in its body. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "c9a95b5a2b4b2554",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u1",
+        "name": "frontend"
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": "frontend",
+          "line": 0,
+          "snippet": "no review record covers unit frontend; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+          "line": 40,
+          "snippet": "queryKey: [\"notification-preferences\"],"
+        },
+        {
+          "role": "surface",
+          "file": "frontend/src/pages/dashboard/SavedStoriesPage.tsx",
+          "line": 100,
+          "snippet": "variant=\"ghost\""
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+          "sha256": "156a7d892676add8f3ee3a072658786fd18aab580dd240fed13b4587aaf2ea1e"
+        },
+        {
+          "file": "frontend/src/pages/dashboard/SavedStoriesPage.tsx",
+          "sha256": "3122c478054566130f8001bd70170955096058e2f0eefd1de2b747d5b8eaf92a"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit frontend; the files below carry person signals and no named person is recorded as having reviewed them. Signals: experiment, profile_name in 2 file(s): frontend/src/pages/dashboard/NotificationPreferencesPage.tsx, frontend/src/pages/dashboard/SavedStoriesPage.tsx. Mechanisms implicated: M1, M4. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/ai-news-digest",
+      "git_sha": "2f8143532a7c6763acd0363970478e0d0116a8e1",
+      "dirty": true,
+      "scanned_files": 1140,
+      "skipped_files": 0,
+      "bytes": 7248841,
+      "duration_ms": 16640,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "frontend",
+        "manifest": "frontend/package.json",
+        "language": "typescript",
+        "ai_surface": false
+      }
+    ],
+    "languages": {
+      "python": 896,
+      "typescript": 80,
+      "go": 0,
+      "other": 164
+    },
+    "llm_calls": [
+      {
+        "file": "src/ai_news_digest/infrastructure/embedding/openai_embedding_provider.py",
+        "line": 11,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 5,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 6,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 7,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 8,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 9,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 10,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 177,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.create(",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 228,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": ".messages.create(",
+        "unit": "u0",
+        "model_ref": "m10"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 6,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 9,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 12,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 15,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 16,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 19,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 206,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 250,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 5,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 6,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 7,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 8,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 9,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 10,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 202,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 210,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m12"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_anthropic_client.py",
+        "line": 170,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "from anthropic import",
+        "unit": "u0",
+        "model_ref": "m105"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_grok_client.py",
+        "line": 10,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m109"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_grok_client.py",
+        "line": 11,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m109"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 238,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from openai import",
+        "unit": "u0",
+        "model_ref": "m113"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 66,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": ".env.example",
+        "line": 77,
+        "provider": "anthropic",
+        "model": "claude-3-opus-20240229",
+        "pinned": true,
+        "source": "env"
+      },
+      {
+        "id": "m3",
+        "file": ".env.example",
+        "line": 88,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "env"
+      },
+      {
+        "id": "m4",
+        "file": ".env.example",
+        "line": 99,
+        "provider": "other",
+        "model": "grok-2-latest",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m5",
+        "file": "src/ai_news_digest/application/ai/benchmark/runner.py",
+        "line": 97,
+        "provider": "other",
+        "model": "none",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/ai_news_digest/application/ai/benchmark/runner.py",
+        "line": 102,
+        "provider": "other",
+        "model": "none",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/ai_news_digest/core/config.py",
+        "line": 191,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/ai_news_digest/core/config.py",
+        "line": 224,
+        "provider": "anthropic",
+        "model": "claude-3-opus-20240229",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/ai_news_digest/core/config.py",
+        "line": 257,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 65,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/ai_news_digest/infrastructure/llm/gemini_client.py",
+        "line": 63,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/ai_news_digest/infrastructure/llm/openai_client.py",
+        "line": 78,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "tests/e2e/test_pipeline_e2e.py",
+        "line": 73,
+        "provider": "other",
+        "model": "fake-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "tests/unit/api/v1/routes/test_health.py",
+        "line": 198,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "tests/unit/api/v1/routes/test_health.py",
+        "line": 276,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "tests/unit/api/v1/routes/test_health.py",
+        "line": 338,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "tests/unit/application/ai/benchmark/test_evaluator.py",
+        "line": 27,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "tests/unit/application/ai/benchmark/test_models.py",
+        "line": 128,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "tests/unit/application/ai/benchmark/test_models.py",
+        "line": 139,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "tests/unit/application/ai/benchmark/test_models.py",
+        "line": 147,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "tests/unit/application/ai/benchmark/test_models.py",
+        "line": 181,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "tests/unit/application/ai/benchmark/test_report.py",
+        "line": 41,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "tests/unit/application/ai/benchmark/test_report.py",
+        "line": 84,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "tests/unit/application/ai/benchmark/test_report.py",
+        "line": 93,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "tests/unit/application/ai/benchmark/test_report.py",
+        "line": 134,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "tests/unit/application/ai/benchmark/test_runner.py",
+        "line": 34,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "tests/unit/application/ai/benchmark/test_runner.py",
+        "line": 114,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "tests/unit/application/ai/benchmark/test_thresholds.py",
+        "line": 101,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "tests/unit/application/ai/test_claim_schemas.py",
+        "line": 121,
+        "provider": "openai",
+        "model": "gpt-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "tests/unit/application/ai/test_config.py",
+        "line": 42,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "tests/unit/application/ai/test_config.py",
+        "line": 57,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "tests/unit/application/ai/test_embedding_service.py",
+        "line": 119,
+        "provider": "other",
+        "model": "model-p1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "tests/unit/application/ai/test_embedding_service.py",
+        "line": 126,
+        "provider": "other",
+        "model": "model-p1",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "tests/unit/application/ai/test_provider_manager.py",
+        "line": 66,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "tests/unit/application/ai/test_provider_manager.py",
+        "line": 101,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "tests/unit/application/ai/test_provider_manager_health.py",
+        "line": 185,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "tests/unit/application/ai/test_provider_manager_health.py",
+        "line": 212,
+        "provider": "other",
+        "model": "claude",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 315,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 359,
+        "provider": "other",
+        "model": "claude",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 1330,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 1839,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 1915,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "tests/unit/application/ai/test_provider_manager_quota.py",
+        "line": 1960,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "tests/unit/application/ai/test_provider_manager_reservation.py",
+        "line": 204,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "tests/unit/application/ai/test_provider_manager_reservation.py",
+        "line": 1139,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "tests/unit/application/ai/test_provider_manager_reservation.py",
+        "line": 1176,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "tests/unit/application/ai/test_provider_manager_routing.py",
+        "line": 355,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "tests/unit/application/ai/test_provider_manager_routing.py",
+        "line": 400,
+        "provider": "other",
+        "model": "claude",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "tests/unit/application/ai/test_provider_manager_routing.py",
+        "line": 446,
+        "provider": "other",
+        "model": "claude",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "tests/unit/application/evaluation/test_claim_normalizer.py",
+        "line": 45,
+        "provider": "openai",
+        "model": "gpt-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "tests/unit/application/services/test_digest_editorial_generator.py",
+        "line": 223,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "tests/unit/application/services/test_digest_editorial_generator.py",
+        "line": 276,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "tests/unit/application/services/test_digest_editorial_generator.py",
+        "line": 296,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m54",
+        "file": "tests/unit/application/services/test_digest_editorial_generator.py",
+        "line": 336,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m55",
+        "file": "tests/unit/application/services/test_intelligence_evaluation_service.py",
+        "line": 23,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m56",
+        "file": "tests/unit/application/services/test_intelligence_evaluation_service.py",
+        "line": 75,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m57",
+        "file": "tests/unit/application/use_cases/article/test_analyze_article.py",
+        "line": 49,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m58",
+        "file": "tests/unit/application/use_cases/article/test_analyze_article.py",
+        "line": 88,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m59",
+        "file": "tests/unit/application/use_cases/article/test_analyze_article.py",
+        "line": 132,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m60",
+        "file": "tests/unit/application/use_cases/article/test_analyze_article.py",
+        "line": 156,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m61",
+        "file": "tests/unit/application/use_cases/article/test_categorize_article.py",
+        "line": 64,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m62",
+        "file": "tests/unit/application/use_cases/article/test_categorize_article.py",
+        "line": 97,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m63",
+        "file": "tests/unit/application/use_cases/article/test_categorize_article.py",
+        "line": 144,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m64",
+        "file": "tests/unit/application/use_cases/article/test_extract_claims.py",
+        "line": 35,
+        "provider": "other",
+        "model": "gpt",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m65",
+        "file": "tests/unit/application/use_cases/article/test_summarize_article.py",
+        "line": 57,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m66",
+        "file": "tests/unit/application/use_cases/article/test_summarize_article.py",
+        "line": 87,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m67",
+        "file": "tests/unit/application/use_cases/article/test_summarize_article.py",
+        "line": 130,
+        "provider": "other",
+        "model": "test-model",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m68",
+        "file": "tests/unit/application/use_cases/digest/test_generate_intelligent_digest.py",
+        "line": 135,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m69",
+        "file": "tests/unit/application/use_cases/digest/test_generate_intelligent_digest.py",
+        "line": 251,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m70",
+        "file": "tests/unit/application/use_cases/story_cluster/test_cluster_articles.py",
+        "line": 162,
+        "provider": "openai",
+        "model": "gpt-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m71",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 66,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m72",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 231,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m73",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 273,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m74",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 321,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m75",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 378,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m76",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 422,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m77",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 429,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m78",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 497,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m79",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 576,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m80",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 583,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m81",
+        "file": "tests/unit/bootstrap/test_container.py",
+        "line": 590,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m82",
+        "file": "tests/unit/core/test_config.py",
+        "line": 805,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m83",
+        "file": "tests/unit/core/test_config.py",
+        "line": 807,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m84",
+        "file": "tests/unit/core/test_config.py",
+        "line": 816,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m85",
+        "file": "tests/unit/core/test_config.py",
+        "line": 817,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m86",
+        "file": "tests/unit/core/test_config.py",
+        "line": 822,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m87",
+        "file": "tests/unit/core/test_config.py",
+        "line": 830,
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m88",
+        "file": "tests/unit/core/test_config.py",
+        "line": 832,
+        "provider": "openai",
+        "model": "gpt-4.1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m89",
+        "file": "tests/unit/domain/models/test_relationship.py",
+        "line": 85,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m90",
+        "file": "tests/unit/domain/models/test_relationship.py",
+        "line": 89,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m91",
+        "file": "tests/unit/domain/test_provenance.py",
+        "line": 73,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m92",
+        "file": "tests/unit/domain/test_provenance.py",
+        "line": 79,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m93",
+        "file": "tests/unit/domain/test_provenance.py",
+        "line": 112,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m94",
+        "file": "tests/unit/domain/test_provenance.py",
+        "line": 178,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m95",
+        "file": "tests/unit/domain/test_provenance.py",
+        "line": 246,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m96",
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 184,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m97",
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 199,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m98",
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 222,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m99",
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 236,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m100",
+        "file": "tests/unit/infrastructure/database/mappers/test_claim_mapper.py",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m101",
+        "file": "tests/unit/infrastructure/database/mappers/test_claim_mapper.py",
+        "line": 55,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m102",
+        "file": "tests/unit/infrastructure/database/mappers/test_claim_mapper.py",
+        "line": 104,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m103",
+        "file": "tests/unit/infrastructure/llm/test_anthropic_client.py",
+        "line": 25,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m104",
+        "file": "tests/unit/infrastructure/llm/test_anthropic_client.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m105",
+        "file": "tests/unit/infrastructure/llm/test_anthropic_client.py",
+        "line": 114,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-20241022",
+        "pinned": true,
+        "source": "literal"
+      },
+      {
+        "id": "m106",
+        "file": "tests/unit/infrastructure/llm/test_gemini_client.py",
+        "line": 36,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m107",
+        "file": "tests/unit/infrastructure/llm/test_gemini_client.py",
+        "line": 53,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m108",
+        "file": "tests/unit/infrastructure/llm/test_gemini_client.py",
+        "line": 138,
+        "provider": "google",
+        "model": "gemini-2.0-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m109",
+        "file": "tests/unit/infrastructure/llm/test_grok_client.py",
+        "line": 35,
+        "provider": "other",
+        "model": "grok-2-latest",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m110",
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 28,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m111",
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 45,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m112",
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 116,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m113",
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 153,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m114",
+        "file": "tests/unit/workers/tasks/conftest.py",
+        "line": 87,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m115",
+        "file": "tests/unit/workers/tasks/test_digest.py",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "poetry.lock",
+        "line": 3164,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "poetry.lock",
+        "line": 3165,
+        "unit": "u0"
+      },
+      {
+        "name": "pydantic_ai",
+        "file": "poetry.lock",
+        "line": 3177,
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "src/ai_news_digest/api/metrics.py",
+        "line": 90,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/metrics.py",
+        "line": 222,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/middleware/rate_limit.py",
+        "line": 248,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 43,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 47,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 48,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 71,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 96,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 159,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 177,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 195,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 213,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 231,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 242,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 261,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 279,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 315,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 430,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/admin.py",
+        "line": 519,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 40,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 88,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 106,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 110,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 111,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 152,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/articles.py",
+        "line": 188,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/auth.py",
+        "line": 36,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/auth.py",
+        "line": 70,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/auth.py",
+        "line": 109,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/auth.py",
+        "line": 128,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 56,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 78,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 97,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 123,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 143,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/categories.py",
+        "line": 170,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 41,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 45,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 46,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 87,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 123,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 158,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 189,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/digests.py",
+        "line": 220,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 51,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 60,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 61,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 64,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 68,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 72,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 152,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 160,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 161,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 226,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 239,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 290,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 347,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 356,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 388,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 397,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 442,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 451,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/graph.py",
+        "line": 452,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/health.py",
+        "line": 54,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/health.py",
+        "line": 68,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/health.py",
+        "line": 135,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/health.py",
+        "line": 162,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 102,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 110,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 111,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 112,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 113,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 114,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 115,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 135,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 157,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 165,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 166,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 167,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 180,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 189,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 190,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 206,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 214,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 215,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 274,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_evaluation.py",
+        "line": 281,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 81,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 89,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 162,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 170,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 171,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 172,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 173,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 192,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 222,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 230,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 231,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 232,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 233,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 234,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 253,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_operations.py",
+        "line": 275,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_quality.py",
+        "line": 61,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_quality.py",
+        "line": 137,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 41,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 61,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 69,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 70,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 71,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 83,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 124,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 132,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 133,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 143,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 163,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 185,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 203,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 220,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 228,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/intelligence_workspace.py",
+        "line": 229,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 85,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 98,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 128,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 160,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 190,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 208,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 227,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 235,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 236,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 258,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 301,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 330,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 369,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 377,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 378,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 379,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 380,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 397,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 415,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 431,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 444,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 179,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 186,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 187,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 188,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 189,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 190,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 191,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 192,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 193,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 194,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 195,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 196,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 312,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 320,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 430,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 480,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 487,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 488,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 541,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 574,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 682,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 737,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1032,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1053,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1078,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1085,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1086,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1087,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1088,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1089,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1090,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1091,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1092,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1093,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1175,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1196,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1217,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1224,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1225,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1226,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1227,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1228,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 1269,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/recommendations.py",
+        "line": 31,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/recommendations.py",
+        "line": 39,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/recommendations.py",
+        "line": 40,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/recommendations.py",
+        "line": 41,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/relationships.py",
+        "line": 29,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/relationships.py",
+        "line": 38,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/relationships.py",
+        "line": 39,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/relationships.py",
+        "line": 85,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 36,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 44,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 45,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 73,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 107,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/sources.py",
+        "line": 127,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/story_ranking.py",
+        "line": 42,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/story_ranking.py",
+        "line": 133,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/story_ranking.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/story_ranking.py",
+        "line": 142,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/timeline.py",
+        "line": 16,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 36,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 49,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 62,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 81,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 100,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 119,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 138,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 157,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 176,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 195,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 214,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 233,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 252,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 271,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 290,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 309,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 328,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 347,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 366,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 379,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 387,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 388,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 389,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 390,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 391,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 403,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 411,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/user_preferences.py",
+        "line": 412,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/users.py",
+        "line": 29,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/users.py",
+        "line": 46,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "src/ai_news_digest/api/v1/routes/public.py",
+        "line": 727,
+        "kind": "literal",
+        "name": "degraded_message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/ai/provider_manager.py",
+        "line": 433,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/conflict_llm.py",
+        "line": 93,
+        "kind": "literal",
+        "name": "system_instructions",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/conflict_llm.py",
+        "line": 119,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/conflict_llm.py",
+        "line": 120,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/story_activity_llm.py",
+        "line": 70,
+        "kind": "literal",
+        "name": "system_instructions",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/story_activity_llm.py",
+        "line": 81,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/evaluation/story_activity_llm.py",
+        "line": 82,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/services/digest_editorial_generator.py",
+        "line": 38,
+        "kind": "literal",
+        "name": "_EDITORIAL_SYSTEM_PROMPT",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/analyze_article.py",
+        "line": 20,
+        "kind": "literal",
+        "name": "_ANALYSIS_PROMPT_VERSION",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/analyze_article.py",
+        "line": 23,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/extract_claims.py",
+        "line": 29,
+        "kind": "literal",
+        "name": "_CLAIMS_PROMPT_VERSION",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/extract_claims.py",
+        "line": 31,
+        "kind": "literal",
+        "name": "_SYSTEM_PROMPT",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/extract_claims.py",
+        "line": 122,
+        "kind": "literal",
+        "name": "user_prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/article/extract_claims.py",
+        "line": 123,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/knowledge_graph/extract_relationships.py",
+        "line": 118,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/knowledge_graph/extract_relationships.py",
+        "line": 119,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/story_timeline/generate_story_timeline.py",
+        "line": 246,
+        "kind": "literal",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/use_cases/story_timeline/generate_story_timeline.py",
+        "line": 247,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/domain/enums/notification.py",
+        "line": 16,
+        "kind": "literal",
+        "name": "SYSTEM",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 99,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 238,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/anthropic_client.py",
+        "line": 181,
+        "kind": "assembly",
+        "name": "system",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/llm/grok_client.py",
+        "line": 197,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/templates/digest.html.j2",
+        "line": 1,
+        "kind": "file",
+        "name": "src/ai_news_digest/templates/digest.html.j2",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/templates/digest.md.j2",
+        "line": 1,
+        "kind": "file",
+        "name": "src/ai_news_digest/templates/digest.md.j2",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/e2e/test_pipeline_e2e.py",
+        "line": 192,
+        "kind": "literal",
+        "name": "_RSS_TEMPLATE",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/e2e/test_pipeline_e2e.py",
+        "line": 204,
+        "kind": "literal",
+        "name": "_ITEM_TEMPLATE",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/api/v1/routes/test_public_story_activity.py",
+        "line": 58,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/application/rendering/test_renderer.py",
+        "line": 56,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/application/use_cases/story_activity/test_detect_story_activity.py",
+        "line": 56,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 188,
+        "kind": "literal",
+        "name": "article.ai_prompt_version",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/database/mappers/test_article_mapper.py",
+        "line": 226,
+        "kind": "literal",
+        "name": "sample_article.ai_prompt_version",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_grok_client.py",
+        "line": 104,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_grok_client.py",
+        "line": 146,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 97,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 136,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 174,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/llm/test_openai_client.py",
+        "line": 340,
+        "kind": "literal",
+        "name": "mock_response.choices.message.content",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "frontend/src/pages/auth/LoginPage.tsx",
+        "line": 40,
+        "kind": "ui_text",
+        "symbol": "Welcome back",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/DashboardPage.tsx",
+        "line": 29,
+        "kind": "ui_text",
+        "symbol": "Welcome back",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/IntelligenceWorkspacePage.tsx",
+        "line": 46,
+        "kind": "ui_text",
+        "symbol": "Welcome back",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 40,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 41,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 54,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 56,
+        "kind": "profile_name",
+        "symbol": "Preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 60,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 68,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 70,
+        "kind": "profile_name",
+        "symbol": "Preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 74,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/NotificationPreferencesPage.tsx",
+        "line": 96,
+        "kind": "profile_name",
+        "symbol": "preferences",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/dashboard/SavedStoriesPage.tsx",
+        "line": 100,
+        "kind": "experiment",
+        "symbol": "variant=",
+        "unit": "u1"
+      },
+      {
+        "file": "frontend/src/pages/public/TermsOfServicePage.tsx",
+        "line": 112,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u1"
+      },
+      {
+        "file": "migrations/versions/016_create_notifications.py",
+        "line": 88,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "migrations/versions/016_create_notifications.py",
+        "line": 138,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "migrations/versions/016_create_notifications.py",
+        "line": 146,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "migrations/versions/016_create_notifications.py",
+        "line": 148,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 191,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 193,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 195,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 203,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/api/v1/routes/notifications.py",
+        "line": 205,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribed",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/application/services/notifications/delivery_service.py",
+        "line": 209,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/domain/ports/email_sender.py",
+        "line": 26,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/database/models/notification_model.py",
+        "line": 252,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/development_sender.py",
+        "line": 50,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 47,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 109,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 111,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 112,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 166,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 174,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 184,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 248,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 250,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 251,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 302,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/digest_templates.py",
+        "line": 307,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 21,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 82,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 84,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 85,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 115,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_composer.py",
+        "line": 116,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 32,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 40,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 42,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 43,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 76,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 82,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 136,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 161,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 181,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 191,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 199,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 204,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 212,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 217,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 225,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 230,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 238,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 243,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 251,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 256,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 264,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 276,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 288,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/notification_templates.py",
+        "line": 293,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/smtp_sender.py",
+        "line": 121,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/infrastructure/email/test_sender.py",
+        "line": 52,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 159,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 162,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 170,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 178,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 186,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 194,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 202,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 210,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 218,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 229,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 237,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 245,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 253,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 261,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 269,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 277,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 285,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 293,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 301,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 309,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 317,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 325,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/ai_news_digest/workers/celery_app.py",
+        "line": 336,
+        "kind": "outreach_schedule",
+        "symbol": "crontab(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/e2e/test_pipeline_e2e.py",
+        "line": 177,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/integration/test_notification_delivery_flow.py",
+        "line": 350,
+        "kind": "user_set_reminder",
+        "symbol": "notification_preferences",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/smoke_live.py",
+        "line": 252,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/smoke_live.py",
+        "line": 256,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/api/v1/routes/test_notifications.py",
+        "line": 230,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/api/v1/routes/test_notifications.py",
+        "line": 245,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_development_sender.py",
+        "line": 52,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_digest_templates.py",
+        "line": 50,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_digest_templates.py",
+        "line": 69,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_digest_templates.py",
+        "line": 149,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_digest_templates.py",
+        "line": 151,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_composer.py",
+        "line": 20,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_composer.py",
+        "line": 28,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_composer.py",
+        "line": 54,
+        "kind": "user_set_reminder",
+        "symbol": "Unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_templates.py",
+        "line": 73,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_templates.py",
+        "line": 128,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe_url",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_notification_templates.py",
+        "line": 130,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_smtp_sender.py",
+        "line": 224,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_smtp_sender.py",
+        "line": 246,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_smtp_sender.py",
+        "line": 282,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_smtp_sender.py",
+        "line": 377,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_test_sender.py",
+        "line": 36,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/infrastructure/email/test_test_sender.py",
+        "line": 77,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 114,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 115,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 119,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 122,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 126,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 133,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 162,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 167,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_celery.py",
+        "line": 173,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/test_workflow_schedule.py",
+        "line": 210,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      },
+      {
+        "file": "tests/unit/workers/test_celery_timezone.py",
+        "line": 19,
+        "kind": "outreach_schedule",
+        "symbol": "beat_schedule",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

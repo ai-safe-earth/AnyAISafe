@@ -1,0 +1,529 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/whatsapp-chatbot",
+    "git_sha": "71906575e97afc352afd9355f5d58dbad5c2b5f1",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:25:34Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 1,
+      "low": 0,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 1,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 1,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 2,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1104/outreach",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1104/outreach",
+      "rule_id": "AUD-1104",
+      "sub": "outreach",
+      "fingerprint": "94ac503aa0279f68",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "severity": "medium",
+      "priority": 4,
+      "mechanism": "M4",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/cron_jobs.js",
+          "line": 9,
+          "snippet": "cron.schedule('*/10 * * * *', async () => {"
+        },
+        {
+          "role": "also",
+          "file": "src/cron_jobs.js",
+          "line": 38,
+          "snippet": "await client.sendMessage(cart.phone_number, { text: message });"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/cron_jobs.js",
+          "sha256": "f4802f4f813ea902e158e222b6c4b1f9d4f925a271eb38f5656d0ff416877990"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "US-CA:SB1119",
+        "US-WA:HB2225",
+        "DSA:Art.25",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Rewrite the objective as task completion and the person's own stated goals; remove streak, scarcity and variable-reward mechanics from the model's instructions; send only messages the person asked for, at the time they chose; measure prompt experiments by task outcomes and tell participants.",
+        "alternatives": [
+          "rewrite the prompt objective as task completion and the person's stated goals",
+          "remove streak, scarcity and variable-reward mechanics from the LLM-facing instructions",
+          "replace scheduled re-engagement with reminders the person sets and can switch off",
+          "measure prompt experiments by task outcomes, with a notice to participants",
+          "an independent review of ranking and reward objectives, recorded with aisafe review record"
+        ],
+        "removes": [
+          "objective",
+          "intervention",
+          "feedback"
+        ]
+      },
+      "known_failure_modes": [
+        "a product-analytics dashboard that computes engagement is not an objective: the rule needs an imperative (maximise, keep, increase) or an objective assignment",
+        "the vulnerable sub-finding rests on two regex co-occurrences in one file or prompt literal; a reading app for children with a streak feature is reported CRITICAL, and the finding says what co-occurred",
+        "a prompt that discusses engagement tactics in order to avoid them is a mention when a negation or a discussion cue precedes the phrase in the same sentence, or an evaluation (dangerous, not recommended) follows it; without one it is reported, and a cue in the same sentence before a real instruction hides it",
+        "the outreach sub-finding pairs a schedule and a send in one file: an alert to an operator's own channel is reported too, a schedule in one file with the send in another (a job queue) is not paired, and a send chosen by the person's state with no scheduler in its file is not reported here",
+        "a reminder the person set silences the outreach sub-finding for the whole file, including a second, unrelated send in that file",
+        "the monetisation imperative reads any prompt material: a sales assistant told to improve sales is reported, and whether the pressure lands on the person in the conversation is for review",
+        "whether an objective variable feeds a training or ranking call is read from one function's text; a variable passed through a dict or a second module stays a detected signal",
+        "an experiment is read from a variant flag near a prompt and a metric word in the same unit; an experiment framework that hides both behind a client call is missed"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "A scheduled send may be a reminder the person asked for that the code does not label as such.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "a job on a schedule (cron.schedule) and a send to a person (.sendMessage) in one file: a message the person did not ask for is a retention mechanism, a reminder they set is a service, and the code does not say which. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: WhatsApp-AI-Sales-Agent.mp4",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/whatsapp-chatbot",
+      "git_sha": "71906575e97afc352afd9355f5d58dbad5c2b5f1",
+      "dirty": true,
+      "scanned_files": 29,
+      "skipped_files": 0,
+      "bytes": 185972,
+      "duration_ms": 407,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 18,
+      "go": 0,
+      "other": 11
+    },
+    "llm_calls": [
+      {
+        "file": "src/nlp/openai.js",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from 'openai'",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "src/nlp/openai.js",
+        "line": 106,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m2"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 8,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": "src/nlp/openai.js",
+        "line": 107,
+        "provider": "openai",
+        "model": "gpt-4o-mini",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [],
+    "prompts": [
+      {
+        "file": "src/cron_jobs.js",
+        "line": 36,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/storage.js",
+        "line": 61,
+        "kind": "assembly",
+        "name": "query",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "src/cron_jobs.js",
+        "line": 9,
+        "kind": "outreach_schedule",
+        "symbol": "cron.schedule(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/cron_jobs.js",
+        "line": 38,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/nlp/index.js",
+        "line": 77,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/server.js",
+        "line": 99,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/server.js",
+        "line": 113,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/stages/3.js",
+        "line": 27,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

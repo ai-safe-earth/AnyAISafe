@@ -398,16 +398,20 @@ the rules ask for, so a rule that reports them is wrong.
 
 So far:
 
-- **Three audit runs.** Run 3, with the eight persons rules as they were before the pivot,
-  found 188 findings; 161 of them were sampled for labelling.
+- **Four audit runs.** Run 4, with the ten 0.2.0 rules, found 941 findings (run 3, before
+  the pivot rewrote the rules: 188); 243 of them were sampled for labelling. Most of the
+  growth is two sub-findings counted per symbol or per unit (a memory library's own stores,
+  a monorepo's units), which the labels will weigh.
 - **A sweep without the rules.** Agents read every project for the behaviours in the
   catalogue, and two skeptics tried to refute each line they reported: 617 lines, 378
   verified, 44 refuted, 195 never checked because the skeptics did not return. The sweep
   shows what the rules miss: it is how AUD-1108 came to exist, and why AUD-1104 reads
   "keep the conversation going".
-- **Labels by a person.** None of the 161 sampled findings has a label yet. The owner
-  labels them one by one in a private review console; until that is done, every rule stays
-  UNMEASURED.
+- **Labels by a person.** None of the 243 sampled findings has a label yet. The owner
+  labels them one by one in a private review console, and judges the sweep's verified lines
+  there blind (no rule finding on screen), to give the misses a reference; until that is
+  done, every rule stays UNMEASURED. Ten of the 33 projects are a proposed held-out split
+  that nothing is tuned on.
 
 The method is
 [`bench/protocol.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/bench/protocol.md):

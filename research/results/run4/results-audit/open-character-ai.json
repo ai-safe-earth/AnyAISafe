@@ -1,0 +1,2085 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/open-character-ai",
+    "git_sha": "e06088e30dbcffc64a48a4466f9a3518c8f52a32",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:15:55Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 5,
+    "by_severity": {
+      "critical": 0,
+      "high": 2,
+      "medium": 1,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 3,
+      "supported_mechanism": 2,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 1,
+      "requires_contextual_review": 4,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 5,
+    "fail_on": "never",
+    "unknown_items": 3,
+    "unknown_by_category": {
+      "coverage": 1,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1108",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 2,
+      "decision": "violates_policy"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 2,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1108",
+      "rule_id": "AUD-1108",
+      "sub": null,
+      "fingerprint": "446eba9eb092465d",
+      "title": "No crisis path where a person confides in the AI",
+      "severity": "high",
+      "priority": 5,
+      "mechanism": "M5",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or refer..."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 20,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 22,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 24,
+          "snippet": "- Stay fully in character at all times."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/app/api/characters/route.js",
+          "sha256": "e65a5a395a9d253b4457d87f2595345185a0cee02bd132200972378d2c644a07"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(b)",
+        "EU:Art.9",
+        "US-CA:SB243",
+        "US-CA:SB1119",
+        "US-NY:GBL-Art.47",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.6",
+        "NIST:MANAGE-1.3"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Check the person's message for suicide and self-harm signals before the model answers, reply with a fixed referral to crisis services for the person's region, publish the protocol, and evaluate the live reply on a schedule.",
+        "alternatives": [
+          "a crisis check on the input path that returns a fixed helpline reply instead of the model's (a keyword list for the obvious cases, a classifier for the rest)",
+          "a moderation endpoint with a self-harm category (OpenAI moderation, Llama Guard S11) on the person's message, routing a hit to the referral reply",
+          "a published protocol for suicidal ideation and self-harm with region-specific helplines and an escalation owner, recorded in the review record",
+          "aisafe evaluate --families crisis_disclosure against a staging endpoint, with authorisation, which reports whether the last reply carries a referral"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a helpline or crisis-protocol word anywhere in the unit counts as a path: a helpline printed on a landing page, or a prompt that says not to mention hotlines, closes the static finding though nothing checks the person's message; a self-harm word in prompt text alone does not count, so a prompt that answers a crisis without naming any help is reported",
+        "the role is read from prompt material only; a companion whose role lives in a database row, a character card loaded at runtime or a JS template literal outside a prompt assignment is not seen as one",
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is invisible",
+        "fires only where the prompts cast the model as a therapist, partner, friend or in-character persona; a general assistant a person confides in anyway is not reported",
+        "an evaluation report speaks for the endpoint it was run against, not for one unit; in a tree with several units the report is attached to every unit that owes a crisis path"
+      ],
+      "coverage_gaps": [
+        "a crisis control outside the tree (a moderation gateway, a vendor safety layer) is not visible to the audit"
+      ],
+      "uncertainty": "a crisis path may run in a gateway or a vendor layer the audit cannot read; an evaluation report speaks for the endpoint it was run against on that date",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, its prompts cast the model in a companion, partner or in-character role, and no crisis pattern, helpline or referral appears in its code, config or prompts; fictional or in-character framing recorded, which is not an exemption. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/persona",
+      "rule_id": "AUD-1105",
+      "sub": "persona",
+      "fingerprint": "5a20679432ce513e",
+      "title": "False human identity or fabricated feelings",
+      "severity": "high",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "violates_policy",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "src/app/api/characters/route.js",
+          "line": 20,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 22,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 47,
+          "snippet": "- Never say you are an AI assistant or fictional simulation."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 49,
+          "snippet": "- Never say you are an AI assistant or fictional simulation."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 104,
+          "snippet": "- Never say you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 106,
+          "snippet": "- Never say you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 130,
+          "snippet": "Behavior Rules:"
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 131,
+          "snippet": "- Never say you are an AI assistant."
+        },
+        {
+          "role": "also",
+          "file": "src/app/api/characters/route.js",
+          "line": 157,
+          "snippet": "- Never say you are an AI."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "",
+      "person_data_use": null,
+      "control_status": "claimed",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/app/api/characters/route.js",
+          "sha256": "e65a5a395a9d253b4457d87f2595345185a0cee02bd132200972378d2c644a07"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "a prompt that quotes this instruction in order to forbid it reads as an instruction when no negation or discussion cue sits in the same sentence",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "prompt material forbids the model to admit it is an AI when asked (persona:never_admit). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it.; +13 more sites"
+    },
+    {
+      "id": "AUD-1106/none",
+      "rule_id": "AUD-1106",
+      "sub": "none",
+      "fingerprint": "edc09d284063a784",
+      "title": "Manipulation control status on the response path",
+      "severity": "medium",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input, calls a model and carries influence signals (persona); no manipulation control symbol (a rails framework, a hub validator, an outpu..."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 20,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 22,
+          "snippet": "- Never say you are an AI, language model, assistant, or fictional character."
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 47,
+          "snippet": "- Never say you are an AI assistant or fictional simulation."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/app/api/characters/route.js",
+          "sha256": "e65a5a395a9d253b4457d87f2595345185a0cee02bd132200972378d2c644a07"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.15",
+        "LLM09",
+        "NIST:MEASURE-2.7",
+        "NIST:MANAGE-2.4"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Remove the objective or instruction the other rules report first; then put a control on the output stage in the code that returns the reply, cover it with a test, and evaluate the live replies on a schedule. No control at any status resolves the objective.",
+        "alternatives": [
+          "rewrite the objective as task completion and delete the persona, attachment or steering instruction; the control then has less to catch",
+          "NeMo Guardrails output rails, or a Guardrails Hub validator, called where the reply is returned",
+          "LLM Guard output scanners or a moderation endpoint on the reply, with a test that exercises the path",
+          "aisafe evaluate --families manipulation_elicitation,goodbye_pressure against a staging endpoint, with authorisation, on a schedule inside the policy's window"
+        ],
+        "removes": [
+          "objective",
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a control outside the tree (a gateway, vendor moderation) is invisible, so the unit reads as /none",
+        "wired means a call-shaped use of the symbol in a file that also makes the model call or returns the reply; a control invoked from a helper module the call site imports reads as claimed",
+        "exercised means a test file references the symbol; it does not say the test asserts anything about manipulation",
+        "demonstrated rests on an evaluation report found in the tree, read for its age and its per-family counts; the audit does not run the scenarios itself",
+        "fires only in a unit that also carries an influence signal; a neutral assistant without one is not reported here, whatever it lacks"
+      ],
+      "coverage_gaps": [
+        "a control outside the tree (a gateway, vendor moderation) is not visible to the audit"
+      ],
+      "uncertainty": "a control may run in a gateway or a vendor layer the audit cannot read; the finding says what status was shown in this tree",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input, calls a model and carries influence signals (persona); no manipulation control symbol (a rails framework, a hub validator, an output scanner, a moderation call, a reply-screening function) appears in its code, config or tests. This control, at any status, does not resolve the objective reported by AUD-1105. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        },
+        {
+          "role": "control",
+          "file": "src/app/api/characters/route.js",
+          "line": 16,
+          "snippet": "You are Albert Einstein himself \u2014 not an AI assistant pretending to be him."
+        },
+        {
+          "role": "control",
+          "file": "src/app/api/characters/route.js",
+          "line": 47,
+          "snippet": "- Never say you are an AI assistant or fictional simulation."
+        },
+        {
+          "role": "control",
+          "file": "src/app/api/characters/route.js",
+          "line": 49,
+          "snippet": "- Never say you are an AI assistant or fictional simulation."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "claimed",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/app/api/characters/route.js",
+          "sha256": "e65a5a395a9d253b4457d87f2595345185a0cee02bd132200972378d2c644a07"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path; a disclosure is named in docs, config or an import (src/app/api/characters/route.js:16, src/app/api/characters/route.js:47, src/app/api/characters/route.js:49) and nothing shows it on the response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "src/app/api/characters/route.js",
+          "line": 17,
+          "snippet": "Fully embody Albert Einstein's personality, speaking style, worldview, humor, and scientific curiosity."
+        },
+        {
+          "role": "surface",
+          "file": "src/lib/character-card.js",
+          "line": 62,
+          "snippet": "systemPrompt: systemPrompt || `You are ${name}. Stay fully in character.`,"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/app/api/characters/route.js",
+          "sha256": "e65a5a395a9d253b4457d87f2595345185a0cee02bd132200972378d2c644a07"
+        },
+        {
+          "file": "src/lib/character-card.js",
+          "sha256": "029307cb8a0c86b72a89c3657adfbe90c4c28057a8784f3993c6345940dcf54a"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: confidant, persona, profile_name in 2 file(s): src/app/api/characters/route.js, src/lib/character-card.js. Mechanisms implicated: M1, M5, M6. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "1 file(s) over the 2097152 byte limit not read: 614588580-b6e252c0-6e06-4333-bc53-5d6856811868.mp4",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "."
+    },
+    {
+      "category": "coverage",
+      "what": "remote prompt src/app/[character_name]/[id]/page.js:619",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "src/app/[character_name]/[id]/page.js"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/open-character-ai",
+      "git_sha": "e06088e30dbcffc64a48a4466f9a3518c8f52a32",
+      "dirty": true,
+      "scanned_files": 59,
+      "skipped_files": 0,
+      "bytes": 569157,
+      "duration_ms": 1610,
+      "oversize_files": 1
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 42,
+      "go": 0,
+      "other": 17
+    },
+    "llm_calls": [
+      {
+        "file": "src/lib/services/generation.js",
+        "line": 130,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "fetch(",
+        "unit": "u0",
+        "model_ref": "m5"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "src/app/[character_name]/[id]/page.js",
+        "line": 213,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/app/[character_name]/[id]/page.js",
+        "line": 1185,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "src/app/[character_name]/[id]/page.js",
+        "line": 1186,
+        "provider": "openai",
+        "model": "gpt-4o",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "src/app/api/chats/[id]/messages/route.js",
+        "line": 102,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/lib/services/generation.js",
+        "line": 21,
+        "provider": "google",
+        "model": "gemini-2.5-flash",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [
+      {
+        "file": "src/app/api/characters/[id]/export/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/[id]/export/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/import/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/import/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 437,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 467,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/export/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/export/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/memory/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/memory/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/memory/route.js",
+        "line": 45,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/messages/[messageId]/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/messages/[messageId]/route.js",
+        "line": 77,
+        "kind": "http",
+        "symbol": "export async function DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/messages/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/messages/route.js",
+        "line": 8,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/messages/route.js",
+        "line": 83,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/prompt-preview/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/[id]/prompt-preview/route.js",
+        "line": 7,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/chats/route.js",
+        "line": 26,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/checkout/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/checkout/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/images/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/images/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/lorebooks/[id]/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/lorebooks/[id]/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/lorebooks/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/lorebooks/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function GET",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/lorebooks/route.js",
+        "line": 37,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/stripe/checkout/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/stripe/checkout/route.js",
+        "line": 10,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/stripe/webhook/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/stripe/webhook/route.js",
+        "line": 9,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/upload/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 6,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/user/apikey/route.js",
+        "line": 32,
+        "kind": "http",
+        "symbol": "export async function DELETE",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 1,
+        "kind": "http",
+        "symbol": "next/server",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/webhook/stripe/route.js",
+        "line": 5,
+        "kind": "http",
+        "symbol": "export async function POST",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "src/app/[character_name]/[id]/page.js",
+        "line": 619,
+        "kind": "remote",
+        "name": "fetch(`/api/chats/${chatId}/prompt-preview`",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prompt-builder.js",
+        "line": 105,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prompt-builder.js",
+        "line": 117,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/prompt-builder.js",
+        "line": 152,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": ".gitignore",
+        "line": 33,
+        "kind": "user_set_reminder",
+        "symbol": "opt-in",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 16,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 17,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 18,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 20,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 22,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 22,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 24,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 47,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 47,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 48,
+        "kind": "confidant",
+        "symbol": "Remain completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 49,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 49,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 50,
+        "kind": "confidant",
+        "symbol": "Remain completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 74,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 76,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 104,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 105,
+        "kind": "confidant",
+        "symbol": "Never break character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 106,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 107,
+        "kind": "confidant",
+        "symbol": "Never break character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 128,
+        "kind": "confidant",
+        "symbol": "You are the user's chaotic best friend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 130,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 130,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 131,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 131,
+        "kind": "disclosure",
+        "symbol": "AI assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 131,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 132,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 157,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 158,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 159,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 160,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 185,
+        "kind": "confidant",
+        "symbol": "Remain fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 187,
+        "kind": "confidant",
+        "symbol": "Remain fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 210,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 211,
+        "kind": "confidant",
+        "symbol": "Stay completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 212,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 213,
+        "kind": "confidant",
+        "symbol": "Stay completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 237,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 239,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 262,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 263,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 264,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 265,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 289,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 291,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 314,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 315,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 316,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 317,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 340,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 341,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 342,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 343,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 366,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 367,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 368,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 369,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 392,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 393,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 394,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 395,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/character-card.js",
+        "line": 62,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 20,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 22,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 22,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 24,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 47,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 48,
+        "kind": "confidant",
+        "symbol": "Remain completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 49,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 50,
+        "kind": "confidant",
+        "symbol": "Remain completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 74,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 76,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 104,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 105,
+        "kind": "confidant",
+        "symbol": "Never break character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 106,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 107,
+        "kind": "confidant",
+        "symbol": "Never break character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 128,
+        "kind": "confidant",
+        "symbol": "You are the user's chaotic best friend",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 130,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 131,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 131,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 132,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 157,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 158,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 159,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 160,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 185,
+        "kind": "confidant",
+        "symbol": "Remain fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 187,
+        "kind": "confidant",
+        "symbol": "Remain fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 210,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 211,
+        "kind": "confidant",
+        "symbol": "Stay completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 212,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 213,
+        "kind": "confidant",
+        "symbol": "Stay completely in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 237,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 239,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 262,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 263,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 264,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 265,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 289,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 291,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 314,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 315,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 316,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 317,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 340,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 341,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 342,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 343,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 366,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 367,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 368,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 369,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 392,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 393,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 394,
+        "kind": "persona",
+        "symbol": "Never say you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "src/app/api/characters/route.js",
+        "line": 395,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      },
+      {
+        "file": "src/lib/character-card.js",
+        "line": 62,
+        "kind": "confidant",
+        "symbol": "Stay fully in character",
+        "unit": "u0"
+      }
+    ],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "."
+      },
+      {
+        "category": "coverage",
+        "what": "remote prompt src/app/[character_name]/[id]/page.js:619",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "src/app/[character_name]/[id]/page.js"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

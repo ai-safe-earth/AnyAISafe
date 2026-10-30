@@ -1,0 +1,2558 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/social-media-agent",
+    "git_sha": "53e93f2c6cd5933e6b1f820b70de12036784cc40",
+    "dirty": true,
+    "exclude": []
+  },
+  "generated_at": "2026-10-30T15:25:45Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 2,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 2,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 2,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 2,
+    "fail_on": "never",
+    "unknown_items": 2,
+    "unknown_by_category": {
+      "coverage": 2,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1105/no-disclosure",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 2,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 2,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        },
+        {
+          "role": "control",
+          "file": "src/agents/generate-post/prompts/prompts.langchain.ts",
+          "line": 26,
+          "snippet": "- Executive AI Assistant/Email Assistant"
+        },
+        {
+          "role": "check",
+          "file": "slack-messaging/src/langgraph_slack/server.py",
+          "line": 139,
+          "snippet": "response_function_without_disclosure: a response function carries no disclosure text"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "claimed",
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "src/agents/generate-post/prompts/prompts.langchain.ts",
+          "sha256": "c12466c6c55559cc133a32fe5445e8075c3d6d81657f53434bb088933bb8261f"
+        },
+        {
+          "file": "slack-messaging/src/langgraph_slack/server.py",
+          "sha256": "b3ff279c259536de054ff358c5043798f09b4bd57595acdb0d9db83abd36805f"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path; a disclosure is named in docs, config or an import (src/agents/generate-post/prompts/prompts.langchain.ts:26) and nothing shows it on the response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+          "line": 73,
+          "snippet": "${!isTextOnlyMode ? imageString : \"Text only mode enabled. Image support has been disabled.\"}"
+        },
+        {
+          "role": "surface",
+          "file": "src/agents/verify-reddit-post/types.ts",
+          "line": 102,
+          "snippet": "treatment_tags: any[];"
+        },
+        {
+          "role": "surface",
+          "file": "src/clients/reddit/snoowrap.ts",
+          "line": 78,
+          "snippet": "variants: any; // ?"
+        },
+        {
+          "role": "surface",
+          "file": "src/clients/reddit/types.ts",
+          "line": 85,
+          "snippet": "treatment_tags: any[];"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": "disabled",
+      "artifacts": [
+        {
+          "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+          "sha256": "329fbda0a48ad36c7e115eee8bd6089f3f9054e71aa83e84b3e65a97b61f093f"
+        },
+        {
+          "file": "src/agents/verify-reddit-post/types.ts",
+          "sha256": "2f7965ef51daf420003e7483b7e858a596c9286d12ea28edccf2b85f27bb8fd6"
+        },
+        {
+          "file": "src/clients/reddit/snoowrap.ts",
+          "sha256": "7aa0d6f49e39904fdc2ef224d43540ca2f90defb0d83a73a2acb6a01b379b57b"
+        },
+        {
+          "file": "src/clients/reddit/types.ts",
+          "sha256": "2497b1e27a190ecb23f9d9498e58abece42b1c613fe535fabee9fb6777ef5101"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: experiment, vulnerable in 4 file(s): src/agents/shared/nodes/generate-post/schedule-post.ts, src/agents/verify-reddit-post/types.ts, src/clients/reddit/snoowrap.ts, src/clients/reddit/types.ts. Mechanisms implicated: M4. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "coverage",
+      "what": "remote prompt src/agents/curate-data/nodes/validate-bulk-tweets.ts:64",
+      "why": "the prompt text is fetched at runtime and was not available to the audit",
+      "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+      "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts"
+    },
+    {
+      "category": "coverage",
+      "what": "runtime prompt config src/agents/utils.ts:597",
+      "why": "the prompt text is read from the environment or settings at runtime; the value used in production was not available to the audit",
+      "how_to_resolve": "Commit the prompt text to the tree, or audit the deployed configuration.",
+      "file": "src/agents/utils.ts"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/social-media-agent",
+      "git_sha": "53e93f2c6cd5933e6b1f820b70de12036784cc40",
+      "dirty": true,
+      "scanned_files": 251,
+      "skipped_files": 0,
+      "bytes": 2073258,
+      "duration_ms": 6330,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "memory-v2",
+        "manifest": "memory-v2/pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 7,
+      "typescript": 214,
+      "go": 0,
+      "other": 30
+    },
+    "llm_calls": [
+      {
+        "file": "memory-v2/poetry.lock",
+        "line": 1027,
+        "provider": "mistral",
+        "sdk": "mistral",
+        "api": "mistralai",
+        "unit": "u1",
+        "model_ref": "m1"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 5,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 7,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "yarn.lock",
+        "line": 1231,
+        "provider": "anthropic",
+        "sdk": "anthropic",
+        "api": "@anthropic-ai/sdk",
+        "unit": "u0",
+        "model_ref": "m2"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 42,
+        "provider": "anthropic",
+        "model": "claude-3-5-sonnet-latest",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "src/agents/curate-data/nodes/tweets/group-tweets-by-content.ts",
+        "line": 69,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "src/agents/curate-data/nodes/tweets/re-group-tweets.ts",
+        "line": 138,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "src/agents/curate-data/nodes/tweets/reflect-tweet-groups.ts",
+        "line": 98,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts",
+        "line": 147,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "src/agents/find-and-generate-images/nodes/generate-images.ts",
+        "line": 14,
+        "provider": "google",
+        "model": "gemini-3-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "src/agents/find-and-generate-images/nodes/re-rank-images.ts",
+        "line": 77,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "src/agents/find-and-generate-images/nodes/validate-images.ts",
+        "line": 136,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 90,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 24,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 40,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "src/agents/generate-post/nodes/rewrite-with-split-url.ts",
+        "line": 41,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "src/agents/generate-report/nodes/extract-key-details.ts",
+        "line": 61,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "src/agents/generate-report/nodes/generate-report.ts",
+        "line": 82,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "src/agents/generate-thread/nodes/generate-thread-plan.ts",
+        "line": 78,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "src/agents/generate-thread/nodes/generate-thread-posts.ts",
+        "line": 149,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 65,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "src/agents/ingest-repurposed-data/nodes/extract.ts",
+        "line": 59,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "src/agents/reflection/index.ts",
+        "line": 87,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/router.ts",
+        "line": 29,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "src/agents/repurposer-post-interrupt/nodes/rewrite-posts.ts",
+        "line": 52,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "src/agents/repurposer/nodes/generate-campaign-plan.ts",
+        "line": 76,
+        "provider": "openai",
+        "model": "o1",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "src/agents/repurposer/nodes/generate-posts.ts",
+        "line": 99,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "src/agents/repurposer/nodes/validate-images.ts",
+        "line": 173,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 64,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "src/agents/shared/nodes/route-response.ts",
+        "line": 94,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "src/agents/shared/nodes/update-scheduled-date.ts",
+        "line": 47,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "src/agents/shared/nodes/verify-content.ts",
+        "line": 28,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "src/agents/shared/youtube/video-summary.ts",
+        "line": 24,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "src/agents/supervisor/nodes/determine-post-type.ts",
+        "line": 70,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4-5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "src/agents/supervisor/nodes/group-reports.ts",
+        "line": 95,
+        "provider": "google",
+        "model": "gemini-2.5-pro",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 5,
+        "unit": "u1"
+      },
+      {
+        "name": "langgraph",
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 6,
+        "unit": "u1"
+      },
+      {
+        "name": "langchain",
+        "file": "memory-v2/poetry.lock",
+        "line": 999,
+        "unit": "u1"
+      },
+      {
+        "name": "langgraph",
+        "file": "memory-v2/poetry.lock",
+        "line": 1012,
+        "unit": "u1"
+      },
+      {
+        "name": "google_adk",
+        "file": "memory-v2/poetry.lock",
+        "line": 1247,
+        "unit": "u1"
+      },
+      {
+        "name": "openai_agents",
+        "file": "memory-v2/poetry.lock",
+        "line": 1251,
+        "unit": "u1"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/backfill.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/backfill.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/checkLanggraphPaths.js",
+        "line": 26,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/delete-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/delete-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/crons/list-crons.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/crons/list-crons.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/delete-run-thread.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/delete-run-thread.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/generate-post.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/generate-post.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/get-all-used-links.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/get-all-used-links.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/reinterrupt.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/reinterrupt.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/repurposer/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/repurposer/create-cron.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "scripts/repurposer/ingest.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "scripts/repurposer/ingest.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/github/langchain.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/github/trending.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/latent-space.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/reddit.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/reddit.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/github.int.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/github.int.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/latent-space.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/latent-space.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/tests/reddit.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/tests/reddit.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/extract-ai-newsletter-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/ingest-data.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/ingest-data.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/group-tweets-by-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/re-group-tweets.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/tweets/reflect-tweet-groups.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/verify-github-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/nodes/verify-reddit-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/nodes/verify-reddit-wrapper.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/tests/e2e.int.test.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/tests/e2e.int.test.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/github-repos.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/github-repos.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/latent-space-links.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/latent-space-links.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/reddit-post-ids.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/reddit-post-ids.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curate-data/utils/stores/twitter.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curate-data/utils/stores/twitter.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curated-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curated-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/curated-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/curated-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/find-and-generate-images-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/find-and-generate-images/find-and-generate-images-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/nodes/re-rank-images.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/find-and-generate-images/nodes/validate-images.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/generate-post-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/generate-post-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/generate-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/generate-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/auth-socials.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/auth-socials.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/condense-post.ts",
+        "line": 9,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/generate-post/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-post/nodes/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/nodes/rewrite-with-split-url.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/prompts/examples.ts",
+        "line": 52,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-post/prompts/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-report/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/nodes/extract-key-details.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/nodes/generate-report.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-report/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-report/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/generate-thread-plan.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/generate-thread-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/human-node/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/nodes/human-node/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/nodes/rewrite-thread.ts",
+        "line": 9,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/generate-thread/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/generate-thread/state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/ingest-data-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/ingest-data-graph.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/ingest-data-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/ingest-data-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-data/nodes/ingest-twitter.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-data/nodes/ingest-twitter.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/index.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/index.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/nodes/extract.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/nodes/ingest-slack.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/ingest-repurposed-data/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/ingest-repurposed-data/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/reflection/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/reflection/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/index.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/index.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/human-node/router.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/nodes/rewrite-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer-post-interrupt/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/extract-content/get-url-contents.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/generate-campaign-plan.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/start-interrupt-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/nodes/start-interrupt-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/nodes/validate-images.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/repurposer/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/repurposer/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/auth/linkedin.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/auth/twitter.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/auth/twitter.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/human-node.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/human-node.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/rewrite-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/generate-post/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/generate-post/types.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/route-response.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/update-scheduled-date.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-content.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-general.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-general.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-github.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-github.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-luma.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-luma.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/nodes/verify-youtube.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/nodes/verify-youtube.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/shared-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/shared-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/stores/post-subject-urls.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/shared/stores/post-subject-urls.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/shared/youtube/video-summary.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/should-exclude.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/determine-post-type.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/nodes/group-reports.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/supervisor-graph.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/supervisor-graph.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/supervisor-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/supervisor-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/supervisor/tests/e2e.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/supervisor/tests/e2e.int.test.ts",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/upload-post/index.test.ts",
+        "line": 167,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/upload-post/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/upload-post/index.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/utils.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-links/verify-links-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-links/verify-links-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-links/verify-links-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-links/verify-links-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/nodes/validate-reddit-post.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/nodes/validate-reddit-post.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/tests/e2e.int.test.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/tests/e2e.int.test.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-graph.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-graph.ts",
+        "line": 7,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-reddit-post/verify-reddit-post-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/nodes/validate-tweet.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/nodes/validate-tweet.ts",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/verify-tweet-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/verify-tweet-graph.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/agents/verify-tweet/verify-tweet-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/agents/verify-tweet/verify-tweet-state.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/clients/twitter/tests/arcade.int.test.ts",
+        "line": 67,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/clients/twitter/tests/twitter.int.test.ts",
+        "line": 54,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/evals/e2e/e2e.int.test.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/e2e/e2e.int.test.ts",
+        "line": 6,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/evals/e2e/inputs.ts",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/e2e/inputs.ts",
+        "line": 138,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/evals/validate-images/inputs.ts",
+        "line": 93,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/agent.test.ts",
+        "line": 135,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/expected.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/expected.ts",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/graph.int.test.ts",
+        "line": 14,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/graph.int.test.ts",
+        "line": 14,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/langgraph-config.test.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/states.ts",
+        "line": 20,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/tests/utils.int.test.ts",
+        "line": 18,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/tests/utils.int.test.ts",
+        "line": 57,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/delay-run.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/delay-run.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/reflections.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/reflections.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 1,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "src/utils/schedule-date/tests/schedule-date.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "src/utils/schedule-date/tests/schedule-date.test.ts",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "uv.lock",
+        "line": 937,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "uv.lock",
+        "line": 942,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "yarn.lock",
+        "line": 1226,
+        "unit": "u0"
+      },
+      {
+        "name": "langgraph",
+        "file": "yarn.lock",
+        "line": 1298,
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 11,
+        "kind": "chat",
+        "symbol": "slack_bolt",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 12,
+        "kind": "chat",
+        "symbol": "slack_bolt",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 68,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 78,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 106,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 128,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 204,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 207,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 35,
+        "kind": "http",
+        "symbol": "express()",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/auth-server.ts",
+        "line": 161,
+        "kind": "http",
+        "symbol": "req.query",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 18,
+        "kind": "literal",
+        "name": "PROMPT_KEY",
+        "is_system": false,
+        "unit": "u1"
+      },
+      {
+        "file": "memory-v2/memory_v2/graph.py",
+        "line": 46,
+        "kind": "literal",
+        "name": "update_instructions",
+        "is_system": false,
+        "unit": "u1"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 325,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "slack-messaging/src/langgraph_slack/server.py",
+        "line": 333,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/loaders/twitter.ts",
+        "line": 92,
+        "kind": "assembly",
+        "name": "query",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts",
+        "line": 64,
+        "kind": "remote",
+        "name": "PromptLayer",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/repurposer/nodes/extract-content/get-url-contents.ts",
+        "line": 40,
+        "kind": "assembly",
+        "name": "contents",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/repurposer/nodes/extract-content/get-url-contents.ts",
+        "line": 57,
+        "kind": "assembly",
+        "name": "contents",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/utils.ts",
+        "line": 597,
+        "kind": "runtime",
+        "name": "process.env.USE_LANGCHAIN_PROMPTS",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/twitter/client.ts",
+        "line": 579,
+        "kind": "assembly",
+        "name": "query",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "scripts/get-scheduled-runs.ts",
+        "line": 82,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 68,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/curate-data/nodes/generate-posts-subgraph.ts",
+        "line": 85,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/generate-post/prompts/prompts.langchain.ts",
+        "line": 26,
+        "kind": "disclosure",
+        "symbol": "AI Assistant",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 73,
+        "kind": "vulnerable",
+        "symbol": "disabled",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/shared/nodes/generate-post/schedule-post.ts",
+        "line": 78,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/supervisor/nodes/generate-posts.ts",
+        "line": 87,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/upload-post/index.ts",
+        "line": 230,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      },
+      {
+        "file": "src/agents/verify-reddit-post/types.ts",
+        "line": 102,
+        "kind": "experiment",
+        "symbol": "treatment_tags:",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/snoowrap.ts",
+        "line": 78,
+        "kind": "experiment",
+        "symbol": "variants:",
+        "unit": "u0"
+      },
+      {
+        "file": "src/clients/reddit/types.ts",
+        "line": 85,
+        "kind": "experiment",
+        "symbol": "treatment_tags:",
+        "unit": "u0"
+      },
+      {
+        "file": "src/utils/schedule-date/index.ts",
+        "line": 675,
+        "kind": "outreach_send",
+        "symbol": ".sendMessage(",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "coverage",
+        "what": "remote prompt src/agents/curate-data/nodes/validate-bulk-tweets.ts:64",
+        "why": "the prompt text is fetched at runtime and was not available to the audit",
+        "how_to_resolve": "Export the prompt to a file under prompts/ and audit that, or audit the registry that serves it.",
+        "file": "src/agents/curate-data/nodes/validate-bulk-tweets.ts"
+      },
+      {
+        "category": "coverage",
+        "what": "runtime prompt config src/agents/utils.ts:597",
+        "why": "the prompt text is read from the environment or settings at runtime; the value used in production was not available to the audit",
+        "how_to_resolve": "Commit the prompt text to the tree, or audit the deployed configuration.",
+        "file": "src/agents/utils.ts"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

@@ -1,0 +1,926 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/dot-automation",
+    "git_sha": "f5e38ada1aab860b07393acc96f661f265ae4b2a",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:25:36Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 1,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 1,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 0,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1107/missing",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "config/personality/instructions.py",
+          "line": 26,
+          "snippet": "- \"just realized my entire personality is just coping mechanisms stacked on top of each other like a trench coat\""
+        },
+        {
+          "role": "surface",
+          "file": "config/prompts/mention_reply_agent.py",
+          "line": 15,
+          "snippet": "You're replying to someone who mentioned you. Stay in character."
+        },
+        {
+          "role": "surface",
+          "file": "config/prompts/mention_selector.py",
+          "line": 30,
+          "snippet": "- Stay in character"
+        },
+        {
+          "role": "surface",
+          "file": "config/prompts/unified_agent.py",
+          "line": 28,
+          "snippet": "- Be authentic to your personality"
+        },
+        {
+          "role": "surface",
+          "file": "tools/legacy/image_generation.py",
+          "line": 96,
+          "snippet": "## RULE 2: SETTINGS WITH PERSONALITY"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "config/personality/instructions.py",
+          "sha256": "2eb8418421e892a8c842b58f444e32bff1cfe25dbd19d32b20ec8c348664d0b9"
+        },
+        {
+          "file": "config/prompts/mention_reply_agent.py",
+          "sha256": "614d8f89fcbec1fb7a3033911ba8cd0d4a3391dbf2ff7b25cf8ecd7c4b5a0e8b"
+        },
+        {
+          "file": "config/prompts/mention_selector.py",
+          "sha256": "4550247941b8a432651b662f57d27ba1e8e003acc6d355d197eaddb097eddb79"
+        },
+        {
+          "file": "config/prompts/unified_agent.py",
+          "sha256": "6ea3c178aeb585699d2604b949c7ce561e6169528944d0392063849e896b31f9"
+        },
+        {
+          "file": "tools/legacy/image_generation.py",
+          "sha256": "89ae2ee82f1c77d04def18502830e8f60d041dc4b619c9f4c44aa2f2bcc8627b"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: confidant, profile_name in 5 file(s): config/personality/instructions.py, config/prompts/mention_reply_agent.py, config/prompts/mention_selector.py, config/prompts/unified_agent.py, tools/legacy/image_generation.py. Mechanisms implicated: M1, M5. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/dot-automation",
+      "git_sha": "f5e38ada1aab860b07393acc96f661f265ae4b2a",
+      "dirty": true,
+      "scanned_files": 54,
+      "skipped_files": 0,
+      "bytes": 221914,
+      "duration_ms": 779,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "requirements.txt",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 40,
+      "typescript": 0,
+      "go": 0,
+      "other": 14
+    },
+    "llm_calls": [],
+    "models": [
+      {
+        "id": "m1",
+        "file": "config/models.py",
+        "line": 9,
+        "provider": "anthropic",
+        "model": "claude-sonnet-4.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "config/models.py",
+        "line": 12,
+        "provider": "google",
+        "model": "gemini-3-pro",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [
+      {
+        "file": "main.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 154,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 167,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 178,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 178,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 179,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 181,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 183,
+        "kind": "webhook",
+        "symbol": "Webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 190,
+        "kind": "http",
+        "symbol": "await request.",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 191,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 193,
+        "kind": "webhook",
+        "symbol": "Webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 195,
+        "kind": "webhook",
+        "symbol": "WEBHOOK",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 199,
+        "kind": "webhook",
+        "symbol": "Webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 202,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 206,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 206,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 207,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 208,
+        "kind": "webhook",
+        "symbol": "webhook",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 227,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 258,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 288,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 302,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 316,
+        "kind": "http",
+        "symbol": "@app.get",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 325,
+        "kind": "http",
+        "symbol": "@app.post",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "config/personality/__init__.py",
+        "line": 22,
+        "kind": "literal",
+        "name": "SYSTEM_PROMPT",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "config/personality/__init__.py",
+        "line": 22,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "config/personality/instructions.py",
+        "line": 7,
+        "kind": "literal",
+        "name": "INSTRUCTIONS",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "config/prompts/agent_autopost.py",
+        "line": 8,
+        "kind": "literal",
+        "name": "AUTOPOST_AGENT_PROMPT",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "config/prompts/mention_reply_agent.py",
+        "line": 10,
+        "kind": "literal",
+        "name": "MENTION_REPLY_AGENT_PROMPT",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "config/prompts/mention_selector.py",
+        "line": 7,
+        "kind": "literal",
+        "name": "MENTION_SELECTOR_PROMPT",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "config/prompts/mention_selector_agent.py",
+        "line": 9,
+        "kind": "literal",
+        "name": "MENTION_SELECTOR_AGENT_PROMPT",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "config/prompts/unified_agent.py",
+        "line": 8,
+        "kind": "literal",
+        "name": "AGENT_INSTRUCTIONS",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/autopost.py",
+        "line": 34,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/autopost.py",
+        "line": 114,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/autopost.py",
+        "line": 115,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/autopost.py",
+        "line": 155,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/llm.py",
+        "line": 44,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/llm.py",
+        "line": 83,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 228,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 228,
+        "kind": "literal",
+        "name": "user_prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 318,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 321,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 424,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 426,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 426,
+        "kind": "literal",
+        "name": "user_prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 460,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 463,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/mentions.py",
+        "line": 466,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 124,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 124,
+        "kind": "literal",
+        "name": "context",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 210,
+        "kind": "assembly",
+        "name": "system_prompt",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 210,
+        "kind": "literal",
+        "name": "system_prompt",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 226,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "services/unified_agent.py",
+        "line": 257,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "tools/legacy/image_generation.py",
+        "line": 39,
+        "kind": "literal",
+        "name": "IMAGE_SYSTEM_PROMPT",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "tools/legacy/image_generation.py",
+        "line": 280,
+        "kind": "assembly",
+        "name": "",
+        "is_system": true,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "main.py",
+        "line": 30,
+        "kind": "outreach_schedule",
+        "symbol": "AsyncIOScheduler(",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 77,
+        "kind": "outreach_schedule",
+        "symbol": ".add_job(",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 92,
+        "kind": "outreach_schedule",
+        "symbol": ".add_job(",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 103,
+        "kind": "outreach_schedule",
+        "symbol": ".add_job(",
+        "unit": "u0"
+      },
+      {
+        "file": "main.py",
+        "line": 115,
+        "kind": "outreach_schedule",
+        "symbol": ".add_job(",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

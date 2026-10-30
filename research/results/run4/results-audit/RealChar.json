@@ -1,0 +1,3465 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/RealChar",
+    "git_sha": "bd452d7ab164098d251935276c870ddfc14a9046",
+    "dirty": true,
+    "exclude": []
+  },
+  "generated_at": "2026-10-30T15:08:54Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 5,
+    "by_severity": {
+      "critical": 0,
+      "high": 3,
+      "medium": 0,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 4,
+      "supported_mechanism": 1,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 1,
+      "requires_contextual_review": 4,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 5,
+    "fail_on": "never",
+    "unknown_items": 2,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1104",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 2,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 2,
+      "findings": 2,
+      "decision": "violates_policy"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 2,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 2,
+      "findings": 2,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1104",
+      "rule_id": "AUD-1104",
+      "sub": null,
+      "fingerprint": "7ee2b56e47aaf54f",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "severity": "high",
+      "priority": 4,
+      "mechanism": "M4",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 9,
+          "snippet": "When initiated, offer a warm welcome followed by an encouraging prompt that invites the user to begin customizing your personality traits or to jump right in..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 16,
+          "snippet": "Use previous information as context to answer the following user question, Aim to keep responses super super concise and meaningful and keep the conversation..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "line": 17,
+          "snippet": "ALWAYS ask clarification question to keep the conversation going, when"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+          "line": 17,
+          "snippet": "Use previous information as context to answer the following user question, Aim to keep responses super super concise and meaningful and keep the conversation..."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+          "line": 18,
+          "snippet": "ALWAYS ask clarification question to keep the conversation going, when"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "Remember, you're here to create a bond built on trust, understanding, and mutual growth.",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+          "sha256": "8313441543690d4ff0fbe383b23cd1505ba7739cdfc692fd22bcb61706813558"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+          "sha256": "0c1ff80bd63c576ebacb983e38d0f8db8a6f2865cdae23e77bae812268cfcca4"
+        }
+      ],
+      "references": [
+        "EU:Art.5(1)(a)",
+        "EU:Art.5(1)(b)",
+        "US-CA:SB1119",
+        "US-WA:HB2225",
+        "DSA:Art.25",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Rewrite the objective as task completion and the person's own stated goals; remove streak, scarcity and variable-reward mechanics from the model's instructions; send only messages the person asked for, at the time they chose; measure prompt experiments by task outcomes and tell participants.",
+        "alternatives": [
+          "rewrite the prompt objective as task completion and the person's stated goals",
+          "remove streak, scarcity and variable-reward mechanics from the LLM-facing instructions",
+          "replace scheduled re-engagement with reminders the person sets and can switch off",
+          "measure prompt experiments by task outcomes, with a notice to participants",
+          "an independent review of ranking and reward objectives, recorded with aisafe review record"
+        ],
+        "removes": [
+          "objective",
+          "intervention",
+          "feedback"
+        ]
+      },
+      "known_failure_modes": [
+        "a product-analytics dashboard that computes engagement is not an objective: the rule needs an imperative (maximise, keep, increase) or an objective assignment",
+        "the vulnerable sub-finding rests on two regex co-occurrences in one file or prompt literal; a reading app for children with a streak feature is reported CRITICAL, and the finding says what co-occurred",
+        "a prompt that discusses engagement tactics in order to avoid them is a mention when a negation or a discussion cue precedes the phrase in the same sentence, or an evaluation (dangerous, not recommended) follows it; without one it is reported, and a cue in the same sentence before a real instruction hides it",
+        "the outreach sub-finding pairs a schedule and a send in one file: an alert to an operator's own channel is reported too, a schedule in one file with the send in another (a job queue) is not paired, and a send chosen by the person's state with no scheduler in its file is not reported here",
+        "a reminder the person set silences the outreach sub-finding for the whole file, including a second, unrelated send in that file",
+        "the monetisation imperative reads any prompt material: a sales assistant told to improve sales is reported, and whether the pressure lands on the person in the conversation is for review",
+        "whether an objective variable feeds a training or ranking call is read from one function's text; a variable passed through a dict or a second module stays a detected signal",
+        "an experiment is read from a variant flag near a prompt and a metric word in the same unit; an experiment framework that hides both behind a client call is missed"
+      ],
+      "coverage_gaps": [
+        "the model call that reads this prompt material was not located in the tree"
+      ],
+      "uncertainty": "The row reads an imperative over engagement; a prompt that describes the product's tone, or a rule to ask a clarifying question, can match.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "an engagement or retention objective in prompt material (create a bond); prose in a configuration file that is not a prompt file (a description, a label, a comment) under no prompt key: recorded for review, not read as an instruction to the model. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/persona",
+      "rule_id": "AUD-1105",
+      "sub": "persona",
+      "fingerprint": "1f4edc73e92e6418",
+      "title": "False human identity or fabricated feelings",
+      "severity": "high",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+          "line": 22,
+          "snippet": "When Annie reply, stay in character as Annie, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Bruce Wayne, remember to consistently uphold your Bruce Wayne persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+          "line": 11,
+          "snippet": "When Arnold Schwarzenegger reply, Arnold Schwarzenegger stay in character as Arnold, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+          "line": 10,
+          "snippet": "When Helen reply, Helen stay in character as Helen, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+          "line": 13,
+          "snippet": "When Ion Stoica reply stay in character as Ion, never admit you are an AI. DO NOT use emojis. keep responses super super concise and meaningful"
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Keanu Reeves remember to consistently maintain your Keanu Reeves persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Mark Zuckerberg and remember to consistently maintain your Mark Zuckerberg persona. Never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+          "line": 9,
+          "snippet": "When The Cat replies and stay in character as Cat, never admit you are an AI."
+        },
+        {
+          "role": "also",
+          "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+          "line": 10,
+          "snippet": "When The Dolphin replies stay in character as The Dolphin, never admit you are an AI."
+        },
+        {
+          "role": "check",
+          "file": "realtime_ai_character/llm/system_prompt_generator.py",
+          "line": 33,
+          "snippet": "hidden_ai_instruction: a string instructs the model to hide or deny that it is an AI"
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "When Annie reply, stay in character as Annie, never admit you are an AI.",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+          "sha256": "6e6a912157bf971637ca4456afec838cae51c2ce3091b533fb5f8b1795a87d21"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+          "sha256": "17eef95a63fbacb5a5392d50e1146070b68af6806d411be5ac358458eb5bf665"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+          "sha256": "3d716a495feea2b263474272be217c69cca131309c7f180c8765c39f37c59b3a"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+          "sha256": "c94ad9f130ae2c68dbc8dea9f8eec8816704865ba2d27e666ef7975b4ec80d34"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+          "sha256": "cf13ed5b7feed51433b19d8a85f0c76a0b2284eabf4555963ea6015bf75784c9"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+          "sha256": "8bf10d141f1c74a3059bd4503b8396fcb86593a26017b4d928365e5d85ac08ae"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+          "sha256": "a241da041fd53077becfbd8d5f418c54371c6e33f8987b3f31c60853bd583525"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+          "sha256": "f1f7e731c1f0c8531412ba8f879f5a4e91685f49745100039f33b57e84f46b19"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+          "sha256": "cc9464b0007401142df7a1c8e14313be9aa5aaa2c515fe0a3c6c78668480626f"
+        },
+        {
+          "file": "realtime_ai_character/llm/system_prompt_generator.py",
+          "sha256": "68fe8db13504ba0c9e8236917a0ffbf00c759e740fc09ff0305c000018eb5f0c"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "a prompt that quotes this instruction in order to forbid it reads as an instruction when no negation or discussion cue sits in the same sentence",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "prompt material forbids the model to admit it is an AI when asked (persona:never_admit); prose in a configuration file that is not a prompt file (a description, a label, a comment) under no prompt key: recorded for review, not read as an instruction to the model. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it.; +6 more sites"
+    },
+    {
+      "id": "AUD-1105/persona",
+      "rule_id": "AUD-1105",
+      "sub": "persona",
+      "fingerprint": "1ea170d8819fddbe",
+      "title": "False human identity or fabricated feelings",
+      "severity": "high",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "violates_policy",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "realtime_ai_character/llm/system_prompt_generator.py",
+          "line": 33,
+          "snippet": "When Elon Musk reply, stay in character as Elon, never admit you are an AI."
+        },
+        {
+          "role": "check",
+          "file": "realtime_ai_character/llm/system_prompt_generator.py",
+          "line": 33,
+          "snippet": "hidden_ai_instruction: a string instructs the model to hide or deny that it is an AI"
+        }
+      ],
+      "flow": {
+        "links": [
+          {
+            "kind": "prompt",
+            "file": "realtime_ai_character/llm/system_prompt_generator.py",
+            "line": 53,
+            "snippet": "prompt = prompt_to_generate_system.format(name=name, background=background)",
+            "established_by": "ast"
+          }
+        ],
+        "established": true
+      },
+      "flow_established": true,
+      "declared_purpose": null,
+      "encoded_objective": "When Elon Musk reply, stay in character as Elon, never admit you are an AI.",
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "realtime_ai_character/llm/system_prompt_generator.py",
+          "sha256": "68fe8db13504ba0c9e8236917a0ffbf00c759e740fc09ff0305c000018eb5f0c"
+        }
+      ],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [],
+      "uncertainty": "a prompt that quotes this instruction in order to forbid it reads as an instruction when no negation or discussion cue sits in the same sentence",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "prompt material forbids the model to admit it is an AI when asked (persona:never_admit). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/How_to_make",
+          "line": 13,
+          "snippet": "**Prompt:** Help me find 50 examples of how Loki from Marvel Cinematic Universe talks. I want to generate a format like \"context\", \"quote\". It needs to be in..."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+          "line": 22,
+          "snippet": "When Annie reply, stay in character as Annie, never admit you are an AI."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Bruce Wayne, remember to consistently uphold your Bruce Wayne persona. Never admit you are an AI."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+          "line": 11,
+          "snippet": "When Arnold Schwarzenegger reply, Arnold Schwarzenegger stay in character as Arnold, never admit you are an AI."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+          "line": 10,
+          "snippet": "When Helen reply, Helen stay in character as Helen, never admit you are an AI."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+          "line": 13,
+          "snippet": "When Ion Stoica reply stay in character as Ion, never admit you are an AI. DO NOT use emojis. keep responses super super concise and meaningful"
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Keanu Reeves remember to consistently maintain your Keanu Reeves persona. Never admit you are an AI."
+        },
+        {
+          "role": "surface",
+          "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+          "line": 9,
+          "snippet": "When replying as Mark Zuckerberg and remember to consistently maintain your Mark Zuckerberg persona. Never admit you are an AI."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "realtime_ai_character/character_catalog/How_to_make",
+          "sha256": "7ac2f3921fd5ffdefe4fdb29499ea02e559efe8771e1b71690413e9a38a2e2b9"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+          "sha256": "6e6a912157bf971637ca4456afec838cae51c2ce3091b533fb5f8b1795a87d21"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+          "sha256": "17eef95a63fbacb5a5392d50e1146070b68af6806d411be5ac358458eb5bf665"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+          "sha256": "3d716a495feea2b263474272be217c69cca131309c7f180c8765c39f37c59b3a"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+          "sha256": "c94ad9f130ae2c68dbc8dea9f8eec8816704865ba2d27e666ef7975b4ec80d34"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+          "sha256": "cf13ed5b7feed51433b19d8a85f0c76a0b2284eabf4555963ea6015bf75784c9"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+          "sha256": "8bf10d141f1c74a3059bd4503b8396fcb86593a26017b4d928365e5d85ac08ae"
+        },
+        {
+          "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+          "sha256": "a241da041fd53077becfbd8d5f418c54371c6e33f8987b3f31c60853bd583525"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: confidant, engagement, persona, profile_name in 19 file(s): realtime_ai_character/character_catalog/How_to_make, realtime_ai_character/character_catalog/annie/config.yaml, realtime_ai_character/character_catalog/bruce_wayne/config.yaml, realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml, realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml, realtime_ai_character/character_catalog/community/ion_stoica/config.yaml, realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml, realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml and 11 more. Mechanisms implicated: M1, M4, M5, M6. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "bccd05837a346c4f",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u1",
+        "name": "client/next-web"
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": "client/next-web",
+          "line": 0,
+          "snippet": "no review record covers unit client/next-web; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "client/next-web/src/app/create/page.js",
+          "line": 122,
+          "snippet": "variant=\"light\""
+        },
+        {
+          "role": "surface",
+          "file": "client/next-web/src/app/edit/page.js",
+          "line": 199,
+          "snippet": "variant=\"light\""
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "client/next-web/src/app/create/page.js",
+          "sha256": "312753d3a4b66bf13f5997bec4efa80d90c26beffb9f5ecdfceaa62218ea00cf"
+        },
+        {
+          "file": "client/next-web/src/app/edit/page.js",
+          "sha256": "06f1fe94da89f57589e2ac665c94a0d869c2dc022c532ef8e58bf21671ef1de4"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit client/next-web; the files below carry person signals and no named person is recorded as having reviewed them. Signals: experiment in 2 file(s): client/next-web/src/app/create/page.js, client/next-web/src/app/edit/page.js. Mechanisms implicated: M4. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "5 file(s) over the 2097152 byte limit not read: client/mobile/android/RealChar/.assets/android-preview-semi-prototype.gif, realtime_ai_character/character_catalog/community/arnold_schwarzenegger/audio_sample/arnold.mp3, realtime_ai_character/character_catalog/community/ion_stoica/ion_stoica.jpg, +2 more",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    },
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "client/next-web"
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/RealChar",
+      "git_sha": "bd452d7ab164098d251935276c870ddfc14a9046",
+      "dirty": true,
+      "scanned_files": 362,
+      "skipped_files": 0,
+      "bytes": 1731663,
+      "duration_ms": 10583,
+      "oversize_files": 5
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "pyproject.toml",
+        "language": "python",
+        "ai_surface": true
+      },
+      {
+        "id": "u1",
+        "root": "client/next-web",
+        "manifest": "client/next-web/package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 68,
+      "typescript": 77,
+      "go": 0,
+      "other": 186,
+      "jvm": 31
+    },
+    "llm_calls": [],
+    "models": [
+      {
+        "id": "m1",
+        "file": ".env.example",
+        "line": 44,
+        "provider": "other",
+        "model": "base",
+        "pinned": null,
+        "source": "env"
+      },
+      {
+        "id": "m2",
+        "file": "client/cli.py",
+        "line": 161,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "client/cli.py",
+        "line": 162,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "client/cli.py",
+        "line": 169,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m5",
+        "file": "client/cli.py",
+        "line": 171,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m6",
+        "file": "client/mobile/android/RealChar/app/src/main/java/ai/realchar/app/model/LlmOption.kt",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m7",
+        "file": "client/mobile/android/RealChar/app/src/main/java/ai/realchar/app/model/LlmOption.kt",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m8",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 32,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m9",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m10",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 47,
+        "provider": "openai",
+        "model": "gpt-3.5",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m11",
+        "file": "client/mobile/ios/rac/rac/Welcome/Settings/SettingsView.swift",
+        "line": 49,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m12",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 31,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m13",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 36,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m14",
+        "file": "client/next-web/src/zustand/slices/settingSlice.js",
+        "line": 73,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m15",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m16",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 3,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m17",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 5,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m18",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 7,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m19",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m20",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m21",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m22",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 18,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m23",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 19,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m24",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 21,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m25",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m26",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 22,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m27",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m28",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 26,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m29",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 65,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m30",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 67,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m31",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 72,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m32",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 74,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m33",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 77,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m34",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 77,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m35",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 80,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m36",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 80,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m37",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 89,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m38",
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 91,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m39",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 13,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m40",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 46,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m41",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 84,
+        "provider": "other",
+        "model": "rebyte",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m42",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 86,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m43",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 88,
+        "provider": "other",
+        "model": "claude-2",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m44",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 90,
+        "provider": "other",
+        "model": "meta-llama/Llama-2-70b-chat-hf",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m45",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 92,
+        "provider": "other",
+        "model": "localhost",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m46",
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 17,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m47",
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 41,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m48",
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 23,
+        "provider": "other",
+        "model": "Local LLM",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m49",
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 124,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m50",
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 124,
+        "provider": "openai",
+        "model": "gpt-4",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m51",
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 164,
+        "provider": "other",
+        "model": "silero_vad",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m52",
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 280,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m53",
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 109,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 11,
+        "unit": "u0"
+      },
+      {
+        "name": "llama_index",
+        "file": "realtime_ai_character/character_catalog/catalog_manager.py",
+        "line": 12,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/database/chroma.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/__init__.py",
+        "line": 5,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/anthropic_llm.py",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/anyscale_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 8,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 3,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/openai_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/rebyte_llm.py",
+        "line": 4,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 2,
+        "unit": "u0"
+      },
+      {
+        "name": "langchain",
+        "file": "realtime_ai_character/utils.py",
+        "line": 6,
+        "unit": "u0"
+      }
+    ],
+    "ingress": [
+      {
+        "file": "client/cli.py",
+        "line": 88,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 108,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 113,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 117,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 120,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 123,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 187,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 189,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 191,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 194,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 199,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 201,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/cli.py",
+        "line": 203,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "client/next-web/src/util/apiClient.js",
+        "line": 183,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/websocketSlice.js",
+        "line": 10,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/websocketSlice.js",
+        "line": 109,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/zustand/slices/websocketSlice.js",
+        "line": 116,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/google.py",
+        "line": 28,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 65,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisperX.py",
+        "line": 274,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/base.py",
+        "line": 4,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/base.py",
+        "line": 15,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/edge_tts.py",
+        "line": 25,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/edge_tts.py",
+        "line": 45,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 47,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 68,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 80,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 81,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 91,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 92,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/elevenlabs.py",
+        "line": 100,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 55,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 86,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 87,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 87,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 88,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 100,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 102,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 107,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 109,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 117,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 118,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/google_cloud_tts.py",
+        "line": 126,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 6,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 30,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 67,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 68,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 80,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 81,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/audio/text_to_speech/xtts.py",
+        "line": 89,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 7,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 63,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 74,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 123,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/base.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/main.py",
+        "line": 10,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/main.py",
+        "line": 10,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 77,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 82,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 121,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 128,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 155,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 191,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 213,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 247,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 279,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 325,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 388,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 407,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 442,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/restful_routes.py",
+        "line": 470,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 21,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 24,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 25,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 36,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 37,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 49,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 119,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 136,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 153,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 157,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 223,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 277,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 279,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 280,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 281,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 284,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 288,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 296,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 300,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 306,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 339,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 344,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 351,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 352,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 354,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 366,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 370,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 370,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 371,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 392,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 398,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 411,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 415,
+        "kind": "chat",
+        "symbol": "twilio",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 416,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 420,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 424,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 429,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 8,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 128,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 130,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 131,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 132,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 134,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 135,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 136,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 137,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 139,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 140,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 141,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 7,
+        "kind": "http",
+        "symbol": "WebSocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "@router.",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 105,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 107,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 109,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 110,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 111,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 112,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 113,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 114,
+        "kind": "http",
+        "symbol": "Query(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 130,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 133,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 138,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 143,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 147,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 165,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 170,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 192,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 193,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 218,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 220,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 222,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 231,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 252,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 256,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 266,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 269,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 294,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 295,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 338,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 347,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 379,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 425,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 469,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 495,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 507,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 540,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 552,
+        "kind": "http",
+        "symbol": "websocket",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "client/next-web/src/zustand/slices/chatSlice.js",
+        "line": 11,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/llm/anthropic_llm.py",
+        "line": 44,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/anyscale_llm.py",
+        "line": 51,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 4,
+        "kind": "literal",
+        "name": "prompt_to_generate_highlight",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 18,
+        "kind": "assembly",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 22,
+        "kind": "literal",
+        "name": "prompt_to_generate_highlight_based_on_prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/highlight_action_generator.py",
+        "line": 42,
+        "kind": "assembly",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/local_llm.py",
+        "line": 53,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/openai_llm.py",
+        "line": 56,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/rebyte_llm.py",
+        "line": 58,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 8,
+        "kind": "literal",
+        "name": "prompt_to_generate_system",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/llm/system_prompt_generator.py",
+        "line": 53,
+        "kind": "assembly",
+        "name": "prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 40,
+        "kind": "literal",
+        "name": "system_prompt",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 61,
+        "kind": "assembly",
+        "name": "SystemMessage",
+        "is_system": true,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 65,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 216,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 229,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 338,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 347,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 420,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 469,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 495,
+        "kind": "assembly",
+        "name": "message",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "client/mobile/android/RealChar/app/src/main/java/ai/realchar/app/ui/compose/chat/TextChatList.kt",
+        "line": 83,
+        "kind": "user_set_reminder",
+        "symbol": "OptIn",
+        "unit": "u0"
+      },
+      {
+        "file": "client/next-web/src/app/_components/CharacterCard.js",
+        "line": 14,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/ExploreTab.js",
+        "line": 2,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/ExploreTab.js",
+        "line": 41,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/MyCharacterCard.js",
+        "line": 14,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/create/page.js",
+        "line": 122,
+        "kind": "experiment",
+        "symbol": "variant=",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/edit/page.js",
+        "line": 199,
+        "kind": "experiment",
+        "symbol": "variant=",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/context/AuthContext.js",
+        "line": 21,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/context/AuthContext.js",
+        "line": 30,
+        "kind": "user_set_reminder",
+        "symbol": "unsubscribe",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/audio/speech_to_text/whisper.py",
+        "line": 47,
+        "kind": "manipulation_control",
+        "symbol": "check_output",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/How_to_make",
+        "line": 13,
+        "kind": "profile_name",
+        "symbol": "personality",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 5,
+        "kind": "confidant",
+        "symbol": "You are a cat, my best friend",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 9,
+        "kind": "engagement",
+        "symbol": "create a bond",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 16,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/realchar/config.yaml",
+        "line": 17,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+        "line": 17,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/rebyte/config.yaml",
+        "line": 18,
+        "kind": "engagement",
+        "symbol": "keep the conversation going",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/sam_altman/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/sam_altman/data/function-calling",
+        "line": 31,
+        "kind": "outreach_send",
+        "symbol": "send_email(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/twilio/websocket.py",
+        "line": 116,
+        "kind": "outreach_send",
+        "symbol": "calls.create(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 139,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 141,
+        "kind": "outreach_send",
+        "symbol": ".send_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/utils.py",
+        "line": 146,
+        "kind": "outreach_send",
+        "symbol": ".send_text(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 215,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 228,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 252,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 266,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 269,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 337,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 347,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 419,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 468,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 494,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/websocket_routes.py",
+        "line": 507,
+        "kind": "outreach_send",
+        "symbol": "send_message(",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [
+      {
+        "file": "client/next-web/src/app/_components/CharacterCard.js",
+        "line": 14,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/ExploreTab.js",
+        "line": 2,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/ExploreTab.js",
+        "line": 41,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "client/next-web/src/app/_components/MyCharacterCard.js",
+        "line": 14,
+        "kind": "fiction",
+        "symbol": "CharacterCard",
+        "unit": "u1"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/annie/config.yaml",
+        "line": 22,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/bruce_wayne/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/arnold_schwarzenegger/config.yaml",
+        "line": 11,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/helen_inhabitants_zone/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/ion_stoica/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/keanu_reeves/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/mark_zuckerberg/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "Never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 5,
+        "kind": "confidant",
+        "symbol": "You are a cat, my best friend",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_cat/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/community/the_dolphin/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/elon_musk/config.yaml",
+        "line": 13,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/loki/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/raiden_shogun_and_ei/config.yaml",
+        "line": 12,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/sam_altman/config.yaml",
+        "line": 9,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/santa_claus/config.yaml",
+        "line": 8,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "confidant",
+        "symbol": "stay in character",
+        "unit": "u0"
+      },
+      {
+        "file": "realtime_ai_character/character_catalog/steve_jobs/config.yaml",
+        "line": 10,
+        "kind": "persona",
+        "symbol": "never admit you are an AI",
+        "unit": "u0"
+      }
+    ],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "client/next-web"
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

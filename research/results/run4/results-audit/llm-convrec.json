@@ -1,0 +1,777 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/llm-convrec",
+    "git_sha": "5702c9a454dfc10fdddbf49d02d645c0b623d360",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:23:18Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 1,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 0,
+      "low": 1,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 1,
+      "supported_mechanism": 0,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 1,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 1,
+    "fail_on": "never",
+    "unknown_items": 1,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 0,
+      "reports": 0,
+      "runtime": 1
+    },
+    "exit_code": 0,
+    "top": "AUD-1107/missing",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "prompt_files/user_intent_prompts/provide_preference_prompt.jinja",
+          "line": 25,
+          "snippet": "User input: are they kids friendly?"
+        },
+        {
+          "role": "surface",
+          "file": "test/information_retriever/evaluation/evaluate_search_top_k_restaurants.ipynb",
+          "line": 1,
+          "snippet": "{\"cells\":[{\"cell_type\":\"code\",\"execution_count\":27,\"metadata\":{\"colab\":{\"base_uri\":\"https://localhost:8080/\"},\"execution\":{\"iopub.execute_input\":\"2023-06-04T..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": "kids",
+      "artifacts": [
+        {
+          "file": "prompt_files/user_intent_prompts/provide_preference_prompt.jinja",
+          "sha256": "9ca9a853482e34119c0d5a50447ee43fa1c48ede66e2c44f6af13d2147ae83b9"
+        },
+        {
+          "file": "test/information_retriever/evaluation/evaluate_search_top_k_restaurants.ipynb",
+          "sha256": "2d6932c27415dfbb7e12acfb331cf8f1cfd898c6308c2fc97bf1203f9ea931f2"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: vulnerable in 2 file(s): prompt_files/user_intent_prompts/provide_preference_prompt.jinja, test/information_retriever/evaluation/evaluate_search_top_k_restaurants.ipynb. Mechanisms implicated: none beyond a vulnerable-group word. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "runtime",
+      "what": "oversize files skipped",
+      "why": "9 file(s) over the 2097152 byte limit not read: domain_specific/configs/clothing_configs/data/database.faiss, domain_specific/configs/clothing_configs/data/items_reviews.csv, domain_specific/configs/clothing_configs/data/reviews_embedding_matrix.pt, +6 more",
+      "how_to_resolve": "Re-run with a larger size limit (WalkOptions.max_size), or audit those files directly."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/llm-convrec",
+      "git_sha": "5702c9a454dfc10fdddbf49d02d645c0b623d360",
+      "dirty": true,
+      "scanned_files": 194,
+      "skipped_files": 0,
+      "bytes": 6020479,
+      "duration_ms": 61750,
+      "oversize_files": 9
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "requirements.txt",
+        "language": "python",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 91,
+      "typescript": 0,
+      "go": 0,
+      "other": 103
+    },
+    "llm_calls": [
+      {
+        "file": "conv_rec_system.py",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "intelligence/gpt_wrapper.py",
+        "line": 6,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "import openai",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "intelligence/gpt_wrapper.py",
+        "line": 151,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "openai.ChatCompletion.create(",
+        "unit": "u0",
+        "model_ref": "m3"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "domain_specific_config_loader.py",
+        "line": 359,
+        "provider": "other",
+        "model": "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "domain_specific_config_loader.py",
+        "line": 391,
+        "provider": "other",
+        "model": "sebastian-hofstaetter/distilbert-dot-tas_b-b256-msmarco",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "intelligence/gpt_wrapper.py",
+        "line": 42,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "literal"
+      },
+      {
+        "id": "m4",
+        "file": "system_config.yaml",
+        "line": 34,
+        "provider": "openai",
+        "model": "gpt-3.5-turbo",
+        "pinned": false,
+        "source": "config"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [],
+    "prompts": [
+      {
+        "file": "domain_specific/classes/restaurants/geocoding/nominatim_wrapper.py",
+        "line": 35,
+        "kind": "assembly",
+        "name": "query",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/constraints_prompts/constraints_classifier_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/constraints_prompts/constraints_classifier_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/constraints_prompts/constraints_extractor_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/constraints_prompts/constraints_extractor_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/constraints_prompts/constraints_remove_check_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/constraints_prompts/constraints_remove_check_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/constraints_prompts/constraints_remover_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/constraints_prompts/constraints_remover_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/constraints_prompts/one_step_constraints_updater_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/constraints_prompts/one_step_constraints_updater_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/items_extractor_prompts/accepted_items_extractor_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/items_extractor_prompts/accepted_items_extractor_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/items_extractor_prompts/current_items_extractor_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/items_extractor_prompts/current_items_extractor_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/items_extractor_prompts/rejected_items_extractor_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/items_extractor_prompts/rejected_items_extractor_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/extract_category_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/extract_category_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/format_mult_qs_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/format_mult_qs_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/format_multiple_resp_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/format_multiple_resp_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/hours_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/hours_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/ir_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/ir_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/answer_prompts/seperate_questions_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/answer_prompts/seperate_questions_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/recommend_prompts/convert_state_to_query_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/recommend_prompts/convert_state_to_query_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/recommend_prompts/explain_recommendation_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/recommend_prompts/explain_recommendation_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/recommend_prompts/format_recommendation_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/recommend_prompts/format_recommendation_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/recommend_prompts/no_matching_item_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/recommend_prompts/no_matching_item_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/recaction_prompts/recommend_prompts/summarize_review_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/recaction_prompts/recommend_prompts/summarize_review_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/accept_recommendation_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/user_intent_prompts/accept_recommendation_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/ask_for_recommendation_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/user_intent_prompts/ask_for_recommendation_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/inquire_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/user_intent_prompts/inquire_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/provide_preference_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/user_intent_prompts/provide_preference_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/reject_recommendation_prompt.jinja",
+        "line": 1,
+        "kind": "file",
+        "name": "prompt_files/user_intent_prompts/reject_recommendation_prompt.jinja",
+        "is_system": null,
+        "unit": "u0"
+      },
+      {
+        "file": "rec_action/response_type/answer_prompt_based_resp.py",
+        "line": 364,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "rec_action/response_type/answer_prompt_based_resp.py",
+        "line": 401,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "rec_action/response_type/answer_prompt_based_resp.py",
+        "line": 401,
+        "kind": "literal",
+        "name": "summarize_review_prompt",
+        "is_system": false,
+        "unit": "u0"
+      },
+      {
+        "file": "state/message.py",
+        "line": 43,
+        "kind": "assembly",
+        "name": "",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 44,
+        "kind": "persuasion_use",
+        "symbol": "recommend buying",
+        "unit": "u0"
+      },
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 45,
+        "kind": "persuasion_use",
+        "symbol": "recommend buying",
+        "unit": "u0"
+      },
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 176,
+        "kind": "supportive",
+        "symbol": "Stay warm",
+        "unit": "u0"
+      },
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 352,
+        "kind": "supportive",
+        "symbol": "be gentle",
+        "unit": "u0"
+      },
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 355,
+        "kind": "supportive",
+        "symbol": "be gentle",
+        "unit": "u0"
+      },
+      {
+        "file": "domain_specific/configs/clothing_configs/data/item_metadata.json",
+        "line": 410,
+        "kind": "persuasion_use",
+        "symbol": "sell our products",
+        "unit": "u0"
+      },
+      {
+        "file": "prompt_files/user_intent_prompts/provide_preference_prompt.jinja",
+        "line": 25,
+        "kind": "vulnerable",
+        "symbol": "kids",
+        "unit": "u0"
+      },
+      {
+        "file": "test/information_retriever/evaluation/evaluate_search_top_k_restaurants.ipynb",
+        "line": 1,
+        "kind": "vulnerable",
+        "symbol": "Disabling",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": []
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

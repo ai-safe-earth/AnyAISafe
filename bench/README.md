@@ -176,10 +176,11 @@ The research study (`research/`) runs the same harness over its own pinned corpu
 restricted to the rules it measures, with everything written under its own folder:
 
 ```bash
-python bench/run.py --corpus research/corpus.yaml --out-dir research/results/run3 \
-    --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107,AUD-1108 --keep-clones
-python bench/score.py --tool audit --csv research/results/run3/findings-audit.csv \
-    --results research/results/run3/results-audit --out research/results/run3/precision-audit.md
+python bench/run.py --corpus research/corpus.yaml --out-dir research/results/run4 \
+    --rules AUD-1101,AUD-1102,AUD-1103,AUD-1104,AUD-1105,AUD-1106,AUD-1107,AUD-1108,AUD-1109,AUD-1110 \
+    --keep-clones
+python bench/score.py --tool audit --csv research/results/run4/findings-audit.csv \
+    --results research/results/run4/results-audit --out research/results/run4/precision-audit.md
 ```
 
 `--rules` is passed through as `aisafe audit --rules`. Clones are shared in

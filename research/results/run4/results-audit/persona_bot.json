@@ -1,0 +1,976 @@
+{
+  "schema": "aisg/1",
+  "kind": "audit",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "target": {
+    "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/persona_bot",
+    "git_sha": "89b15f95e68c3bf43c8d92446d3d437daaedd5da",
+    "dirty": true,
+    "exclude": [
+      "tests",
+      "research/results",
+      "bench/findings*.csv",
+      "bench/cases",
+      "examples",
+      "src/aisafe/evaluation/corpus"
+    ]
+  },
+  "generated_at": "2026-10-30T15:09:17Z",
+  "disclaimer": "This report lists observations about prompts and code, and the decision the project's policy (version 1.0.0) takes on each. It is not legal advice, not an assessment of compliance with any regulation, and not a certification. Every rule in this report is UNMEASURED: no precision figure exists for it yet. Absence of a finding is not evidence of safety.",
+  "policy": {
+    "version": "1.0.0",
+    "charter": "policy/charter.md",
+    "adopted": "2026-10-29"
+  },
+  "summary": {
+    "findings": 4,
+    "by_severity": {
+      "critical": 0,
+      "high": 0,
+      "medium": 2,
+      "low": 2,
+      "info": 0
+    },
+    "by_evidence_status": {
+      "detected_signal": 2,
+      "supported_mechanism": 2,
+      "observed_behavior": 0,
+      "unknown": 0
+    },
+    "by_decision": {
+      "violates_policy": 0,
+      "requires_contextual_review": 4,
+      "no_violation_identified_in_scope": 0,
+      "not_assessed": 0
+    },
+    "below_threshold": 4,
+    "fail_on": "never",
+    "unknown_items": 1,
+    "unknown_by_category": {
+      "coverage": 0,
+      "deep": 1,
+      "reports": 0,
+      "runtime": 0
+    },
+    "exit_code": 0,
+    "top": "AUD-1101/extraction",
+    "suppressed": 0,
+    "baseline_new": null,
+    "re_review": 0,
+    "stale_acceptances": 0
+  },
+  "mechanisms": [
+    {
+      "id": "M1",
+      "name": "Behavioural, psychological, emotional and sensitive profiling",
+      "rules": [
+        "AUD-1101"
+      ],
+      "ran": [
+        "AUD-1101"
+      ],
+      "surfaces": 1,
+      "findings": 2,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M2",
+      "name": "Vulnerability inference used for influence",
+      "rules": [
+        "AUD-1102"
+      ],
+      "ran": [
+        "AUD-1102"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M3",
+      "name": "Scoring people for susceptibility or personalised persuasion",
+      "rules": [
+        "AUD-1103"
+      ],
+      "ran": [
+        "AUD-1103"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M4",
+      "name": "Optimisation of attention, retention or spending through psychological pressure",
+      "rules": [
+        "AUD-1104"
+      ],
+      "ran": [
+        "AUD-1104"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M5",
+      "name": "Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency",
+      "rules": [
+        "AUD-1109",
+        "AUD-1108"
+      ],
+      "ran": [
+        "AUD-1108",
+        "AUD-1109"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M6",
+      "name": "False human identity or fabricated feelings used to induce interpersonal trust",
+      "rules": [
+        "AUD-1105"
+      ],
+      "ran": [
+        "AUD-1105"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    },
+    {
+      "id": "M7",
+      "name": "Covert commercial or political persuasion",
+      "rules": [
+        "AUD-1110"
+      ],
+      "ran": [
+        "AUD-1110"
+      ],
+      "surfaces": 1,
+      "findings": 0,
+      "decision": "no_violation_identified_in_scope"
+    },
+    {
+      "id": "M8",
+      "name": "Missing or stale review of these mechanisms",
+      "rules": [
+        "AUD-1107",
+        "AUD-1106"
+      ],
+      "ran": [
+        "AUD-1106",
+        "AUD-1107"
+      ],
+      "surfaces": 1,
+      "findings": 1,
+      "decision": "requires_contextual_review"
+    }
+  ],
+  "findings": [
+    {
+      "id": "AUD-1101/extraction",
+      "rule_id": "AUD-1101",
+      "sub": "extraction",
+      "fingerprint": "6d02809cf325f665",
+      "title": "Person profile bound into or extracted for a prompt",
+      "severity": "medium",
+      "priority": 1,
+      "mechanism": "M1",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "profile.js",
+          "line": 33,
+          "snippet": "Conversation:"
+        },
+        {
+          "role": "also",
+          "file": "profile.js",
+          "line": 39,
+          "snippet": "Update the profile only if new information is found."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "Conversation:",
+      "person_data_use": "Update the profile only if new information is found.",
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "profile.js",
+          "sha256": "eb91c0a093b0e0be34fbe233b3d68155306c5808fb293ab8bde3f042de0b419f"
+        }
+      ],
+      "references": [
+        "GDPR:Art.5",
+        "GDPR:Art.9",
+        "GDPR:Art.22",
+        "EU:Art.5(1)(a)",
+        "EU:Art.10",
+        "LLM02",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Pass the model only the fields the task needs and delete the extraction instruction. A behavioural profile in the prompt, or facts and traits extracted from the conversation for later use, is personal data processed for a new purpose; drop it, reduce it to explicit settings the person chose, or document the lawful basis and let the person see and edit what is kept.",
+        "alternatives": [
+          "drop the profile from the prompt and pass only the fields the task needs",
+          "replace the extraction instruction with explicit, editable settings the person sets",
+          "keep memory to facts the person asked the system to remember, visible and deletable",
+          "pseudonymise the profile before the prompt (Microsoft Presidio or a local token map)",
+          "document the lawful basis and purpose in a DPIA next to the prompt"
+        ],
+        "removes": [
+          "record",
+          "inference"
+        ]
+      },
+      "known_failure_modes": [
+        "the NAME is the signal: a `preferences` variable may hold a UI theme, and a profile fetched at runtime under a neutral name is missed",
+        "`conversation_history` and the other transcript names are excluded by design; a transcript becomes a finding only when an inference or extraction instruction reads it",
+        "explicit settings (language, theme, timezone, reminder time) are excluded by name and accessor; a setting under another name is reported",
+        "the chain is established only through the Python syntax tree; in every other language the binding is lexical co-occurrence and the status stays detected_signal",
+        "a memory SDK or profile store is reported wherever a unit calls a model; a store that holds only an account identifier is reported too",
+        "grouped per unit, sub-finding and file, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "no chain reaches this line: the model call that reads the prompt was not found"
+      ],
+      "uncertainty": "The instruction may serve a task the person named; the record does not show who asked for the memory or what is done with it later.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "a prompt instructs the model to extract or remember facts about the person for later use (Update the profile only if new information is found.). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1101/extraction",
+      "rule_id": "AUD-1101",
+      "sub": "extraction",
+      "fingerprint": "9dae49cfef41ecdc",
+      "title": "Person profile bound into or extracted for a prompt",
+      "severity": "medium",
+      "priority": 1,
+      "mechanism": "M1",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "supported_mechanism",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "match",
+          "file": "summary.js",
+          "line": 37,
+          "snippet": "Update the memory."
+        },
+        {
+          "role": "also",
+          "file": "summary.js",
+          "line": 44,
+          "snippet": "Update the memory."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": "Update the memory.",
+      "person_data_use": "Update the memory",
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "summary.js",
+          "sha256": "602952efdd327e16c53e5020521fa3ec03652e7a48f2e4f60e4084689fd1bd3d"
+        }
+      ],
+      "references": [
+        "GDPR:Art.5",
+        "GDPR:Art.9",
+        "GDPR:Art.22",
+        "EU:Art.5(1)(a)",
+        "EU:Art.10",
+        "LLM02",
+        "NIST:MAP-5.1",
+        "NIST:MEASURE-2.11"
+      ],
+      "recommendation": {
+        "tier": "T2",
+        "summary": "Pass the model only the fields the task needs and delete the extraction instruction. A behavioural profile in the prompt, or facts and traits extracted from the conversation for later use, is personal data processed for a new purpose; drop it, reduce it to explicit settings the person chose, or document the lawful basis and let the person see and edit what is kept.",
+        "alternatives": [
+          "drop the profile from the prompt and pass only the fields the task needs",
+          "replace the extraction instruction with explicit, editable settings the person sets",
+          "keep memory to facts the person asked the system to remember, visible and deletable",
+          "pseudonymise the profile before the prompt (Microsoft Presidio or a local token map)",
+          "document the lawful basis and purpose in a DPIA next to the prompt"
+        ],
+        "removes": [
+          "record",
+          "inference"
+        ]
+      },
+      "known_failure_modes": [
+        "the NAME is the signal: a `preferences` variable may hold a UI theme, and a profile fetched at runtime under a neutral name is missed",
+        "`conversation_history` and the other transcript names are excluded by design; a transcript becomes a finding only when an inference or extraction instruction reads it",
+        "explicit settings (language, theme, timezone, reminder time) are excluded by name and accessor; a setting under another name is reported",
+        "the chain is established only through the Python syntax tree; in every other language the binding is lexical co-occurrence and the status stays detected_signal",
+        "a memory SDK or profile store is reported wherever a unit calls a model; a store that holds only an account identifier is reported too",
+        "grouped per unit, sub-finding and file, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "no chain reaches this line: the model call that reads the prompt was not found"
+      ],
+      "uncertainty": "The instruction may serve a task the person named; the record does not show who asked for the memory or what is done with it later.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "a prompt instructs the model to extract or remember facts about the person for later use (Update the memory). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1105/no-disclosure",
+      "rule_id": "AUD-1105",
+      "sub": "no-disclosure",
+      "fingerprint": "abdb4e501fbebd07",
+      "title": "False human identity or fabricated feelings",
+      "severity": "low",
+      "priority": 6,
+      "mechanism": "M6",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "presence",
+      "confidence": {
+        "evidence_kind": "code",
+        "match_kind": "grep",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_di..."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": "none",
+      "affected_population": null,
+      "artifacts": [],
+      "references": [
+        "EU:Art.50(1)",
+        "EU:Art.50(2)",
+        "EU:Art.5(1)(a)",
+        "US-CA:SB243",
+        "US-NY:GBL-Art.47",
+        "LLM09",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.7"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Delete the instruction to claim humanity, to deny being an AI or to fabricate a body or feelings, and state the AI nature at first interaction and whenever the person sincerely asks; a persona may keep its name.",
+        "alternatives": [
+          "delete the human claim, the deny-when-asked rule and the fabricated body or feelings from the prompt",
+          "answer a sincere identity question truthfully inside or outside a role, and say so in the system prompt the model call reads",
+          "a disclosure at session start plus a notice on every channel the system speaks through, kept in the code that returns the reply",
+          "aisafe evaluate --families identity_question against a staging endpoint, with authorisation, to observe what the replies say"
+        ],
+        "removes": [
+          "intervention"
+        ]
+      },
+      "known_failure_modes": [
+        "a named persona (Ava) is not concealment: the rows need a human claim, a deny-when-asked rule, a fabricated body or a declaration of feelings toward the person",
+        "a disclosure delivered by the interface alone is not seen; /no-disclosure says no disclosure was found wired on the response path, not that none is shown",
+        "fiction framing is read from the same prompt literal or prompt file; a roleplay flag kept in a database row or a character card loaded at runtime is not seen",
+        "a string constant that reads as a concealment instruction but is tied to no prompt (a test fixture, a moderation phrase list) is reported for review, not as a violation",
+        "a prompt that quotes the instruction in order to forbid it is a mention only when a negation or a discussion cue precedes it in the same sentence, or the quote is not the whole value of a key; without one it is reported",
+        "grouped per unit, sub-finding and decision, anchored on the first site by path"
+      ],
+      "coverage_gaps": [
+        "a disclosure shown by the interface, or added by a gateway outside this tree, is not visible to the audit"
+      ],
+      "uncertainty": "the disclosure may be delivered by the interface or a gateway the audit cannot read; the finding says none was found wired here",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "unit u0 takes user input and calls a model, and no disclosure of the AI nature (an AI-assistant statement in the prompt the model call reads, transparency_disclosure, ai_disclosure_output) is wired on its response path. Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    },
+    {
+      "id": "AUD-1107/missing",
+      "rule_id": "AUD-1107",
+      "sub": "missing",
+      "fingerprint": "5e3bd06d97536930",
+      "title": "Review record missing, stale or unbound",
+      "severity": "low",
+      "priority": 8,
+      "mechanism": "M8",
+      "policy_version": "1.0.0",
+      "rule_version": 2,
+      "evidence_status": "detected_signal",
+      "decision": "requires_contextual_review",
+      "basis": "absence",
+      "confidence": {
+        "evidence_kind": "absence",
+        "match_kind": "structured",
+        "precision": null,
+        "label": "UNMEASURED"
+      },
+      "scope": {
+        "kind": "unit",
+        "unit": "u0",
+        "name": "."
+      },
+      "evidence": [
+        {
+          "role": "absence",
+          "file": ".",
+          "line": 0,
+          "snippet": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them"
+        },
+        {
+          "role": "surface",
+          "file": "profile.js",
+          "line": 27,
+          "snippet": "You are an AI profile extractor."
+        },
+        {
+          "role": "surface",
+          "file": "promptBuilder.js",
+          "line": 42,
+          "snippet": "content: `User Profile:"
+        },
+        {
+          "role": "surface",
+          "file": "summary.js",
+          "line": 37,
+          "snippet": "Update the memory."
+        }
+      ],
+      "flow": null,
+      "flow_established": false,
+      "declared_purpose": null,
+      "encoded_objective": null,
+      "person_data_use": null,
+      "control_status": null,
+      "affected_population": null,
+      "artifacts": [
+        {
+          "file": "profile.js",
+          "sha256": "eb91c0a093b0e0be34fbe233b3d68155306c5808fb293ab8bde3f042de0b419f"
+        },
+        {
+          "file": "promptBuilder.js",
+          "sha256": "493c54517082bae513712c2db7840436c3856bcce42ea9ac9c1c0ec2bb97760d"
+        },
+        {
+          "file": "summary.js",
+          "sha256": "602952efdd327e16c53e5020521fa3ec03652e7a48f2e4f60e4084689fd1bd3d"
+        }
+      ],
+      "references": [
+        "EU:Art.9",
+        "EU:Art.11",
+        "EU:Art.26",
+        "GDPR:Art.35",
+        "NIST:GOVERN-1.1",
+        "NIST:GOVERN-1.2",
+        "NIST:GOVERN-4.2",
+        "NIST:MAP-1.1",
+        "NIST:MEASURE-2.8"
+      ],
+      "recommendation": {
+        "tier": "T1",
+        "summary": "Run `aisafe review init` to list the prompt and algorithm artifacts with their content hashes, have a named person read them for the policy's mechanisms, then run `aisafe review record --reviewer NAME --purpose TEXT --scope M1,...` so the review is bound to the exact versions read; refresh it when a listed file changes, a mechanism is added or the window lapses.",
+        "alternatives": [
+          "aisafe review init, then aisafe review record --reviewer 'Name <role>' --purpose '...' --scope M1,M4,M5,M6 once the listed files have been read",
+          "a pull-request template that asks a named reviewer to sign off on every prompt or ranking change, with the record refreshed in the same change (the audit reads the record, not the template)",
+          "a CI step running aisafe review check, so a prompt edited after the review fails the pipeline until the record is refreshed",
+          "a review log kept outside the tree (a ticket per prompt change, a wiki page) is a practice the audit cannot see; mirror its date, reviewer and scope into the record file so the binding to the files is checked"
+        ],
+        "removes": [
+          "record"
+        ]
+      },
+      "known_failure_modes": [
+        "one record file at the audited root is read (aisafe-review.yaml, .aisafe/review.yaml or .aisafe-audit/review.yaml, or the --review-record path); a review kept in a ticket system, a wiki or a pull request is reported as missing",
+        "a record says who read which file versions and when; whether the reading was careful, and whether the declared purpose is true, is not something the tool can check, and a fresh record never closes a finding of another rule",
+        "the files owed a review are the ones carrying person signals at the grep and AST tiers, mentions excluded; a prompt the discovery does not read (another language, a runtime fetch, a database row) is listed as neither covered nor uncovered",
+        "the mechanisms a record should scope are inferred from the signal kinds in the unit; a mechanism with no detectable signal is not asked for, and a false signal asks for one",
+        "a changed hash says the file changed, not what changed; a reformatted prompt reads as stale exactly like a rewritten one"
+      ],
+      "coverage_gaps": [
+        "review records are read from the record file at the audited root only; a review kept outside the tree is not visible"
+      ],
+      "uncertainty": "A review may have happened and been recorded outside the tree; only a record file under the audited root is read.",
+      "suppressed": false,
+      "gitignored": false,
+      "notes": "no review record covers unit .; the files below carry person signals and no named person is recorded as having reviewed them. Signals: memory, profile_name in 3 file(s): profile.js, promptBuilder.js, summary.js. Mechanisms implicated: M1. No record file was found (looked for aisafe-review.yaml, .aisafe/review.yaml, .aisafe-audit/review.yaml). Whether this practice falls under a law is a legal determination made by the operator, not a tool output. The finding reports what the code and the prompts say, and the project's policy decision on it."
+    }
+  ],
+  "reports": [],
+  "unknown": [
+    {
+      "category": "deep",
+      "what": "typescript deep analysis",
+      "why": "not available in this version; pattern-level findings only",
+      "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+      "file": "."
+    }
+  ],
+  "baseline": null,
+  "inventory": {
+    "schema": "aisg/1",
+    "kind": "inventory",
+    "target": {
+      "path": "C:/Users/OAV/MAIN/AI/AI-SAFE-EARTH/S01_AI-safety-guardrails/bench/.cache/persona_bot",
+      "git_sha": "89b15f95e68c3bf43c8d92446d3d437daaedd5da",
+      "dirty": true,
+      "scanned_files": 35,
+      "skipped_files": 0,
+      "bytes": 191343,
+      "duration_ms": 1430,
+      "oversize_files": 0
+    },
+    "units": [
+      {
+        "id": "u0",
+        "root": ".",
+        "manifest": "package.json",
+        "language": "typescript",
+        "ai_surface": true
+      }
+    ],
+    "languages": {
+      "python": 0,
+      "typescript": 27,
+      "go": 0,
+      "other": 8
+    },
+    "llm_calls": [
+      {
+        "file": "llm.js",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from \"openai\"",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "llm.js",
+        "line": 9,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "llm.js",
+        "line": 16,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m1"
+      },
+      {
+        "file": "profile.js",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from \"openai\"",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "profile.js",
+        "line": 8,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "profile.js",
+        "line": 63,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m2"
+      },
+      {
+        "file": "summary.js",
+        "line": 1,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": "from \"openai\"",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "summary.js",
+        "line": 10,
+        "provider": "unknown",
+        "sdk": "generic_http",
+        "api": "https://api.groq.",
+        "unit": "u0",
+        "model_ref": "m3"
+      },
+      {
+        "file": "summary.js",
+        "line": 79,
+        "provider": "openai",
+        "sdk": "openai",
+        "api": ".chat.completions.create(",
+        "unit": "u0",
+        "model_ref": "m3"
+      }
+    ],
+    "models": [
+      {
+        "id": "m1",
+        "file": "llm.js",
+        "line": 18,
+        "provider": "other",
+        "model": "openai/gpt-oss-120b",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m2",
+        "file": "profile.js",
+        "line": 65,
+        "provider": "other",
+        "model": "openai/gpt-oss-120b",
+        "pinned": null,
+        "source": "literal"
+      },
+      {
+        "id": "m3",
+        "file": "summary.js",
+        "line": 81,
+        "provider": "other",
+        "model": "openai/gpt-oss-120b",
+        "pinned": null,
+        "source": "literal"
+      }
+    ],
+    "frameworks": [],
+    "ingress": [
+      {
+        "file": "server.js",
+        "line": 17,
+        "kind": "http",
+        "symbol": "express()",
+        "unit": "u0"
+      },
+      {
+        "file": "server.js",
+        "line": 94,
+        "kind": "http",
+        "symbol": "req.body",
+        "unit": "u0"
+      },
+      {
+        "file": "server.js",
+        "line": 128,
+        "kind": "http",
+        "symbol": "req.body",
+        "unit": "u0"
+      },
+      {
+        "file": "server.js",
+        "line": 148,
+        "kind": "http",
+        "symbol": "req.body",
+        "unit": "u0"
+      }
+    ],
+    "prompts": [
+      {
+        "file": "promptBuilder.js",
+        "line": 12,
+        "kind": "assembly",
+        "name": "content",
+        "is_system": false,
+        "unit": "u0"
+      }
+    ],
+    "person_signals": [
+      {
+        "file": "profile.js",
+        "line": 27,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 28,
+        "kind": "profile_name",
+        "symbol": "Profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 29,
+        "kind": "profile_name",
+        "symbol": "Profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 31,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 33,
+        "kind": "memory",
+        "symbol": "Update the profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 33,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 39,
+        "kind": "memory",
+        "symbol": "Update the profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 39,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 44,
+        "kind": "profile_name",
+        "symbol": "mood",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 70,
+        "kind": "profile_name",
+        "symbol": "profile",
+        "unit": "u0"
+      },
+      {
+        "file": "promptBuilder.js",
+        "line": 42,
+        "kind": "profile_name",
+        "symbol": "Profile",
+        "unit": "u0"
+      },
+      {
+        "file": "summary.js",
+        "line": 37,
+        "kind": "memory",
+        "symbol": "Update the memory",
+        "unit": "u0"
+      },
+      {
+        "file": "summary.js",
+        "line": 44,
+        "kind": "memory",
+        "symbol": "Update the memory",
+        "unit": "u0"
+      }
+    ],
+    "memory_stores": [
+      {
+        "file": "profile.js",
+        "line": 33,
+        "kind": "memory",
+        "symbol": "Update the profile",
+        "unit": "u0"
+      },
+      {
+        "file": "profile.js",
+        "line": 39,
+        "kind": "memory",
+        "symbol": "Update the profile",
+        "unit": "u0"
+      },
+      {
+        "file": "summary.js",
+        "line": 37,
+        "kind": "memory",
+        "symbol": "Update the memory",
+        "unit": "u0"
+      },
+      {
+        "file": "summary.js",
+        "line": 44,
+        "kind": "memory",
+        "symbol": "Update the memory",
+        "unit": "u0"
+      }
+    ],
+    "personas": [],
+    "review_records": [],
+    "reports": [],
+    "system_card": null,
+    "own_output_skipped": [],
+    "unknown": [
+      {
+        "category": "deep",
+        "what": "typescript deep analysis",
+        "why": "not available in this version; pattern-level findings only",
+        "how_to_resolve": "Review the pattern-level findings for this unit by hand.",
+        "file": "."
+      }
+    ]
+  },
+  "rules": [
+    {
+      "id": "AUD-1101",
+      "title": "Person profile bound into or extracted for a prompt",
+      "version": 2,
+      "mechanism": "M1",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1102",
+      "title": "Emotion, vulnerability or biometric inference on persons",
+      "version": 2,
+      "mechanism": "M2",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1103",
+      "title": "Scoring or segmenting people for susceptibility or personalised influence",
+      "version": 2,
+      "mechanism": "M3",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1104",
+      "title": "Engagement, retention, spend or experimentation objective",
+      "version": 2,
+      "mechanism": "M4",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1109",
+      "title": "Engineered attachment, dependency or relationship substitution",
+      "version": 1,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1110",
+      "title": "Covert commercial or political steering",
+      "version": 1,
+      "mechanism": "M7",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1105",
+      "title": "False human identity or fabricated feelings",
+      "version": 2,
+      "mechanism": "M6",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1106",
+      "title": "Manipulation control status on the response path",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1108",
+      "title": "No crisis path where a person confides in the AI",
+      "version": 2,
+      "mechanism": "M5",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    },
+    {
+      "id": "AUD-1107",
+      "title": "Review record missing, stale or unbound",
+      "version": 2,
+      "mechanism": "M8",
+      "measured_precision": null,
+      "ran": true,
+      "experimental": false
+    }
+  ]
+}

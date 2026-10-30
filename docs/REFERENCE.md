@@ -1065,8 +1065,8 @@ the protocol for the second thing; `bench/README.md` is the manual.
 
 ```bash
 python bench/score.py --cases bench/cases                 # -> bench/cases-score.md: tp, fn, fp, precision and recall with counts, per rule and split
-python bench/run.py --corpus research/corpus.yaml --out-dir research/results/run3 --rules AUD-1101,...,AUD-1110 --keep-clones
-python bench/score.py --tool audit --csv research/results/run3/findings-audit.csv --results research/results/run3/results-audit --out research/results/run3/precision-audit.md
+python bench/run.py --corpus research/corpus.yaml --out-dir research/results/run4 --rules AUD-1101,...,AUD-1110 --keep-clones
+python bench/score.py --tool audit --csv research/results/run4/findings-audit.csv --results research/results/run4/results-audit --out research/results/run4/precision-audit.md
 ```
 
 `score.py --cases` runs the audit in-process over every `tree/` and compares the findings
