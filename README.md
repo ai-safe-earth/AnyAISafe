@@ -35,10 +35,8 @@ uvx aisafe audit --list-rules                            # the ten rules and the
 No API key, no account, no model call. On Windows, set `PYTHONIOENCODING=utf-8` first
 (PowerShell: `$env:PYTHONIOENCODING = "utf-8"`).
 
-PyPI still carries 0.1.0, the product before the pivot (see
+Releases before 0.2.0 are the product before the pivot (see
 [What changed in the pivot](https://github.com/ai-safe-earth/AnyAISafe#what-changed-in-the-pivot)).
-Until 0.2.0 is published, run this version from the repository:
-`uvx --from "git+https://github.com/ai-safe-earth/AnyAISafe" aisafe audit .`
 
 Next, two files worth committing:
 
@@ -433,7 +431,7 @@ uvx aisafe audit .                 # or run without installing
 pipx run aisafe audit .            # same, with pipx
 ```
 
-Until 0.2.0 is on PyPI, install this version from the repository:
+To run the unreleased code on `main`, install from the repository:
 `pip install "aisafe[devtools] @ git+https://github.com/ai-safe-earth/AnyAISafe"`.
 
 **Name clash.** The unrelated PyPI package `aisafeguard` also installs a command called
@@ -506,10 +504,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ai-safe-earth/AnyAISafe@main   # pin a vX.Y.Z tag once 0.2.0 is published
+      - uses: ai-safe-earth/AnyAISafe@v0.2.0
         with:
           fail-on: high
-          install-from: action-path          # this checkout of the action; drop it once 0.2.0 is on PyPI
           # optional; commit it first (aisafe audit . --write-baseline audit-baseline.json)
           baseline: audit-baseline.json
           pr-comment: "true"
@@ -524,7 +521,7 @@ summary, uploads the SARIF to Code Scanning and exits with the audit's own exit 
 ```yaml
 repos:
   - repo: https://github.com/ai-safe-earth/AnyAISafe
-    rev: <a commit sha, or the v0.2.0 tag once published>
+    rev: v0.2.0
     hooks:
       - id: aisafe-audit       # runs at pre-push
         args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]
@@ -689,7 +686,7 @@ with any regulation. Findings describe prompts and code; they do not prove a sys
 free of risk, and absence of a finding is not evidence of safety. Whether a practice falls
 under a law is a legal determination made by the operator.
 
-**Status.** Early. 0.1.0, on PyPI, is the product before the pivot; the pivoted auditor
-ships as 0.2.0. Every rule is UNMEASURED. Known limits are listed under
+**Status.** Early. 0.2.0 is the first release of the pivoted auditor; 0.1.0 is the
+product before the pivot. Every rule is UNMEASURED. Known limits are listed under
 [How it works](https://github.com/ai-safe-earth/AnyAISafe#how-it-works) and in
 [`CHANGELOG.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/CHANGELOG.md).

@@ -12,7 +12,7 @@
 # The report goes under .aisafe-audit/ like every other artefact of the flow; the next audit
 # reads it there as observed behaviour (AUD-1106, AUD-1108) whether or not .gitignore lists
 # the directory.
-$AISAFE_VERSION = "0.1.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+$AISAFE_VERSION = "0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 $scriptArgs = @($args)
 $run = if ($env:AISAFE_EVALUATE_RUN) { $env:AISAFE_EVALUATE_RUN } else { "0" }
 $skipTests = if ($env:AISAFE_EVALUATE_SKIP_TESTS) { $env:AISAFE_EVALUATE_SKIP_TESTS } else { "0" }

@@ -142,8 +142,8 @@ The distribution, the import name and the console script are all `aisafe`. The o
 runtime dependency is `pyyaml`; `aisafe evaluate` uses the standard library for HTTP.
 Python 3.10 or newer.
 
-PyPI carries 0.1.0, the product before the pivot. Until 0.2.0 is published, install this
-version from the repository:
+Releases before 0.2.0 are the product before the pivot. To run the unreleased code on
+`main`, install from the repository:
 
 ```bash
 pip install "aisafe[devtools] @ git+https://github.com/ai-safe-earth/AnyAISafe"
@@ -1002,11 +1002,10 @@ finding at or above `fail-on` (only new ones when `baseline` is set):
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: ai-safe-earth/AnyAISafe@main        # pin a vX.Y.Z tag once 0.2.0 is published
+- uses: ai-safe-earth/AnyAISafe@v0.2.0
   with:
     fail-on: high
     baseline: audit-baseline.json           # optional; commit it first
-    install-from: action-path               # the checkout this action came from; drop it once 0.2.0 is on PyPI
 ```
 
 Inputs: `path` (default `.`), `fail-on` (default `high`), `baseline`, `extra-args`,
@@ -1026,7 +1025,7 @@ stage, `pass_filenames: false`, `always_run: true`, default args `--fail-on high
 ```yaml
 repos:
   - repo: https://github.com/ai-safe-earth/AnyAISafe
-    rev: <a commit sha, or the v0.2.0 tag once published>
+    rev: v0.2.0
     hooks:
       - id: aisafe-audit
         args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]

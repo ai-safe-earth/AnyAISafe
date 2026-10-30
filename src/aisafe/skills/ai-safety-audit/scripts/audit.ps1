@@ -1,6 +1,6 @@
 # ai-safety-audit bootstrap: run `aisafe audit` through a pinned install chain (PowerShell mirror of audit.sh).
 # aisafe-audit: ignore-file
-$AISAFE_VERSION = "0.1.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+$AISAFE_VERSION = "0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 if (Get-Command aisafe -ErrorAction SilentlyContinue) {
     $resolved = (Get-Command aisafe).Source
     $version = (& aisafe --version 2>$null) -replace '^aisafe ', ''

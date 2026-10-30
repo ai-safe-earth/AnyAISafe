@@ -4,7 +4,7 @@
 #
 #   repos:
 #     - repo: https://github.com/ai-safe-earth/AnyAISafe
-#       rev: v0.1.0
+#       rev: v0.2.0
 #       hooks:
 #         - id: aisafe-audit
 #           args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]

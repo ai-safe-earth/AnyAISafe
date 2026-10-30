@@ -8,6 +8,8 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-10-30
+
 **The product pivots.** `aisafe` now does one thing: it audits the prompts and the
 algorithms around them, in AI-enabled software, for profiling, manipulation, engineered
 emotional attachment, deceptive identity and behavioural influence over the person using
@@ -17,7 +19,7 @@ measurement, attestation levels and the agent-host hooks are removed from the ac
 package. They stay in git at the local refs `legacy/broad-product` and
 `legacy/pre-pivot-0.1.0` (commit dc2dfcb) and in the published `aisafe==0.1.0`.
 `docs/migration.md` lists every path and what became of it; the compatibility breaks are
-in its section 4. The next release will be 0.2.0.
+in its section 4.
 
 ### Added
 
@@ -337,5 +339,6 @@ distribution `anyaisafe` with the import and command `aisg`; none was published.
   `metadata["judge_error"]`, with `unavailable` usage, instead of swallowing it
   silently; the two AUD-802 entries on them left the self-audit baseline.
 
-[Unreleased]: https://github.com/ai-safe-earth/AnyAISafe/compare/v0.1.0...HEAD
+[Unreleased]: https://github.com/ai-safe-earth/AnyAISafe/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/ai-safe-earth/AnyAISafe/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ai-safe-earth/AnyAISafe/releases/tag/v0.1.0
