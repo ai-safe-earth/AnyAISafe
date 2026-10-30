@@ -24,6 +24,7 @@ from aisafe.analysis import checks, flows, pydeep
 from aisafe.devtools._config import apply_tool_config
 from aisafe.discovery import discover, walk
 from aisafe.evidence.model import (
+    MODES,
     AuditContext,
     Decision,
     Finding,
@@ -75,6 +76,7 @@ __all__ = [
     "build_parser",
     "main",
     "run_audit",
+    "scan",
 ]
 
 PROG = "aisafe audit"
@@ -84,8 +86,9 @@ CONFIG_SECTION = "aisafe-audit"
 # `[tool.aisafe-audit]`. Otherwise a pyproject could make every audit rewrite a baseline
 # (`write_baseline`), run no rule (`inventory_only`) or print the catalogue and exit 0
 # (`list_rules`) -- and the two booleans, once `true` there, have no flag to undo them.
+# `mode` among them: the audited tree's pyproject never chooses how it is audited.
 NOT_CONFIGURABLE: frozenset[str] = frozenset(
-    {"amend_baseline", "accept", "write_baseline", "inventory_only", "list_rules"}
+    {"amend_baseline", "accept", "write_baseline", "inventory_only", "list_rules", "mode"}
 )
 
 # `EXIT_OK` says "nothing counted", on purpose: a zero exit is not a bill of health.
@@ -208,6 +211,7 @@ class AuditOptions:
     no_external: bool = False
     review_record: str | None = None
     evaluation_report: str | None = None
+    mode: str = "self-assessment"
 
     @classmethod
     def from_namespace(cls, ns: argparse.Namespace | AuditOptions) -> AuditOptions:
@@ -229,6 +233,9 @@ class AuditOptions:
         deep = str(get("deep", "python") or "python").lower()
         if deep not in DEEP_CHOICES:
             raise ValueError(f"--deep must be one of {', '.join(DEEP_CHOICES)}, not {deep!r}")
+        mode = str(get("mode", "self-assessment") or "self-assessment").lower()
+        if mode not in MODES:
+            raise ValueError(f"--mode must be one of {', '.join(MODES)}, not {mode!r}")
         return cls(
             path=str(get("path", ".") or "."),
             format=fmt,
@@ -252,6 +259,7 @@ class AuditOptions:
             no_external=bool(get("no_external", False)),
             review_record=_opt_str(get("review_record")),
             evaluation_report=_opt_str(get("evaluation_report")),
+            mode=mode,
         )
 
     def to_dict(self) -> dict[str, Any]:
@@ -388,6 +396,16 @@ def build_parser() -> argparse.ArgumentParser:
         choices=DEEP_CHOICES,
         default="python",
         help="AST layer (default: python)",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=MODES,
+        default="self-assessment",
+        help=(
+            "who is scanning: self-assessment (the team that owns the system; the default) or "
+            "auditor (an independent auditor: the ignore-file marker and the own-output "
+            "heads skip nothing); the report states it. Never read from pyproject.toml"
+        ),
     )
     parser.add_argument(
         "--rules",
@@ -561,11 +579,19 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     folded into one context."""
     own_output_skipped: list[str] = []
     oversize_skipped: list[str] = []
+    marker_skipped: list[str] = []
+    auditor = getattr(options, "mode", "self-assessment") == "auditor"
     files, units, walk_unknown = walk.walk(
         root,
-        walk.WalkOptions(exclude=tuple(options.exclude), include_ignored=options.include_ignored),
+        walk.WalkOptions(
+            exclude=tuple(options.exclude),
+            include_ignored=options.include_ignored,
+            honour_marker=not auditor,
+            skip_own_output=not auditor,
+        ),
         own_output_skipped=own_output_skipped,
         oversize_skipped=oversize_skipped,
+        marker_skipped=marker_skipped,
     )
     # The walker names the audit's own reports it stepped over; discover copies the list
     # onto the inventory so every renderer can say what was not looked at.
@@ -576,7 +602,13 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     # UNKNOWN; the count sits next to `skipped_files` so the inventory line can print a
     # number instead of "not recorded".
     inventory.target["oversize_files"] = len(oversize_skipped)
+    # A file the tree marked to be skipped was not read; the list says which, so a reader
+    # (and an assessment's scope) sees what the marker left out.
+    inventory.target["marker_skipped"] = list(marker_skipped)
+    inventory.target["mode"] = getattr(options, "mode", "self-assessment")
     unknown: list[UnknownItem] = list(walk_unknown) + list(inventory.unknown)
+    if marker_skipped:
+        unknown.append(_marker_item(marker_skipped))
     pyfacts = None
     if options.deep == "python":
         pyfacts = pydeep.analyse_unit([f for f in files if f.lang == "python"], inventory)
@@ -586,7 +618,7 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
         discover.merge_pyfacts_prompts(inventory, pyfacts)
     texts = _python_texts(files)
     # The native checks over the same Python text, as `role: check` evidence for the rules.
-    check_facts = checks.run_checks(files, texts)
+    check_facts = checks.run_checks(files, texts, honour_marker=not auditor)
     unknown.extend(check_facts.errors)
     # The review records. Discovery already read the record at the root and listed its
     # problems; `--review-record` names another file, whose problems are added here.
@@ -600,6 +632,26 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     # package, from going unreported.
     unknown.extend(review.unknown_items())
     evaluation = [r for r in inventory.reports if getattr(r, "kind", None) in EVALUATION_KINDS]
+    if auditor and evaluation:
+        # A report in the audited tree is the audited team's document. In auditor mode it is
+        # listed and never read as observed behaviour: only `--evaluation-report`, a run the
+        # auditor made, counts.
+        unknown.append(
+            UnknownItem(
+                category=UnknownCategory.REPORTS,
+                what="evaluation reports in the audited tree",
+                why=(
+                    f"{len(evaluation)} report(s) found in the tree are the audited team's "
+                    "documents and were not read as observed behaviour in auditor mode: "
+                    + ", ".join(getattr(r, "file", "?") for r in evaluation[:5])
+                ),
+                how_to_resolve=(
+                    "Run `aisafe evaluate` yourself against an endpoint you are authorised to "
+                    "test and pass the report with --evaluation-report."
+                ),
+            )
+        )
+        evaluation = []
     if options.evaluation_report is not None:
         _evaluation_from_flag(options.evaluation_report, root, inventory, evaluation, unknown)
     ctx = AuditContext(
@@ -618,6 +670,25 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     ctx.texts.update(texts)
     ctx.flows = flows.build_flows(ctx)
     return ctx
+
+
+_MARKER_NAMED = 5
+
+
+def _marker_item(paths: Sequence[str]) -> UnknownItem:
+    """One UNKNOWN row naming the files the ignore marker kept out of the scan."""
+    shown = ", ".join(paths[:_MARKER_NAMED])
+    if len(paths) > _MARKER_NAMED:
+        shown += f", +{len(paths) - _MARKER_NAMED} more"
+    return UnknownItem(
+        category=UnknownCategory.COVERAGE,
+        what="files skipped by the ignore-file marker",
+        why=f"{len(paths)} file(s) carry the ignore-file marker and were not read: {shown}",
+        how_to_resolve=(
+            "Remove the marker from any file that holds prompts or code the system runs; "
+            "--mode auditor reads every file whatever it carries."
+        ),
+    )
 
 
 def _dedupe_unknown(items: Sequence[UnknownItem]) -> list[UnknownItem]:
@@ -665,6 +736,26 @@ def _apply_review_decisions(ctx: AuditContext, findings: Sequence[Finding]) -> N
         finding.review_justification = str(getattr(recorded, "justification", "") or "")
         if decision == Decision.VIOLATES.value:
             finding.decision = Decision.VIOLATES
+
+
+def scan(
+    options: AuditOptions, policy: Policy | None = None
+) -> tuple[AuditContext, list[Finding], list[UnknownItem], list[type[AuditRule]]]:
+    """
+    The machine half of one run: the context, the findings of the default rules (or
+    `options.rules`) and every UNKNOWN item. No baseline is read, no recorded review
+    decision is applied and nothing is rendered. `aisafe investigate` and `aisafe assess`
+    stand on it, so the scan they read is what `aisafe audit` reports before a person's
+    decision touches it. Callers build `options` themselves: `[tool.aisafe-audit]` in the
+    audited tree is never applied here.
+    """
+    policy = policy or load_policy()
+    root = _resolve_root(options.path)
+    ctx = _build_context(options, root, policy)
+    rules, _notes = select_rules(options.rules, options.experimental)
+    findings, rule_unknown = run_rules(rules, ctx)
+    unknown = _dedupe_unknown(list(ctx.unknown) + list(rule_unknown) + _missing_module_items())
+    return ctx, list(findings), unknown, list(rules)
 
 
 def _write_output(text: str, output: str | None) -> None:
@@ -944,11 +1035,29 @@ def run_audit(args: argparse.Namespace | AuditOptions) -> int:
     return EXIT_OK if options.write_baseline is not None else exit_code
 
 
+def _auditor_mode(args: Sequence[str]) -> bool:
+    """Whether the command line asks for auditor mode, abbreviations included (argparse
+    accepts `--mo auditor` for `--mode auditor`)."""
+    for index, arg in enumerate(args):
+        flag, eq, value = arg.partition("=")
+        if len(flag) < 4 or not "--mode".startswith(flag):
+            continue
+        if eq:
+            return value == "auditor"
+        return index + 1 < len(args) and args[index + 1] == "auditor"
+    return False
+
+
 def main(argv: Sequence[str] | None = None) -> int:
-    """Console entry: parse, apply `[tool.aisafe-audit]` defaults, run, map errors to exit codes."""
+    """Console entry: parse, apply `[tool.aisafe-audit]` defaults (never in auditor mode),
+    run, map errors to exit codes."""
     parser = build_parser()
-    apply_tool_config(parser, CONFIG_SECTION, exclude=NOT_CONFIGURABLE)
-    ns = parser.parse_args(list(argv) if argv is not None else None)
+    args = list(argv) if argv is not None else sys.argv[1:]
+    # In auditor mode the audited tree's `[tool.aisafe-audit]` is never applied: the team
+    # being audited does not choose what the scan excludes or how it fails.
+    if not _auditor_mode(args):
+        apply_tool_config(parser, CONFIG_SECTION, exclude=NOT_CONFIGURABLE)
+    ns = parser.parse_args(args)
     debug = bool(getattr(ns, "debug", False))
     try:
         return run_audit(ns)

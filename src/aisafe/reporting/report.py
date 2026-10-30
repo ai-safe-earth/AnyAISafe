@@ -46,6 +46,8 @@ from aisafe.evidence.model import (
     DISCLAIMER,
     DISCLAIMER_TEMPLATE,
     FLOW_ESTABLISHED_BY,
+    MODES,
+    SCAN_REPORT_LABEL,
     SCHEMA_VERSION,
     SEVERITY_ORDER,
     AuditContext,
@@ -78,6 +80,8 @@ __all__ = [
     "all_templates",
     "build_report",
     "catalogue",
+    "label_line",
+    "report_mode",
     "check_templates",
     "compute_exit_code",
     "render",
@@ -135,6 +139,7 @@ BANNED_PHRASES: tuple[str, ...] = tuple(
 
 _T_TITLE = "aisafe audit"
 _T_MD_H1 = "# aisafe audit"
+_T_LABEL_LINE = "{label} | mode: {mode}"
 _T_SUMMARY = (
     "{n} finding{s} ({m} below --fail-on {level}, not counted in exit code); {k} unknown item{ks}"
 )
@@ -237,6 +242,7 @@ _TEMPLATES: tuple[str, ...] = (
     DISCLAIMER_TEMPLATE,
     DISCLAIMER,
     _T_TITLE,
+    _T_LABEL_LINE,
     _T_MD_H1,
     _T_SUMMARY,
     _T_SEVERITY_LINE,
@@ -585,6 +591,22 @@ def build_report(
         inventory=ctx.inventory if inventory_included else None,
         rules=catalogue(base, ran_ids),
         disclaimer=disclaimer(policy.version),
+        mode=report_mode(ctx),
+    )
+
+
+def report_mode(ctx: AuditContext) -> str:
+    """The mode the run was made in (`--mode`); self-assessment unless the options say
+    otherwise."""
+    mode = getattr(ctx.options, "mode", None) or "self-assessment"
+    return mode if mode in MODES else "self-assessment"
+
+
+def label_line(report: Report) -> str:
+    """`scan report | mode: self-assessment`: what the document is, and who made it."""
+    return _T_LABEL_LINE.format(
+        label=getattr(report, "label", SCAN_REPORT_LABEL) or SCAN_REPORT_LABEL,
+        mode=getattr(report, "mode", "self-assessment") or "self-assessment",
     )
 
 
@@ -1237,6 +1259,8 @@ def to_sarif(report: Report) -> str:
                     # recorded, never zero.
                     "oversize_files": oversize_files,
                     "policy": _as_dict(report.policy) or {},
+                    "label": report.label,
+                    "mode": report.mode,
                     "disclaimer": report.disclaimer,
                     "generated_at": report.generated_at,
                     "target": _as_dict(report.target),
@@ -1303,6 +1327,8 @@ def to_markdown(report: Report) -> str:
     policy_version = _policy_version(report)
     lines: list[str] = [
         _T_MD_H1,
+        "",
+        label_line(report),
         "",
         f"> {report.disclaimer}",
         "",
@@ -1433,6 +1459,7 @@ def to_terminal(report: Report, quiet: bool = False) -> str:
     rows = _mechanism_rows(report)
     policy_version = _policy_version(report)
     out: list[str] = [_T_TITLE, "=" * len(_T_TITLE)]
+    _emit(out, label_line(report))
     _disclaimer(out, report.disclaimer)
     out.append("")
     _emit(out, _summary_line(summary))

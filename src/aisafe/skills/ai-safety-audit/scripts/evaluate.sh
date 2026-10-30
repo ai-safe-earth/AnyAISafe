@@ -1,6 +1,6 @@
 #!/bin/sh
 # aisafe-audit: ignore-file
-# ai-safety-audit evaluate step (phase 5). Detects the project's test command and prints it,
+# ai-safety-audit evaluate step (phase 6). Detects the project's test command and prints it,
 # then resolves `aisafe` through the same pinned bootstrap chain as audit.sh and runs
 # `aisafe evaluate` against AISAFE_EVALUATE_URL (the project's own chat endpoint) or over
 # AISAFE_EVALUATE_TRANSCRIPTS (a JSONL file of recorded conversations; nothing is sent).

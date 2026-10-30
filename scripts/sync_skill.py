@@ -8,8 +8,9 @@ The canonical skill lives in `src/aisafe/skills/ai-safety-audit/` (shipped in th
 mirror pinned by `tests/unit/test_skill_package.py`. This dev tool:
 
 1. reads `[project].version` from `pyproject.toml`;
-2. rewrites the `AISAFE_VERSION="..."` / `$AISAFE_VERSION = "..."` line in the six canonical
-   scripts (audit, evaluate and review, sh and ps1) so the bootstrap stays pinned to the
+2. rewrites the `AISAFE_VERSION="..."` / `$AISAFE_VERSION = "..."` line in the ten canonical
+   scripts (audit, investigate, assess, evaluate and review, sh and ps1) so the bootstrap
+   stays pinned to the
    release: an unpinned bootstrap would install whatever PyPI serves on the day;
 3. pins `"version"` in `plugins/aisafe/.claude-plugin/plugin.json`;
 4. copies the canonical tree over the mirror, deleting stale mirror files.
@@ -43,6 +44,10 @@ PLUGIN_VERSION_LINE = re.compile(r'("version":\s*")([^"]*)(")')
 SCRIPTS = (
     "scripts/audit.sh",
     "scripts/audit.ps1",
+    "scripts/investigate.sh",
+    "scripts/investigate.ps1",
+    "scripts/assess.sh",
+    "scripts/assess.ps1",
     "scripts/evaluate.sh",
     "scripts/evaluate.ps1",
     "scripts/review.sh",

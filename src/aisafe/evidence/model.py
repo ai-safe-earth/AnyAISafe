@@ -49,7 +49,9 @@ __all__ = [
     "REMOVES",
     "FINDING_KEYS",
     "INVENTORY_KEYS",
+    "MODES",
     "REPORT_KEYS",
+    "SCAN_REPORT_LABEL",
     "REDACT_PATTERNS",
     "Severity",
     "Basis",
@@ -1114,6 +1116,8 @@ class Inventory:
 REPORT_KEYS: tuple[str, ...] = (
     "schema",
     "kind",
+    "label",
+    "mode",
     "tool",
     "target",
     "generated_at",
@@ -1128,6 +1132,15 @@ REPORT_KEYS: tuple[str, ...] = (
     "inventory",
     "rules",
 )
+
+
+# The two modes every document of the workbench states. `self-assessment`: the team
+# that owns the system audits it (the skill's owner-led flow). `auditor`: an
+# independent auditor assesses someone else's system, the audited tree is read-only,
+# and the tree's own markers skip nothing. Neither mode certifies anything.
+MODES: tuple[str, ...] = ("self-assessment", "auditor")
+# What `aisafe audit` output is called: a scan, never an assessment.
+SCAN_REPORT_LABEL = "scan report"
 
 
 @dataclass
@@ -1147,12 +1160,20 @@ class Report:
     inventory: Inventory | dict[str, Any] | None = None
     rules: list[dict[str, Any]] = field(default_factory=list)
     disclaimer: str = DISCLAIMER
+    label: str = SCAN_REPORT_LABEL
+    mode: str = "self-assessment"
+
+    def __post_init__(self) -> None:
+        if self.mode not in MODES:
+            raise ValueError(f"mode must be one of {MODES}, not {self.mode!r}")
 
     def to_dict(self) -> dict[str, Any]:
         inventory = self.inventory
         return {
             "schema": SCHEMA_VERSION,
             "kind": "audit",
+            "label": self.label,
+            "mode": self.mode,
             "tool": _plain(self.tool),
             "target": _plain(self.target),
             "generated_at": self.generated_at,

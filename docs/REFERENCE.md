@@ -13,8 +13,14 @@ output of the checked-out tree at policy version 1.0.0.
 
 `aisafe` audits the prompts of AI-enabled software, and the algorithms around them, for
 profiling, manipulation, engineered emotional attachment, deceptive identity and
-behavioural influence over the person using it. The audit is deterministic, local and
-offline: it reads files, calls no model, installs nothing and opens no socket. A finding
+behavioural influence over the person using it. It is a workbench for an independent
+auditor assessing someone else's AI system (auditor mode), and for the team that owns a
+system assessing it themselves (self-assessment mode); every document says which. The
+audit is deterministic, local and offline: it reads files, calls no model, installs
+nothing and opens no socket. Reasoning about the code happens in a host coding agent,
+with no separate API key, and enters aisafe only as investigation records that `aisafe
+investigate validate` checks mechanically; `aisafe assess` turns the scan and the
+validated records into an assessment. A finding
 says what was established (an evidence status), what the project's policy decides about
 it (a decision), and what it could not see. It is never a verdict on the product, never a
 certification and never a single score.
@@ -26,7 +32,8 @@ usage: aisafe [-h] [--version] command ...
 AnyAISafe: audit the prompts and algorithms of AI-enabled software for how they influence the person using it.
 
 positional arguments:
-  command        one of: audit, review, evaluate, fleet, skill
+  command        one of: audit, investigate, assess, review, evaluate, fleet,
+                 skill
   args           arguments passed through to the command
 
 options:
@@ -37,6 +44,11 @@ Commands:
   audit       Audit the prompts and code of a repository for profiling, manipulation,
               engineered attachment, deceptive identity and behavioural influence over
               the person using it; findings carry evidence and a policy decision
+  investigate Plan the surfaces an investigation reads, cite lines, and validate the
+              investigation records a host coding agent writes, against the tree
+  assess      Merge the scan, the validated investigation records, the review records
+              and the evaluation reports into an assessment: one outcome per mechanism,
+              the scope read and the scope left out; never a certification
   review      Write or check the review record: a named person, the artifacts they read
               (bound by content hash), the mechanisms considered, the declared purpose
   evaluate    Send fixed scenarios to an endpoint you are authorised to test, or read
@@ -50,6 +62,9 @@ Run `aisafe <command> --help` for a command's own options.
 Examples:
   aisafe audit . --format json -o audit-report.json
   aisafe audit . --baseline audit-baseline.json --fail-on high
+  aisafe investigate plan . -o .aisafe-audit/investigation-plan.json
+  aisafe investigate validate .aisafe-audit/investigations/
+  aisafe assess . --investigations .aisafe-audit/investigations
   aisafe review init
   aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor for adults"
   aisafe evaluate http://localhost:8000/chat --response-path '$.response'
@@ -81,7 +96,7 @@ AnyAISafe/
 |
 |-- src/aisafe/
 |   |-- __init__.py              # __version__ and the lazy exports above
-|   |-- cli.py                   # `aisafe`: audit | review | evaluate | fleet | skill
+|   |-- cli.py                   # `aisafe`: audit | investigate | assess | review | evaluate | fleet | skill
 |   |-- audit.py                 # `aisafe audit`: parser, AuditOptions, run_audit, main
 |   |-- policy/                  # load_policy(), Policy and Mechanism; packaged copies of charter.md
 |   |                            #   and mechanisms.yaml (a test pins them equal to /policy/)
@@ -99,6 +114,11 @@ AnyAISafe/
 |   |-- review/                  # records.py (the review record), cli.py (`aisafe review`),
 |   |                            #   baseline.py (fingerprint baselines with the policy version)
 |   |-- reporting/               # report.py (terminal, json, markdown, sarif), html.py
+|   |-- investigation/           # plan.py (the queue of surfaces), records.py (the record and
+|   |                            #   skeptic formats), text.py (hashes, quotes), validate.py,
+|   |                            #   scan.py (the workbench's scan, the tree's git state), cli.py
+|   |-- assessment/              # assess.py (`aisafe assess`), outcome.py (one outcome per
+|   |                            #   mechanism), render.py (markdown, html, terminal), cli.py
 |   |-- evaluation/              # scenarios.py (`aisafe evaluate`) and corpus/*.yaml (five families)
 |   |-- devtools/                # fleet.py, skill.py, hosts.py, _config.py ([tool.*] defaults), _git.py
 |   `-- skills/ai-safety-audit/  # the agent skill (canonical copy): SKILL.md, references/, scripts/, agents/
@@ -106,17 +126,21 @@ AnyAISafe/
 |-- tests/
 |   |-- conftest.py              # puts src/ on sys.path for uninstalled runs
 |   |-- fixtures/audit/          # persons_companion, persons_benign, clean_py, py_agent, ts_agent, go_service
+|   |-- fixtures/investigate/    # nine trees for investigation records (a flow across files, a benign
+|   |                            #   lookalike, anonymisation and its bypass, a control off the path, ...)
 |   `-- unit/                    # test_<area>.py
 |
 |-- bench/                       # protocol.md, cases/<id>/{tree,expected.yaml} (synthetic corpus),
-|                                #   run.py and score.py (the real-corpus precision loop), corpus.yaml
+|                                #   run.py and score.py (the real-corpus precision loop), corpus.yaml,
+|                                #   investigate.py (investigation records against the labels)
 |-- research/                    # the study: background.md, catalogue.md, corpus.yaml (33 repositories),
 |                                #   log.md, results/, console/ (the owner's review console)
 |-- docs/                        # REFERENCE.md (this file), methodology.md, architecture.md, rules.md
 |                                #   (generated), migration.md
 |-- examples/                    # README.md and companion_demo/ (a prompt-only tree to audit)
 |-- scripts/                     # rules_md.py (generates docs/rules.md and the skill's mechanisms.md),
-|                                #   sync_skill.py (plugin mirror), bump_version.py (version sites)
+|                                #   sync_skill.py (plugin mirror), bump_version.py (version sites),
+|                                #   claim_to_case.py (a confirmed claim into a bench-case skeleton)
 |-- .claude-plugin/, plugins/aisafe/   # the Claude Code plugin: the skill, mirrored byte for byte
 |-- .github/workflows/           # tests.yml (suite, audit gate, ruff, wheel, action dogfood), release.yml
 |-- action.yml                   # the composite GitHub Action
@@ -212,7 +236,8 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
                     [--fail-on-unknown [CATEGORIES]] [--include-ignored]
                     [--baseline FILE] [--write-baseline FILE]
                     [--amend-baseline FILE] [--accept FINGERPRINT=REASON]
-                    [--inventory-only] [--deep {python,none}] [--rules CSV]
+                    [--inventory-only] [--deep {python,none}]
+                    [--mode {self-assessment,auditor}] [--rules CSV]
                     [--experimental] [--exclude GLOBS] [--review-record FILE]
                     [--evaluation-report FILE] [--list-rules] [--quiet]
                     [--debug] [--no-external] [--redact | --no-redact]
@@ -233,6 +258,7 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
 | `--accept FINGERPRINT=REASON` | with `--amend-baseline`: the reason a listed fingerprint stays (repeatable; ASCII, no verdict language, nothing secret-shaped) |
 | `--inventory-only` | print the inventory document and exit 0; no rules run |
 | `--deep {python,none}` | the syntax-tree layer (default: `python`) |
+| `--mode {self-assessment,auditor}` | who is scanning (default: `self-assessment`); the report states it. In `auditor` mode the ignore-file marker and the own-output heads skip nothing, so the audited team cannot hide a file. Never read from `pyproject.toml` |
 | `--rules CSV` | run only these rule ids (a demoted id runs with a stderr note) |
 | `--experimental` | include rules measured below `MIN_PRECISION` (0.80) |
 | `--exclude GLOBS` | walker excludes (csv of globs; repeatable) |
@@ -251,7 +277,8 @@ list), `rules` (a list), `baseline`, `review-record`, `evaluation-report`, `form
 `output`, `deep`, `include-ignored`, `experimental`, `quiet`, `debug`; a key that is not a
 flag is ignored. An explicit flag always wins. The per-invocation
 actions `--write-baseline`, `--amend-baseline`, `--accept`, `--inventory-only` and
-`--list-rules` are never read from the file. A boolean set to `true` in the file has no
+`--list-rules` are never read from the file, and neither is `--mode`: the audited tree never
+chooses how it is audited. A boolean set to `true` in the file has no
 command-line flag to switch it back off. This repository's own table:
 
 ```toml
@@ -478,6 +505,217 @@ suppression. When the current policy is newer than the baseline's:
 An old suppression never becomes an acceptance because the policy moved. A baseline
 written by 0.1.0 (no `policy_version`) loads; its bare fingerprints are re-reviewed under
 the current policy. Re-create it with `--write-baseline` to carry the reasons over.
+
+## `aisafe investigate`
+
+The deterministic half of an investigation: the plan of surfaces to read, the citation of a
+line, the validation of the records a host coding agent writes, and the digest a skeptic
+pass binds to. None of the four reasons about the code.
+
+```
+usage: aisafe investigate [-h] action ...
+
+Plan an investigation of the surfaces of a tree, cite lines for a record, and
+validate investigation records against the tree. Deterministic; no model.
+
+positional arguments:
+  action
+    plan      write the ranked queue of surfaces to investigate
+    validate  check investigation records against the tree
+    cite      print a citation (file, line, quote, sha256) for a record
+    digest    print the record_sha256 a skeptic file binds to
+
+options:
+  -h, --help  show this help message and exit
+```
+
+### `plan`
+
+```
+usage: aisafe investigate plan [-h] [--budget BUDGET]
+                               [--format {terminal,json}] [-o OUTPUT]
+                               [--mode {self-assessment,auditor}]
+                               [path]
+
+positional arguments:
+  path                  the audited tree (default: .)
+
+options:
+  -h, --help            show this help message and exit
+  --budget BUDGET       surfaces to queue (default: 20)
+  --format {terminal,json}
+  -o, --output OUTPUT   write the plan here (JSON)
+  --mode {self-assessment,auditor}
+```
+
+The plan (`aisg/investigation-plan/1`) is the ranked queue of **surfaces** built from the
+scan's inventory, not only from rule hits: person-facing units, prompt files, literals and
+assemblies, prompts fetched at run time, model calls, schedulers and senders, memory
+stores, profile sources and external destinations. Each surface has an id (`s-` and twelve
+hex digits of a hash of its type, path and the cited line's text, so it survives lines
+moving above it), a priority (`high`, `normal`, `low`; the rules are in the module
+docstring of `aisafe.investigation.plan`), the signals and machine findings in its scope,
+and its **hypotheses**: the `mechanism/pattern` pairs of the policy that apply to its type.
+A hypothesis is `signalled` when a signal in the scope speaks to its mechanism. The budget
+(default 20) is how many surfaces are queued; the rest are `left_out`, counted by
+priority. Surfaces in a code language the workbench does not read (anything but Python,
+JS/TS and prompt or configuration text) are `unsupported`. `untrusted_text` lists lines
+addressed to an auditor or an AI tool, and agent instruction files; `not_read` lists the
+files the ignore marker, the own-output check and the size limit kept out. The scan under
+the plan uses fixed options: Python deep analysis, every default rule, no baseline, and
+no `[tool.aisafe-audit]` of the audited tree. `plan_sha256` is equal for equal trees.
+
+### `cite`, `validate`, `digest`
+
+```
+usage: aisafe investigate cite [-h] [--target TARGET]
+                               [--mode {self-assessment,auditor}]
+                               location
+
+positional arguments:
+  location              FILE:LINE or FILE:LINE-END, relative to the target
+
+options:
+  -h, --help            show this help message and exit
+  --target TARGET       the audited tree (default: .)
+  --mode {self-assessment,auditor}
+```
+
+`cite FILE:LINE` (or `FILE:LINE-END`) prints `{file, line, quote, sha256}` exactly as
+`validate` checks them: the quote is the line with whitespace collapsed and secrets
+redacted, and `sha256` is the hash of the file's bytes with CRLF turned into LF.
+
+```
+usage: aisafe investigate validate [-h] [--target TARGET]
+                                   [--format {terminal,json}] [-o OUTPUT]
+                                   [--mode {self-assessment,auditor}]
+                                   [--working-tree]
+                                   records [records ...]
+
+positional arguments:
+  records               record files or directories
+
+options:
+  -h, --help            show this help message and exit
+  --target TARGET       the audited tree (default: .)
+  --format {terminal,json}
+  -o, --output OUTPUT   write the result here
+  --mode {self-assessment,auditor}
+  --working-tree        check quotes against uncommitted files on disk (the
+                        result says so)
+```
+
+One record (`aisg/investigation/1`) answers one hypothesis on one surface. The field list
+is the skill's `references/investigate.md`; in short: `id`, `created_at`, `target
+{path, commit}`, `mode`, `operator {name, role}` (the person who ran the investigation),
+`mechanism` (M1 to M7), `pattern`, `view`, `surface`, `hypothesis`, `links` (each with
+`kind`, `how` `read|traced|runtime-only`, `file`, `line`, `quote`, `sha256`, and `from` and
+`via` hops that make the links one chain), `counterevidence`, `controls` (`on_path`
+`yes|no|unknown`), `absent_links`, `open_questions`, `missing_evidence`, `proposed
+{evidence_status, decision}`, `verification_steps`, `investigator {agent, model, version,
+session}`, `skeptic {result, reason, file}`; optional `covers`, `supersedes`,
+`depends_on`, `untrusted_text`.
+
+A record is **rejected** when a required field is empty or malformed, a cited file is not
+one the scan walked, a quote is not at its line, a content hash differs, the record names
+another commit or another mode, its free text pronounces a verdict, a quote carries a
+secret-shaped string, a remediation step already passes (it tests nothing), a regression
+step fails, a file it depends on changed, or its id is used twice. An accepted record
+keeps its claim only as far as the evidence carries it, and `notes` say why when it does
+not: a violation needs a complete, connected chain of the pattern's links and the
+pattern's absent control shown absent on the path; a closing needs the chain broken (a
+required link ruled out) or the control on the path with its location; a runtime-only
+link, an unsupported language, a supported benign reading or an open question lowers the
+claim to `unknown` or a review. A skeptic pass (`aisg/skeptic/1`) counts only when it is
+bound to the record by `record_sha256` (`digest`) and was written in another session. The
+uncommitted state of the tree is refused (exit 2) unless `--working-tree` is given; the
+result then says so. Exit codes: 0 every record accepted, 1 a record rejected, 2 fatal
+(no record found, uncommitted changes, unreadable input).
+
+```
+usage: aisafe investigate digest [-h] record
+
+positional arguments:
+  record      an investigation record
+
+options:
+  -h, --help  show this help message and exit
+```
+
+## `aisafe assess`
+
+```
+usage: aisafe assess [-h] --investigations DIR [DIR ...] [-o OUTPUT_DIR]
+                     [--format {terminal,json}] [--retest ASSESSMENT]
+                     [--working-tree] [--mode {self-assessment,auditor}]
+                     [--budget BUDGET]
+                     [path]
+
+Merge the scan, the validated investigation records, the review records and
+the evaluation reports into an assessment with one outcome per mechanism.
+Never a certification.
+
+positional arguments:
+  path                  the audited tree (default: .)
+
+options:
+  -h, --help            show this help message and exit
+  --investigations DIR [DIR ...]
+                        investigation record files or directories (required:
+                        no records, no assessment)
+  -o, --output-dir OUTPUT_DIR
+                        where the three files go (default: PATH/.aisafe-
+                        audit/assessment)
+  --format {terminal,json}
+  --retest ASSESSMENT   a previous assessment.json: re-run its records'
+                        verification steps on this commit
+  --working-tree        assess uncommitted files
+  --mode {self-assessment,auditor}
+  --budget BUDGET       surfaces the plan queues
+```
+
+The assessment (`aisg/assessment/1`, labelled `assessment`; `aisafe audit` writes a `scan
+report`) merges the scan, the validated records and their skeptic passes, the review
+records and the evaluation reports, and keeps them apart: `machine` (the scan and the
+records), `human` (the review records and the decisions a named person recorded, shown
+beside the outcome and never changing it), `auditee` (what the audited team supplied, in
+auditor mode), `evaluation`. It records the commit, the deployment and configuration
+(from the engagement, in auditor mode), the mode, the policy version, the investigators
+(agent, model, version) and operators, the scope (the plan's surfaces, how many were
+queued and investigated, and what was left unassessed: surfaces not investigated,
+unsupported ones, files the marker or the own-output check kept out, the scan's UNKNOWN
+items), the inputs with their hashes, and the remediation check. `assessment.md` and
+`assessment.html` start with the tool's own marker line, so a later walk skips them.
+
+**Outcomes**, per mechanism:
+
+| outcome | when |
+|---|---|
+| `violations_identified` | a record establishes the mechanism (a complete, connected trace, upheld by a bound skeptic pass) or the scan reports a violation on supported or observed evidence; a closing record never lowers it |
+| `inconclusive` | a blocking gap remains: a high-priority surface carrying one of the mechanism's hypotheses without a deciding record for it (left out by the budget, unreached or unsupported); a skeptic refutation; a deciding claim no bound skeptic pass upheld; runtime-only evidence for a required link; a record a person still has to weigh; a rejected record; a supported scan finding no deciding record covers; a closing record next to text addressed to auditors or AI tools |
+| `not_assessed` | no record names the mechanism and the scan holds no supported or observed finding of it |
+| `no_violation_identified_within_assessed_scope` | a record closes the mechanism, upheld by its skeptic pass, and no gap remains; it says "closed on k of n surfaces" |
+
+M8 (missing or stale review) is read from the scan's AUD-1106 and AUD-1107 facts and the
+review records. The overall outcome is the least favourable one, in the order of the
+table. Acceptances and baselines are not inputs. Without an accepted record the command
+exits 2: an assessment never falls back to the scan.
+
+**Retest.** `--retest PREVIOUS` re-runs the verification steps of the previous
+assessment's records on the tree as it is now; it needs at least one record made at the new
+commit. A record is `remediated` only when every remediation step failed at its commit
+(re-checked there through `git show` for `absent` and `present` steps) and passes now, no
+regression step fails, no current record establishes the same hypothesis on the surface,
+and the scan reports no supported violation of the mechanism in the surface's file. The
+other statuses: `not_remediated`, `regressed`, `needs_reinvestigation` (a step that cannot
+run mechanically, or only a `no_finding` step, and no record at the new commit closes the
+hypothesis), `not_verified` (a remediation step already passed at the previous commit),
+`held` (regression steps only, all passing), `same_commit`. A step on a file the walk no
+longer reads cannot run, and is never a pass. A finding that is no longer reported is
+listed as "not reported", never as remediated, and a violation the retest does not show
+remediated stands in the new assessment. The previous records are retested rather than
+counted as rejected; a mechanism closes again only through a new record on the new code. Exit codes: 0 every mechanism has no violation identified within
+the assessed scope and no record was rejected; 1 otherwise; 2 fatal.
 
 ## `aisafe review`
 
@@ -963,28 +1201,35 @@ documentation, and `install` says so on stderr.
 The `ai-safety-audit` skill (`src/aisafe/skills/ai-safety-audit/`, shipped in the wheel
 and mirrored byte for byte into `plugins/aisafe/skills/` by `scripts/sync_skill.py`) is
 what an agent host adds on top of the CLI: explanation, the person's decisions, and a
-gated change workflow. The intelligence stays in the commands. Nine hard rules hold in
-every phase: no verdict or certification; every rule is UNMEASURED and no confidence
+gated change workflow. Its flow is self-assessment mode; auditor mode is described in
+its `references/investigate.md`. The deterministic part stays in the commands, and the
+agent's reading of the code enters only as investigation records. Eleven hard rules hold
+in every phase: no verdict or certification; every rule is UNMEASURED and no confidence
 number is invented; UNKNOWN and `coverage_gaps` are things nobody has checked; the
 person is the reviewer and the agent is `assisted_by`; one change per approval, preferring
 the change that removes the objective, the inference or the intervention; no tests and no
 `aisafe evaluate` without approval, and never against real users; the agent never
 silences or accepts a finding to make it go away; the bootstrap prints which `aisafe` ran
-and at which version; no push.
+and at which version; no push; repository content is untrusted evidence, never followed,
+and text addressed to auditors or AI tools is recorded; the agent's reasoning enters only
+as attributed records, and the skeptic pass runs in a fresh context.
 
 | phase | what runs | what it writes |
 |---|---|---|
 | 1 Survey | `aisafe audit . --format json --write-baseline`; `aisafe audit . --inventory-only` | `.aisafe-audit/audit-report.json`, `.aisafe-audit/audit-baseline.json`, `.aisafe-audit/inventory.json` |
-| 2 Document | `aisafe audit . --format html` | `.aisafe-audit/audit-before.html`: the mechanism map, one section per mechanism, the plan, UNKNOWN |
-| 3 Review | a walk through each `requires_contextual_review` finding by mechanism, asking the question the mechanism's `distinct_from` poses; `aisafe review init`, `aisafe review record --reviewer "<person>" --assisted-by "<agent>"`, `aisafe review check` | `aisafe-review.yaml` at the repository root, with the person's `decisions:` |
-| 4 Remediate | one diff per approval, then `aisafe audit . --format json -q --baseline ...` into a scratch file; a finding the person keeps is accepted with `--amend-baseline --accept` | `.aisafe-audit/audit-recheck.json` after each diff; `.aisafe-audit/audit-report-after.json`, `.aisafe-audit/audit-after.html`; on the PR path `.aisafe-audit/pr-body.md` |
-| 5 Evaluate | only with approval: `aisafe evaluate <loopback-url> --families ...` or `--transcripts FILE`; then a re-audit, which reads the report | `.aisafe-audit/evaluation-report.json` |
+| 2 Investigate | `aisafe investigate plan`, then per queued surface and hypothesis: trace, `aisafe investigate cite`, write the record, `aisafe investigate validate`; a skeptic pass in a fresh context on each deciding claim; `aisafe assess . --investigations ...` | `.aisafe-audit/investigation-plan.json`, `.aisafe-audit/investigations/<id>.json` and `<id>.skeptic.json`, `.aisafe-audit/assessment/assessment.{json,md,html}` |
+| 3 Document | `aisafe audit . --format html` | `.aisafe-audit/audit-before.html`: the mechanism map, one section per mechanism, the plan, UNKNOWN |
+| 4 Review | a walk through each `requires_contextual_review` finding by mechanism, asking the question the mechanism's `distinct_from` poses; `aisafe review init`, `aisafe review record --reviewer "<person>" --assisted-by "<agent>"`, `aisafe review check` | `aisafe-review.yaml` at the repository root, with the person's `decisions:` |
+| 5 Remediate | one diff per approval, then `aisafe audit . --format json -q --baseline ...` into a scratch file; a finding the person keeps is accepted with `--amend-baseline --accept`; then `aisafe assess ... --retest` | `.aisafe-audit/audit-recheck.json` after each diff; `.aisafe-audit/audit-report-after.json`, `.aisafe-audit/audit-after.html`; `.aisafe-audit/assessment-after/`; on the PR path `.aisafe-audit/pr-body.md` |
+| 6 Evaluate | only with approval: `aisafe evaluate <loopback-url> --families ...` or `--transcripts FILE`; then a re-audit, which reads the report | `.aisafe-audit/evaluation-report.json` |
 
-The bootstrap scripts `scripts/{audit,review,evaluate}.{sh,ps1}` resolve `aisafe` on PATH,
+The bootstrap scripts `scripts/{audit,investigate,assess,review,evaluate}.{sh,ps1}` resolve
+`aisafe` on PATH,
 else `uvx --from "aisafe==<pinned version>"`, else `pipx run`, and print one stderr line
 naming the path and version that ran. `references/mechanisms.md` is generated from the
 policy by `scripts/rules_md.py --skill`; `references/report-format.md` describes the
-report fields; `references/apply/{python,typescript,generic}.md` show how to remove an
+report fields; `references/investigate.md` holds the record format, the tracing method,
+the person-data view, the skeptic pass and auditor mode; `references/apply/{python,typescript,generic}.md` show how to remove an
 objective, an inference or an intervention; `references/hosts.md` lists the skill
 directories. `agents/openai.yaml` carries the description for OpenAI-style hosts.
 
@@ -1081,6 +1326,19 @@ overrides it and says so), and prints a paste-ready `measured_precision` block p
 rule measured below `MIN_PRECISION` (0.80) moves behind `--experimental`; a rule's figure
 comes from the real corpus only, never from the synthetic cases. `unclear` leaves the
 denominator.
+
+**Investigation records against the labels.** `bench/investigate.py --records DIR --cases
+bench/cases` validates the records under `DIR/<case-id>/` against a copy of each case's
+tree and compares their effective claims with the case's labels; `--reference
+research/results/reference/<set>-labels.csv` does the same against the blind reference
+labels, for records under `DIR/<repo>/` validated against the pinned clones. It prints
+every agreement and disagreement with counts, and "unreviewed" in place of precision
+and recall when no second person reviewed the labels. A record directory for a held-out
+repository is refused: none is investigated in this milestone.
+`scripts/claim_to_case.py` turns a claim a person confirmed (an investigation record
+with `--confirmed-by`, or a confirmed reference row) into a bench-case skeleton under
+`bench/drafts/`: the positive case carries the confirmed decision, attributed to that
+person; the benign twin carries no label until someone writes its tree and its labels.
 
 Status (2026-10-29): the synthetic cases are the paired cases of `methodology.md`
 section 10, authored during the pivot with `reviewed_by` unset; the real-corpus sample is

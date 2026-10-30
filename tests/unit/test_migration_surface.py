@@ -51,17 +51,26 @@ def test_no_removed_package_directory_exists() -> None:
 def test_console_commands_are_exactly_the_focused_set() -> None:
     from aisafe import cli
 
-    assert set(cli.COMMANDS) == {"audit", "review", "evaluate", "fleet", "skill", "probe"}
+    assert set(cli.COMMANDS) == {
+        "audit",
+        "investigate",
+        "assess",
+        "review",
+        "evaluate",
+        "fleet",
+        "skill",
+        "probe",
+    }
     for removed in ("lint", "misalign", "init", "measure", "decide", "hook", "attest"):
         assert removed not in cli.COMMANDS
 
 
-def test_help_lists_the_five_public_commands_and_hides_the_alias(capsys) -> None:
+def test_help_lists_the_public_commands_and_hides_the_alias(capsys) -> None:
     from aisafe import cli
 
     assert cli.main([]) == 2
     out = capsys.readouterr().out
-    for name in ("audit", "review", "evaluate", "fleet", "skill"):
+    for name in ("audit", "investigate", "assess", "review", "evaluate", "fleet", "skill"):
         assert f"  {name} " in out, name
     for removed in ("lint ", "misalign", "measure", "decide", "hook", "attest", " init "):
         assert removed not in out, removed

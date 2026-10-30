@@ -32,6 +32,12 @@ Rules that hold here:
 - A file over `max_size` is not read, and that is reported: the count, the limit and the
   first few paths go under UNKNOWN, and `oversize_skipped` receives every path so the
   caller can put the count on the inventory. Silence is never a pass.
+- A file carrying the ignore marker in its first five lines is skipped, and the skip is
+  named: `marker_skipped` receives every such path, so the caller can list it under
+  UNKNOWN and an assessment can list it as unassessed scope. A marker is the tree's own
+  claim about itself; in auditor mode (`WalkOptions.honour_marker=False`,
+  `skip_own_output=False`) neither the marker nor the own-output heads skip anything, so
+  the team being audited cannot hide a file with one comment line.
 - `.aisafe-audit/` (`AUDIT_DIR`) is never pruned by `.gitignore`, in either the directory
   or the file branch. The skill puts every artefact there and proposes the gitignore line
   for it, so the measure and probe reports the skill itself produces would otherwise stop
@@ -122,6 +128,27 @@ _OWN_SARIF_RE = re.compile(
     r'"aisg_schema":\s*"' + re.escape(SCHEMA_VERSION) + r'",\s*"own_output_skipped":'
 )
 _OWN_REPORT_SUFFIXES = (".json", ".sarif")
+# The workbench documents: investigation records and their validation, skeptic passes,
+# investigation plans, assessments, engagements and bundle manifests. Their quotes would
+# re-report every line they cite. A head match on the exact schema label and the kind
+# that goes with it, like the audit report's.
+_OWN_WORKBENCH: dict[str, str] = {
+    name: name
+    for name in (
+        "investigation",
+        "investigation-validation",
+        "investigation-plan",
+        "skeptic",
+        "assessment",
+        "engagement",
+        "bundle",
+    )
+}
+_OWN_WORKBENCH_RE = re.compile(
+    r'"schema":\s*"aisg/('
+    + "|".join(re.escape(k) for k in sorted(_OWN_WORKBENCH, key=len, reverse=True))
+    + r')/1"'
+)
 
 
 # ---------------------------------------------------------------------------
@@ -140,6 +167,9 @@ class WalkOptions:
     # run and the units are the same; only the records handed on are filtered. A path
     # the walk never saw is one UNKNOWN row, never a silent no-op.
     only: tuple[str, ...] = ()
+    # Auditor mode turns both off: the tree's own claims about itself skip nothing.
+    honour_marker: bool = True
+    skip_own_output: bool = True
 
 
 @dataclass
@@ -404,6 +434,11 @@ def is_own_report(name: str, head: str) -> bool:
         return True
     if not lower.endswith(".json"):
         return False
+    workbench = _OWN_WORKBENCH_RE.search(head)
+    if workbench is not None:
+        kind = _OWN_WORKBENCH[workbench.group(1)]
+        if re.search(r'"kind":\s*"' + re.escape(kind) + '"', head):
+            return True
     return bool(_OWN_SCHEMA_RE.search(head)) and bool(_OWN_KIND_RE.search(head))
 
 
@@ -519,6 +554,7 @@ def walk(
     *,
     own_output_skipped: list[str] | None = None,
     oversize_skipped: list[str] | None = None,
+    marker_skipped: list[str] | None = None,
 ) -> tuple[list[FileRecord], list[Unit], list[UnknownItem]]:
     """
     Enumerate `root`. Never raises on an unreadable entry; see the module docstring.
@@ -530,6 +566,9 @@ def walk(
     `oversize_skipped`, when given, receives the POSIX relpath of every file over
     `options.max_size`. Those files always get one UNKNOWN row (count, limit, first few
     paths) whether or not the sink is passed; the sink is for the inventory's count.
+
+    `marker_skipped`, when given, receives the POSIX relpath of every file skipped for the
+    ignore marker, sorted. With `honour_marker=False` no file is skipped for it.
     """
     opts = options or WalkOptions()
     root = Path(root).resolve()
@@ -601,11 +640,24 @@ def walk(
             text_head = head.decode("utf-8-sig", errors="replace")
             # The html report carries the marker on line 1; name it before the marker
             # check drops it without a trace.
-            if is_own_html(text_head) or is_own_report(name, text_head):
+            own = is_own_html(text_head) or is_own_report(name, text_head)
+            if (
+                not own
+                and name.lower().endswith(".json")
+                and rel.startswith((AUDIT_DIR + "/", *(d + "/" for d in LEGACY_AUDIT_DIRS)))
+                and size > HEAD_BYTES
+            ):
+                # A workbench document written with its keys sorted puts `schema` late;
+                # under the audit directory the whole file is read for the check.
+                whole = read_text(full) or ""
+                own = is_own_report(name, whole)
+            if opts.skip_own_output and own:
                 if own_output_skipped is not None:
                     own_output_skipped.append(rel)
                 continue
-            if has_ignore_marker(text_head):
+            if opts.honour_marker and has_ignore_marker(text_head):
+                if marker_skipped is not None:
+                    marker_skipped.append(rel)
                 continue
             pending.append(_Pending(full, rel, _lang_for(name), size, gitignored))
 
@@ -683,6 +735,8 @@ def walk(
     # match across Windows and Linux (same invariant as oversize_skipped and records).
     if own_output_skipped is not None:
         own_output_skipped[:] = sorted(own_output_skipped)
+    if marker_skipped is not None:
+        marker_skipped[:] = sorted(marker_skipped)
     return records, units, unknown
 
 
@@ -733,10 +787,11 @@ def _ignored_dirs_item(ignored_dirs: list[str]) -> UnknownItem:
 
 
 def _git(args: Sequence[str], cwd: Path) -> str | None:
-    """Run a read-only git command; stdout on success, None on any failure."""
+    """Run a read-only git command; stdout on success, None on any failure. The audited
+    repository's file-system monitor is turned off: its configuration starts no program."""
     try:
         proc = subprocess.run(
-            ["git", *args],
+            ["git", "-c", "core.fsmonitor=false", *args],
             cwd=str(cwd),
             stdin=subprocess.DEVNULL,
             capture_output=True,

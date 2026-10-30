@@ -58,11 +58,11 @@ and exits 1 when they differ. `install` refuses to overwrite a differing copy wi
 
 ## What the installed copy contains
 
-`SKILL.md` (the five-phase flow and the hard rules), `agents/openai.yaml` (host metadata
+`SKILL.md` (the six-phase flow and the hard rules), `agents/openai.yaml` (host metadata
 for hosts that read it), `references/` (`report-format.md`, `mechanisms.md`, generated from
-the policy and the rule registry, `apply/python.md`, `apply/typescript.md`,
-`apply/generic.md`, and this file) and `scripts/` (`audit`, `review` and `evaluate`, each as
-`.sh` and `.ps1`). The reference documents whose examples quote the prompt phrases the rules
+the policy and the rule registry, `investigate.md`, `apply/python.md`, `apply/typescript.md`,
+`apply/generic.md`, and this file) and `scripts/` (`audit`, `investigate`, `assess`,
+`review` and `evaluate`, each as `.sh` and `.ps1`). The reference documents whose examples quote the prompt phrases the rules
 look for carry `<!-- # aisafe-audit: ignore-file -->` on their second line, so an audit of
 the repository the skill is installed in skips them instead of reporting the examples.
 
@@ -74,8 +74,9 @@ That is the intersection of what the hosts above accept; host-specific metadata 
 
 ## Bootstrap scripts
 
-`scripts/audit.sh`, `audit.ps1`, `review.sh`, `review.ps1`, `evaluate.sh` and
-`evaluate.ps1` resolve `aisafe` in this order: `aisafe` on PATH, else `uvx --from
+`scripts/audit.sh`, `audit.ps1`, `investigate.sh`, `investigate.ps1`, `assess.sh`,
+`assess.ps1`, `review.sh`, `review.ps1`, `evaluate.sh` and `evaluate.ps1` resolve `aisafe`
+in this order: `aisafe` on PATH, else `uvx --from
 'aisafe==<version>'`, else `pipx run --spec 'aisafe==<version>'`. `aisafe` is the
 distribution, the importable name and the console script; on PyPI the unrelated
 `aisafeguard` also installs an `aisafe` command, so every script says which one ran: one
@@ -84,6 +85,6 @@ line on stderr before the command, `aisafe: <path> version <version> (pinned <ve
 say so before reading any result. The version is pinned to the package that shipped the
 scripts, and a test asserts it equals `pyproject.toml`; an unpinned bootstrap would run
 whatever version the index serves that day. When none of the three is available,
-`audit.sh` and `review.sh` exit 2 with install hints, and `evaluate.sh` prints `evaluate
+`audit.sh`, `investigate.sh`, `assess.sh` and `review.sh` exit 2 with install hints, and `evaluate.sh` prints `evaluate
 skipped: aisafe not importable in target` after the test step and exits 0: it is a step on
 someone else's project and reports what it could not do.

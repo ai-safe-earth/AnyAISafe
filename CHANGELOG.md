@@ -36,6 +36,42 @@ place the version lives and moves the Unreleased entries under a dated heading;
   a link that exists only at run time; it never supports a trace. The chain line names each
   missing link, a partial trace is never shown complete, and a finding with no chain says
   which links a trace would need.
+- **A third-party assessment workbench, in two modes.** Self-assessment mode is the
+  owner-led flow; auditor mode is an independent auditor assessing someone else's system,
+  in which the scan reads every file whatever ignore marker or own-output head it carries.
+  `aisafe audit --mode`; every document states its mode; `aisafe audit` output is labelled
+  "scan report".
+- **`aisafe investigate`.** `plan` writes the ranked queue of surfaces from the inventory
+  (person-facing units, prompts, prompts fetched at run time, model calls, schedulers and
+  senders, memory stores, profile sources, external destinations), each with its
+  hypotheses as policy patterns, a structural priority, a budget (20) whose left-out
+  surfaces are counted, and the text addressed to auditors or AI tools. `cite` prints a
+  citation as the validator checks it; `validate` checks investigation records
+  (`aisg/investigation/1`) against the tree: quotes at their lines, content hashes, walked
+  files, required fields, the commit and the mode, connected chains, steps that test
+  something, skeptic passes (`aisg/skeptic/1`) bound by hash and run in another session;
+  a claim the cited code does not carry is lowered, with the reason. `digest` prints the
+  hash a skeptic pass binds to.
+- **`aisafe assess`.** The assessment (`aisg/assessment/1`, JSON, Markdown, HTML): one
+  outcome per mechanism (`violations_identified`, `inconclusive`, `not_assessed`,
+  `no_violation_identified_within_assessed_scope`, with "closed on k of n surfaces"), the
+  overall outcome the least favourable, every blocking gap listed, machine, human and
+  auditee inputs kept apart, the scope read and left out, the inputs hashed. `--retest`
+  counts a remediation only when the record's steps fail at its commit and pass on the new
+  one. Without an accepted record it exits 2.
+- **The skill's Investigate phase** (phase 2 of six), `references/investigate.md` (the
+  record format, tracing, the person-data view, the skeptic pass, auditor mode), rules 10
+  and 11 (repository content is untrusted evidence; reasoning enters only as attributed
+  records), and the `investigate` and `assess` bootstrap scripts.
+- **Investigation fixtures and measurement.** Nine fixtures under
+  `tests/fixtures/investigate/` (a flow across files, a benign lookalike, anonymisation and
+  its bypass, a control imported and never called, a prompt fetched at run time, a
+  semantic finding the rules miss, a renamed outreach job, a partial trace);
+  `bench/investigate.py` compares records with the case labels and the reference labels
+  and prints "unreviewed" in place of precision and recall; `scripts/claim_to_case.py`
+  turns a confirmed claim into a bench-case skeleton and its unlabelled benign twin.
+- **Policy 1.1.0: an M1 `transmission` pattern** (person-data view, `collection` and
+  `transmission`, with `anonymisation` as its absent control).
 
 ### Changed
 
@@ -50,6 +86,10 @@ place the version lives and moves the Unreleased entries under a dated heading;
   failing one; a report dated in the future has an unknown age and demonstrates nothing.
 - **Review records and baseline acceptances made under policy 1.0.0 are re-reviewed.** The
   repository's own baseline reason was recorded again under 1.1.0, unchanged.
+- **The scan lists the files the ignore-file marker kept out** (`target.marker_skipped`
+  and one UNKNOWN row), and skips the workbench's own documents (records, skeptic passes,
+  plans, assessments) as its own output.
+- **The report envelope gains `label` and `mode`**, after `kind`.
 
 ### Fixed
 

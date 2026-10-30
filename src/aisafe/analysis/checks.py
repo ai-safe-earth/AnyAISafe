@@ -624,12 +624,18 @@ def _read(record: Any) -> str | None:
         return None
 
 
-def run_checks(records: Iterable[Any], texts: Mapping[str, str | None] | None = None) -> CheckFacts:
+def run_checks(
+    records: Iterable[Any],
+    texts: Mapping[str, str | None] | None = None,
+    *,
+    honour_marker: bool = True,
+) -> CheckFacts:
     """Run every check over the Python records (`lang == "python"`).
 
     `texts` maps a relpath to its decoded text, or None when the walk could not read it;
     a record missing from the mapping is read from its path. A file whose first five lines
-    carry the ignore marker is skipped and listed. Files are visited in path order and hits
+    carry the ignore marker is skipped and listed (never in auditor mode,
+    `honour_marker=False`). Files are visited in path order and hits
     are sorted, so the same tree gives the same facts. Never raises: a check that fails on a
     file becomes an UNKNOWN item.
     """
@@ -644,7 +650,7 @@ def run_checks(records: Iterable[Any], texts: Mapping[str, str | None] | None = 
         text = texts[relpath] if relpath in texts else _read(record)
         if text is None:
             continue
-        if _has_marker(text):
+        if honour_marker and _has_marker(text):
             facts.skipped.append(relpath)
             continue
         facts.files += 1

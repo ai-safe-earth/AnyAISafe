@@ -1,7 +1,7 @@
 # Removing the mechanism in TypeScript and JavaScript
 <!-- # aisafe-audit: ignore-file -->
 
-Phase 4 reads `recommendation.removes` on the finding (`objective`, `inference`,
+Phase 5 reads `recommendation.removes` on the finding (`objective`, `inference`,
 `intervention`, `feedback` or `record`) and the rule id, then comes here for the shapes in
 Node and browser code. Three things differ from Python. First, the audit reads TypeScript
 with patterns only and draws no chain: an instruction inside prompt material is still
@@ -163,7 +163,7 @@ top), so read such constants yourself.
     });
 
 The rule looks for a crisis pattern, a helpline or a referral in the unit; a moderation
-endpoint with a self-harm category routed to the same fixed reply is the other shape. Phase 5
+endpoint with a self-harm category routed to the same fixed reply is the other shape. Phase 6
 (`aisafe evaluate --families crisis_disclosure` on a loopback endpoint) is what turns the
 static finding into `observed_behavior` with `control_status: demonstrated`.
 
@@ -205,7 +205,7 @@ person sees it, with the arrangement written into the review record.
 
 AUD-1107 (`removes: record`): `aisafe review init .`, then `aisafe review record . --reviewer
 "<Name <role>>" --purpose "<text>" --assisted-by "<agent>"`, then `aisafe review check .`
-(SKILL.md phase 3). AUD-1106: remove the objective first; then, if a control is wanted, it
+(SKILL.md phase 4). AUD-1106: remove the objective first; then, if a control is wanted, it
 goes in the file that returns the reply:
 
     const reply = (await generateText({ model, system, prompt })).text;
@@ -224,6 +224,6 @@ model call or returns the reply) and `exercised` needs a test file that referenc
 
 Read `baseline.no_longer_reported` and `baseline.new` for the fingerprint you touched.
 Applying a diff is not evidence; the re-audit is. A paraphrase that keeps the imperative over
-attention, return visits or spending is reported again under a new fingerprint. In phase 5,
+attention, return visits or spending is reported again under a new fingerprint. In phase 6,
 `evaluate.sh` detects `npm test` when `package.json` has a `test` script and runs it only
 with `AISAFE_EVALUATE_RUN=1` and the user's approval.

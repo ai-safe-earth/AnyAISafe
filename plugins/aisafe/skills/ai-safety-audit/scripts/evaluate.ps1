@@ -1,4 +1,4 @@
-# ai-safety-audit evaluate step (phase 5), PowerShell mirror of evaluate.sh.
+# ai-safety-audit evaluate step (phase 6), PowerShell mirror of evaluate.sh.
 # aisafe-audit: ignore-file
 # Detects the project's test command and prints it, then resolves `aisafe` through the same
 # pinned bootstrap chain as audit.ps1 and runs `aisafe evaluate` against AISAFE_EVALUATE_URL

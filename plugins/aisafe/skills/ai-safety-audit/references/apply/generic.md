@@ -3,7 +3,7 @@
 
 For repositories whose prompts live in files (`prompts/*.md`, `agents/*.yaml`, `*.jinja`,
 `*.prompt.*`, persona cards), and for languages the audit reads with patterns only (Go,
-Java, Kotlin, Rust, Ruby, C#, PHP, shell). Phase 4 reads `recommendation.removes` on the
+Java, Kotlin, Rust, Ruby, C#, PHP, shell). Phase 5 reads `recommendation.removes` on the
 finding (`objective`, `inference`, `intervention`, `feedback` or `record`) and the rule id,
 then comes here when neither `python.md` nor `typescript.md` matches. The shapes below are
 the change without a library; translate them into the idiom the codebase already uses and

@@ -1,7 +1,7 @@
 # Removing the mechanism in Python
 <!-- # aisafe-audit: ignore-file -->
 
-Phase 4 reads `recommendation.removes` on the finding (`objective`, `inference`,
+Phase 5 reads `recommendation.removes` on the finding (`objective`, `inference`,
 `intervention`, `feedback` or `record`) and the rule id, then comes here. Each section says
 what to delete or rewrite, what to put in its place, and what the re-audit should show. A
 change that removes the objective, the inference or the intervention is preferred to a
@@ -214,7 +214,7 @@ The rule runs on a unit that receives requests (an `ingress` row in the inventor
 a model; a module that holds the persona and no route shows no AUD-1108, a gap to say out
 loud, not a pass. It looks for a crisis pattern, a helpline or a referral in the unit's code,
 config or prompts; a moderation endpoint with a self-harm category that routes to the same
-fixed reply is the other shape. The static finding stays `requires_contextual_review` until phase 5:
+fixed reply is the other shape. The static finding stays `requires_contextual_review` until phase 6:
 `aisafe evaluate --families crisis_disclosure` against a loopback endpoint is what turns it
 into `observed_behavior` with `control_status: demonstrated`. A vendor safety layer outside
 the tree stays a `coverage_gaps` entry; say so rather than accepting the finding.
@@ -270,7 +270,7 @@ the review record.
 
 ## M8 -- the review record and the control status (AUD-1107, AUD-1106)
 
-AUD-1107 (`removes: record`): nothing to delete. Write the record (SKILL.md phase 3):
+AUD-1107 (`removes: record`): nothing to delete. Write the record (SKILL.md phase 4):
 
     aisafe review init .
     aisafe review record . --reviewer "J. Doe <product owner>" --purpose "<text>" --affected "<text>" --assisted-by "<agent>"
@@ -295,7 +295,7 @@ by them. Then, if a control is still wanted, it goes where the reply is returned
         return reply                         # a test that calls respond(): exercised
 
 `claimed` is a symbol in docs, config or an import only. `demonstrated` needs an evaluation
-report (phase 5) with `goodbye_pressure` or `manipulation_elicitation` passing inside the
+report (phase 6) with `goodbye_pressure` or `manipulation_elicitation` passing inside the
 policy's window; AUD-1106 is then no longer reported and the M8 coverage row records it.
 
 ## Re-audit after each change

@@ -148,6 +148,14 @@ mechanisms:
         view: person-data
         links: [collection, storage]
         rules: [AUD-1101/extraction, AUD-1101/store]
+      # Personal data that feeds a profile and leaves the system: to an analytics or
+      # profiling service, a model provider, a log shipper. The mechanism is the data
+      # leaving without the anonymisation the path claims; a record closes it only by
+      # showing that transformation on the path the data takes, every branch included.
+      - id: transmission
+        view: person-data
+        links: [collection, transmission]
+        absent_control: anonymisation
 
   - id: M2
     name: Vulnerability inference used for influence

@@ -75,6 +75,7 @@ from aisafe.reporting.report import (
     _uncertainty_text,
     _unknown_detail_lines,
     _unknown_head,
+    label_line,
     tool_version,
 )
 
@@ -711,6 +712,7 @@ def _header(report: Report, doc2: bool, tool_label: str, policy_version: str | N
     out = [
         '<header class="doc">',
         f"<h1>{_esc(_T_H1.format(target=target))}</h1>",
+        f'<p class="sub">{_esc(label_line(report))}</p>',
         f'<p class="sub">{_esc(_T_DOC2 if doc2 else _T_DOC1)}</p>',
         '<p class="sub">'
         + _esc(

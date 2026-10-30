@@ -27,7 +27,7 @@ what could not be checked. Read all three out, every time.
 | value | meaning |
 |---|---|
 | `violates_policy` | a supported mechanism or an observed behaviour the charter prohibits, with no contextual condition left to settle. A prohibited instruction to the model is enough; demonstrated harm is not required |
-| `requires_contextual_review` | a signal or mechanism the charter says to record and review: a profile store, an inference step, a scoring function, a persona, an outreach schedule, a control claimed but not demonstrated, a stale review. A person decides, and records the decision (phase 3) |
+| `requires_contextual_review` | a signal or mechanism the charter says to record and review: a profile store, an inference step, a scoring function, a persona, an outreach schedule, a control claimed but not demonstrated, a stale review. A person decides, and records the decision (phase 4) |
 | `no_violation_identified_in_scope` | used on the mechanism coverage rows, not on findings: the rules ran on the surfaces the audit could read and nothing landed. Not a certification; the UNKNOWN list is part of the scope |
 | `not_assessed` | coverage rows only: the mechanism's rules did not run, or there was no surface |
 
@@ -117,8 +117,8 @@ Every key, in the order the JSON writes them (`FINDING_KEYS` in `aisafe.evidence
   the rule alone; `sub` is the sub-finding name or `null` (`vulnerable`, `persona`,
   `extraction`, `store`, `missing`, `stale`, `none`, `claimed`, ...).
 - `fingerprint`: 16 hex characters, stable across renumbered lines and renamed locals. It is
-  what `--baseline` compares, what `--accept` names in phase 4, and what a review record's
-  `decisions:` entry names in phase 3.
+  what `--baseline` compares, what `--accept` names in phase 5, and what a review record's
+  `decisions:` entry names in phase 4.
 - `title`: the rule's title; the same for every sub-finding of the rule.
 - `severity`: `critical`, `high`, `medium`, `low` or `info`. It follows the policy's
   severity criteria (what the mechanism does to the person), never detector confidence, and
@@ -167,7 +167,7 @@ Every key, in the order the JSON writes them (`FINDING_KEYS` in `aisafe.evidence
   kept for readers of 0.2.0 reports. Up to 0.2.0 it meant "every present link is `ast` or
   `declared`", which a chain of one link met; `docs/migration.md` has the change.
 - `declared_purpose`: the `declared_purpose` of the review record covering the unit and
-  file (phase 3), else `null`. `encoded_objective`: the instruction the prompt carries,
+  file (phase 4), else `null`. `encoded_objective`: the instruction the prompt carries,
   redacted, at most 160 characters, when the finding has one. The renderers print the two
   side by side: `purpose: declared: <text> | encoded: <text>`.
 - `person_data_use`: the profile variable, SDK or inferred trait the finding read, when
@@ -189,7 +189,7 @@ Every key, in the order the JSON writes them (`FINDING_KEYS` in `aisafe.evidence
 - `recommendation`: `tier` (`T1` a text or config change, `T2` a new step, `T3`
   restructuring), `summary`, `alternatives` (at least three, at least one not naming aisafe),
   and `removes`: which part of the chain the remediation takes out, a subset of
-  `objective`, `inference`, `intervention`, `feedback`, `record`. Phase 4 reads `removes`
+  `objective`, `inference`, `intervention`, `feedback`, `record`. Phase 5 reads `removes`
   first: a change that removes the objective, the inference or the intervention is preferred
   over one that adds a filter in front of the person. `references/apply/<language>.md` has
   the shapes.
@@ -251,11 +251,17 @@ block, each item with `resolve: <how_to_resolve>`.
 
 Key order is fixed; `schema` is first.
 
-    schema, kind, tool, target, generated_at, disclaimer, policy, summary, mechanisms,
-    findings, reports, unknown, baseline, inventory, rules
+    schema, kind, label, mode, tool, target, generated_at, disclaimer, policy, summary,
+    mechanisms, findings, reports, unknown, baseline, inventory, rules
 
 - `schema` is `"aisg/1"`, `kind` is `"audit"`; the walker recognises its own earlier output
   by these two and skips it (`inventory.own_output_skipped`).
+- `label` is `"scan report"`: `aisafe audit` output is a scan, never an assessment (only
+  `aisafe assess` writes one). `mode` is `self-assessment` (the team that owns the system
+  runs it; the default) or `auditor` (`--mode auditor`: an independent auditor, and the
+  tree's ignore-file marker and own-output heads skip nothing). The terminal and markdown
+  print both as the line `scan report | mode: <mode>` under the title; SARIF carries them in
+  the run's property bag. Neither mode certifies anything.
 - `tool`: `{"name": "aisafe-audit", "version": ...}`. `target`: `path`, `git_sha`, `dirty`
   and `exclude` (the resolved walker excludes, so two documents made from different working
   directories show the mismatch).
@@ -318,7 +324,8 @@ The inventory sits inside the report and is the whole document of `--inventory-o
 `target`, `units` (`id`, `root`, `manifest`, `language`, `ai_surface`), `languages`,
 `llm_calls`, `models` (with `pinned`), `frameworks`, `ingress`, `prompts`, `person_signals`,
 `memory_stores`, `personas`, `review_records`, `reports`, `system_card`,
-`own_output_skipped`, `unknown`. For phase 1:
+`own_output_skipped`, `unknown`. `target.marker_skipped` lists the files the ignore-file
+marker kept out of a self-assessment scan (one UNKNOWN row names them too). For phase 1:
 
 - `prompts`: `{file, line, kind, name, is_system, unit}`; `kind` is `file` (a path under
   the prompt globs: `prompts/`, `*.prompt.*`, `*.jinja`, `agents/*.yaml`, ...), `literal`
@@ -332,7 +339,7 @@ The inventory sits inside the report and is the whole document of `--inventory-o
 - `memory_stores` (kind `memory`) and `personas` (kinds `persona`, `confidant`, `fiction`),
   same row shape.
 - `review_records`: `{file, reviewer, reviewed_at, policy_version, artifacts (count), scope}`
-  for each valid record; empty until phase 3.
+  for each valid record; empty until phase 4.
 - `reports`: the evaluation reports found: the fields of the report's `reports` entries,
   keyed `file` where the report says `source`, and without `summary`.
 - `system_card`: a legacy `ai-system-card.yaml`, read only for `affected_persons` and
@@ -434,7 +441,7 @@ verdict-shaped reviewer or purpose, a malformed record).
 
 ## The evaluation report (`kind: evaluation`)
 
-Written by `aisafe evaluate` (phase 5), read by the next audit from `.aisafe-audit/` (or
+Written by `aisafe evaluate` (phase 6), read by the next audit from `.aisafe-audit/` (or
 anywhere in the tree, or `--evaluation-report PATH`). Keys: `schema`, `kind`,
 `generated_at`, `tool` (`name: "aisafe evaluate"`, `mode: "endpoint" | "transcripts"`,
 `corpus_families`), `target` (the endpoint `url`, `response_path` and `request_template`,

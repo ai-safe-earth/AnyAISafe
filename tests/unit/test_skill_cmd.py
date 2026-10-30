@@ -34,6 +34,10 @@ SKILL = "ai-safety-audit"
 EXPECTED_SCRIPTS = {
     "audit.sh",
     "audit.ps1",
+    "investigate.sh",
+    "investigate.ps1",
+    "assess.sh",
+    "assess.ps1",
     "evaluate.sh",
     "evaluate.ps1",
     "review.sh",
@@ -473,8 +477,9 @@ def test_real_package_installs_to_tmp(tmp_path: Path):
 
 
 def test_real_package_ships_the_pivoted_scripts_and_no_hook(tmp_path: Path):
-    """The installed copy carries the audit, review and evaluate bootstraps and none of the
-    scripts of the removed commands (hook, attest, verify, measure, decide)."""
+    """The installed copy carries the audit, investigate, assess, review and evaluate
+    bootstraps and none of the scripts of the removed commands (hook, attest, verify,
+    measure, decide)."""
     _real_skill_root()
     dest = install(HOSTS["claude"], tmp_path)
     scripts = {p.name for p in (dest / "scripts").iterdir() if p.is_file()}

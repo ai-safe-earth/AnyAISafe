@@ -107,7 +107,9 @@ policy version, and what was not.
   with `link_kinds` and `link_statuses`): a trace is complete only when every link its
   pattern requires is present and supported, and a link counts as investigated only when
   a validated investigation record cites it. An objective link includes an instruction
-  whose object is the person's attachment. The decision and severity criteria did not
+  whose object is the person's attachment. Personal data that feeds a profile and leaves
+  the system is M1's `transmission` pattern, with anonymisation as the control whose
+  absence on the path is the mechanism. The decision and severity criteria did not
   change.
 
 A change to the mechanisms, their decision criteria or the severity criteria increments the

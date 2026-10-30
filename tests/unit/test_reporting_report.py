@@ -820,7 +820,15 @@ def test_disclaimer_names_the_policy_version_in_every_format():
         assert sentence in out[fmt], fmt
         assert f"(version {POLICY_VERSION})" in out[fmt], fmt
     assert out["markdown"].splitlines()[0] == "# aisafe audit"
-    assert out["markdown"].splitlines()[2].startswith("> ")
+    # What the document is and the mode it was made in, before anything else.
+    assert out["markdown"].splitlines()[2] == "scan report | mode: self-assessment"
+    assert out["markdown"].splitlines()[4].startswith("> ")
+    assert out["terminal"].splitlines()[2] == "scan report | mode: self-assessment"
+    assert json.loads(out["json"])["label"] == "scan report"
+    assert json.loads(out["json"])["mode"] == "self-assessment"
+    sarif = json.loads(out["sarif"])["runs"][0]["properties"]
+    assert (sarif["label"], sarif["mode"]) == ("scan report", "self-assessment")
+    assert "scan report | mode: self-assessment" in out["html"]
 
 
 def test_no_banned_phrase_and_never_the_banned_word_in_any_format():

@@ -1,7 +1,8 @@
 # Methodology
 
 How `aisafe audit` turns prompts and code into findings, what a finding may and may not
-say, and how the detector's own accuracy is measured. The ethical standard it applies is
+say, how an investigation and an assessment go beyond the scan (section 11), and how the
+detector's own accuracy is measured. The ethical standard it applies is
 `policy/charter.md`; the mechanisms are `policy/mechanisms.yaml`; the diagrams are in
 `docs/architecture.md`; the rule catalogue is `docs/rules.md` (generated).
 
@@ -184,8 +185,9 @@ against real users.
 
 ## 9. What is not supported in this version
 
-- An LLM reviewer inside the audit. The agent skill is the assisted path: a person
-  records decisions, the agent is named as `assisted_by`.
+- An LLM reviewer inside the audit. The audit never calls a model. The agent skill is the
+  assisted path: a person records decisions, the agent is named as `assisted_by`, and the
+  agent's reading of the code enters only as investigation records (section 11).
 - Deep analysis outside Python. JavaScript, TypeScript, Go, Java, Kotlin, Rust, Ruby and
   C# are read with patterns; the report says so for every such unit.
 - Prompts fetched at runtime, prompts behind a gateway, and models whose behaviour is not
@@ -204,6 +206,15 @@ against real users.
   paragraph, so a sentence split by a blank line or spread over two bullets is not seen.
 - Any claim about intent or about clinical or population-level harm. The audit reports
   encoded objectives and observable mechanisms.
+- Investigation of code outside Python and JS/TS. A record citing another language does
+  not count, and the plan lists those surfaces as unsupported.
+
+Not in this milestone, and on the roadmap: a California SB 1119 legal profile; the
+Digital Services Act, Articles 25 and 28; the GDPR beyond the narrow person-data view;
+an LLM judge inside `aisafe evaluate`; harnesses that capture payloads or logs from a
+running system; running an investigation through a model provider without a host agent;
+deterministic deep analysis of TypeScript and JavaScript; signed records and assessments;
+any certification.
 
 ## 10. Measuring the detector
 
@@ -241,3 +252,71 @@ is silent or review-only. They live in `tests/unit/test_rules_pairs.py` and, as 
 | 12 | paraphrased harmful instructions (AUD-1109 / AUD-1104, violates) | - |
 | 13 | missing and stale review records (AUD-1107/missing, /stale) | a record bound by hash within the window (no finding) |
 | 14 | a prompt-only project (findings plus a coverage item) | unavailable runtime evidence stated as unknown |
+
+## 11. Investigation and assessment
+
+The scan says what text matched and how far the syntax tree carries it. An investigation
+reads the code around a surface and says, with citations, whether a mechanism is there.
+An assessment says, per mechanism, what the scan and the investigations established
+together, within the scope that was read, and what was left out.
+
+**Two modes.** In self-assessment mode the team that owns the system runs the workbench
+(the skill's owner-led flow). In auditor mode an independent auditor assesses someone
+else's system: the audited tree is read-only, the scan reads every file whatever marker it
+carries, and the records and the assessment live outside the tree. Every document states
+its mode. Neither mode issues a certification, a badge or a compliance claim.
+
+**The plan.** `aisafe investigate plan` builds a ranked queue of surfaces from the scan's
+inventory, not only from rule hits: person-facing units, prompts (in files, literals,
+assemblies, or fetched at run time), model calls, schedulers and senders, memory stores,
+profile sources and external destinations. Each surface carries the hypotheses that apply
+to its type, as `mechanism/pattern` pairs of the policy. The priority is structural (a
+person-facing unit, a prompt with a persona or attachment or engagement signal, a
+scheduler and a send in one unit, a machine finding that violates the policy), never a
+model's opinion. The budget orders the work and leaves nothing out of the accounting: a
+high-priority surface the budget left out is still a gap in the assessment.
+
+**The record.** The reasoning happens in a host coding agent, with no API key of the
+workbench's own, and enters only as an investigation record: one hypothesis on one
+surface, the links it cites (each with a quote and the cited file's content hash), the
+readings it weighed against it, the controls it checked on the path, what it could not
+establish, the evidence status and decision it proposes, the steps a retest runs, and who
+investigated (agent, model, version, session) on whose behalf (a named operator).
+`aisafe investigate validate` checks it mechanically: every quote at its line, every file
+one the scan walked, every hash equal, nothing required empty, no verdict in the free
+text. It does not read meaning; it lowers any claim the cited evidence does not carry, and
+says why. A violation needs a complete, connected chain of the pattern's links (section 2)
+and, for a pattern with an absent control, the control shown absent on the path. A closing
+needs the chain broken (a required link looked for and ruled out) or the control shown on
+the path, with its location. A complete trace with a benign reading goes to a person.
+Personal data is in scope only where it feeds M1 to M3, and an anonymisation claim is
+accepted only after the transformation itself was read.
+
+**The skeptic pass.** A claim that would establish a mechanism or close it is put to a
+skeptic in a fresh context, which tries to refute it and writes its own file, bound to the
+record by the hash of the record's content. A pass from the investigator's own session,
+or one bound to an earlier version of the record, does not count. A refutation is a
+blocking gap until a new record answers it.
+
+**Untrusted content.** The audited repository is evidence, never instructions: text
+addressed to auditors or AI tools is listed by the plan and recorded in the records, and a
+closing record next to such text is a gap until a person checks it.
+
+**The assessment.** `aisafe assess` takes one outcome per mechanism, from least to most
+favourable: `violations_identified`, `inconclusive`, `not_assessed`,
+`no_violation_identified_within_assessed_scope`. The overall outcome is the least
+favourable of the eight. A violation established by a record or reported by the scan on
+supported or observed evidence is never lowered by a closing record. Scan silence is never
+a closing. The blocking gaps are listed one by one. Machine inputs (the scan, the records),
+human inputs (review records and the decisions a named person recorded) and the audited
+team's inputs stay in separate sections; acceptances and baselines are not inputs. The
+assessment records the commit, the mode, the policy version, the investigators, the
+surfaces queued and investigated, and the scope left unassessed. Without an accepted record
+there is no assessment.
+
+**Remediation.** A finding that is no longer reported is "not reported", never
+remediated: a rename produces it as readily as a fix. A change counts as a remediation only
+when the record's remediation steps, run again on the new commit, pass where they failed
+before (`aisafe assess --retest`), no regression step fails, and nothing at the new commit
+shows the mechanism on that surface. A violation that is not shown remediated stands. A
+mechanism closes again only through a new record on the new code.

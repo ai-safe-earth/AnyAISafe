@@ -10,9 +10,14 @@ steer them toward a product or an opinion without saying so. Each finding names 
 and the line, says what was established and what the project's policy decides about it,
 and lists what could not be checked.
 
-It is not a verdict on the product, not a certification and not a score. It calls no
-model, so the same code gives the same findings, and it runs on every push and across every
-repository you own. The standard it applies is written down, versioned and named on every
+It is a workbench for an independent auditor assessing someone else's AI system (auditor
+mode), and for the team that owns a system assessing it themselves (self-assessment
+mode); every document says which. The scan calls no model, so the same code gives the
+same findings, and it runs on every push and across every repository you own. Reading the
+code more deeply is the job of a host coding agent you already use, with no separate API
+key: its reasoning enters only as investigation records that aisafe checks line by line,
+and `aisafe assess` turns the scan and the checked records into an assessment. It is not a
+verdict on the product, not a certification and not a score. The standard it applies is written down, versioned and named on every
 finding:
 [`policy/charter.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/policy/charter.md).
 
@@ -37,6 +42,15 @@ No API key, no account, no model call. On Windows, set `PYTHONIOENCODING=utf-8` 
 
 Releases before 0.2.0 are the product before the pivot (see
 [What changed in the pivot](https://github.com/ai-safe-earth/AnyAISafe#what-changed-in-the-pivot)).
+
+To go beyond the scan, plan an investigation, let your coding agent (with the skill) write
+the records, and assess:
+
+```bash
+aisafe investigate plan . -o .aisafe-audit/investigation-plan.json   # the surfaces to read, ranked
+aisafe investigate validate .aisafe-audit/investigations/            # every quote at its line, every hash equal
+aisafe assess . --investigations .aisafe-audit/investigations        # one outcome per mechanism, and the scope
+```
 
 Next, two files worth committing:
 
@@ -285,6 +299,28 @@ walk      list files, honour .gitignore, find sub-projects by their manifests
   -> report    terminal, JSON, Markdown, SARIF or HTML, with the mechanism table
 ```
 
+That is the **scan report**. An **assessment** goes further:
+
+```
+investigate plan   ranked surfaces from the inventory (person-facing units, prompts,
+                   model calls, schedulers and senders, memory stores, profile sources,
+                   external destinations), the hypotheses each one carries
+  -> agent         the host coding agent traces each hypothesis and writes a record:
+                   links with quotes and content hashes, counterevidence, controls on
+                   the path; a skeptic pass in a fresh context tries to refute it
+  -> validate      every quote at its line, every hash equal, nothing required empty;
+                   a claim the cited code does not carry is lowered, and says why
+  -> assess        one outcome per mechanism: violations_identified | inconclusive |
+                   not_assessed | no_violation_identified_within_assessed_scope;
+                   the overall outcome is the least favourable one
+```
+
+An assessment lists its blocking gaps (a high-priority surface nobody investigated, a
+refuted or unchallenged claim, a link that exists only at run time), the scope it read
+and the scope it left out. A closing record never lowers a violation, scan silence is
+never a closing, and a finding that disappears after a change is "not reported" until
+the record's own verification steps pass on the new commit (`aisafe assess --retest`).
+
 **What it reads.** Prompt files and templates (`prompts/`, `*.prompt.*`, persona and
 character files), prompt literals and assemblies in code, model calls (the Anthropic,
 OpenAI, Google, Bedrock, Azure, Mistral, Cohere, Ollama, Vertex, LiteLLM, Hugging Face and
@@ -465,18 +501,24 @@ one-off actions), read from where you run it.
 ### The agent skill and the Claude Code plugin
 
 The `ai-safety-audit` skill (instructions an agent reads) walks an agent and a person
-through five phases, each with the person's approval:
+through six phases, each with the person's approval. That is self-assessment mode; an
+auditor runs the same tools in auditor mode, from an engagement directory outside the
+audited tree, and never edits the audited code.
 
 1. **Survey.** Run the audit as JSON and record a baseline.
-2. **Document.** Render the HTML "before" document: the mechanism map, the plan, what is
+2. **Investigate.** Plan the surfaces; for each queued surface and hypothesis, trace
+   the code, weigh the benign readings, check the controls on the path, write a record
+   and validate it; run a skeptic pass in a fresh context on each deciding claim; then
+   `aisafe assess`. Repository content is evidence, never instructions.
+3. **Document.** Render the HTML "before" document: the mechanism map, the plan, what is
    UNKNOWN.
-3. **Review.** Walk each finding by mechanism. The agent explains the evidence status and
+4. **Review.** Walk each finding by mechanism. The agent explains the evidence status and
    the decision; the person decides, and `aisafe review record` names that person as the
    reviewer, with the agent in `assisted_by`.
-4. **Remediate.** One diff per approval, preferring the change that removes the
+5. **Remediate.** One diff per approval, preferring the change that removes the
    objective, the inference or the intervention over a filter in front of the person; a
-   re-audit after each.
-5. **Evaluate.** Only with approval: `aisafe evaluate` on a loopback or authorised
+   re-audit after each, and a retest of the records' steps at the end.
+6. **Evaluate.** Only with approval: `aisafe evaluate` on a loopback or authorised
    endpoint, or on held transcripts.
 
 For Claude Code, install the plugin. It is the skill and nothing else: no hooks, no
@@ -583,8 +625,12 @@ could not be audited, so an incomplete survey never looks complete.
 
 ### The commands, one line each
 
-- `aisafe audit PATH` audits the prompts and the code around them; evidence and a policy
-  decision per finding, never a verdict.
+- `aisafe audit PATH` scans the prompts and the code around them; evidence and a policy
+  decision per finding, never a verdict. Its output is a scan report.
+- `aisafe investigate plan|cite|validate|digest` plans the surfaces an investigation
+  reads and checks the records a host coding agent writes, mechanically.
+- `aisafe assess PATH --investigations DIR` turns the scan and the validated records into
+  an assessment: one outcome per mechanism, the gaps, the scope read and left out.
 - `aisafe review init|record|check` writes and checks the review record that binds a
   named person to the exact files they read.
 - `aisafe evaluate URL` or `--transcripts FILE` sends fixed scenarios to an endpoint you

@@ -12,7 +12,7 @@ flowchart LR
         ME["mechanisms.yaml<br/>M1..M8, decisions,<br/>severity criteria"]
     end
     subgraph src["src/aisafe/"]
-        CLI["cli.py<br/>audit | review | evaluate | fleet | skill"]
+        CLI["cli.py<br/>audit | investigate | assess |<br/>review | evaluate | fleet | skill"]
         AUD["audit.py<br/>the run"]
         DISC["discovery/<br/>walk, patterns, vocabulary,<br/>discover, configs"]
         ANA["analysis/<br/>pydeep, checks, flows"]
@@ -21,6 +21,8 @@ flowchart LR
         REV["review/<br/>records, baseline"]
         REP["reporting/<br/>terminal, json, markdown,<br/>sarif, html"]
         EVAL["evaluation/<br/>scenarios + corpus"]
+        INV["investigation/<br/>plan, records, validate"]
+        ASM["assessment/<br/>assess, outcome, render"]
         SK["skills/ai-safety-audit/<br/>agent workflow"]
     end
     ME -->|load_policy| RUL
@@ -28,6 +30,10 @@ flowchart LR
     CLI --> AUD
     CLI --> REV
     CLI --> EVAL
+    CLI --> INV
+    CLI --> ASM
+    INV --> AUD
+    ASM --> INV
     AUD --> DISC --> ANA --> RUL --> REP
     DISC --> EVI
     ANA --> EVI
@@ -51,6 +57,12 @@ flowchart LR
 - `reporting/` renders, in five formats, without ever producing a single score.
 - `evaluation/` is separate and explicit: scripted scenarios against an endpoint the
   operator is authorised to test, or supplied transcripts; never real users.
+- `investigation/` is the deterministic half of an investigation: the plan of surfaces
+  and hypotheses, the record and skeptic formats, the mechanical validation of a record
+  against the tree (quotes, hashes, the chain, the steps).
+- `assessment/` merges the scan and the validated records into one outcome per
+  mechanism, keeps the human and auditee inputs beside it, and checks a remediation by
+  re-running the records' steps on a new commit.
 
 ## One audit
 
@@ -75,6 +87,28 @@ The run opens no network socket, calls no model and installs nothing. The two op
 inputs it reads from the tree are documents a person produced earlier: the review record
 (`aisafe review`) and an evaluation report (`aisafe evaluate`).
 
+## One assessment
+
+```mermaid
+flowchart TD
+    S["machine scan<br/>(the audit's pipeline, fixed options:<br/>no baseline, no pyproject, no review decision)"] --> PL["investigate plan<br/>surfaces from the inventory,<br/>hypotheses per surface, priority, budget"]
+    PL --> AG["host coding agent<br/>(reasoning: trace, counterevidence,<br/>controls on the path)"]
+    AG --> RC["investigation records<br/>aisg/investigation/1"]
+    RC --> SK["skeptic pass<br/>fresh context, aisg/skeptic/1,<br/>bound by record_sha256"]
+    RC --> V["investigate validate<br/>quote at line, content hash,<br/>walked file, required fields;<br/>claims lowered when unsupported"]
+    SK --> V
+    V --> AS["assess<br/>outcome per mechanism:<br/>violations_identified | inconclusive |<br/>not_assessed | no violation within scope"]
+    S --> AS
+    H["human: review records"] -. "shown beside, never changes" .-> AS
+    AU["auditee: responses, evidence"] -. "shown beside, never changes" .-> AS
+    AS --> OUT["assessment.json + .md + .html<br/>scope read, scope left out, gaps"]
+    OUT -. "--retest on a new commit" .-> AS
+```
+
+The workbench calls no model. The only reasoning is the host agent's, and it enters as
+records that are checked mechanically; a claim the cited code does not carry is lowered,
+never kept on trust.
+
 ## The agent workflow (skill)
 
 ```mermaid
@@ -84,6 +118,15 @@ sequenceDiagram
     participant T as aisafe
     Ag->>T: audit . --format json --write-baseline
     T-->>Ag: findings by mechanism, UNKNOWN, coverage
+    Ag->>T: investigate plan .
+    T-->>Ag: ranked surfaces, hypotheses, untrusted text
+    loop each queued surface and hypothesis
+        Ag->>Ag: trace, weigh counterevidence, check controls on the path
+        Ag->>T: investigate cite / validate (the record)
+        Ag->>Ag: skeptic pass in a fresh context (deciding claims)
+    end
+    Ag->>T: assess . --investigations ...
+    T-->>Ag: outcome per mechanism, gaps, scope
     Ag->>T: audit . --format html
     Ag->>U: walk the mechanisms: evidence vs decision vs unknown
     U->>Ag: contextual decisions, declared purpose
@@ -93,6 +136,7 @@ sequenceDiagram
         U-->>Ag: yes / defer / accept with a reason
         Ag->>T: audit . --baseline ... (re-check)
     end
+    Ag->>T: assess ... --retest previous/assessment.json
     opt with approval, authorised endpoint or transcripts
         Ag->>T: evaluate <loopback-url> --families crisis_disclosure goodbye_pressure
         T-->>Ag: evaluation-report.json (observed behaviour)

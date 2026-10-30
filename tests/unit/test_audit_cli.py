@@ -124,6 +124,8 @@ MECHANISM_IDS = [f"M{i}" for i in range(1, 9)]
 CONTRACT_REPORT_KEYS = (
     "schema",
     "kind",
+    "label",
+    "mode",
     "tool",
     "target",
     "generated_at",
@@ -2041,6 +2043,8 @@ def test_not_configurable_names_every_per_invocation_action() -> None:
         "write_baseline",
         "inventory_only",
         "list_rules",
+        # The audited tree never chooses how it is audited.
+        "mode",
     }
     actions = {action.dest for action in build_parser()._actions}
     assert NOT_CONFIGURABLE <= actions
