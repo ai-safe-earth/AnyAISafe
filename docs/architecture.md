@@ -12,7 +12,7 @@ flowchart LR
         ME["mechanisms.yaml<br/>M1..M8, decisions,<br/>severity criteria"]
     end
     subgraph src["src/aisafe/"]
-        CLI["cli.py<br/>audit | investigate | assess |<br/>review | evaluate | fleet | skill"]
+        CLI["cli.py<br/>audit | investigate | assess | engagement |<br/>review | evaluate | fleet | skill"]
         AUD["audit.py<br/>the run"]
         DISC["discovery/<br/>walk, patterns, vocabulary,<br/>discover, configs"]
         ANA["analysis/<br/>pydeep, checks, flows"]
@@ -23,6 +23,8 @@ flowchart LR
         EVAL["evaluation/<br/>scenarios + corpus"]
         INV["investigation/<br/>plan, records, validate"]
         ASM["assessment/<br/>assess, outcome, render"]
+        ENG["engagement/<br/>model, bundle, cli"]
+        LEG["legal/<br/>profile, evaluate,<br/>profiles/*.yaml"]
         SK["skills/ai-safety-audit/<br/>agent workflow"]
     end
     ME -->|load_policy| RUL
@@ -32,8 +34,11 @@ flowchart LR
     CLI --> EVAL
     CLI --> INV
     CLI --> ASM
+    CLI --> ENG
     INV --> AUD
     ASM --> INV
+    ASM --> ENG
+    ASM --> LEG
     AUD --> DISC --> ANA --> RUL --> REP
     DISC --> EVI
     ANA --> EVI
@@ -63,6 +68,13 @@ flowchart LR
 - `assessment/` merges the scan and the validated records into one outcome per
   mechanism, keeps the human and auditee inputs beside it, and checks a remediation by
   re-running the records' steps on a new commit.
+- `engagement/` is the auditor's workspace outside the audited tree: who audits whom, the
+  scope and authorisations, the applicability answers, the evidence requests and received
+  documents (hashed), the auditee's responses, the QA sign-off, and the bundle manifest
+  that hashes every input and output of an assessment.
+- `legal/` reads the legal profiles (`aisg/legal-profile/1`: quoted provisions, in-force
+  dates, applicability conditions, the evidence each needs) against the engagement's
+  answers and the evidence, into a legal section kept apart from the ethical outcome.
 
 ## One audit
 
@@ -101,13 +113,19 @@ flowchart TD
     S --> AS
     H["human: review records"] -. "shown beside, never changes" .-> AS
     AU["auditee: responses, evidence"] -. "shown beside, never changes" .-> AS
+    EN["engagement (outside the tree)<br/>auditor, scope, authorisations,<br/>applicability answers"] --> AS
+    AS --> LG["legal section<br/>profiles x answers x evidence:<br/>one result per provision,<br/>never merged with the outcome"]
     AS --> OUT["assessment.json + .md + .html<br/>scope read, scope left out, gaps"]
-    OUT -. "--retest on a new commit" .-> AS
+    LG --> OUT
+    AS --> RQ["evidence-requests.json<br/>requested | received | insufficient"]
+    OUT --> BU["bundle.json<br/>sha256 of every input and output"]
+    OUT -. "--retest on the auditee's new commit" .-> AS
 ```
 
 The workbench calls no model. The only reasoning is the host agent's, and it enters as
 records that are checked mechanically; a claim the cited code does not carry is lowered,
-never kept on trust.
+never kept on trust. The engagement's statements, answers, evidence decisions, responses
+and sign-offs are a person's; the tool reads them and writes none of them.
 
 ## The agent workflow (skill)
 

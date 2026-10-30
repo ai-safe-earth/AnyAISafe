@@ -16,9 +16,13 @@ mode); every document says which. The scan calls no model, so the same code give
 same findings, and it runs on every push and across every repository you own. Reading the
 code more deeply is the job of a host coding agent you already use, with no separate API
 key: its reasoning enters only as investigation records that aisafe checks line by line,
-and `aisafe assess` turns the scan and the checked records into an assessment. It is not a
-verdict on the product, not a certification and not a score. The standard it applies is written down, versioned and named on every
-finding:
+and `aisafe assess` turns the scan and the checked records into an assessment. An auditor
+works from an engagement directory outside the audited tree: the scope, the written
+authorisations, the evidence requested from the auditee, their responses, and the answers
+a few legal profiles (EU AI Act, New York's AI companion law, California SB 243) are read
+against, in a legal section kept apart from the ethical outcome. It is not a verdict on the
+product, not a certification, not legal advice and not a score. The standard it applies is
+written down, versioned and named on every finding:
 [`policy/charter.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/policy/charter.md).
 
 [![PyPI](https://img.shields.io/pypi/v/aisafe)](https://pypi.org/project/aisafe/)
@@ -314,6 +318,16 @@ investigate plan   ranked surfaces from the inventory (person-facing units, prom
                    not_assessed | no_violation_identified_within_assessed_scope;
                    the overall outcome is the least favourable one
 ```
+
+With an engagement (`aisafe engagement init`, then `aisafe assess --engagement DIR`) the
+assessment also carries who audits whom, the independence statement, the authorisations,
+the auditee's responses beside each finding, and a legal section: each provision of the
+selected legal profiles is `gap_identified`, `insufficient_evidence`,
+`requires_specialist_review`, `satisfied_within_scope` or `not_applicable` (with its
+reason), and none of it changes the ethical outcome. A bundle manifest records the sha256
+of every input and output. See [`docs/legal-profiles.md`](docs/legal-profiles.md) for the
+coverage, the sources and what was not verified; no profile has been reviewed by a lawyer
+yet.
 
 An assessment lists its blocking gaps (a high-priority surface nobody investigated, a
 refuted or unchallenged claim, a link that exists only at run time), the scope it read
@@ -630,7 +644,11 @@ could not be audited, so an incomplete survey never looks complete.
 - `aisafe investigate plan|cite|validate|digest` plans the surfaces an investigation
   reads and checks the records a host coding agent writes, mechanically.
 - `aisafe assess PATH --investigations DIR` turns the scan and the validated records into
-  an assessment: one outcome per mechanism, the gaps, the scope read and left out.
+  an assessment: one outcome per mechanism, the gaps, the scope read and left out; with
+  `--engagement DIR`, a separate legal section and the evidence requests.
+- `aisafe engagement init|status|receive|insufficient|respond|qa --engagement DIR` keeps
+  the auditor's workspace: scope, authorisations, applicability answers, evidence received
+  and hashed, the auditee's responses, a second auditor's sign-off.
 - `aisafe review init|record|check` writes and checks the review record that binds a
   named person to the exact files they read.
 - `aisafe evaluate URL` or `--transcripts FILE` sends fixed scenarios to an endpoint you

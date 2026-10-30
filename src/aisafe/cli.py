@@ -6,15 +6,19 @@ Single entry point for AnyAISafe.
     aisafe audit . --format json -o audit-report.json
     aisafe investigate plan . -o .aisafe-audit/investigation-plan.json
     aisafe assess . --investigations .aisafe-audit/investigations
+    aisafe engagement init --engagement ../acme-engagement --target .
     aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor"
     aisafe evaluate http://localhost:8000/chat --families goodbye_pressure
     aisafe fleet fleet.yaml --jobs 4 --proposal
     aisafe skill install --host all
 
-Seven commands: `audit` (the static scan of prompts and the code around them),
+Eight commands: `audit` (the static scan of prompts and the code around them),
 `investigate` (the plan of surfaces, and the mechanical check of the investigation records
 a host coding agent writes), `assess` (the assessment built from the scan and the
-validated records), `review` (the record a named person signs about what they read),
+validated records, with a separate legal section when an engagement is given),
+`engagement` (the auditor's workspace: scope, authorisations, applicability answers,
+evidence requests, auditee responses, QA sign-off), `review` (the record a named person
+signs about what they read),
 `evaluate` (fixed scenarios against an endpoint you are authorised to test, or held
 transcripts), `fleet` (many repositories, one audit each) and `skill` (install the agent
 skill). `probe` is a hidden
@@ -27,7 +31,8 @@ defaults and exit codes are unchanged:
 
     0  nothing counted
     1  findings (audit), a rejected record (investigate validate), a mechanism not
-       closed or a rejected record (assess), stale or uncovered artifacts (review check),
+       closed or a rejected record (assess), an engagement with fields to fill in or a
+       changed file (engagement status), stale or uncovered artifacts (review check),
        failed cases (evaluate), a repository not audited (fleet), a refused or drifted
        install (skill)
     2  fatal (bad args, unreadable input)
@@ -54,7 +59,11 @@ Commands:
               investigation records a host coding agent writes, against the tree
   assess      Merge the scan, the validated investigation records, the review records
               and the evaluation reports into an assessment: one outcome per mechanism,
-              the scope read and the scope left out; never a certification
+              the scope read and the scope left out, and with an engagement a separate
+              legal section; never a certification
+  engagement  The auditor's workspace outside the audited tree: who audits whom, the
+              scope, the written authorisations, the applicability answers, the evidence
+              requested and received, the auditee's responses, the QA sign-off
   review      Write or check the review record: a named person, the artifacts they read
               (bound by content hash), the mechanisms considered, the declared purpose
   evaluate    Send fixed scenarios to an endpoint you are authorised to test, or read
@@ -71,6 +80,9 @@ Examples:
   aisafe investigate plan . -o .aisafe-audit/investigation-plan.json
   aisafe investigate validate .aisafe-audit/investigations/
   aisafe assess . --investigations .aisafe-audit/investigations
+  aisafe engagement init --engagement ../acme-engagement --target . --auditor "A. Auditor"
+  aisafe assess . --engagement ../acme-engagement --evaluation-report eval.json
+  aisafe engagement status --engagement ../acme-engagement
   aisafe review init
   aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor for adults"
   aisafe evaluate http://localhost:8000/chat --response-path '$.response'
@@ -115,6 +127,12 @@ def _assess(argv: Sequence[str]) -> int:
     return assess_main(list(argv))
 
 
+def _engagement(argv: Sequence[str]) -> int:
+    from aisafe.engagement.cli import main as engagement_main
+
+    return engagement_main(list(argv))
+
+
 def _investigate(argv: Sequence[str]) -> int:
     from aisafe.investigation.cli import main as investigate_main
 
@@ -139,17 +157,19 @@ COMMANDS: dict[str, Callable[[Sequence[str]], int]] = {
     "evaluate": _evaluate,
     "investigate": _investigate,
     "assess": _assess,
+    "engagement": _engagement,
     "fleet": _fleet,
     "skill": _skill,
     "probe": _probe,  # hidden alias of `evaluate`; not listed in the epilog
 }
 
 # The commands a person is shown: the help line, the error for a wrong name and the
-# epilog all list these five. The alias dispatches but is named nowhere.
+# epilog all list these. The alias dispatches but is named nowhere.
 PUBLIC_COMMANDS: tuple[str, ...] = (
     "audit",
     "investigate",
     "assess",
+    "engagement",
     "review",
     "evaluate",
     "fleet",

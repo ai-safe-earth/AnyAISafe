@@ -394,13 +394,19 @@ class TestSkillMd:
         closing = text.find("## Closing")
         assert closing > positions[-1]
 
-    def test_hard_rules_are_numbered_one_to_eleven(self):
+    def test_hard_rules_are_numbered_one_to_twelve(self):
         text = skill_md()
         start = text.find("Hard rules")
         end = text.find("## Where things live")
         assert 0 <= start < end
         numbers = re.findall(r"^(\d+)\. ", text[start:end], re.MULTILINE)
-        assert numbers == [str(n) for n in range(1, 12)], numbers
+        assert numbers == [str(n) for n in range(1, 13)], numbers
+
+    def test_hard_rule_twelve_keeps_a_persons_fields_theirs(self):
+        text = " ".join(skill_md().split())
+        assert "12. A person's fields stay a person's." in text
+        assert "independence statement" in text and "QA sign-off" in text
+        assert "not reviewed by a lawyer" in text
 
     def test_hard_rules_ten_and_eleven(self):
         text = skill_md()

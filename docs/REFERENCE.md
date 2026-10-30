@@ -7,7 +7,7 @@ measured. The ethical standard is `../policy/charter.md`; how findings are made 
 (generated); the pivot is `migration.md`.
 
 Every command shown here exists in `aisafe --help`. Output quoted in code blocks is real
-output of the checked-out tree at policy version 1.0.0.
+output of the checked-out tree at policy version 1.1.0.
 
 ## Overview
 
@@ -20,7 +20,13 @@ audit is deterministic, local and offline: it reads files, calls no model, insta
 nothing and opens no socket. Reasoning about the code happens in a host coding agent,
 with no separate API key, and enters aisafe only as investigation records that `aisafe
 investigate validate` checks mechanically; `aisafe assess` turns the scan and the
-validated records into an assessment. A finding
+validated records into an assessment. An auditor works from an engagement directory
+outside the audited tree (`aisafe engagement`): who audits whom, the scope, the written
+authorisations, the applicability answers the legal profiles read, the evidence requested
+from the auditee and received, the auditee's responses and an optional second auditor's
+sign-off. With an engagement, the assessment carries a legal section of its own, read from
+the legal profiles in `legal-profiles.md`, kept apart from the ethical outcome and never
+changing it, and a bundle manifest with the sha256 of every input and output. A finding
 says what was established (an evidence status), what the project's policy decides about
 it (a decision), and what it could not see. It is never a verdict on the product, never a
 certification and never a single score.
@@ -32,8 +38,8 @@ usage: aisafe [-h] [--version] command ...
 AnyAISafe: audit the prompts and algorithms of AI-enabled software for how they influence the person using it.
 
 positional arguments:
-  command        one of: audit, investigate, assess, review, evaluate, fleet,
-                 skill
+  command        one of: audit, investigate, assess, engagement, review,
+                 evaluate, fleet, skill
   args           arguments passed through to the command
 
 options:
@@ -48,7 +54,11 @@ Commands:
               investigation records a host coding agent writes, against the tree
   assess      Merge the scan, the validated investigation records, the review records
               and the evaluation reports into an assessment: one outcome per mechanism,
-              the scope read and the scope left out; never a certification
+              the scope read and the scope left out, and with an engagement a separate
+              legal section; never a certification
+  engagement  The auditor's workspace outside the audited tree: who audits whom, the
+              scope, the written authorisations, the applicability answers, the evidence
+              requested and received, the auditee's responses, the QA sign-off
   review      Write or check the review record: a named person, the artifacts they read
               (bound by content hash), the mechanisms considered, the declared purpose
   evaluate    Send fixed scenarios to an endpoint you are authorised to test, or read
@@ -65,6 +75,9 @@ Examples:
   aisafe investigate plan . -o .aisafe-audit/investigation-plan.json
   aisafe investigate validate .aisafe-audit/investigations/
   aisafe assess . --investigations .aisafe-audit/investigations
+  aisafe engagement init --engagement ../acme-engagement --target . --auditor "A. Auditor"
+  aisafe assess . --engagement ../acme-engagement --evaluation-report eval.json
+  aisafe engagement status --engagement ../acme-engagement
   aisafe review init
   aisafe review record --reviewer "J. Doe <product owner>" --purpose "a language tutor for adults"
   aisafe evaluate http://localhost:8000/chat --response-path '$.response'
@@ -96,7 +109,8 @@ AnyAISafe/
 |
 |-- src/aisafe/
 |   |-- __init__.py              # __version__ and the lazy exports above
-|   |-- cli.py                   # `aisafe`: audit | investigate | assess | review | evaluate | fleet | skill
+|   |-- cli.py                   # `aisafe`: audit | investigate | assess | engagement | review |
+|   |                            #   evaluate | fleet | skill
 |   |-- audit.py                 # `aisafe audit`: parser, AuditOptions, run_audit, main
 |   |-- policy/                  # load_policy(), Policy and Mechanism; packaged copies of charter.md
 |   |                            #   and mechanisms.yaml (a test pins them equal to /policy/)
@@ -119,6 +133,10 @@ AnyAISafe/
 |   |                            #   scan.py (the workbench's scan, the tree's git state), cli.py
 |   |-- assessment/              # assess.py (`aisafe assess`), outcome.py (one outcome per
 |   |                            #   mechanism), render.py (markdown, html, terminal), cli.py
+|   |-- engagement/              # model.py (engagement.json, evidence requests, responses, QA),
+|   |                            #   bundle.py (the bundle manifest), cli.py (`aisafe engagement`)
+|   |-- legal/                   # profile.py (load and check aisg/legal-profile/1), evaluate.py (the
+|   |                            #   legal section), profiles/*.yaml (EU AI Act, NY GBL Art. 47, CA SB 243)
 |   |-- evaluation/              # scenarios.py (`aisafe evaluate`) and corpus/*.yaml (five families)
 |   |-- devtools/                # fleet.py, skill.py, hosts.py, _config.py ([tool.*] defaults), _git.py
 |   `-- skills/ai-safety-audit/  # the agent skill (canonical copy): SKILL.md, references/, scripts/, agents/
@@ -136,7 +154,7 @@ AnyAISafe/
 |-- research/                    # the study: background.md, catalogue.md, corpus.yaml (33 repositories),
 |                                #   log.md, results/, console/ (the owner's review console)
 |-- docs/                        # REFERENCE.md (this file), methodology.md, architecture.md, rules.md
-|                                #   (generated), migration.md
+|                                #   (generated), legal-profiles.md, migration.md
 |-- examples/                    # README.md and companion_demo/ (a prompt-only tree to audit)
 |-- scripts/                     # rules_md.py (generates docs/rules.md and the skill's mechanisms.md),
 |                                #   sync_skill.py (plugin mirror), bump_version.py (version sites),
@@ -645,15 +663,16 @@ options:
 ## `aisafe assess`
 
 ```
-usage: aisafe assess [-h] --investigations DIR [DIR ...] [-o OUTPUT_DIR]
+usage: aisafe assess [-h] [--investigations DIR [DIR ...]] [--engagement DIR]
+                     [--evaluation-report FILE] [-o OUTPUT_DIR]
                      [--format {terminal,json}] [--retest ASSESSMENT]
                      [--working-tree] [--mode {self-assessment,auditor}]
                      [--budget BUDGET]
                      [path]
 
 Merge the scan, the validated investigation records, the review records and
-the evaluation reports into an assessment with one outcome per mechanism.
-Never a certification.
+the evaluation reports into an assessment with one outcome per mechanism, and,
+with an engagement, a separate legal section. Never a certification.
 
 positional arguments:
   path                  the audited tree (default: .)
@@ -661,16 +680,24 @@ positional arguments:
 options:
   -h, --help            show this help message and exit
   --investigations DIR [DIR ...]
-                        investigation record files or directories (required:
-                        no records, no assessment)
+                        investigation record files or directories (required
+                        without --engagement; default with it:
+                        DIR/investigations). No records, no assessment
+  --engagement DIR      the engagement directory (`aisafe engagement init`);
+                        required in auditor mode
+  --evaluation-report FILE
+                        an `aisafe evaluate` report you ran; in auditor mode
+                        the only evaluation read
   -o, --output-dir OUTPUT_DIR
-                        where the three files go (default: PATH/.aisafe-
-                        audit/assessment)
+                        where the files go (default: PATH/.aisafe-
+                        audit/assessment, or DIR/assessment)
   --format {terminal,json}
   --retest ASSESSMENT   a previous assessment.json: re-run its records'
                         verification steps on this commit
   --working-tree        assess uncommitted files
   --mode {self-assessment,auditor}
+                        self-assessment (default) or auditor; with
+                        --engagement, the engagement's mode
   --budget BUDGET       surfaces the plan queues
 ```
 
@@ -678,9 +705,12 @@ The assessment (`aisg/assessment/1`, labelled `assessment`; `aisafe audit` write
 report`) merges the scan, the validated records and their skeptic passes, the review
 records and the evaluation reports, and keeps them apart: `machine` (the scan and the
 records), `human` (the review records and the decisions a named person recorded, shown
-beside the outcome and never changing it), `auditee` (what the audited team supplied, in
-auditor mode), `evaluation`. It records the commit, the deployment and configuration
-(from the engagement, in auditor mode), the mode, the policy version, the investigators
+beside the outcome and never changing it), `auditee` (the audited team's responses and the
+state of every evidence request, from the engagement, shown beside and never changing it),
+`evaluation`, and `legal` (with an engagement). It records the commit, the deployment and
+configuration (from the engagement's scope), the engagement itself (who audits whom, the
+independence statement, the authorisations, the applicability answers, the file's sha256),
+the mode, the policy version, the investigators
 (agent, model, version) and operators, the scope (the plan's surfaces, how many were
 queued and investigated, and what was left unassessed: surfaces not investigated,
 unsupported ones, files the marker or the own-output check kept out, the scan's UNKNOWN
@@ -714,8 +744,154 @@ hypothesis), `not_verified` (a remediation step already passed at the previous c
 longer reads cannot run, and is never a pass. A finding that is no longer reported is
 listed as "not reported", never as remediated, and a violation the retest does not show
 remediated stands in the new assessment. The previous records are retested rather than
-counted as rejected; a mechanism closes again only through a new record on the new code. Exit codes: 0 every mechanism has no violation identified within
-the assessed scope and no record was rejected; 1 otherwise; 2 fatal.
+counted as rejected; a mechanism closes again only through a new record on the new code.
+In auditor mode the auditor recommends and the auditee implements: the retest runs on the
+auditee's new commit, which the engagement's `scope.commits` must list.
+
+**With an engagement** (`--engagement DIR`): the mode is the engagement's (a contradicting
+`--mode` is refused), the records default to `DIR/investigations`, the outputs to
+`DIR/assessment`. In auditor mode the engagement is required, must lie outside the audited
+tree, must name this tree as its `scope.target` and this commit in `scope.commits`, and
+must name the auditor, the organisation, the auditee, the independence statement and at
+least one written authorisation; `--working-tree` is refused and no output may go inside
+the tree. In auditor mode the only evaluation read is the report passed with
+`--evaluation-report`, which must lie outside the tree (the tree's own reports are listed
+as UNKNOWN, never read). A retest must be of the same mode and, in auditor mode, the same
+engagement, and it never writes over the assessment it retests (pass `-o`).
+
+**The legal section** reads the profiles whose jurisdiction the engagement selects against
+its applicability answers, the audit date (the assessment's UTC date) and the evidence:
+one result per provision, `gap_identified`, `insufficient_evidence`,
+`requires_specialist_review`, `satisfied_within_scope` or `not_applicable` (with its
+reason), each with the evidence rows behind it and the profile's `legal_review` status. How
+a result is reached, the coverage and what is not covered are in `legal-profiles.md`. The
+legal section never changes a mechanism's outcome or the exit code.
+
+**Evidence requests.** Each organisational evidence item of a provision that applies and
+is in force, and each `missing_evidence` line of an accepted record, becomes a request in
+`DIR/evidence-requests.json` (`aisg/evidence-requests/1`): new ones `requested`, existing
+ones kept as they are, ones no longer asked kept with `active: false`. A provision whose
+applicability is still undetermined asks for nothing yet: answer the engagement's
+questions first.
+
+**The bundle manifest.** Every run writes `bundle.json` (`aisg/bundle/1`) next to the
+assessment: the target commit, the mode, and the sha256 of every input (records, skeptic
+passes, the previous assessment, the evaluation reports, the policy, and with an
+engagement `engagement.json`, the requests as read, every received document, every
+response and the legal profiles) and every output (`assessment.json`, `.md`, `.html`,
+`evidence-requests.json`). The hashes are of the bytes as read, what `sha256sum` prints,
+so a third party holding the files can check them; `aisafe engagement status` re-checks the
+engagement's bundle.
+
+Exit codes: 0 every mechanism has no violation identified within the assessed scope and no
+record was rejected; 1 otherwise; 2 fatal.
+
+## `aisafe engagement`
+
+```
+usage: aisafe engagement [-h] action ...
+
+The engagement directory of an assessment: who audits whom, the scope, the
+authorisations, the applicability answers, the evidence requested and
+received, the auditee's responses and the QA sign-off.
+
+positional arguments:
+  action
+    init          write a new engagement.json with every answer empty
+    status        what is still to fill in, and the state of every file
+    receive       record documents received for an evidence request (copied
+                  and hashed)
+    insufficient  mark an evidence request insufficient, with the reason
+    respond       record the auditee's management response to a finding
+    qa            record a second auditor's sign-off, bound to the
+                  assessment's sha256
+
+options:
+  -h, --help      show this help message and exit
+```
+
+The engagement directory is the auditor's workspace, outside the audited tree:
+
+```
+DIR/engagement.json         aisg/engagement/1: who, scope, authorisations, applicability answers
+DIR/investigations/         investigation records and skeptic passes
+DIR/evidence/               documents received from the auditee, copied in and hashed
+DIR/evidence-requests.json  aisg/evidence-requests/1: requested | received | insufficient
+DIR/responses/*.json        aisg/auditee-response/1: the auditee's management responses
+DIR/qa.json                 aisg/qa-signoff/1: optional second-auditor sign-off
+DIR/assessment/             the assessment and its bundle manifest
+```
+
+**`init`** writes `engagement.json` with the names given on the command line and every
+other field empty: the independence statement, the scope (commits, deployment,
+configuration, environments, exclusions), the written authorisations for test endpoints
+and data, and the applicability answers are written by a person, never prefilled. It
+refuses a directory inside the audited tree (in either mode), a directory that still holds
+another engagement's files, and it never overwrites an existing engagement.
+
+```
+usage: aisafe engagement init [-h] --engagement DIR --target PATH
+                              [--mode {self-assessment,auditor}]
+                              [--auditor AUDITOR]
+                              [--organisation ORGANISATION]
+                              [--auditee AUDITEE]
+
+write a new engagement.json with every answer empty
+
+options:
+  -h, --help            show this help message and exit
+  --engagement DIR      the engagement directory
+  --target PATH         the audited tree
+  --mode {self-assessment,auditor}
+  --auditor AUDITOR     the auditor's name
+  --organisation ORGANISATION
+                        the auditor's organisation
+  --auditee AUDITEE     whose system is audited
+```
+
+The applicability answers the legal profiles read:
+
+| answer | values |
+|---|---|
+| `markets` | where the system is offered, in the profiles' codes: `EU`, `US-NY`, `US-CA`, and `other` for every market no profile covers (any other code is refused, never read as a no) |
+| `jurisdictions` | the profiles to evaluate, by their codes; selecting one never makes it apply |
+| `roles` | `provider`, `deployer`, `operator` (the AI Act roles; New York and California ask who is an operator under their own definitions) |
+| `product_type` | free text, printed with the answers |
+| `minors` | `known` (the operator knows of minor users), `none_known`, `unknown` |
+| `age_assurance` | `none`, `self_declaration`, `age_estimation`, `age_verification`, `unknown` |
+| `eu_placement` | `placed_on_market`, `put_into_service`, `used`, `none` |
+| `definitions` | per scope definition a profile asks about (`us-ny-gbl-47/ai-companion`, ...): `{answer: meets / does_not_meet / unknown, reason}`; an answer without its reason does not decide |
+| `answered_by`, `answered_on` | who gave the answers, and when |
+
+`unknown` never decides a condition: a provision whose applicability depends on it is
+`insufficient_evidence`. Answers with no `answered_by` decide nothing.
+
+**`status`** says what is still to fill in, the questions behind each open definition, the
+state of every evidence request and received document (a document that no longer matches
+its sha256 is `changed` and stops counting), the auditee's responses, whether the last
+assessment's bundle still matches, and the QA sign-offs (each bound to the assessment's
+sha256; one for an earlier assessment is shown as such, and the latest sign-off of the
+current assessment is the one that stands). It also says when a response or a document
+came after the last assessment, when the bundle is missing, and when a written
+authorisation's document no longer matches its sha256. Exit 0 when nothing is open or
+changed (no field to fill in, no request outstanding, no changed file, the QA approval
+when it is required), 1 otherwise.
+
+**`receive`** copies documents into `DIR/evidence/<request>/`, records their sha256, who
+received them and when, and marks the request `received`. **`insufficient`** marks a
+request insufficient with the person and the reason; sending the same documents again
+does not undo that decision, only a new document does. A request whose wording changes
+after a decision is open again (`requested`), with its documents kept. **`respond`** records the auditee's
+management response to a mechanism, a record, a finding fingerprint or a provision; the
+assessment shows it beside what it answers and it never changes the outcome. **`qa`**
+records a second auditor's sign-off (`approved` or `changes_requested`), bound to the
+assessment file's sha256; the engagement's auditor cannot sign it. With `qa.required: true`
+in the engagement, `status` stays at 1 until the latest sign-off of the current assessment
+is an approval.
+
+The auditor decides. `receive`, `insufficient`, `respond` and `qa` record what a named
+person did or said, on that person's instruction; the agent skill never runs them on its
+own and never writes a statement, an answer, a response or a sign-off.
 
 ## `aisafe review`
 

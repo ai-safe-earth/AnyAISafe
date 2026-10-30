@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Sequence
 
 from aisafe.analysis import checks, flows, pydeep
-from aisafe.devtools._config import apply_tool_config
+from aisafe.devtools._config import apply_tool_config, load_tool_config
 from aisafe.discovery import discover, walk
 from aisafe.evidence.model import (
     MODES,
@@ -1035,27 +1035,23 @@ def run_audit(args: argparse.Namespace | AuditOptions) -> int:
     return EXIT_OK if options.write_baseline is not None else exit_code
 
 
-def _auditor_mode(args: Sequence[str]) -> bool:
-    """Whether the command line asks for auditor mode, abbreviations included (argparse
-    accepts `--mo auditor` for `--mode auditor`)."""
-    for index, arg in enumerate(args):
-        flag, eq, value = arg.partition("=")
-        if len(flag) < 4 or not "--mode".startswith(flag):
-            continue
-        if eq:
-            return value == "auditor"
-        return index + 1 < len(args) and args[index + 1] == "auditor"
-    return False
-
-
 def main(argv: Sequence[str] | None = None) -> int:
     """Console entry: parse, apply `[tool.aisafe-audit]` defaults (never in auditor mode),
     run, map errors to exit codes."""
     parser = build_parser()
     args = list(argv) if argv is not None else sys.argv[1:]
     # In auditor mode the audited tree's `[tool.aisafe-audit]` is never applied: the team
-    # being audited does not choose what the scan excludes or how it fails.
-    if not _auditor_mode(args):
+    # being audited does not choose what the scan excludes or how it fails. argparse
+    # decides the mode exactly as the final parse will (abbreviations such as `--m`, and
+    # the last `--mode` wins); `mode` is not configurable, so the section cannot change it.
+    probe, _ = parser.parse_known_args(args)
+    if getattr(probe, "mode", None) == "auditor":
+        if load_tool_config(CONFIG_SECTION):
+            _note(
+                "auditor mode: the [tool.aisafe-audit] section of the working directory's "
+                "pyproject.toml was not applied"
+            )
+    else:
         apply_tool_config(parser, CONFIG_SECTION, exclude=NOT_CONFIGURABLE)
     ns = parser.parse_args(args)
     debug = bool(getattr(ns, "debug", False))

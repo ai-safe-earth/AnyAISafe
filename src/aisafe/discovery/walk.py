@@ -129,9 +129,10 @@ _OWN_SARIF_RE = re.compile(
 )
 _OWN_REPORT_SUFFIXES = (".json", ".sarif")
 # The workbench documents: investigation records and their validation, skeptic passes,
-# investigation plans, assessments, engagements and bundle manifests. Their quotes would
-# re-report every line they cite. A head match on the exact schema label and the kind
-# that goes with it, like the audit report's.
+# investigation plans, assessments, engagements, evidence requests, auditee responses, QA
+# sign-offs and bundle manifests. Their quotes would re-report every line they cite. A
+# head match on the exact schema label and the kind that goes with it, like the audit
+# report's.
 _OWN_WORKBENCH: dict[str, str] = {
     name: name
     for name in (
@@ -142,6 +143,9 @@ _OWN_WORKBENCH: dict[str, str] = {
         "assessment",
         "engagement",
         "bundle",
+        "evidence-requests",
+        "auditee-response",
+        "qa-signoff",
     )
 }
 _OWN_WORKBENCH_RE = re.compile(

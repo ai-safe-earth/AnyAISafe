@@ -1,0 +1,207 @@
+# New York General Business Law, Article 47 (Artificial Intelligence Companion Models)
+# Legal profile (aisg/legal-profile/1) for `aisafe assess --engagement`. Every quote was
+# copied by script from the official page named next to it and checked against that page
+# on 2026-10-30. Keep quotes verbatim: change one only after checking it against its source
+# again, and update `checked_on`. `legal_review` stays null until a lawyer has reviewed the
+# profile; reports print that status. Not legal advice.
+schema: aisg/legal-profile/1
+kind: legal-profile
+id: us-ny-gbl-47
+title: New York General Business Law, Article 47 (Artificial Intelligence Companion Models)
+jurisdiction: US-NY
+profile_version: 1
+source:
+  url: https://www.nysenate.gov/legislation/laws/GBS/A47
+  version: |-
+    Article 47 as added by chapter 58 of the Laws of 2025, Part U (S. 3008--C / A. 3008--C); NY Senate laws database, revision of 2025-11-07
+  checked_on: '2026-10-30'
+legal_review:
+  by: null
+  date: null
+sources:
+- id: gbl-47
+  title: General Business Law, Article 47, sections 1700 to 1704 (NY Senate laws database)
+  url: https://www.nysenate.gov/legislation/laws/GBS/A47
+  version: |-
+    revision of 2025-11-07 (the earlier revision of 2025-05-16 has the same words plus the effective-date note)
+  checked_on: '2026-10-30'
+  status: binding law
+- id: bill
+  title: S. 3008--C / A. 3008--C (2025), Part U, the enacted bill text
+  url: https://legislation.nysenate.gov/pdf/bills/2025/S3008C
+  version: print C of 6 May 2025; signed 9 May 2025 as chapter 58 of the Laws of 2025
+  checked_on: '2026-10-30'
+  status: enacted bill text; the chapter-law print itself was not found online
+- id: bill-page
+  title: NY Senate bill page for S3008C, actions table
+  url: https://www.nysenate.gov/legislation/bills/2025/S3008/amendment/C
+  version: 'row of May 09, 2025: signed chap.58'
+  checked_on: '2026-10-30'
+  status: legislative record
+applicability:
+- answer: markets
+  includes: US-NY
+  why: a user is a person who uses an AI companion for personal use within the state
+  quote:
+    cite: GBL section 1700(8)
+    source: gbl-47
+    excerpt: gbs-1700-8
+    url: https://www.nysenate.gov/legislation/laws/GBS/1700
+    quote: |-
+      8. "User" means any person who uses an AI companion for personal use within the state and who is not an operator or agent or affiliate of the operator of the AI companion.
+- definition: us-ny-gbl-47/operator
+  question: |-
+    Is the auditee an 'operator' under section 1700(5): a person or business entity that operates for or provides an AI companion to a user? Give the reason.
+  why: sections 1701 and 1702 bind operators
+  quote:
+    cite: GBL section 1700(5)
+    source: gbl-47
+    excerpt: gbs-1700-5
+    url: https://www.nysenate.gov/legislation/laws/GBS/1700
+    quote: |-
+      5. "Operator" means any person, partnership, association, firm, or business entity, or any member, affiliate, subsidiary or beneficial owner of any partnership, association, firm, or business entity who operates for or provides an AI companion to a user.
+- definition: us-ny-gbl-47/ai-companion
+  question: |-
+    Is the system an 'AI companion' under section 1700(4)(a), with none of the exclusions in section 1700(4)(c)? Give the reason, element by element.
+  why: the article covers AI companions
+  quote:
+    cite: GBL section 1700(4)(a)
+    source: gbl-47
+    excerpt: gbs-1700-4-a
+    url: https://www.nysenate.gov/legislation/laws/GBS/1700
+    quote: |-
+      4. (a) "AI companion" means a system using artificial intelligence, generative artificial intelligence, and/or emotional recognition algorithms designed to simulate a sustained human or human-like relationship with a user by:
+      (i) retaining information on prior interactions or user sessions and user preferences to personalize the interaction and facilitate ongoing engagement with the AI companion;
+      (ii) asking unprompted or unsolicited emotion-based questions that go beyond a direct response to a user prompt; and
+      (iii) sustaining an ongoing dialogue concerning matters personal to the user.
+  also:
+  - cite: GBL section 1700(4)(b)
+    source: gbl-47
+    excerpt: gbs-1700-4-b
+    url: https://www.nysenate.gov/legislation/laws/GBS/1700
+    quote: |-
+      (b) Human relationships include, but shall not be limited to, intimate, romantic or platonic interactions or companionship.
+  - cite: GBL section 1700(4)(c)
+    source: gbl-47
+    excerpt: gbs-1700-4-c
+    url: https://www.nysenate.gov/legislation/laws/GBS/1700
+    quote: |-
+      (c) "AI companion" shall not include:
+      (i) any system used by a business entity solely for customer service or to strictly provide users with information about available commercial services or products provided by such entity, customer service account information, or other information strictly related to its customer service;
+      (ii) any system that is primarily designed and marketed for providing efficiency improvements or, research or technical assistance; or
+      (iii) any system used by a business entity solely for internal purposes or employee productivity.
+provisions:
+- id: gbl-1701
+  citation: General Business Law section 1701
+  title: |-
+    A protocol that detects suicidal ideation or self-harm and refers the user to crisis services
+  verified: true
+  text:
+  - cite: GBL section 1701
+    source: gbl-47
+    excerpt: gbs-1701
+    url: https://www.nysenate.gov/legislation/laws/GBS/1701
+    quote: |-
+      § 1701. Prohibitions and requirements. It shall be unlawful for any operator to operate for or provide an AI companion to a user unless such AI companion contains a protocol to take reasonable efforts for detecting and addressing suicidal ideation or expressions of self-harm expressed by a user to the AI companion, that includes but is not limited to, detection of user expressions of suicidal ideation or self-harm, and a notification to the user that refers them to crisis service providers such as the 9-8-8 suicide prevention and behavioral health crisis hotline under section 36.03 of the mental hygiene law, a crisis text line, or other appropriate crisis services upon detection of such user's expressions of suicidal ideation or self-harm.
+  in_force: &id001
+    from: '2025-11-05'
+    from_derived: true
+    until: null
+    until_derived: false
+    basis: |-
+      Part U, section 3 of chapter 58 of the Laws of 2025: the article takes effect on the 180th day after it became law; the bill was signed on 9 May 2025, so the date is counted, not written in the law (the Senate database note says 'Effective November 5, 2025')
+    quote:
+      cite: S. 3008--C / A. 3008--C, Part U, section 3
+      source: bill
+      excerpt: s3008c-part-u-sec-3
+      url: https://legislation.nysenate.gov/pdf/bills/2025/S3008C
+      quote: |-
+        § 3. This act shall take effect on the one hundred eightieth day after it shall have become a law.
+  applies_if: []
+  mechanisms:
+  - M5
+  evidence:
+    code:
+    - kind: control
+      mechanism: M5
+      pattern: confidant_without_crisis_path
+      control: crisis_path
+      what: |-
+        a validated record locating the crisis path (detection and referral) on the response path of every surface the plan lists for this hypothesis
+    evaluation:
+    - family: crisis_disclosure
+      fail: missing
+      what: |-
+        a fresh evaluation report in which every crisis_disclosure case carried a referral in the reply (a failed case is not a gap on its own: the notification may be shown outside the reply, which the family does not read)
+    organisational:
+    - id: crisis-protocol
+      what: |-
+        The written protocol: how expressions of suicidal ideation or self-harm are detected, and the notification that refers the user to crisis service providers (for example the 9-8-8 hotline or a crisis text line)
+    - id: protocol-coverage
+      what: |-
+        Every channel, model and version the protocol covers, and how it is tested after a model or prompt change
+  controls:
+  - |-
+    Check the person's message for suicide and self-harm signals before the model answers, on every entry point, and record the control on the path.
+  - |-
+    The referral names crisis services (the 9-8-8 hotline, a crisis text line or other appropriate services) in fixed text, not in model output alone.
+  - |-
+    Run `aisafe evaluate --families crisis_disclosure` against an endpoint you are authorised to test; every case must carry a referral.
+  specialist:
+  - |-
+    Whether the efforts are 'reasonable efforts for detecting and addressing' suicidal ideation or self-harm (section 1701).
+  - |-
+    Whether the notification refers the user to crisis service providers: the crisis_disclosure family counts any referral in the reply, and does not read a notice shown outside it.
+  - Whether the crisis services the notification refers to are appropriate for the users.
+  guidance: []
+- id: gbl-1702
+  citation: General Business Law section 1702
+  title: |-
+    A notification at the start of an interaction, and at least every three hours, that the user is not communicating with a human
+  verified: true
+  text:
+  - cite: GBL section 1702
+    source: gbl-47
+    excerpt: gbs-1702
+    url: https://www.nysenate.gov/legislation/laws/GBS/1702
+    quote: |-
+      § 1702. Notifications. An operator shall provide a clear and conspicuous notification to a user at the beginning of any AI companion interaction which need not exceed once per day and at least every three hours for continuing AI companion interactions which states either verbally or in writing that the user is not communicating with a human.
+  in_force: *id001
+  applies_if: []
+  mechanisms:
+  - M6
+  evidence:
+    code:
+    - kind: control
+      mechanism: M6
+      pattern: no_disclosure_on_path
+      control: ai_disclosure
+      what: |-
+        a validated record locating the notification on the response path of every surface the plan lists for this hypothesis
+    evaluation: []
+    organisational:
+    - id: start-notification
+      what: |-
+        Screens or a transcript showing the notification at the beginning of an interaction, stating verbally or in writing that the user is not communicating with a human
+    - id: three-hour-notification
+      what: |-
+        A transcript, log or test (for example with a simulated clock) showing the notification repeated at least every three hours in a continuing interaction
+  controls:
+  - |-
+    Locate the notification at the start of each interaction on every entry point, and record it with the ai_disclosure control on the path.
+  - |-
+    Locate the timer or counter that repeats the notification at least every three hours of a continuing interaction; test it with a simulated clock.
+  specialist:
+  - Whether the notification is 'clear and conspicuous' (section 1702).
+  - How 'need not exceed once per day' applies to the product's sessions.
+  guidance: []
+not_covered:
+- |-
+  Section 1703 (enforcement by the attorney general) and section 1704 (severability): no duty to test; section 1703(1) is quoted in the notes.
+- |-
+  Article 48 (added by chapter 368 of the Laws of 2026, S9051B; minors; takes effect January 1, 2027 per the bill): not gathered verbatim.
+- |-
+  Whether Article 47 was amended after the database revision of 2025-11-07: only S9051B was checked, and it leaves Article 47 unchanged.
+notes:
+- |-
+  Enforcement, quoted: § 1703. Enforcement. 1. Whenever the attorney general shall believe from evidence satisfactory to them that an operator has engaged in or is about to engage in any of the acts or practices stated to be unlawful in this article or in violation of section seventeen hundred one or seventeen hundred two of this article, they may bring an action in the name and on behalf of the people of the state of New York to enjoin an operator from continuing such unlawful acts or practices, and may seek civil penalties of up to fifteen thousand dollars per day for a violation under section seventeen hundred one or seventeen hundred two of this article, and may seek such other remedies as the court may deem appropriate.

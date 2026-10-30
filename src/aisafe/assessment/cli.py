@@ -4,16 +4,26 @@
 
     aisafe assess . --investigations .aisafe-audit/investigations
     aisafe assess . --investigations .aisafe-audit/investigations --retest previous/assessment.json
+    aisafe assess ../acme --engagement ../acme-engagement --evaluation-report eval.json
 
-Writes `assessment.json` (`aisg/assessment/1`, authoritative), `assessment.md` and
-`assessment.html` into the output directory (default `.aisafe-audit/assessment/` under the
-audited tree) and prints a summary. Only this command's output is called an assessment;
-`aisafe audit` writes a scan report.
+Writes `assessment.json` (`aisg/assessment/1`, authoritative), `assessment.md`,
+`assessment.html` and `bundle.json` (`aisg/bundle/1`: the sha256 of every input and output)
+into the output directory and prints a summary. The default output directory is
+`.aisafe-audit/assessment/` under the audited tree, or `assessment/` in the engagement
+directory when `--engagement` is given. Only this command's output is called an
+assessment; `aisafe audit` writes a scan report.
+
+With `--engagement DIR` the mode comes from the engagement, the records default to
+DIR/investigations, the legal profiles are read against the engagement's applicability
+answers, and DIR/evidence-requests.json is updated (new requests added as `requested`,
+existing ones kept as they are). In auditor mode the engagement is required and the
+audited tree is read-only: every output goes outside it.
 
 Exit codes: 0 every mechanism has no violation identified within the assessed scope and no
 record was rejected; 1 otherwise; 2 fatal (no accepted investigation record, uncommitted
-changes without --working-tree, unreadable input). Without investigation records there is
-no assessment: the command never falls back to the scan.
+changes without --working-tree, an engagement that cannot be used, unreadable input).
+Without investigation records there is no assessment: the command never falls back to the
+scan. The legal section never changes the exit code.
 """
 
 from __future__ import annotations
@@ -41,23 +51,38 @@ def build_parser() -> argparse.ArgumentParser:
         prog=PROG,
         description=(
             "Merge the scan, the validated investigation records, the review records and the "
-            "evaluation reports into an assessment with one outcome per mechanism. Never a "
-            "certification."
+            "evaluation reports into an assessment with one outcome per mechanism, and, with "
+            "an engagement, a separate legal section. Never a certification."
         ),
     )
     parser.add_argument("path", nargs="?", default=".", help="the audited tree (default: .)")
     parser.add_argument(
         "--investigations",
         nargs="+",
-        required=True,
+        default=None,
         metavar="DIR",
-        help="investigation record files or directories (required: no records, no assessment)",
+        help=(
+            "investigation record files or directories (required without --engagement; "
+            "default with it: DIR/investigations). No records, no assessment"
+        ),
+    )
+    parser.add_argument(
+        "--engagement",
+        default=None,
+        metavar="DIR",
+        help="the engagement directory (`aisafe engagement init`); required in auditor mode",
+    )
+    parser.add_argument(
+        "--evaluation-report",
+        default=None,
+        metavar="FILE",
+        help="an `aisafe evaluate` report you ran; in auditor mode the only evaluation read",
     )
     parser.add_argument(
         "-o",
         "--output-dir",
         default=None,
-        help=f"where the three files go (default: PATH/{DEFAULT_OUTPUT})",
+        help=f"where the files go (default: PATH/{DEFAULT_OUTPUT}, or DIR/assessment)",
     )
     parser.add_argument("--format", choices=("terminal", "json"), default="terminal")
     parser.add_argument(
@@ -67,7 +92,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="a previous assessment.json: re-run its records' verification steps on this commit",
     )
     parser.add_argument("--working-tree", action="store_true", help="assess uncommitted files")
-    parser.add_argument("--mode", choices=MODES, default="self-assessment")
+    parser.add_argument(
+        "--mode",
+        choices=MODES,
+        default=None,
+        help="self-assessment (default) or auditor; with --engagement, the engagement's mode",
+    )
     parser.add_argument("--budget", type=int, default=20, help="surfaces the plan queues")
     return parser
 
@@ -99,6 +129,8 @@ def write_outputs(document: dict, output_dir: Path) -> list[Path]:
 def main(argv: Sequence[str] | None = None) -> int:
     from aisafe.assessment.assess import run_assessment
     from aisafe.assessment.render import render_terminal
+    from aisafe.engagement import model as eng_model
+    from aisafe.engagement.bundle import build_bundle, hash_now
 
     parser = build_parser()
     ns = parser.parse_args(list(argv) if argv is not None else None)
@@ -106,29 +138,75 @@ def main(argv: Sequence[str] | None = None) -> int:
         if ns.budget < 1:
             _note("--budget must be at least 1")
             return 2
+        engagement = None
+        if ns.engagement:
+            engagement = eng_model.load_engagement(Path(ns.engagement))
+            if ns.mode is not None and ns.mode != engagement.mode:
+                _note(f"--mode {ns.mode} contradicts the engagement's mode ({engagement.mode})")
+                return 2
+        mode = ns.mode or (engagement.mode if engagement is not None else "self-assessment")
+        if ns.investigations:
+            investigations = [Path(p) for p in ns.investigations]
+        elif engagement is not None:
+            investigations = [engagement.dir / eng_model.INVESTIGATIONS_DIR]
+        else:
+            _note("--investigations is required without --engagement")
+            return 2
+        output_dir = (
+            Path(ns.output_dir)
+            if ns.output_dir
+            else (
+                engagement.dir / eng_model.ASSESSMENT_DIR
+                if engagement is not None
+                else Path(ns.path) / DEFAULT_OUTPUT
+            )
+        )
+        if mode == "auditor" and _inside(output_dir, Path(ns.path)):
+            _note("in auditor mode the audited tree is read-only; pass -o outside it")
+            return 2
+        if ns.retest and (output_dir / "assessment.json").resolve() == Path(ns.retest).resolve():
+            # The previous assessment is an input of the retest: it is never overwritten.
+            _note("--retest names the assessment this run would overwrite; pass -o elsewhere")
+            return 2
         run = run_assessment(
             ns.path,
-            [Path(p) for p in ns.investigations],
-            mode=ns.mode,
+            investigations,
+            mode=mode,
             working_tree=ns.working_tree,
             retest=Path(ns.retest) if ns.retest else None,
             budget=ns.budget,
+            engagement=engagement,
+            evaluation_report=ns.evaluation_report,
         )
         if run.document is None:
             _note(f"no assessment: {run.fatal}")
             return 2
-        output_dir = Path(ns.output_dir) if ns.output_dir else Path(ns.path) / DEFAULT_OUTPUT
-        if ns.mode == "auditor" and _inside(output_dir, Path(ns.path)):
-            _note("in auditor mode the audited tree is read-only; pass -o outside it")
-            return 2
+        inputs = hash_now(run.bundle_inputs)
         written = write_outputs(run.document, output_dir)
-        _note("assessment written: " + ", ".join(p.as_posix() for p in written))
+        outputs = [{"role": "assessment", "path": p.as_posix()} for p in written]
+        if engagement is not None and run.requests is not None:
+            requests_path = engagement.dir / eng_model.REQUESTS_FILE
+            eng_model.write_json(requests_path, run.requests)
+            outputs.append({"role": "evidence requests", "path": requests_path.as_posix()})
+        bundle = build_bundle(
+            bundle_dir=output_dir,
+            document=run.document,
+            inputs=inputs,
+            outputs=outputs,
+            engagement_dir=engagement.dir if engagement is not None else None,
+        )
+        bundle_path = output_dir / eng_model.BUNDLE_FILE
+        eng_model.write_json(bundle_path, bundle)
+        _note("assessment written: " + ", ".join(p.as_posix() for p in [*written, bundle_path]))
         if ns.format == "json":
             sys.stdout.write(json.dumps(run.document, indent=2) + "\n")
         else:
             text = render_terminal(run.document)
             sys.stdout.write(text.encode("ascii", "backslashreplace").decode("ascii"))
         return run.exit_code
+    except eng_model.EngagementError as exc:
+        _note(str(exc))
+        return 2
     except KeyboardInterrupt:
         _note("interrupted")
         return 130

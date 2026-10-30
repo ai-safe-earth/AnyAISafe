@@ -73,6 +73,8 @@ include = ["aisafe*"]
 "aisafe.policy" = ["*.yaml", "*.md"]
 # Scenario corpus for `aisafe evaluate`, loaded via importlib.resources.
 "aisafe.evaluation" = ["corpus/*.yaml"]
+# The legal profiles `aisafe assess --engagement` reads (aisg/legal-profile/1).
+"aisafe.legal" = ["profiles/*.yaml"]
 # Agent skill copied by `aisafe skill install`, read via aisafe.skills.skill_root().
 # The recursive glob is the intent; the per-type globs cover setuptools
 # versions that do not recurse `**`.
@@ -131,5 +133,6 @@ exclude = [
     "bench/cases",
     "examples",
     "src/aisafe/evaluation/corpus",
+    "src/aisafe/legal/profiles",
 ]
 fail-on = "high"

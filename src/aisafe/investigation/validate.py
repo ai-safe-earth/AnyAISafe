@@ -1541,7 +1541,10 @@ def render_validation(run: ValidationRun) -> str:
         "===========================",
         f"record validation | mode: {run.mode}",
         f"target: {run.root.as_posix()} at {run.state.get('commit') or 'no commit'}"
-        + (" (working tree)" if run.working_tree else ""),
+        + (" (working tree)" if run.working_tree else "")
+        + (
+            "; git could not report the state of the tree" if run.state.get("status_failed") else ""
+        ),
     ]
     if run.fatal:
         lines += ["", f"not validated: {run.fatal}"]

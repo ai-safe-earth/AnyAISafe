@@ -73,6 +73,9 @@ class Gap:
     detail: str
     surface: str | None = None
     record: str | None = None
+    # The pattern the gap concerns, when one is known; None reads as every pattern of the
+    # mechanism (the legal section treats it so).
+    pattern: str | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -80,6 +83,7 @@ class Gap:
             "detail": self.detail,
             "surface": self.surface,
             "record": self.record,
+            "pattern": self.pattern,
         }
 
 
@@ -265,13 +269,19 @@ def mechanism_outcomes(
                         "high_surface_not_investigated",
                         f"{surface['type']} {where}: {mechanism.id}/{hyp.get('pattern')} {why}",
                         surface=surface["id"],
+                        pattern=str(hyp.get("pattern")),
                     )
                 )
         for record in mine:
             if record.claim in ("establishes", "closes"):
                 if _skeptic_refuted(record):
                     gaps.append(
-                        Gap("skeptic_refuted", "a skeptic pass refuted the claim", record=record.id)
+                        Gap(
+                            "skeptic_refuted",
+                            "a skeptic pass refuted the claim",
+                            record=record.id,
+                            pattern=record.pattern,
+                        )
                     )
                 elif not _skeptic_upheld(record):
                     gaps.append(
@@ -279,6 +289,7 @@ def mechanism_outcomes(
                             "skeptic_not_run",
                             "no skeptic pass bound to the record upheld the claim",
                             record=record.id,
+                            pattern=record.pattern,
                         )
                     )
             if record.runtime:
@@ -287,6 +298,7 @@ def mechanism_outcomes(
                         "runtime_only",
                         "a required link exists only at run time: " + ", ".join(record.runtime),
                         record=record.id,
+                        pattern=record.pattern,
                     )
                 )
             if record.claim == "review":
@@ -296,6 +308,7 @@ def mechanism_outcomes(
                         f"the record's claim is {record.effective.get('evidence_status')} / "
                         f"{record.effective.get('decision')}: a person weighs it",
                         record=record.id,
+                        pattern=record.pattern,
                     )
                 )
             if record.claim == "closes":
@@ -308,6 +321,7 @@ def mechanism_outcomes(
                             f"closing reading ({', '.join(near)}); the skeptic pass did not say "
                             "it checked the reading does not follow it",
                             record=record.id,
+                            pattern=record.pattern,
                         )
                     )
         for record in [*their_rejected, *unplaced]:
@@ -318,6 +332,7 @@ def mechanism_outcomes(
                     if record in their_rejected
                     else "a rejected record names no mechanism it could be kept apart from",
                     record=record.id or record.path,
+                    pattern=getattr(record, "pattern", None),
                 )
             )
         covered = {
@@ -331,6 +346,7 @@ def mechanism_outcomes(
                         "scan_finding_to_decide",
                         f"{finding.display_id} ({finding.evidence_status.value}) at "
                         f"{row['file']}:{row['line']}: no deciding record covers it",
+                        pattern=getattr(policy.pattern_of(finding.display_id), "id", None),
                     )
                 )
         plan_closed = {

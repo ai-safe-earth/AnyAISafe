@@ -794,7 +794,9 @@ def build_plan(scan: MachineScan, *, budget: int = DEFAULT_BUDGET) -> dict[str, 
             "unsupported_files": sum(
                 1 for rel in scan.walked if scan.reading_of(rel) == "unsupported"
             ),
-            "tracked_not_walked": len(scan.tracked_not_walked),
+            "tracked_not_walked": None
+            if scan.tracked_not_walked is None
+            else len(scan.tracked_not_walked),
         },
         "surfaces": surfaces,
         "queued": queued,
@@ -809,7 +811,9 @@ def build_plan(scan: MachineScan, *, budget: int = DEFAULT_BUDGET) -> dict[str, 
             # Files of the commit the walk never read (a skipped directory, a binary or
             # UTF-16 file, the size limit, the marker, an exclude), and walked files in a
             # language this version does not read.
-            "tracked_not_walked": list(scan.tracked_not_walked),
+            "tracked_not_walked": None
+            if scan.tracked_not_walked is None
+            else list(scan.tracked_not_walked),
             "unsupported_files": sorted(
                 rel for rel in scan.walked if scan.reading_of(rel) == "unsupported"
             ),
@@ -831,6 +835,11 @@ def _by_rule(findings: Iterable[Finding]) -> dict[str, int]:
     return dict(sorted(counts.items()))
 
 
+def _count(items: list[str] | None) -> str:
+    """How many, or "an unknown number of" when git could not list them."""
+    return "an unknown number of" if items is None else str(len(items))
+
+
 def render_plan(plan: dict[str, Any]) -> str:
     """The plan for a terminal: the counts, then one line per surface in rank order."""
     counts = plan["counts"]
@@ -840,7 +849,12 @@ def render_plan(plan: dict[str, Any]) -> str:
         "=======================",
         f"investigation plan | mode: {plan['mode']}",
         f"target: {plan['target']['path']} at {plan['target'].get('commit') or 'no commit'}"
-        + (" (uncommitted changes)" if plan["target"].get("dirty") else ""),
+        + (" (uncommitted changes)" if plan["target"].get("dirty") else "")
+        + (
+            " (git could not report the state of the tree)"
+            if plan["target"].get("status_failed")
+            else ""
+        ),
         f"policy {plan['policy']['version']} | plan {plan['plan_sha256'][:16]}",
         (
             f"{counts['surfaces']} surfaces: {counts['by_priority']['high']} high, "
@@ -887,10 +901,10 @@ def render_plan(plan: dict[str, Any]) -> str:
     lines.append(
         f"not read: {len(not_read['marker_skipped'])} file(s) skipped by the ignore-file "
         f"marker, {len(not_read['own_output_skipped'])} as the tool's own output, "
-        f"{len(not_read['tracked_not_walked'])} tracked file(s) the walk did not read, "
+        f"{_count(not_read['tracked_not_walked'])} tracked file(s) the walk did not read, "
         f"{len(not_read['unsupported_files'])} file(s) in a language this version does not read"
     )
-    for rel in not_read["tracked_not_walked"][:10]:
+    for rel in (not_read["tracked_not_walked"] or [])[:10]:
         lines.append(f"  - not walked: {rel}")
     for rel in not_read["unsupported_files"][:10]:
         lines.append(f"  - unsupported: {rel}")

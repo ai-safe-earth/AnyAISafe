@@ -209,8 +209,9 @@ against real users.
 - Investigation of code outside Python and JS/TS. A record citing another language does
   not count, and the plan lists those surfaces as unsupported.
 
-Not in this milestone, and on the roadmap: a California SB 1119 legal profile; the
-Digital Services Act, Articles 25 and 28; the GDPR beyond the narrow person-data view;
+Not in this milestone, and on the roadmap: a California SB 1119 legal profile (section 12
+and `legal-profiles.md`); the Digital Services Act, Articles 25 and 28; the GDPR beyond the
+narrow person-data view;
 an LLM judge inside `aisafe evaluate`; harnesses that capture payloads or logs from a
 running system; running an investigation through a model provider without a host agent;
 deterministic deep analysis of TypeScript and JavaScript; signed records and assessments;
@@ -320,3 +321,48 @@ when the record's remediation steps, run again on the new commit, pass where the
 before (`aisafe assess --retest`), no regression step fails, and nothing at the new commit
 shows the mechanism on that surface. A violation that is not shown remediated stands. A
 mechanism closes again only through a new record on the new code.
+
+## 12. The engagement and the legal profiles
+
+**The engagement.** An independent assessment starts from an engagement directory outside
+the audited tree (`aisafe engagement init`). It names the auditor and the organisation,
+the auditee, the auditor's own statement of independence, the scope (the commits, the
+deployment and configuration, the environments), the written authorisations for test
+endpoints and data, the mode, and the applicability answers the legal profiles read. The
+tool writes none of these: `init` leaves every statement and answer empty, and an
+auditor-mode assessment refuses to run until the names, the independence statement, a
+commit and an authorisation are there, and the commit it reads is one the scope lists.
+
+**Who decides.** The auditor decides. The auditee supplies evidence and a management
+response per finding; both are shown beside the outcome and never change it. A second
+auditor may sign off the assessment; the sign-off is bound to the assessment file's
+sha256, so a later assessment needs a new one. In auditor mode the auditor recommends and
+the auditee implements; the retest runs on the auditee's new commit. The skill changes
+code only in self-assessment mode.
+
+**Evidence requests.** What the investigation could not see (a record's
+`missing_evidence`) and the organisational evidence a legal provision needs become
+requests, each `requested`, `received` or `insufficient`. A received document is copied
+into the engagement with its sha256; once its bytes change it no longer counts.
+
+**The bundle.** Every assessment writes a manifest with the sha256 of each input and
+output, so a third party holding the files can check that none changed.
+
+**Legal profiles.** A legal profile reads a few provisions of one law against the
+engagement's answers and the evidence. It is a section of its own: ethical and legal
+conclusions never merge, and behaviour a law permits can still violate the charter.
+Applicability is `applies`, `does_not_apply` or `undetermined`, from the answers; selecting
+a jurisdiction never establishes it, and an `unknown` answer never decides. A provision not
+in force on the audit date is `not_applicable` when the law states the date, and goes to a
+specialist when the date was counted or inferred: a derived date never removes a duty on
+its own. Each duty a mechanism's pattern can test is mapped to it (the crisis path of M5,
+which AUD-1108 serves; the AI disclosure and the concealment instruction of M6, which
+AUD-1105 serves) and to the evaluation family that tests it (crisis_disclosure,
+identity_question); every other duty becomes an evidence request. `satisfied_within_scope`
+needs every listed piece of evidence present and validated, and scanner silence never
+counts. The legal elements no code can show, such as a material distortion of behaviour,
+significant harm or whether efforts are reasonable, give `requires_specialist_review`,
+with the evidence attached. Every profile records where its text was read and when, and
+`legal_review` stays null until a lawyer has reviewed it; reports print that status. The
+coverage, the sources and what was not verified are in `legal-profiles.md`. None of this is
+legal advice.

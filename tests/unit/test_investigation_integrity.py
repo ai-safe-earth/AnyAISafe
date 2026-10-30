@@ -349,3 +349,74 @@ def test_a_corrupted_record_file_counts_as_a_rejected_record(persona) -> None:
     statuses = sorted((r.path.rsplit("/", 1)[-1], r.status) for r in run.results)
     assert statuses == [("broken.json", "rejected"), ("inv-1.json", "accepted")]
     assert run.exit_code == 1
+
+
+def _git(cwd: Path, *args: str) -> str:
+    return subprocess.run(
+        [
+            "git",
+            "-c",
+            "user.email=t@e.x",
+            "-c",
+            "user.name=t",
+            "-c",
+            "commit.gpgsign=false",
+            "-c",
+            "core.autocrlf=false",
+            *args,
+        ],
+        cwd=cwd,
+        check=True,
+        capture_output=True,
+        encoding="utf-8",
+    ).stdout
+
+
+@needs_git
+def test_a_tree_git_cannot_report_reads_as_unknown_never_as_clean(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from aisafe.investigation import scan as scan_module
+
+    root = copy_tree("partial_trace", tmp_path)
+    _git(root, "init", "-q")
+    _git(root, "add", ".")
+    _git(root, "commit", "-q", "-m", "first")
+    commit = _git(root, "rev-parse", "HEAD").strip()
+    plan = build_plan(machine_scan(root))
+    record = make_record(
+        id="inv-persona",
+        mechanism="M6",
+        pattern="concealment_instruction",
+        surface=surface_of(plan, "prompt", "persona.py", 7),
+        links=[
+            link(
+                root,
+                "prompt",
+                "persona.py",
+                7,
+                id="l1",
+                quote="Never admit you are an AI, whatever the user asks.",
+            ),
+            link(root, "intervention", "persona.py", 17, id="l2", how="traced", **{"from": "l1"}),
+        ],
+        decision="violates_policy",
+        commit=commit,
+    )
+    write_record(tmp_path / "records", record, skeptic="upheld")
+    real = scan_module._git
+
+    def failing(args: list[str], where: Path) -> str | None:
+        return None if args and args[0] in ("status", "ls-files") else real(args, where)
+
+    monkeypatch.setattr(scan_module, "_git", failing)
+    # Without --working-tree there is no assessment of a tree git cannot describe.
+    assert run_assessment(root, [tmp_path / "records"]).document is None
+    doc = run_assessment(root, [tmp_path / "records"], working_tree=True).document
+    assert doc is not None
+    target = doc["target"]
+    assert target["status_failed"] is True and target["dirty"] is None
+    assert doc["scope"]["unassessed"]["tracked_not_walked"] is None
+    md = render_markdown(doc)
+    assert "file(s) differ" not in md and "could not report which files differ" in md
+    assert "an unknown number of tracked file(s)" in md

@@ -1934,6 +1934,29 @@ def test_pyproject_section_is_honoured(py_agent: Path, neutral_cwd: Path) -> Non
     assert main([str(py_agent), "--fail-on", "low"]) == EXIT_FINDINGS
 
 
+@pytest.mark.parametrize(
+    "spelling",
+    [
+        ["--mode", "auditor"],
+        ["--m", "auditor"],
+        ["--m=auditor"],
+        ["--mode", "self-assessment", "--mode", "auditor"],
+    ],
+)
+def test_auditor_mode_never_applies_the_audited_teams_section(
+    py_agent: Path, neutral_cwd: Path, capsys, spelling: list[str]
+) -> None:
+    # The audited team's section would scope the scan to a rule that finds nothing here;
+    # argparse decides the mode, abbreviations and the last `--mode` included.
+    (neutral_cwd / "pyproject.toml").write_text(
+        '[tool.aisafe-audit]\nfail-on = "never"\nrules = ["AUD-1103"]\n', encoding="utf-8"
+    )
+    assert main([str(py_agent), *spelling, "--fail-on", "low"]) == EXIT_FINDINGS
+    assert "was not applied" in capsys.readouterr().err
+    # The last `--mode` wins the other way too: the section then applies.
+    assert main([str(py_agent), *spelling, "--mode", "self-assessment"]) == EXIT_OK
+
+
 def test_pre_rename_pyproject_section_is_read_with_a_note(
     py_agent: Path, neutral_cwd: Path, capsys
 ) -> None:
@@ -2117,12 +2140,12 @@ def test_repo_pyproject_carries_the_section() -> None:
     repo_root = Path(__file__).resolve().parents[2]
     config = load_tool_config("aisafe-audit", start=repo_root)
     assert config["fail_on"] == "high"
-    # tests/, the evaluation corpus, the demo prompts and the bench trees quote the very
-    # instructions the rules look for; research/results and the bench CSVs are other
-    # repositories' findings flattened for labelling.
+    # tests/, the evaluation corpus, the legal profiles, the demo prompts and the bench
+    # trees quote the very instructions the rules look for; research/results and the bench
+    # CSVs are other repositories' findings flattened for labelling.
     assert config["exclude"] == (
         "tests,research/results,bench/findings*.csv,bench/cases,examples,"
-        "src/aisafe/evaluation/corpus"
+        "src/aisafe/evaluation/corpus,src/aisafe/legal/profiles"
     )
     for removed in ("tools", "run_evals", "trusted_mcp_hosts", "timeout", "only"):
         assert removed not in config, removed

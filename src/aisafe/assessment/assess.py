@@ -9,10 +9,20 @@ It merges four inputs and keeps them apart in the document:
   passes;
 - **human**: the review records and the decisions a named person recorded in them, shown
   beside the outcome and never changing it;
-- **auditee**: responses and evidence from the team being audited (auditor mode, from the
-  engagement), shown beside and never changing it;
-- **evaluation**: the evaluation reports the scan read (in auditor mode, only the ones the
-  auditor ran).
+- **auditee**: responses and evidence from the team being audited (from the engagement),
+  shown beside and never changing it;
+- **evaluation**: the evaluation reports the scan read (in auditor mode, only the one the
+  auditor ran and passed with `--evaluation-report`).
+
+With an engagement (`--engagement DIR`) the document also carries who audits whom, the
+scope and the authorisations, and a `legal` section: the selected legal profiles read
+against the engagement's applicability answers (`aisafe.legal.evaluate`), kept apart from
+the ethical outcome and never changing it or the exit code. The organisational evidence
+the legal profiles need and the `missing_evidence` of the accepted records become evidence
+requests, merged into DIR/evidence-requests.json by the CLI. In auditor mode the engagement
+is required, must lie outside the audited tree, must name this tree as its target and this
+commit among its commits, and must name the auditor, the auditee, the independence
+statement and a written authorisation.
 
 The outcome per mechanism comes from `outcome.mechanism_outcomes`. Without an accepted
 investigation record made at this commit the command exits 2: an assessment never falls
@@ -33,8 +43,9 @@ from __future__ import annotations
 
 import subprocess
 from dataclasses import dataclass, field
+from datetime import date, datetime, timezone
 from pathlib import Path
-from typing import Any, Sequence
+from typing import TYPE_CHECKING, Any, Sequence
 
 from aisafe.assessment.outcome import OUTCOMES, least_favourable, mechanism_outcomes
 from aisafe.evidence.model import MODES, Decision, EvidenceStatus, Finding, now_iso
@@ -43,6 +54,9 @@ from aisafe.investigation.records import RecordError, load_json
 from aisafe.investigation.scan import MachineScan, machine_scan
 from aisafe.investigation.text import content_sha256, quote_in_text
 from aisafe.investigation.validate import RecordResult, run_step, validate_paths
+
+if TYPE_CHECKING:
+    from aisafe.engagement.model import Engagement
 
 __all__ = [
     "ASSESSMENT_KIND",
@@ -77,6 +91,10 @@ class AssessmentRun:
     exit_code: int = 2
     scan: MachineScan | None = None
     records: list[RecordResult] = field(default_factory=list)
+    # With an engagement: the evidence requests to write back (merged), and every input
+    # the bundle manifest hashes ({role, path}).
+    requests: dict[str, Any] | None = None
+    bundle_inputs: list[dict[str, Any]] = field(default_factory=list)
 
 
 def _finding_row(finding: Finding) -> dict[str, Any]:
@@ -212,7 +230,9 @@ def _scope(
             "surfaces_not_investigated": not_investigated,
             "unsupported": list(plan["unsupported"]),
             "unsupported_files": list(plan["not_read"].get("unsupported_files") or []),
-            "tracked_not_walked": list(plan["not_read"].get("tracked_not_walked") or []),
+            "tracked_not_walked": None
+            if plan["not_read"].get("tracked_not_walked") is None
+            else list(plan["not_read"]["tracked_not_walked"]),
             "marker_skipped": list(plan["not_read"]["marker_skipped"]),
             "own_output_skipped": list(plan["not_read"]["own_output_skipped"]),
             "oversize_files": plan["not_read"]["oversize_files"],
@@ -421,6 +441,91 @@ def _retest(
 # ---------------------------------------------------------------------------
 
 
+# Engagement fields an auditor-mode assessment cannot do without: accountability has a name.
+_AUDITOR_NEEDS = frozenset(
+    {
+        "auditor.name",
+        "auditor.organisation",
+        "auditee.name",
+        "independence.statement",
+        "independence.by",
+        "independence.date",
+        "authorisations",
+        "scope.commits",
+    }
+)
+
+
+def _engagement_problem(engagement: Engagement, path: Path, mode: str) -> str | None:
+    """Why the engagement cannot be used for this run; None when it can. Auditor mode is
+    strict: outside the tree, naming this tree, complete where accountability needs it."""
+    from aisafe.engagement.model import inside, missing_fields
+
+    if engagement.mode != mode:
+        return f"the engagement is in {engagement.mode} mode; this run is in {mode} mode"
+    if inside(engagement.dir, path):
+        # The engagement lives outside the audited tree, in either mode.
+        return "the engagement directory must be outside the audited tree"
+    if mode != "auditor":
+        return None
+    scope = engagement.data.get("scope") or {}
+    target = scope.get("target")
+    named = engagement.dir / str(target) if target else None
+    if named is None or not _same_dir(named, Path(path)):
+        return f"the engagement names {target!r} as its target, not {Path(path).as_posix()}"
+    need = [m for m in missing_fields(engagement.data) if m.split(":")[0] in _AUDITOR_NEEDS]
+    if need:
+        return "the engagement is not complete for auditor mode: " + "; ".join(need)
+    return None
+
+
+def _inside_tree(path: Path, tree: Path) -> bool:
+    try:
+        path.resolve().relative_to(tree.resolve())
+    except ValueError:
+        return False
+    return True
+
+
+def _same_dir(a: Path, b: Path) -> bool:
+    """One directory, however it is reached (a junction, a symlink, another spelling)."""
+    try:
+        return a.resolve() == b.resolve() or a.samefile(b)
+    except OSError:
+        return False
+
+
+def _previous_problem(prev: dict[str, Any], mode: str, engagement: Engagement | None) -> str | None:
+    """Why the previous assessment cannot be retested here; None when it can."""
+    if prev.get("mode") != mode:
+        return (
+            f"--retest: the previous assessment is in {prev.get('mode')} mode, this run in {mode}"
+        )
+    if mode == "auditor" and engagement is not None:
+        before = (prev.get("engagement") or {}).get("path")
+        if not before or not _same_dir(Path(str(before)).parent, engagement.dir):
+            return "--retest: the previous assessment was made in another engagement"
+    return None
+
+
+def _record_requests(records: Sequence[RecordResult]) -> list[dict[str, Any]]:
+    """One evidence request per `missing_evidence` line of an accepted record."""
+    from aisafe.legal.evaluate import record_request_id
+
+    out = []
+    for record in records:
+        for text in (record.raw or {}).get("missing_evidence") or []:
+            if isinstance(text, str) and text.strip() and record.id:
+                out.append(
+                    {
+                        "id": record_request_id(record.id, text),
+                        "source": {"record": record.id, "missing_evidence": text.strip()},
+                        "what": text.strip(),
+                    }
+                )
+    return out
+
+
 def run_assessment(
     path: str | Path,
     investigations: Sequence[Path],
@@ -429,11 +534,14 @@ def run_assessment(
     working_tree: bool = False,
     retest: Path | None = None,
     budget: int = DEFAULT_BUDGET,
-    engagement: dict[str, Any] | None = None,
+    engagement: Engagement | None = None,
+    evaluation_report: str | None = None,
+    today: date | None = None,
 ) -> AssessmentRun:
     """Build the assessment document (see the module docstring)."""
     from aisafe.reporting.report import TOOL_NAME, tool_version
 
+    today = today or datetime.now(timezone.utc).date()
     if mode not in MODES:
         return AssessmentRun(fatal=f"mode must be one of {', '.join(MODES)}")
     if mode == "auditor" and engagement is None:
@@ -442,11 +550,45 @@ def run_assessment(
                 "auditor mode needs an engagement (`aisafe engagement init`, then --engagement DIR)"
             )
         )
+    if mode == "auditor" and working_tree:
+        return AssessmentRun(
+            fatal="in auditor mode an assessment is of a commit: --working-tree is refused"
+        )
+    if engagement is not None:
+        problem = _engagement_problem(engagement, Path(path), mode)
+        if problem is not None:
+            return AssessmentRun(fatal=problem)
     for item in investigations:
         if not Path(item).exists():
             return AssessmentRun(fatal=f"no such file or directory: {Path(item).as_posix()}")
     prev = _load_previous(Path(retest)) if retest is not None else None
-    scan = machine_scan(path, mode=mode)
+    if prev is not None:
+        problem = _previous_problem(prev, mode, engagement)
+        if problem is not None:
+            return AssessmentRun(fatal=problem)
+    if mode == "auditor" and evaluation_report is not None:
+        if _inside_tree(Path(evaluation_report), Path(path)):
+            return AssessmentRun(
+                fatal=(
+                    "--evaluation-report is inside the audited tree: in auditor mode only a "
+                    "report the auditor ran, kept outside the tree, is read"
+                )
+            )
+    if evaluation_report is not None:
+        # The flag names a file relative to the working directory, not to the tree: resolve
+        # it once, so the scan, the document and the bundle name the same file.
+        evaluation_report = Path(evaluation_report).resolve().as_posix()
+    scan = machine_scan(path, mode=mode, evaluation_report=evaluation_report)
+    if mode == "auditor" and engagement is not None:
+        commit = scan.state.commit
+        if commit is None or not any(commit.startswith(c) for c in engagement.commits):
+            return AssessmentRun(
+                fatal=(
+                    f"the tree is at commit {commit or 'none'}, which the engagement's "
+                    "scope.commits does not list: an auditor assesses the commits in scope"
+                ),
+                scan=scan,
+            )
     plan = build_plan(scan, budget=budget)
     run = validate_paths(
         investigations,
@@ -491,6 +633,7 @@ def run_assessment(
     remediation = None
     if retest is not None and prev is not None:
         remediation = _retest(Path(retest), prev, scan, accepted, plan)
+    carried = (remediation or {}).get("results") or []
     outcomes = mechanism_outcomes(
         scan.policy,
         records=accepted,
@@ -500,11 +643,14 @@ def run_assessment(
         untrusted=plan["untrusted_text"],
         review_records=list(scan.ctx.inventory.review_records or []),
         rules_ran=[rule.id for rule in scan.rules],
-        carried=(remediation or {}).get("results") or [],
+        carried=carried,
+        today=today,
     )
     overall = least_favourable(o.outcome for o in outcomes)
     investigators, operators = _people(accepted)
+    state = scan.state
     inputs = []
+    bundle_inputs: list[dict[str, Any]] = []
     for result in run.results:
         try:
             inputs.append(
@@ -514,6 +660,7 @@ def run_assessment(
                     "sha256": content_sha256(Path(result.path)),
                 }
             )
+            bundle_inputs.append({"role": "investigation record", "path": result.path})
         except OSError:
             continue
         skeptic_file = (result.skeptic or {}).get("file")
@@ -527,6 +674,7 @@ def run_assessment(
                         "sha256": content_sha256(skeptic_path),
                     }
                 )
+                bundle_inputs.append({"role": "skeptic pass", "path": skeptic_path.as_posix()})
             except OSError:
                 pass
     if remediation is not None:
@@ -537,8 +685,115 @@ def run_assessment(
                 "sha256": remediation["previous"]["sha256"],
             }
         )
+        bundle_inputs.append(
+            {"role": "previous assessment", "path": remediation["previous"]["file"]}
+        )
+    if evaluation_report is not None:
+        # The path as given, resolved from where the command ran: what was read.
+        bundle_inputs.append(
+            {"role": "evaluation report", "path": Path(evaluation_report).resolve().as_posix()}
+        )
+    for report in scan.ctx.evaluation:
+        file = getattr(report, "file", None)
+        if file and evaluation_report is None:
+            where = Path(file) if Path(file).is_absolute() else scan.root / file
+            bundle_inputs.append({"role": "evaluation report", "path": where.as_posix()})
+    if working_tree:
+        for rel in state.dirty if not state.status_failed else ():
+            bundle_inputs.append(
+                {"role": "working-tree file", "path": (scan.root / rel).as_posix()}
+            )
+    from aisafe.policy import charter_path, policy_path
+
+    bundle_inputs.append({"role": "policy", "path": policy_path().as_posix()})
+    bundle_inputs.append({"role": "policy charter", "path": charter_path().as_posix()})
+
+    legal = None
+    requests_doc = None
+    auditee: dict[str, Any] = {
+        "note": (
+            "What the team being audited said or supplied, shown beside the outcome; it never "
+            "changes it."
+        ),
+        "responses": [],
+        "evidence": [],
+        "problems": [],
+    }
+    engagement_doc = None
+    if engagement is not None:
+        from aisafe.engagement import model as eng_model
+        from aisafe.legal.evaluate import evaluate_legal
+        from aisafe.legal.profile import definition_questions, load_profiles
+
+        profiles = load_profiles(policy=scan.policy)
+        existing = eng_model.load_requests(engagement.dir)
+        legal_args: dict[str, Any] = {
+            "answers": engagement.answers,
+            "today": today,
+            "policy": scan.policy,
+            "outcomes": outcomes,
+            "records": accepted,
+            "surfaces": plan["surfaces"],
+            "findings": scan.findings,
+            "evaluation": scan.ctx,
+            "carried": carried,
+        }
+        # First pass: which organisational evidence the applicable provisions ask for. The
+        # requests are merged, then the section is read again against the merged states.
+        _, wanted = evaluate_legal(
+            profiles, requests=eng_model.request_states(engagement.dir, existing), **legal_args
+        )
+        requests_doc = eng_model.merge_requests(
+            existing, [*wanted, *_record_requests(accepted)], today=today.isoformat()
+        )
+        states = eng_model.request_states(engagement.dir, requests_doc)
+        legal, _ = evaluate_legal(profiles, requests=states, **legal_args)
+        responses, problems = eng_model.load_responses(engagement.dir)
+        auditee["responses"] = responses
+        auditee["evidence"] = list(states.values())
+        auditee["problems"] = problems
+        engagement_doc = {
+            **engagement.summary(),
+            "to_fill_in": eng_model.missing_fields(
+                engagement.data, definitions=definition_questions(profiles)
+            ),
+        }
+        bundle_inputs.append({"role": "engagement", "path": engagement.path.as_posix()})
+        requests_path = engagement.dir / eng_model.REQUESTS_FILE
+        if requests_path.is_file():
+            bundle_inputs.append(
+                {"role": "evidence requests (as read)", "path": requests_path.as_posix()}
+            )
+        for request in states.values():
+            for document in request["documents"]:
+                bundle_inputs.append(
+                    {
+                        "role": f"evidence document ({request['id']})",
+                        "path": (engagement.dir / str(document["path"])).as_posix(),
+                    }
+                )
+        for response in responses:
+            bundle_inputs.append(
+                {
+                    "role": "auditee response",
+                    "path": (engagement.dir / response["file"]).as_posix(),
+                }
+            )
+        for profile in profiles:
+            bundle_inputs.append({"role": "legal profile", "path": profile.path.as_posix()})
+        for auth in eng_model.authorisation_states(engagement.dir, engagement.data):
+            document = auth.get("document") or {}
+            if document.get("path"):
+                bundle_inputs.append(
+                    {
+                        "role": "written authorisation",
+                        "path": (engagement.dir / str(document["path"])).as_posix(),
+                    }
+                )
+        auditee["unmatched"] = _unmatched_responses(responses, outcomes, accepted, scan, legal)
+
     exit_code = 0 if all(o.outcome == OUTCOMES[-1] for o in outcomes) and not rejected else 1
-    state = scan.state
+    scope_eng = (engagement.data.get("scope") or {}) if engagement is not None else {}
     document: dict[str, Any] = {
         "schema": ASSESSMENT_SCHEMA,
         "kind": ASSESSMENT_KIND,
@@ -551,12 +806,14 @@ def run_assessment(
             "path": scan.root.as_posix(),
             "commit": state.commit,
             "git": state.is_git,
-            "dirty": list(state.dirty),
+            # None when git could not say which files differ: unknown, never 0.
+            "dirty": None if state.status_failed else list(state.dirty),
+            "status_failed": state.status_failed,
             "working_tree": working_tree,
-            "deployment": (engagement or {}).get("deployment"),
-            "configuration": (engagement or {}).get("configuration"),
+            "deployment": scope_eng.get("deployment"),
+            "configuration": scope_eng.get("configuration"),
         },
-        "engagement": None if engagement is None else engagement.get("summary"),
+        "engagement": engagement_doc,
         "policy": {"version": scan.policy.version},
         "investigators": investigators,
         "operators": operators,
@@ -580,7 +837,7 @@ def run_assessment(
             "skipped_files": list(run.skipped),
         },
         "human": _human(scan),
-        "auditee": (engagement or {}).get("auditee") or {"responses": [], "evidence": []},
+        "auditee": auditee,
         "evaluation": [
             {
                 "file": getattr(r, "file", None),
@@ -591,8 +848,31 @@ def run_assessment(
             for r in scan.ctx.evaluation
         ],
         "remediation": remediation,
-        "legal": None,
+        "legal": legal,
         "inputs": inputs,
         "exit_code": exit_code,
     }
-    return AssessmentRun(document=document, exit_code=exit_code, scan=scan, records=run.results)
+    return AssessmentRun(
+        document=document,
+        exit_code=exit_code,
+        scan=scan,
+        records=run.results,
+        requests=requests_doc,
+        bundle_inputs=bundle_inputs,
+    )
+
+
+def _unmatched_responses(
+    responses: Sequence[dict[str, Any]],
+    outcomes: Sequence[Any],
+    records: Sequence[RecordResult],
+    scan: MachineScan,
+    legal: dict[str, Any] | None,
+) -> list[str]:
+    """Responses whose `to` names no mechanism, record, finding or provision of this
+    assessment: shown, never placed beside the wrong thing."""
+    known = {o.id for o in outcomes} | {r.id for r in records if r.id}
+    known |= {f.fingerprint for f in scan.findings}
+    for prof in (legal or {}).get("profiles") or []:
+        known |= {f"{prof['id']}/{prov['id']}" for prov in prof.get("provisions") or []}
+    return [str(r.get("file")) for r in responses if r.get("to") not in known]

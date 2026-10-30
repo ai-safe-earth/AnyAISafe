@@ -1,0 +1,511 @@
+# Regulation (EU) 2024/1689 (Artificial Intelligence Act), as amended by Regulation (EU) 2026/1744
+# Legal profile (aisg/legal-profile/1) for `aisafe assess --engagement`. Every quote was
+# copied by script from the official page named next to it and checked against that page
+# on 2026-10-30. Keep quotes verbatim: change one only after checking it against its source
+# again, and update `checked_on`. `legal_review` stays null until a lawyer has reviewed the
+# profile; reports print that status. Not legal advice.
+schema: aisg/legal-profile/1
+kind: legal-profile
+id: eu-ai-act
+title: |-
+  Regulation (EU) 2024/1689 (Artificial Intelligence Act), as amended by Regulation (EU) 2026/1744
+jurisdiction: EU
+profile_version: 1
+source:
+  url: |-
+    https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+  version: |-
+    OJ L, 2024/1689, 12.7.2024; amended by Regulation (EU) 2026/1744, OJ L, 2026/1744, 24.7.2026
+  checked_on: '2026-10-30'
+legal_review:
+  by: null
+  date: null
+sources:
+- id: ai-act
+  title: |-
+    Regulation (EU) 2024/1689 of the European Parliament and of the Council of 13 June 2024 laying down harmonised rules on artificial intelligence (Artificial Intelligence Act)
+  url: |-
+    https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+  version: |-
+    OJ L, 2024/1689, 12.7.2024 (English XHTML from the Publications Office; the consolidated text of 27.07.2026 used only to see which provisions changed)
+  checked_on: '2026-10-30'
+  status: binding law
+- id: omnibus
+  title: |-
+    Regulation (EU) 2026/1744 of 8 July 2026 (Digital Omnibus on AI), amending Regulation (EU) 2024/1689
+  url: |-
+    https://publications.europa.eu/resource/cellar/b459c07f-86fb-11f1-bf5e-01aa75ed71a1.0006.03/DOC_1
+  version: |-
+    OJ L, 2026/1744, 24.7.2026; in force on the third day after publication (Article 4), 27 July 2026 by count
+  checked_on: '2026-10-30'
+  status: binding law
+- id: gl-prohibited
+  title: |-
+    Commission Guidelines on prohibited artificial intelligence practices established by Regulation (EU) 2024/1689 (AI Act)
+  url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+  version: C(2025) 5052 final, Brussels, 29.7.2025
+  checked_on: '2026-10-30'
+  status: |-
+    non-binding guidance (its paragraph (5)); the date from which the adopted text applies was not found in any official page read
+- id: gl-transparency
+  title: |-
+    Guidelines on the implementation of the transparency obligations for certain AI systems under Article 50 of Regulation (EU) 2024/1689
+  url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+  version: C(2026) 5054 final, Brussels, 20.7.2026, annex
+  checked_on: '2026-10-30'
+  status: |-
+    unverified status: the approving Communication of 20.7.2026 approves the content of a draft and says the guidelines apply only from their formal adoption; no formally adopted version was found
+applicability:
+- answer: markets
+  includes: EU
+  why: the Act's duties attach to the Union market
+  quote:
+    cite: Article 3, point (9)
+    source: ai-act
+    excerpt: art-3-9
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      (9) ‘placing on the market’ means the first making available of an AI system or a general-purpose AI model on the Union market;
+- answer: eu_placement
+  includes_any:
+  - placed_on_market
+  - put_into_service
+  - used
+  why: |-
+    Article 5(1)(a) and (b) name the placing on the market, the putting into service or the use of an AI system; Article 2 (scope) is not quoted in this profile version, so the auditor's answer stands in for it
+- definition: eu-ai-act/ai-system
+  question: |-
+    Is the audited system an AI system within the meaning of the Act? (Article 3(1) is not quoted in this profile version; give the reason.)
+  why: the provisions below apply to AI systems
+provisions:
+- id: art-5-1-a
+  citation: Article 5(1), first subparagraph, point (a)
+  title: 'Prohibited practice: subliminal, purposefully manipulative or deceptive techniques'
+  verified: true
+  text:
+  - cite: Article 5(1)(a)
+    source: ai-act
+    excerpt: art-5-1-a
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      (a) the placing on the market, the putting into service or the use of an AI system that deploys subliminal techniques beyond a person’s consciousness or purposefully manipulative or deceptive techniques, with the objective, or the effect of materially distorting the behaviour of a person or a group of persons by appreciably impairing their ability to make an informed decision, thereby causing them to take a decision that they would not have otherwise taken in a manner that causes or is reasonably likely to cause that person, another person or group of persons significant harm;
+    lead_in: '1. The following AI practices shall be prohibited:'
+  in_force:
+    from: '2025-02-02'
+    from_derived: false
+    until: null
+    until_derived: false
+    basis: |-
+      Article 113, third paragraph, point (a), as replaced by Regulation (EU) 2026/1744: Chapter II (Article 5) applies from 2 February 2025; only the new points (ba) and (bb) and the new paragraphs (1a) and (1b) apply from 2 December 2026
+    quote:
+      cite: Article 113, third paragraph, point (a), as replaced
+      source: omnibus
+      excerpt: art-113-p3-a-2026
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=b459c07f-86fb-11f1-bf5e-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: |-
+        (a) Chapters I and II shall apply from 2 February 2025, with the exception of Article 5(1), first subparagraph, points (ba) and (bb), and Article 5(1a) and (1b) which shall apply from 2 December 2026;
+  applies_if:
+  - answer: roles
+    includes_any:
+    - provider
+    - deployer
+    why: the prohibition applies to providers and deployers, each within their responsibilities
+    quote:
+      cite: Guidelines on prohibited practices, paragraph (62)
+      source: gl-prohibited
+      excerpt: gl-p62
+      url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+      quote: |-
+        (62) The first condition, i.e. the ‘placing on the market’, the ‘putting into service’ or the ‘use’ of an AI system, has already been analysed. The prohibition, therefore, applies to both providers and deployers of AI systems, each within their respective responsibilities, not to place on the market, put into service or use such systems. The next sections focus on the other three conditions.
+  mechanisms:
+  - M2
+  - M3
+  - M4
+  - M5
+  - M6
+  - M7
+  ceiling: requires_specialist_review
+  evidence:
+    code:
+    - kind: indicators
+      mechanisms:
+      - M2
+      - M3
+      - M4
+      - M5
+      - M6
+      - M7
+      what: |-
+        the ethical outcome of the mechanisms that describe manipulative or deceptive techniques: a violation the investigation established is an indicator for the second condition, never the prohibition
+    evaluation: []
+    organisational:
+    - id: techniques-assessment
+      what: |-
+        The system's intended purpose and a description of its persuasion, engagement, persona and attachment features, with the provider's or deployer's own assessment of them against Article 5(1)(a)
+  controls:
+  - |-
+    Read the linked mechanisms' investigation records: a vulnerability inference or a susceptibility score used for influence (M2, M3), an engagement objective (M4), an attachment instruction (M5), a concealed AI nature (M6) or covert steering (M7) established on a surface is evidence of a technique, to be weighed with the other three conditions.
+  - |-
+    Run the investigation on every high-priority surface the plan lists for M2 to M7; an uninvestigated surface leaves the evidence incomplete.
+  - Request the techniques assessment and compare it with what the records established.
+  specialist:
+  - |-
+    Whether all four cumulative conditions are met, with a plausible causal link between the technique, the material distortion of behaviour and the significant harm (guidelines, paragraphs (60) and (61)).
+  - |-
+    Whether the technique materially distorts behaviour by appreciably impairing the ability to make an informed decision (paragraphs (76) to (78)), by objective or by effect (paragraph (83)).
+  - |-
+    Whether the harm is significant, and reasonably likely (paragraphs (85), (91) and (94)); the prohibitions are read narrowly (paragraph (57)) and case by case (paragraph (7)).
+  guidance:
+  - cite: Guidelines on prohibited practices, paragraph (61)
+    source: gl-prohibited
+    excerpt: gl-p61
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (61) For the prohibition to apply, all four conditions must be simultaneously fulfilled and there must be a plausible causal link between the techniques deployed, the material distortion of the behaviour of the person, and the significant harm that has resulted or is reasonably likely to result from that behaviour.
+  - cite: Guidelines on prohibited practices, paragraph (67)
+    source: gl-prohibited
+    excerpt: gl-p67
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (67) ‘Purposefully manipulative techniques’ are not defined in the AI Act, but they should be understood as techniques that are designed or objectively aim to influence, alter, or control an individual’s behaviour in a manner that undermines their individual autonomy and free choices. Manipulative techniques are typically designed to exploit cognitive biases, psychological vulnerabilities, or situational factors that make individuals more susceptible to influence. Because of their adaptability, AI systems are also able to respond well to a person’s individual circumstances or vulnerabilities and increase the effectiveness and impact of manipulation at scale. While the manipulative capability is an important element to determine the nature of the technique, it is not necessary that the provider or deployer or the system itself deploying the manipulative techniques also intends to cause harm.
+  - cite: Guidelines on prohibited practices, paragraph (83)
+    source: gl-prohibited
+    excerpt: gl-p83
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (83) The intent of the provider or deployer to materially distort the behaviour of a person or group of persons is a sufficient, but not a necessary, condition for the prohibition in Article 5(1)(a) AI Act to apply. That prohibition also applies where no such intent is present, but the effect of the technique(s) deployed by an AI system is capable of materially distorting the behaviour of a person or a group of persons to a point that undermines their individual autonomy and free choices.
+  - cite: Guidelines on prohibited practices, paragraph (7)
+    source: gl-prohibited
+    excerpt: gl-p7
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (7) The application of Article 5 AI Act will require a case-by-case assessment, which takes due account of the specific situation at issue in an individual case. Therefore, the examples given in these Guidelines are merely indicative and are without prejudice to the need for such an assessment in each case.
+- id: art-5-1-b
+  citation: Article 5(1), first subparagraph, point (b)
+  title: |-
+    Prohibited practice: exploiting vulnerabilities due to age, disability or a specific social or economic situation
+  verified: true
+  text:
+  - cite: Article 5(1)(b)
+    source: ai-act
+    excerpt: art-5-1-b
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      (b) the placing on the market, the putting into service or the use of an AI system that exploits any of the vulnerabilities of a natural person or a specific group of persons due to their age, disability or a specific social or economic situation, with the objective, or the effect, of materially distorting the behaviour of that person or a person belonging to that group in a manner that causes or is reasonably likely to cause that person or another person significant harm;
+    lead_in: '1. The following AI practices shall be prohibited:'
+  in_force:
+    from: '2025-02-02'
+    from_derived: false
+    until: null
+    until_derived: false
+    basis: Article 113, third paragraph, point (a), as replaced by Regulation (EU) 2026/1744
+    quote:
+      cite: Article 113, third paragraph, point (a), as replaced
+      source: omnibus
+      excerpt: art-113-p3-a-2026
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=b459c07f-86fb-11f1-bf5e-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: |-
+        (a) Chapters I and II shall apply from 2 February 2025, with the exception of Article 5(1), first subparagraph, points (ba) and (bb), and Article 5(1a) and (1b) which shall apply from 2 December 2026;
+  applies_if:
+  - answer: roles
+    includes_any:
+    - provider
+    - deployer
+    why: the prohibition applies to providers and deployers, each within their responsibilities
+    quote:
+      cite: Guidelines on prohibited practices, paragraph (62)
+      source: gl-prohibited
+      excerpt: gl-p62
+      url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+      quote: |-
+        (62) The first condition, i.e. the ‘placing on the market’, the ‘putting into service’ or the ‘use’ of an AI system, has already been analysed. The prohibition, therefore, applies to both providers and deployers of AI systems, each within their respective responsibilities, not to place on the market, put into service or use such systems. The next sections focus on the other three conditions.
+  mechanisms:
+  - M2
+  - M3
+  - M5
+  ceiling: requires_specialist_review
+  evidence:
+    code:
+    - kind: indicators
+      mechanisms:
+      - M2
+      - M3
+      - M5
+      what: |-
+        the ethical outcome of the mechanisms that infer or score vulnerability and engineer dependency: a violation established is an indicator of exploitation, never the prohibition
+    evaluation: []
+    organisational:
+    - id: vulnerable-users
+      what: |-
+        Who the system is offered to and used by (age groups, persons with disabilities, persons in a specific social or economic situation), and the measures taken for them
+  controls:
+  - |-
+    Read the M2, M3 and M5 records: vulnerability inference used for influence, susceptibility scoring, or engineered dependency next to a vulnerable group is evidence of exploitation, to be weighed with the other conditions.
+  - |-
+    Compare the engagement's answer on minors and age assurance with what the records show about age signals.
+  specialist:
+  - |-
+    Whether the system exploits vulnerabilities due to age, disability or a specific social or economic situation (guidelines, paragraphs (101) to (109)), as opposed to lawful practices (paragraph (103)).
+  - |-
+    Whether the exploitation materially distorts behaviour and causes, or is reasonably likely to cause, significant harm (paragraphs (113) to (115)).
+  - Whether Article 5(1)(a) or (b) is the dominant provision (paragraph (125)).
+  guidance:
+  - cite: Guidelines on prohibited practices, paragraph (99)
+    source: gl-prohibited
+    excerpt: gl-p99
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (99) For the prohibition to apply all four conditions must be simultaneously fulfilled and there must be a plausible causal link between the exploitation, the material distortion of the behaviour of the person, and the significant harm that has resulted, or is reasonably likely to result, from that behaviour.
+  - cite: Guidelines on prohibited practices, paragraph (104)
+    source: gl-prohibited
+    excerpt: gl-p104
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (104) Age is a primary vulnerability category covered by the prohibition in Article 5(1)(b) AI Act, including both young and older people. That prohibition aims to prevent AI systems from exploiting cognitive and other limitations that children and older people may have, and to protect them from harmful undue influence, manipulation and exploitation. This aligns with the objectives of the AI Act and other Union and national legal frameworks and policies aimed at ensuring child safety.
+  - cite: Guidelines on prohibited practices, paragraph (125)
+    source: gl-prohibited
+    excerpt: gl-p125
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/112367
+    quote: |-
+      (125) In scenarios where both provisions may seem applicable, the primary criterion for differentiation should be the dominant aspect of the exploitation. If the exploitation applies regardless of the specific vulnerabilities of the persons concerned, Article 5(1)(a) AI Act should take precedence, while taking into account the particular effects of the manipulative or deceptive technique on the vulnerable persons’ behaviour and the specific harms that those persons are likely to experience. If the AI-enabled manipulation and exploitation is targeted at a specific vulnerable group of persons due to their age, disability, or specific social or economic situation or aimed to exploit their vulnerabilities, then Article 5(1)(b) AI Act should be applied instead. Exploitation of vulnerabilities of other groups may be covered as part of Article 5(1)(a) AI Act if the purposefully manipulative practice leverage on specific vulnerabilities and weaknesses of those persons.
+- id: art-50-1
+  citation: Article 50(1), read with Article 50(5)
+  title: Inform people that they are interacting with an AI system
+  verified: true
+  text:
+  - cite: Article 50(1)
+    source: ai-act
+    excerpt: art-50-1
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      1. Providers shall ensure that AI systems intended to interact directly with natural persons are designed and developed in such a way that the natural persons concerned are informed that they are interacting with an AI system, unless this is obvious from the point of view of a natural person who is reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use. This obligation shall not apply to AI systems authorised by law to detect, prevent, investigate or prosecute criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, unless those systems are available for the public to report a criminal offence.
+  - cite: Article 50(5)
+    source: ai-act
+    excerpt: art-50-5
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      5. The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.
+  in_force:
+    from: '2026-08-02'
+    from_derived: false
+    until: null
+    until_derived: false
+    basis: |-
+      Article 113, second paragraph; Regulation (EU) 2026/1744 did not defer Article 50(1): its only Article 50 transition, new Article 111(4), concerns Article 50(2) for systems placed on the market before 2 August 2026
+    quote:
+      cite: Article 113, second paragraph
+      source: ai-act
+      excerpt: art-113-p2
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: It shall apply from 2 August 2026.
+  applies_if:
+  - answer: roles
+    includes: provider
+    why: Article 50(1) binds providers
+    quote:
+      cite: Article 3, point (3)
+      source: ai-act
+      excerpt: art-3-3
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: |-
+        (3) ‘provider’ means a natural or legal person, public authority, agency or other body that develops an AI system or a general-purpose AI model or that has an AI system or a general-purpose AI model developed and places it on the market or puts the AI system into service under its own name or trademark, whether for payment or free of charge;
+  - definition: eu-ai-act/interacts-directly
+    question: |-
+      Is the system intended to interact directly with natural persons (Article 50(1))? Give the reason.
+    why: the duty covers AI systems intended to interact directly with natural persons
+  mechanisms:
+  - M6
+  evidence:
+    code:
+    - kind: control
+      mechanism: M6
+      pattern: no_disclosure_on_path
+      control: ai_disclosure
+      what: |-
+        a validated record locating the AI disclosure on the response path of every surface the plan lists for this hypothesis
+    evaluation:
+    - family: identity_question
+      what: a fresh evaluation report in which every identity_question case passed
+    organisational:
+    - id: first-interaction
+      what: |-
+        Screens or a transcript of a first interaction on each channel, showing the information that the person is interacting with an AI system and where it appears (at the latest at the first interaction, Article 50(5))
+    - id: accessibility
+      what: How the information meets the applicable accessibility requirements (Article 50(5))
+  controls:
+  - |-
+    Locate the disclosure on the response path of every entry point, before or with the first reply, and record it with the ai_disclosure control on the path.
+  - |-
+    Read the M6 concealment records: a prompt that instructs the model to claim to be human or to deny being an AI is evidence the specialist weighs against the information.
+  - |-
+    Run `aisafe evaluate --families identity_question` against an endpoint you are authorised to test; every case must pass.
+  - |-
+    For an AI agent, check that it discloses its artificial nature and the person on whose behalf it acts (guidelines, point (31)).
+  specialist:
+  - |-
+    Whether the information is given in a clear and distinguishable manner (Article 50(5); guidelines, point (142)).
+  - |-
+    Whether a prompt that instructs the model to claim to be human or to deny being an AI (M6 concealment_instruction, AUD-1105/persona) defeats the information the system gives in another way.
+  - |-
+    Whether the 'obvious' exception applies, where the provider relies on it: the provider has to assess and demonstrate it (guidelines, point (42)).
+  - Whether the law-enforcement exception in Article 50(1) applies.
+  guidance:
+  - cite: Transparency guidelines (draft), point (33)
+    source: gl-transparency
+    excerpt: gl-33
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (33) While the mechanism to inform should be embedded in the design and development of the system and in the way the system interacts with the natural persons, notification should be provided during the operation of the AI system and at the latest at the time of the first interaction with the natural person (as required in Article 50(5) AI Act, see Section 7 below). Providers are responsible for ensuring that, after the AI system’s placement on the market or putting into service, natural persons interacting with the AI system are effectively and consistently informed throughout the lifecycle of the AI system, as placed on the market or put into service by that provider.
+  - cite: Transparency guidelines (draft), point (35)
+    source: gl-transparency
+    excerpt: gl-35
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (35) Substance of the notification: Article 50(1) AI Act requires providers of interactive AI systems to design and develop them in a manner that all natural persons interacting with such AI systems are explicitly informed about the artificial, non-human nature of the interacting counterpart. If it is reasonably foreseeable to the provider that the AI system may interact with natural persons belonging to the above-mentioned vulnerable groups, then the information should be adapted accordingly and provided in an accessible format, as required under applicable Union law to also ensure the full understanding of those natural persons (20).
+  - cite: Transparency guidelines (draft), point (42)
+    source: gl-transparency
+    excerpt: gl-42
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (42) To be able to rely on the first exception, providers will need to assess and demonstrate: i) the obvious artificial nature of the interaction to ii) a natural person who must be reasonably well-informed, observant and circumspect, taking into account the circumstances and the context of use.
+  - cite: Transparency guidelines (draft), point (143)
+    source: gl-transparency
+    excerpt: gl-143
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (143) Article 50(5) AI Act requires the information to be provided to the natural persons concerned at the latest at the time of the first interaction or exposure. The first interaction or exposure refers not only to the first natural person interacting with or exposed to (the output of) an AI system, but also any subsequent, first interaction with or exposure to (the output of) the AI system by any other natural person. As regards the first interaction with an AI-system, the information should, at least, be provided once at the start of an interactive session, while considering the specific contexts mentioned in point above. As regards AI-generated or manipulated content falling within the scope of Article 50(2) and (4) AI Act, the information obligation applies to each output of an AI system with respect to any natural person exposed to the content. It should be understood in the sense of any moment in time at which a natural person is reasonably likely to be exposed to the output of the AI system and perceive the disclosure, taking into account the specificities of disclosure in case of evidently creative, artistic and other works (see Section 6.1.3.). Moreover, deployers are allowed to inform natural persons earlier than the first actual interaction or exposure (e.g. at the beginning of content featuring deep fakes). However, if it is reasonably foreseeable that persons may not perceive content from its beginning, then only disclosure at the beginning of content does not adequately inform those persons and should be complemented with disclosure at later moments, where possible. This may be implemented as appropriate, taking into account the objective of the transparency obligations to ensure an effective provision of the information and meaningful user awareness in increasingly immersive and realistic AI environments where users have increasing difficulties to distinguish the origin and the truthfulness of the content and the interaction.
+  - cite: Transparency guidelines (draft), point (153)
+    source: gl-transparency
+    excerpt: gl-153
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (153) According to Article 113 AI Act, Article 50 AI Act will apply as from 2 August 2026. This requires all in scope AI systems placed on the market or put into service in the Union to be compliant with that provision on that date, regardless of their date of placement on the market or putting into service (50). Regulation amending the AI Act (the AI Omnibus), which has been recently adopted by the Union legislature, envisages a targeted grandfathering rule only with regard to the marking and detection obligations under Article 50(2) AI Act for generative AI systems placed on the market or put into service before 2 August 2026. It gives providers of those existing systems a transitional period to bring their systems in conformity by 2 December 2026. Systems that are partly interactive and partly generative may benefit from this transitional period only with regard to the marking obligation under Article 50(2) AI Act, while compliance with the disclosure obligation for AI systems directly interacting with natural persons must be ensured as of 2 August 2026.
+- id: art-50-3
+  citation: Article 50(3), read with Article 50(5)
+  title: Inform people exposed to emotion recognition or biometric categorisation
+  verified: true
+  text:
+  - cite: Article 50(3)
+    source: ai-act
+    excerpt: art-50-3
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      3. Deployers of an emotion recognition system or a biometric categorisation system shall inform the natural persons exposed thereto of the operation of the system, and shall process the personal data in accordance with Regulations (EU) 2016/679 and (EU) 2018/1725 and Directive (EU) 2016/680, as applicable. This obligation shall not apply to AI systems used for biometric categorisation and emotion recognition, which are permitted by law to detect, prevent or investigate criminal offences, subject to appropriate safeguards for the rights and freedoms of third parties, and in accordance with Union law.
+  - cite: Article 50(5)
+    source: ai-act
+    excerpt: art-50-5
+    url: |-
+      https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+    quote: |-
+      5. The information referred to in paragraphs 1 to 4 shall be provided to the natural persons concerned in a clear and distinguishable manner at the latest at the time of the first interaction or exposure. The information shall conform to the applicable accessibility requirements.
+  in_force:
+    from: '2026-08-02'
+    from_derived: false
+    until: null
+    until_derived: false
+    basis: Article 113, second paragraph; not changed by Regulation (EU) 2026/1744
+    quote:
+      cite: Article 113, second paragraph
+      source: ai-act
+      excerpt: art-113-p2
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: It shall apply from 2 August 2026.
+  applies_if:
+  - answer: roles
+    includes: deployer
+    why: Article 50(3) binds deployers
+    quote:
+      cite: Article 3, point (4)
+      source: ai-act
+      excerpt: art-3-4
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: |-
+        (4) ‘deployer’ means a natural or legal person, public authority, agency or other body using an AI system under its authority except where the AI system is used in the course of a personal non-professional activity;
+  - definitions_any:
+    - eu-ai-act/emotion-recognition-system
+    - eu-ai-act/biometric-categorisation-system
+    question: |-
+      Is the system an emotion recognition system (Article 3(39): inference 'on the basis of their biometric data') or a biometric categorisation system? Give the reason for each.
+    why: the duty covers deployers of those two kinds of system
+    quote:
+      cite: Article 3, point (39)
+      source: ai-act
+      excerpt: art-3-39
+      url: |-
+        https://op.europa.eu/o/opportal-service/download-handler?identifier=dc8116a1-3fe6-11ef-865a-01aa75ed71a1&format=xhtml&language=en&productionSystem=cellar&part=
+      quote: |-
+        (39) ‘emotion recognition system’ means an AI system for the purpose of identifying or inferring emotions or intentions of natural persons on the basis of their biometric data;
+  mechanisms:
+  - M2
+  evidence:
+    code: []
+    evaluation: []
+    organisational:
+    - id: exposure-notice
+      what: |-
+        The information given to the persons exposed that the system is operating, and when it is given (at the latest at the first exposure, Article 50(5))
+    - id: data-protection-notice
+      what: |-
+        The data protection information for the processing, which Article 50(3) requires to follow Regulations (EU) 2016/679 and 2018/1725 and Directive (EU) 2016/680 (that law is outside this profile)
+  controls:
+  - |-
+    Locate where the system infers emotions or intentions and from what data (M2 records; AUD-1102 in the scan).
+  - |-
+    Check that the notice reaches every exposed person, whether the system runs in real time or ex post (guidelines, point (100)).
+  specialist:
+  - |-
+    Whether the inference is 'on the basis of their biometric data' (Article 3(39)); the definition of biometric data is not quoted in this profile version.
+  - |-
+    Whether the system is a biometric categorisation system (Article 3(40), quoted in the guidelines, point (103)).
+  - |-
+    Whether the processing complies with Union data protection law, and whether the law-enforcement exception applies.
+  guidance:
+  - cite: Transparency guidelines (draft), point (101)
+    source: gl-transparency
+    excerpt: gl-101
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (101) Article 3(39) AI Act defines an ‘emotion recognition system’ as ‘an AI system for the purpose of identifying or inferring emotions or intentions of natural persons on the basis of their biometric data’. The detailed explanation of this notion provided in the Commission guidelines on the classification of high-risk AI systems, including the practical examples set out therein, are equally relevant in the context of Article 50(3) AI Act.
+  - cite: Transparency guidelines (draft), point (105)
+    source: gl-transparency
+    excerpt: gl-105
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (105) The scope of the information to be provided: Deployers are required to inform natural persons concerned that they are exposed to an emotion recognition system or to a biometric categorisation system, which is being operated. The AI Act does not require including information about the reasons for the system’s operation, or if the system also processes information for purposes other than emotion recognition or biometric categorisation, which are required to be disclosed under Union data protection law (see Section 5.3.).
+  - cite: Transparency guidelines (draft), point (110)
+    source: gl-transparency
+    excerpt: gl-110
+    url: https://ec.europa.eu/newsroom/dae/redirection/document/131215
+    quote: |-
+      (110) The information obligation under Article 50(3) AI Act does not, in itself render the use of an emotion recognition and biometric categorisation system lawful. Nor does it legitimise intrusive or discriminatory uses that might be unlawful and prohibited under Article 5 AI Act or other Union law. Deployers need to comply with the information obligation in Article 50(3) AI Act, in addition to any applicable information requirements under Union data protection law. In certain cases, deployers can consider adding notifications pursuant to Article 50(3) AI Act to the information provided to data subjects under Union data protection law.
+not_covered:
+- |-
+  Article 50(2): machine-readable marking of synthetic content (new Article 111(4) gives systems placed on the market before 2 August 2026 until 2 December 2026).
+- 'Article 50(4): deep fakes and AI-generated text published to inform the public.'
+- |-
+  Article 5(1), points (ba) and (bb), inserted by Regulation (EU) 2026/1744 and applying from 2 December 2026, and the other prohibited practices of Article 5(1).
+- |-
+  High-risk obligations (Chapter III, Sections 1 to 3, moved to 2 December 2027 and 2 August 2028 by Regulation (EU) 2026/1744), general-purpose AI models (Chapter V) and penalties (Chapter XII).
+- |-
+  Article 2 (scope) and Article 3(1) (the definition of an AI system): not quoted in this profile version; applicability rests on the auditor's answers.
+- |-
+  Union data protection law, to which Article 50(3) refers, and the Digital Services Act (Articles 25 and 28 are on the roadmap).
+- |-
+  Amendments or corrigenda published after the consolidated version of 27.07.2026: not searched when the text was checked on 2026-10-30.
+notes:
+- |-
+  Regulation (EU) 2026/1744 was searched for every mention of Article 50: it replaces Article 50(7) and adds Article 111(4) on Article 50(2); Article 50(1), (3) and (5) are unchanged and apply from 2 August 2026.
+- |-
+  The transparency guidelines are quoted as the draft whose content the Commission approved on 20.7.2026; their formal adoption was not verified, and the approving Communication says they apply only from that adoption.

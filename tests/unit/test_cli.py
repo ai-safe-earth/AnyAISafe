@@ -24,7 +24,16 @@ from aisafe import __version__, cli
 from aisafe.devtools._config import find_pyproject
 
 # The commands a person sees: in COMMANDS and in the Commands block of the epilog.
-EXPECTED_COMMANDS = ("audit", "investigate", "assess", "review", "evaluate", "fleet", "skill")
+EXPECTED_COMMANDS = (
+    "audit",
+    "investigate",
+    "assess",
+    "engagement",
+    "review",
+    "evaluate",
+    "fleet",
+    "skill",
+)
 # In COMMANDS so old scripts keep working; never listed.
 HIDDEN_ALIASES = ("probe",)
 # Commands the pivot removed: a usage error, not a quiet no-op.
@@ -35,6 +44,7 @@ PROG_BY_COMMAND = {
     "audit": "aisafe audit",
     "investigate": "aisafe investigate",
     "assess": "aisafe assess",
+    "engagement": "aisafe engagement",
     "review": "aisafe review",
     "evaluate": "aisafe evaluate",
     "fleet": "aisafe fleet",
@@ -112,6 +122,7 @@ def test_every_command_is_registered_and_documented() -> None:
     assert cli._audit is cli.COMMANDS["audit"]
     assert cli._investigate is cli.COMMANDS["investigate"]
     assert cli._assess is cli.COMMANDS["assess"]
+    assert cli._engagement is cli.COMMANDS["engagement"]
     assert cli._review is cli.COMMANDS["review"]
     assert cli._evaluate is cli.COMMANDS["evaluate"]
     assert cli._fleet is cli.COMMANDS["fleet"]

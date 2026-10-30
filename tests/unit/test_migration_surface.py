@@ -55,6 +55,7 @@ def test_console_commands_are_exactly_the_focused_set() -> None:
         "audit",
         "investigate",
         "assess",
+        "engagement",
         "review",
         "evaluate",
         "fleet",
@@ -70,10 +71,22 @@ def test_help_lists_the_public_commands_and_hides_the_alias(capsys) -> None:
 
     assert cli.main([]) == 2
     out = capsys.readouterr().out
-    for name in ("audit", "investigate", "assess", "review", "evaluate", "fleet", "skill"):
+    for name in (
+        "audit",
+        "investigate",
+        "assess",
+        "engagement",
+        "review",
+        "evaluate",
+        "fleet",
+        "skill",
+    ):
         assert f"  {name} " in out, name
-    for removed in ("lint ", "misalign", "measure", "decide", "hook", "attest", " init "):
+    for removed in ("lint ", "misalign", "measure", "decide", "hook", "attest"):
         assert removed not in out, removed
+    # `init` survives only as a subcommand (`review init`, `engagement init`), never as a
+    # command of its own.
+    assert "aisafe init" not in out and "\n  init " not in out
 
 
 def test_migration_documents_exist_and_name_the_legacy_refs() -> None:

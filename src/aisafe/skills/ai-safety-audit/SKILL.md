@@ -19,10 +19,13 @@ say in the conversation goes into them. Read `references/report-format.md` and
 This flow is **self-assessment mode**: the team that owns the system runs it, the person
 who owns it decides, and you change code only with their approval. **Auditor mode** is an
 independent auditor assessing someone else's system: the audited tree is read-only, the
-plan, the records and the assessment live in the engagement directory outside it, you
-never edit the audited code, and the auditor recommends while the audited team
-implements (`references/investigate.md`, "Auditor mode"). Every document states its
-mode, and neither mode issues a certification, a badge or a compliance claim.
+plan, the records and the assessment live in the engagement directory outside it
+(`aisafe engagement init`), you never edit the audited code, and the auditor recommends
+while the audited team implements (`references/investigate.md`, "Auditor mode"). With an
+engagement the assessment carries a legal section, read from the legal profiles against
+the engagement's answers; it is kept apart from the ethical outcome and is never legal
+advice. Every document states its mode, and neither mode issues a certification, a badge
+or a compliance claim.
 
 Hard rules, in force for every phase:
 
@@ -73,6 +76,14 @@ Hard rules, in force for every phase:
     only as an investigation record you write and `aisafe investigate validate` accepts,
     naming you (agent, model, version, session) and the person who ran you. The skeptic
     pass that tries to refute a deciding claim runs in a fresh context, never in yours.
+12. A person's fields stay a person's. Never write, prefill or suggest the engagement's
+    independence statement, scope, authorisations or applicability answers (a definition
+    answer and its reason included), an evidence request's status, an auditee response or
+    a QA sign-off. `aisafe engagement receive`, `insufficient`, `respond` and `qa` record
+    what a named person did or said: run them only when that person tells you to, with
+    their words. Legal results are read out with the profile's review status ("not
+    reviewed by a lawyer") and never merged with the ethical outcome; they are not legal
+    advice, and you never turn one into a statement that the system is lawful.
 
 ## Where things live
 
@@ -209,13 +220,23 @@ surfaces stay listed as unsupported, never as read. Then the assessment:
     sh <skill>/scripts/assess.sh . --investigations .aisafe-audit/investigations
     powershell -ExecutionPolicy Bypass -File <skill>/scripts/assess.ps1 . --investigations .aisafe-audit/investigations
 
-It writes `.aisafe-audit/assessment/assessment.{json,md,html}`, labelled "assessment"
-(the audit's output is a "scan report"). Read the overall outcome and each mechanism's
+It writes `.aisafe-audit/assessment/assessment.{json,md,html}` and `bundle.json` (the
+sha256 of every input and output), labelled "assessment" (the audit's output is a "scan
+report"). In auditor mode the command is `assess.sh <tree> --engagement <DIR>` from the
+engagement directory, and the files go to `<DIR>/assessment/`. Read the overall outcome and each mechanism's
 outcome out, with its basis and every gap: `violations_identified`, `inconclusive`,
 `not_assessed`, or `no_violation_identified_within_assessed_scope` with "closed on k of n
 surfaces". The overall outcome is the least favourable one; acceptances and baselines never
 change it. Without an accepted record the command exits 2: there is no assessment without
 an investigation.
+
+With an engagement, read the legal section after the ethical outcome, never as part of it:
+per profile its review status, its applicability and why, then each provision's result and
+first reason. `insufficient_evidence` names the answer or the evidence missing; the
+evidence requests it created are in `<DIR>/evidence-requests.json`, and `aisafe engagement
+status --engagement <DIR>` lists them with what is still to fill in. A
+`requires_specialist_review` result means a lawyer or another specialist weighs the
+elements no code can show; say so, and never weigh them yourself.
 
 ## Phase 3 -- Document
 
@@ -299,6 +320,13 @@ answered and `declared_purpose` on the findings the record covers:
     sh <skill>/scripts/audit.sh . --format json --quiet -o .aisafe-audit/audit-recheck.json --baseline .aisafe-audit/audit-baseline.json
 
 ## Phase 5 -- Remediate
+
+Self-assessment mode only. In auditor mode you never edit the audited code: you write the
+recommendation (the chain, what to remove, the verification steps the record already
+carries), the audited team implements it on a new commit, the auditor adds that commit to
+the engagement's `scope.commits`, and the retest runs there (`assess.sh <tree>
+--engagement <DIR> --retest <DIR>/assessment/assessment.json -o <DIR>/retest`) once a
+record has been made on the new code.
 
 One change per approval. Walk the findings by mechanism, `violates_policy` first, then
 `requires_contextual_review` in the order the person settled in phase 4. A finding is never

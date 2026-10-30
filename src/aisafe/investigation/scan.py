@@ -131,7 +131,8 @@ class TreeState:
         return {
             "commit": self.commit,
             "git": self.is_git,
-            "dirty": list(self.dirty),
+            # None when git could not say: unknown, never an empty list.
+            "dirty": None if self.status_failed else list(self.dirty),
             "status_failed": self.status_failed,
         }
 
@@ -147,7 +148,8 @@ class MachineScan:
     state: TreeState
     policy: Policy
     walked: dict[str, Any] = field(default_factory=dict)
-    tracked_not_walked: list[str] = field(default_factory=list)
+    # None when git could not list the commit's files: unknown, never empty.
+    tracked_not_walked: list[str] | None = field(default_factory=list)
 
     def lang_of(self, relpath: str) -> str | None:
         record = self.walked.get(relpath)
@@ -217,19 +219,26 @@ def tree_state(root: Path, walked: set[str], skipped: set[str] = frozenset()) ->
 
 
 def machine_scan(
-    path: str | Path, *, mode: str = "self-assessment", policy: Policy | None = None
+    path: str | Path,
+    *,
+    mode: str = "self-assessment",
+    policy: Policy | None = None,
+    evaluation_report: str | None = None,
 ) -> MachineScan:
-    """The workbench's scan of `path` (see the module docstring). Raises on a missing path
-    and on a policy error."""
+    """The workbench's scan of `path` (see the module docstring). `evaluation_report` is an
+    `aisafe evaluate` report read as `audit --evaluation-report` reads it: in auditor mode
+    the only evaluation that counts. Raises on a missing path and on a policy error."""
     from aisafe.audit import AuditOptions, scan
 
     policy = policy or load_policy()
-    options = AuditOptions(path=str(path), deep="python", mode=mode)
+    options = AuditOptions(
+        path=str(path), deep="python", mode=mode, evaluation_report=evaluation_report
+    )
     ctx, findings, unknown, rules = scan(options, policy)
     walked = {record.relpath: record for record in ctx.files}
     skipped = set(getattr(ctx.inventory, "own_output_skipped", None) or [])
     state = tree_state(ctx.root, set(walked), skipped)
-    not_walked: list[str] = []
+    not_walked: list[str] | None = None if state.is_git and state.tracked is None else []
     if state.tracked is not None:
         not_walked = sorted(p for p in state.tracked if p not in walked and p not in skipped)
     return MachineScan(

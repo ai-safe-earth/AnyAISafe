@@ -257,3 +257,20 @@ with the tree as its target, and you never edit the audited code. The auditor re
 the audited team implements on a new commit, and the retest runs there. An assessment in
 auditor mode is made within an engagement: the record of who audits whom, under which
 written authorisation and scope.
+
+    aisafe engagement init --engagement <DIR> --target <tree> --auditor "<name>" \
+        --organisation "<organisation>" --auditee "<auditee>"
+    aisafe engagement status --engagement <DIR>
+    aisafe investigate plan <tree> --mode auditor -o <DIR>/investigation-plan.json
+    aisafe assess <tree> --engagement <DIR> [--evaluation-report <report>]
+
+`init` leaves every statement and answer empty; the auditor fills them in by hand. The
+assessment refuses to run until the auditor, the organisation, the auditee, the
+independence statement, a written authorisation and the commit are in the engagement.
+Records go to `<DIR>/investigations/`, the assessment and its bundle manifest to
+`<DIR>/assessment/`. A record's `missing_evidence` lines become evidence requests the
+auditor sends to the auditee; documents received are recorded with `aisafe engagement
+receive` (copied and hashed), and a document that changes stops counting. The auditee's
+management responses (`aisafe engagement respond`) show beside the finding they answer and
+never change it. Only the evaluation report the auditor ran, passed with
+`--evaluation-report`, is read in auditor mode.

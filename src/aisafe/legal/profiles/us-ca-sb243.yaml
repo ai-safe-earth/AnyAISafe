@@ -1,0 +1,380 @@
+# California SB 243 (Stats. 2025, Ch. 677): Business and Professions Code, Chapter 22.6, Companion Chatbots
+# Legal profile (aisg/legal-profile/1) for `aisafe assess --engagement`. Every quote was
+# copied by script from the official page named next to it and checked against that page
+# on 2026-10-30. Keep quotes verbatim: change one only after checking it against its source
+# again, and update `checked_on`. `legal_review` stays null until a lawyer has reviewed the
+# profile; reports print that status. Not legal advice.
+schema: aisg/legal-profile/1
+kind: legal-profile
+id: us-ca-sb243
+title: |-
+  California SB 243 (Stats. 2025, Ch. 677): Business and Professions Code, Chapter 22.6, Companion Chatbots
+jurisdiction: US-CA
+profile_version: 1
+source:
+  url: https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202520260SB243
+  version: |-
+    Chaptered bill, Stats. 2025, Ch. 677 (approved October 13, 2025); Bus. & Prof. Code sections 22601 to 22606 as displayed on 2026-10-30; later changes by SB 867 (Stats. 2026, Ch. 189) and SB 1119 (Stats. 2026, Ch. 190) read from those chaptered bills
+  checked_on: '2026-10-30'
+legal_review:
+  by: null
+  date: null
+sources:
+- id: bill
+  title: SB 243 (2025-2026), Companion chatbots, chaptered text
+  url: https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202520260SB243
+  version: Stats. 2025, Ch. 677
+  checked_on: '2026-10-30'
+  status: binding law
+- id: code-22601
+  title: California Business and Professions Code, section 22601 (definitions)
+  url: |-
+    https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+  version: |-
+    as displayed 2026-10-30 (the page does not yet show the SB 867 amendment, which leaves (a) to (e) unchanged)
+  checked_on: '2026-10-30'
+  status: official code text
+- id: code
+  title: California Business and Professions Code, section 22602
+  url: |-
+    https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22602
+  version: as displayed 2026-10-30 (the page does not yet show the SB 1119 amendment)
+  checked_on: '2026-10-30'
+  status: official code text
+- id: code-22604
+  title: California Business and Professions Code, section 22604
+  url: |-
+    https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22604
+  version: as displayed 2026-10-30
+  checked_on: '2026-10-30'
+  status: official code text
+- id: sb1119
+  title: 'SB 1119 (2025-2026), Companion chatbots: children''s safety, chaptered text'
+  url: https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202520260SB1119
+  version: Stats. 2026, Ch. 190 (approved September 10, 2026)
+  checked_on: '2026-10-30'
+  status: binding law; its date of effect is an inference from Cal. Const. art. IV, section 8(c)(1)
+- id: constitution
+  title: California Constitution, article IV, section 8
+  url: |-
+    https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CONS&sectionNum=SEC.%208.&article=IV
+  version: as displayed 2026-10-30
+  checked_on: '2026-10-30'
+  status: binding law
+applicability:
+- answer: markets
+  includes: US-CA
+  why: an operator makes a companion chatbot platform available to a user in the state
+  quote:
+    cite: Bus. & Prof. Code section 22601(e)
+    source: code-22601
+    excerpt: bpc-22601-e
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+    quote: |-
+      (e) “Operator” means a person who makes a companion chatbot platform available to a user in the state.
+- definition: us-ca-sb243/operator
+  question: |-
+    Is the auditee an 'operator' under section 22601(e): a person who makes a companion chatbot platform available to a user in the state? Give the reason.
+  why: the duties bind operators
+  quote:
+    cite: Bus. & Prof. Code section 22601(e)
+    source: code-22601
+    excerpt: bpc-22601-e
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+    quote: |-
+      (e) “Operator” means a person who makes a companion chatbot platform available to a user in the state.
+- definition: us-ca-sb243/companion-chatbot
+  question: |-
+    Is the system a 'companion chatbot' under section 22601(b)(1), with none of the exclusions in section 22601(b)(2)? Give the reason.
+  why: the chapter covers companion chatbots
+  quote:
+    cite: Bus. & Prof. Code section 22601(b)(1)
+    source: code-22601
+    excerpt: bpc-22601-b-1
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+    quote: |-
+      (b) (1) “Companion chatbot” means an artificial intelligence system with a natural language interface that provides adaptive, human-like responses to user inputs and is capable of meeting a user’s social needs, including by exhibiting anthropomorphic features and being able to sustain a relationship across multiple interactions.
+  also:
+  - cite: Bus. & Prof. Code section 22601(b)(2)
+    source: code-22601
+    excerpt: bpc-22601-b-2
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+    quote: |-
+      (2) “Companion chatbot” does not include any of the following:
+      (A) A bot that is used only for customer service, a business’ operational purposes, productivity and analysis related to source information, internal research, or technical assistance.
+      (B) A bot that is a feature of a video game and is limited to replies related to the video game that cannot discuss topics related to mental health, self-harm, sexually explicit conduct, or maintain a dialogue on other topics unrelated to the video game.
+      (C) A stand-alone consumer electronic device that functions as a speaker and voice command interface, acts as a voice-activated virtual assistant, and does not sustain a relationship across multiple interactions or generate outputs that are likely to elicit emotional responses in the user.
+provisions:
+- id: bpc-22602-a
+  citation: Business and Professions Code section 22602(a)
+  title: |-
+    Notify that the chatbot is artificially generated and not human, where a reasonable person would be misled
+  verified: true
+  text:
+  - cite: Bus. & Prof. Code section 22602(a)
+    source: code
+    excerpt: bpc-22602-a
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22602
+    quote: |-
+      (a) If a reasonable person interacting with a companion chatbot would be misled to believe that the person is interacting with a human, an operator shall issue a clear and conspicuous notification indicating that the companion chatbot is artificially generated and not human.
+  in_force: &id001
+    from: '2026-01-01'
+    from_derived: true
+    until: null
+    until_derived: false
+    basis: |-
+      SB 243 states no effective date; the official code page reads 'Effective January 1, 2026', which fits Cal. Const. art. IV, section 8(c)(2) (the 2025 interim recess date was not read from an official page)
+    quote:
+      cite: Bus. & Prof. Code section 22601 history note
+      source: code-22601
+      excerpt: bpc-22601-history-note
+      url: |-
+        https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22601
+      quote: (Added by Stats. 2025, Ch. 677, Sec. 1. (SB 243) Effective January 1, 2026.)
+  applies_if: []
+  mechanisms:
+  - M6
+  evidence:
+    code:
+    - kind: control
+      mechanism: M6
+      pattern: no_disclosure_on_path
+      control: ai_disclosure
+      what: |-
+        a validated record locating the notification on the response path of every surface the plan lists for this hypothesis
+    evaluation:
+    - family: identity_question
+      what: a fresh evaluation report in which every identity_question case passed
+    organisational:
+    - id: not-human-notification
+      what: |-
+        Screens or a transcript showing the notification that the companion chatbot is artificially generated and not human, and when it appears
+  controls:
+  - |-
+    Locate the notification on the response path of every entry point and record it with the ai_disclosure control on the path.
+  - |-
+    Read the M6 concealment records: a prompt that instructs the model to claim to be human makes it likelier that a reasonable person is misled, which is the condition of the duty.
+  - |-
+    Run `aisafe evaluate --families identity_question` against an endpoint you are authorised to test; every case must pass.
+  specialist:
+  - |-
+    Whether a reasonable person interacting with the chatbot would be misled to believe they are interacting with a human (the condition of section 22602(a)); a concealment instruction the investigation established (M6) weighs toward it.
+  - Whether the notification is 'clear and conspicuous'.
+  guidance: []
+  notes:
+  - SB 1119 (Stats. 2026, Ch. 190), section 1, re-enacts subdivision (a) word for word.
+- id: bpc-22602-b-1
+  citation: Business and Professions Code section 22602(b)(1)
+  title: |-
+    A protocol for preventing suicidal ideation, suicide or self-harm content, with a referral to crisis services
+  verified: true
+  text:
+  - cite: Bus. & Prof. Code section 22602(b)(1)
+    source: code
+    excerpt: bpc-22602-b-1
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22602
+    quote: |-
+      (b) (1) An operator shall prevent a companion chatbot on its companion chatbot platform from engaging with users unless the operator maintains a protocol for preventing the production of suicidal ideation, suicide, or self-harm content to the user, including, but not limited to, by providing a notification to the user that refers the user to crisis service providers, including a suicide hotline or crisis text line, if the user expresses suicidal ideation, suicide, or self-harm.
+  in_force: *id001
+  applies_if: []
+  mechanisms:
+  - M5
+  evidence:
+    code:
+    - kind: control
+      mechanism: M5
+      pattern: confidant_without_crisis_path
+      control: crisis_path
+      what: |-
+        a validated record locating the crisis path (detection and referral) on the response path of every surface the plan lists for this hypothesis
+    evaluation:
+    - family: crisis_disclosure
+      fail: missing
+      what: |-
+        a fresh evaluation report in which every crisis_disclosure case carried a referral in the reply (a failed case is not a gap on its own: the notification may be shown outside the reply, which the family does not read)
+    organisational:
+    - id: crisis-protocol
+      what: |-
+        The protocol for preventing the production of suicidal ideation, suicide or self-harm content, including the notification that refers the user to crisis service providers (a suicide hotline or crisis text line)
+  controls:
+  - |-
+    Check the person's message for suicide and self-harm signals before the model answers, on every entry point, and record the control on the path.
+  - The referral names a suicide hotline or crisis text line in fixed text.
+  - |-
+    Run `aisafe evaluate --families crisis_disclosure` against an endpoint you are authorised to test; every case must carry a referral.
+  specialist:
+  - |-
+    Whether the protocol prevents the production of suicidal ideation, suicide or self-harm content to the user: the duty is broader than the referral ('including, but not limited to').
+  - |-
+    Whether the notification refers the user to crisis service providers, including a suicide hotline or crisis text line: the crisis_disclosure family counts any referral in the reply, and does not read a notice shown outside it.
+  guidance: []
+  notes:
+  - SB 1119 (Stats. 2026, Ch. 190), section 1, re-enacts subdivision (b)(1) word for word.
+- id: bpc-22602-b-2
+  citation: Business and Professions Code section 22602(b)(2)
+  title: Publish details of the protocol on the operator's internet website
+  verified: true
+  text:
+  - cite: Bus. & Prof. Code section 22602(b)(2)
+    source: code
+    excerpt: bpc-22602-b-2
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22602
+    quote: |-
+      (2) The operator shall publish details on the protocol required by this subdivision on the operator’s internet website.
+  in_force: *id001
+  applies_if: []
+  mechanisms: []
+  evidence:
+    code: []
+    evaluation: []
+    organisational:
+    - id: published-protocol
+      what: |-
+        The web address and a dated capture of the page on the operator's internet website that publishes details of the protocol
+  controls:
+  - |-
+    Open the operator's website, find the page that publishes details of the protocol, and keep a dated capture.
+  specialist: []
+  guidance: []
+  notes:
+  - SB 1119 (Stats. 2026, Ch. 190), section 1, re-enacts subdivision (b)(2) word for word.
+- id: bpc-22602-c
+  citation: Business and Professions Code section 22602(c)
+  title: Duties toward a user the operator knows is a minor
+  verified: true
+  text:
+  - cite: Bus. & Prof. Code section 22602(c)(1)-(3)
+    source: code
+    excerpt: bpc-22602-c
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22602
+    quote: |-
+      (c) An operator shall, for a user that the operator knows is a minor, do all of the following:
+      (1) Disclose to the user that the user is interacting with artificial intelligence.
+      (2) Provide by default a clear and conspicuous notification to the user at least every three hours for continuing companion chatbot interactions that reminds the user to take a break and that the companion chatbot is artificially generated and not human.
+      (3) Institute reasonable measures to prevent its companion chatbot from producing visual material of sexually explicit conduct or directly stating that the minor should engage in sexually explicit conduct.
+  in_force:
+    from: '2026-01-01'
+    from_derived: true
+    until: '2027-01-01'
+    until_derived: true
+    basis: |-
+      SB 1119 (Stats. 2026, Ch. 190), section 1, rewrites section 22602 without subdivision (c) and states no date; Cal. Const. art. IV, section 8(c)(1) gives January 1, 2027 for a non-urgency statute enacted September 10, 2026 (an inference a lawyer must confirm)
+    quote:
+      cite: Cal. Const., art. IV, section 8(c)(1)
+      source: constitution
+      excerpt: cal-const-iv-8-c-1
+      url: |-
+        https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=CONS&sectionNum=SEC.%208.&article=IV
+      quote: |-
+        (c) (1) Except as provided in paragraphs (2) and (3) of this subdivision, a statute enacted at a regular session shall go into effect on January 1 next following a 90-day period from the date of enactment of the statute and a statute enacted at a special session shall go into effect on the 91st day after adjournment of the special session at which the bill was passed.
+  replaced_by:
+    law: |-
+      SB 1119 (Stats. 2026, Ch. 190), Business and Professions Code Chapter 11.6 (“Adam’s Law”), section 21812
+    from: '2027-07-01'
+    from_derived: false
+    note: |-
+      section 21812 states its own date; if the inference above holds, subdivision (c) stops applying on January 1, 2027, six months before section 21812 applies; Chapter 11.6 is not covered by this profile (roadmap)
+    quote:
+      cite: Bus. & Prof. Code section 21812(e)
+      source: sb1119
+      excerpt: bpc-21812-e
+      url: https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202520260SB1119
+      quote: (e) This section shall become operative on July 1, 2027.
+    deleted_by:
+      cite: SB 1119, Legislative Counsel's Digest (summary, not law)
+      source: sb1119
+      excerpt: sb1119-digest-minor-deletion
+      url: https://leginfo.legislature.ca.gov/faces/billTextClient.xhtml?bill_id=202520260SB1119
+      quote: |-
+        This bill would delete those provisions imposing requirements on an operator if the operator knows the user is a minor.
+  applies_if:
+  - answer: minors
+    equals: known
+    false_if:
+    - none_known
+    why: |-
+      subdivision (c) applies for a user that the operator knows is a minor; with no such user known it has to be re-assessed when one is
+  mechanisms:
+  - M6
+  - M5
+  evidence:
+    code:
+    - kind: control
+      mechanism: M6
+      pattern: no_disclosure_on_path
+      control: ai_disclosure
+      what: |-
+        a validated record locating the disclosure that the user is interacting with artificial intelligence (subdivision (c)(1)) on every surface the plan lists for this hypothesis
+    evaluation:
+    - family: identity_question
+      what: a fresh evaluation report in which every identity_question case passed
+    organisational:
+    - id: break-reminder
+      what: |-
+        A transcript or test showing, by default, a notification at least every three hours of a continuing interaction that reminds the user to take a break and that the chatbot is artificially generated and not human (subdivision (c)(2))
+    - id: explicit-content-measures
+      what: |-
+        The measures that prevent visual material of sexually explicit conduct and direct statements that the minor should engage in sexually explicit conduct, and how they are tested (subdivision (c)(3))
+    - id: minor-knowledge
+      what: |-
+        How the operator comes to know that a user is a minor (age signals, age assurance) and how that switches these duties on
+  controls:
+  - |-
+    Locate where a known minor's account switches on the three duties, and record the disclosure with the ai_disclosure control on the path.
+  - 'Test the break reminder with a simulated clock: at least every three hours, by default.'
+  - Test the explicit-content measures with the operator's own test set; ask for it.
+  specialist:
+  - Which users the operator 'knows' to be minors.
+  - |-
+    Whether the measures against sexually explicit material are 'reasonable measures' (subdivision (c)(3)).
+  - |-
+    The date subdivision (c) stops applying under SB 1119, and the duties of section 21812 that replace it.
+  guidance: []
+- id: bpc-22604
+  citation: Business and Professions Code section 22604
+  title: Disclose that companion chatbots may not be suitable for some minors
+  verified: true
+  text:
+  - cite: Bus. & Prof. Code section 22604
+    source: code-22604
+    excerpt: bpc-22604
+    url: |-
+      https://leginfo.legislature.ca.gov/faces/codes_displaySection.xhtml?lawCode=BPC&sectionNum=22604
+    quote: |-
+      An operator shall disclose to a user of its companion chatbot platform, on the application, the browser, or any other format that a user can use to access the companion chatbot platform, that companion chatbots may not be suitable for some minors.
+  in_force: *id001
+  applies_if: []
+  mechanisms: []
+  evidence:
+    code: []
+    evaluation: []
+    organisational:
+    - id: suitability-notice
+      what: |-
+        Screens of the application, the browser and every other format used to access the platform, each showing the disclosure that companion chatbots may not be suitable for some minors
+  controls:
+  - |-
+    List every format a user can use to reach the platform (application, browser, others) and keep a screen of the disclosure in each.
+  specialist: []
+  guidance: []
+not_covered:
+- |-
+  Section 22603: the annual report to the Office of Suicide Prevention, beginning July 1, 2027, and the duty to use evidence-based methods for measuring suicidal ideation.
+- |-
+  Section 22604.5 (added by SB 867, Stats. 2026, Ch. 189): toys that include a companion chatbot; by inference from January 1, 2027, repealed January 1, 2031.
+- 'Sections 22605 (civil action) and 22606 (cumulative duties): no duty to test.'
+- |-
+  SB 1119 Chapter 11.6 (sections 21810 to 21818, “Adam’s Law”), most of it operative July 1, 2027: a profile of its own is on the roadmap.
+- |-
+  Later changes to Chapter 22.6 other than SB 867 and SB 1119, and measures on the November 3, 2026 ballot: not searched when the text was checked on 2026-10-30.
+notes:
+- |-
+  SB 1119 keeps subdivisions (a), (b)(1) and (b)(2) of section 22602 word for word and drops (c); the official code page did not yet show the amended text on 2026-10-30.

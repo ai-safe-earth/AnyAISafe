@@ -72,6 +72,44 @@ place the version lives and moves the Unreleased entries under a dated heading;
   turns a confirmed claim into a bench-case skeleton and its unlabelled benign twin.
 - **Policy 1.1.0: an M1 `transmission` pattern** (person-data view, `collection` and
   `transmission`, with `anonymisation` as its absent control).
+- **`aisafe engagement`.** The auditor's workspace, outside the audited tree:
+  `engagement.json` (`aisg/engagement/1`: the auditor and organisation, the auditee, the
+  independence statement, the scope, the written authorisations, the mode and the
+  applicability answers), evidence requests (`aisg/evidence-requests/1`, `requested`,
+  `received` or `insufficient`), received documents copied in and hashed, the auditee's
+  management responses (`aisg/auditee-response/1`) and an optional second auditor's QA
+  sign-off (`aisg/qa-signoff/1`) bound to the assessment's sha256. `init` prefills no
+  statement and no answer; `status` lists what is still to fill in, documents that changed
+  and a bundle that no longer matches; `receive`, `insufficient`, `respond` and `qa` record
+  what a named person did.
+- **Legal profiles** (`aisg/legal-profile/1`, `src/aisafe/legal/profiles/`): the EU AI Act
+  (Art. 5(1)(a) and (b), Art. 50(1) and 50(3) with 50(5), as amended by Regulation (EU)
+  2026/1744), New York General Business Law Article 47 (§§ 1701 and 1702) and California
+  SB 243 (§ 22602(a), (b)(1), (b)(2) and (c), § 22604), each quote copied from the official
+  text and checked on 2026-10-30, each date marked stated or derived, `legal_review` null
+  until a lawyer reviews it. `docs/legal-profiles.md` has the coverage, the sources, what
+  was not verified, what is not covered and the roadmap. Not legal advice.
+- **The legal section of an assessment.** `aisafe assess --engagement DIR` reads the
+  selected profiles against the engagement's answers, the audit date and the evidence: one
+  result per provision (`gap_identified`, `insufficient_evidence`,
+  `requires_specialist_review`, `satisfied_within_scope`, `not_applicable` with its reason),
+  kept apart from the ethical outcome and never changing it or the exit code. Selecting a
+  jurisdiction never makes a provision apply; a derived date never removes a duty;
+  scanner silence never satisfies one; answers that name nobody decide nothing; markets
+  and jurisdictions use the profiles' codes (`EU`, `US-NY`, `US-CA`, and `other`), so an
+  unknown code is refused, never read as a no. A code item is met only when every plan
+  surface carrying the hypothesis is closed with no blocking gap, and, for a control, each
+  surface shows the control or rules out the person's link. A concealment instruction is a
+  question for the specialist under the disclosure duties, never a gap on its own, and a
+  failed `crisis_disclosure` case reads as missing evidence, because the family reads only
+  the reply. Testable duties map to the crisis path (M5,
+  AUD-1108) and the AI disclosure and concealment instruction (M6, AUD-1105) and to the
+  crisis_disclosure and identity_question families; every other duty becomes an evidence
+  request, as does each `missing_evidence` line of an accepted record.
+- **The bundle manifest.** Every assessment writes `bundle.json` (`aisg/bundle/1`): the
+  target commit, the mode and the sha256 of every input and output, so a third party can
+  check them. Inputs are hashed as they were read, before any output is written; an input
+  the run writes over (the evidence requests) is marked `rewritten`.
 
 ### Changed
 
@@ -90,6 +128,15 @@ place the version lives and moves the Unreleased entries under a dated heading;
   and one UNKNOWN row), and skips the workbench's own documents (records, skeptic passes,
   plans, assessments) as its own output.
 - **The report envelope gains `label` and `mode`**, after `kind`.
+- **`aisafe assess`** takes `--engagement DIR` (the mode, the records' directory and the
+  output directory then come from it) and `--evaluation-report FILE` (in auditor mode the
+  only evaluation read). In auditor mode it refuses an engagement inside the tree, one that
+  names another tree or leaves out the names, the independence statement or an
+  authorisation, a commit the engagement's scope does not list, and `--working-tree`. The
+  auditee's responses show beside the mechanism they answer.
+- **The scan skips the new workbench documents as its own output** (evidence requests,
+  auditee responses, QA sign-offs), and the repository's self-audit excludes the legal
+  profiles, which quote the instructions the rules look for.
 
 ### Fixed
 
