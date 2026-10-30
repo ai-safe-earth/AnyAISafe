@@ -24,6 +24,17 @@ place the version lives and moves the Unreleased entries under a dated heading;
   judgements, with the reviewer and the date, to `research/results/reference/`, apart from
   the finding labels. The labelling guides cover the ten 0.2.0 rules.
 
+### Fixed
+
+- **JavaScript and TypeScript persona templates are prompt material again.** The expression
+  that reads a backtick template named like a persona, backstory or character as prompt
+  text held a literal backspace character where a word boundary was meant, so it never
+  matched; and a blank line inside such a template shifted the lines counted as prompt
+  material. The concealment and role lines of those templates were left as candidates no
+  rule reads, so AUD-1105, AUD-1108 and AUD-1109 missed them (run 4 lost persona_bot's
+  "never mention you are an AI" line this way). A test now refuses any control character in
+  a tracked text file.
+
 ## [0.2.0] - 2026-10-30
 
 **The product pivots.** `aisafe` now does one thing: it audits the prompts and the

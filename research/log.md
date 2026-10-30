@@ -664,3 +664,17 @@ thing). The guide now says what the code does without those words.
 **Open for the owner.** Confirm or change the held-out split. Label
 `results/run4/findings-audit.csv`, and, blind, the two reference sets (the held-out one
 first, before anything is tuned).
+
+## 2026-10-30 (later) — the persona-template defect, fixed
+
+Two defects in one place, both fixed with tests (`tests/unit/test_discovery_paragraphs.py`,
+`tests/unit/test_source_hygiene.py`). The name expression for persona, backstory and
+character templates now takes a letter, not a word boundary, as its edge, so `BF_PERSONA`
+opens a template and `impersonationWarning` does not; and a template is read as runs of
+consecutive non-blank lines, because a blank line inside one used to shift the line numbers
+counted as prompt material (persona_bot's template has a blank line between every
+paragraph, so its line 7 fell outside the count even with the expression mended). Re-audited
+with the fix, development split only: persona_bot goes from 4 findings to 8 (AUD-1105/persona
+on `persona/boyfriend.js:7`, violates_policy; AUD-1108; AUD-1109/romantic-role; AUD-1106/none);
+open-character-ai, RealChar and SillyTavern are unchanged. Run 4 stays the measurement of
+0.2.0 as released; the next run measures the fix.

@@ -114,3 +114,55 @@ def test_unbalanced_backtick_span_is_capped(tmp_path: Path) -> None:
     body = "const SYSTEM_PROMPT = `You are Ava.\n" + "Keep answers short.\n" * 300
     (tmp_path / "chat.ts").write_text(body + SENTENCE + "\n", encoding="utf-8")
     assert _signals(tmp_path) == []
+
+
+# A persona template in JavaScript: the shape of run 4's regression (research/log.md,
+# 2026-10-30). The name `BF_PERSONA` puts an underscore before the word, and the template
+# opens on its own line with blank lines inside it.
+PERSONA_TEMPLATE = (
+    "export const BF_PERSONA = `\n"
+    "\n"
+    "You are Bae.\n"
+    "\n"
+    "You are my real boyfriend chatting with me on WhatsApp.\n"
+    "\n"
+    "Never mention that you are an AI, chatbot or language model.\n"
+    "Stay completely in character.\n"
+    "`;\n"
+)
+
+
+def _hits(root: Path) -> list:
+    files, units, _unknown = walk.walk(root, walk.WalkOptions())
+    _inventory, hits = discover.discover(root, files, units, None)
+    return hits
+
+
+def test_persona_named_template_is_prompt_material(tmp_path: Path) -> None:
+    (tmp_path / "persona").mkdir()
+    (tmp_path / "persona" / "boyfriend.js").write_text(PERSONA_TEMPLATE, encoding="utf-8")
+    hits = _hits(tmp_path)
+    signals = {(h.line, h.key) for h in hits if h.table == "person_signal"}
+    assert (7, "persona:never_admit") in signals, sorted(signals)
+    assert (5, "romantic_role:role") in signals, sorted(signals)
+    # Not a candidate waiting for a syntax tree no JavaScript file ever gets.
+    assert not [h for h in hits if h.table == "person_signal_candidate" and h.line == 7]
+
+
+def test_character_and_backstory_names_open_a_template(tmp_path: Path) -> None:
+    for name in ("characterPrompt", "BACKSTORY_TEXT"):
+        root = tmp_path / name
+        root.mkdir()
+        (root / "chat.js").write_text(
+            PERSONA_TEMPLATE.replace("BF_PERSONA", name), encoding="utf-8"
+        )
+        signals = {(h.line, h.key) for h in _hits(root) if h.table == "person_signal"}
+        assert (7, "persona:never_admit") in signals, (name, sorted(signals))
+
+
+def test_a_name_that_only_contains_the_word_opens_no_template(tmp_path: Path) -> None:
+    (tmp_path / "chat.js").write_text(
+        PERSONA_TEMPLATE.replace("BF_PERSONA", "impersonationWarning"), encoding="utf-8"
+    )
+    hits = _hits(tmp_path)
+    assert not [h for h in hits if h.table == "person_signal" and h.line == 7]

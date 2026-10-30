@@ -213,7 +213,12 @@ _MENTION_TABLES = frozenset({"model_id", "person_signal", "remote_prompt", "runt
 _PROMPT_LHS_RE = re.compile(patterns._PROMPT_LHS, re.I)
 # A backtick template literal is read whole when its name is prompt-like; without a
 # syntax tree the name is the only hint, so persona and backstory constants count here.
-_TEMPLATE_LHS_RE = re.compile(r"(?:persona|backstory|character)\w*\s*(?:\+?=|:=|:)\s*`", re.I)
+# The boundary is a letter, not `\b`: the word opens a name (`characterPrompt`) or follows
+# an underscore in one (`BF_PERSONA`, where `\b` never matches), and a longer word that
+# only contains it (`impersonation`) is not one of them.
+_TEMPLATE_LHS_RE = re.compile(
+    r"(?<![A-Za-z])(?:persona|backstory|character)\w*\s*(?:\+?=|:=|:)\s*`", re.I
+)
 # An agent skill's own metadata (`skills/<name>/agents/openai.yaml`, installed under
 # .claude/, .codex/ or .agents/) names an interface, not a prompt; without this a
 # repository with no AI at all would become an AI surface by installing a skill.
@@ -506,36 +511,57 @@ _TEMPLATE_SPAN_CAP = 120
 
 def _template_spans(ctx: _FileCtx, prompt_lines: set[int]) -> list[tuple[int, str, list[int]]]:
     """
-    The continuation lines of prompt template literals in JavaScript, TypeScript and Go
-    (backtick strings): a prompt line that opens a backtick string and does not close it
-    on the same line continues until the line that closes it. Each span is returned like
-    a paragraph: (first continuation line, joined text, offsets), so the prompt rows run
-    over the whole literal instead of its opening line alone. A span is cut at
+    The text of prompt template literals in JavaScript, TypeScript and Go (backtick
+    strings): a prompt line that opens a backtick string and does not close it on the same
+    line continues until the line that closes it. The literal is returned as runs of
+    consecutive non-blank lines, each like a paragraph: (first line, joined text, offsets),
+    so the prompt rows run over a sentence wrapped across lines, and every line of the
+    literal, after a blank line too, counts as prompt material. Text after the opening
+    backtick on the opening line belongs to the first run. A literal is cut at
     `_TEMPLATE_SPAN_CAP` lines so an unbalanced backtick cannot swallow a file.
     """
     spans: list[tuple[int, str, list[int]]] = []
     open_from: int | None = None
+    run_start: int | None = None
     pieces: list[str] = []
     offsets: list[int] = []
+
+    def add(number: int, piece: str) -> None:
+        nonlocal run_start
+        if run_start is None:
+            run_start = number
+        offsets.append(sum(len(p) + 1 for p in pieces))
+        pieces.append(piece)
+
+    def flush() -> None:
+        nonlocal run_start
+        if pieces and run_start is not None:
+            spans.append((run_start, " ".join(pieces), list(offsets)))
+        pieces.clear()
+        offsets.clear()
+        run_start = None
+
     for number, raw in enumerate(ctx.lines, 1):
         ticks = raw.replace(r"\`", "").count("`")
         if open_from is None:
             if ticks % 2 == 1 and (
                 number in prompt_lines or _PROMPT_LHS_RE.search(raw) or _TEMPLATE_LHS_RE.search(raw)
             ):
-                open_from, pieces, offsets = number + 1, [], []
+                open_from = number + 1
+                tail = raw.split("`", 1)[1].strip()
+                if tail:
+                    add(number, tail)
             continue
         closes = ticks % 2 == 1
-        text = raw.split("`", 1)[0].strip() if closes else raw.strip()
-        if text:
-            offsets.append(sum(len(piece) + 1 for piece in pieces))
-            pieces.append(text)
+        piece = raw.split("`", 1)[0].strip() if closes else raw.strip()
+        if piece:
+            add(number, piece)
+        else:
+            flush()
         if closes or number - open_from + 1 >= _TEMPLATE_SPAN_CAP:
-            if pieces:
-                spans.append((open_from, " ".join(pieces), list(offsets)))
+            flush()
             open_from = None
-    if open_from is not None and pieces:
-        spans.append((open_from, " ".join(pieces), list(offsets)))
+    flush()
     return spans
 
 
