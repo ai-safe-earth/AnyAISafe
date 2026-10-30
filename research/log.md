@@ -578,8 +578,15 @@ to v2.
 **Run 4's CSV is the file to label.** `results/run4/findings-audit.csv` (243 rows, at most 40
 per rule spread across repositories, now with the audit's own `decision` and
 `evidence_status` columns, which run 3's CSV did not carry) replaces run 3's as the file that
-gets labelled; `findings-audit-all.csv` holds all 941. No row of run 3 was ever labelled, so
-nothing is lost; run 3 stays in `results/run3/` as the state before the 0.2.0 rules.
+gets labelled; `findings-audit-all.csv` holds all 941. Run 3 stays in `results/run3/` as the
+state before the 0.2.0 rules. Its CSV holds no verdict, but the owner labelled 39 of its rows
+in the console on 2026-10-29 (34 unclear, 4 false alarms, 1 real: 31 SillyTavern and 7 eliza
+AUD-1101 rows, and tutor-gpt's AUD-1108), 25 of them with a note. Those labels are in the
+console's database (`sets/run3/labels`), not yet imported into the CSV. They stay there, the
+run 3 set stays in the console beside run 4, and none is carried to run 4 by any script: the
+rules changed between the two runs, and a label judges the claim one rule version made.
+Importing them into run 3's CSV, and carrying any of them to a run 4 row that makes the same
+claim, is for the owner to decide.
 
 **A defect run 4 exposed.** persona_bot's boyfriend persona (`persona/boyfriend.js:7`, the
 line that tells the model never to say it is an AI) was reported by run 3 (AUD-1105/persona,
