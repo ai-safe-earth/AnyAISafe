@@ -143,8 +143,10 @@ nothing landed; otherwise the strongest decision among its findings) -- then eac
 
 - its `evidence_status` and its `decision`, as two separate statements;
 - its chain (`objective -> person data -> inference -> prompt -> intervention -> feedback`):
-  which links are `ast` or `declared` (established) and which are `co-located` only; a chain
-  with a co-located link is lexical co-occurrence, and you say so;
+  which links are supported (`ast`, `declared`, `investigated`) and which are `co-located`
+  or `runtime-only`; whether the trace is complete for the finding's `pattern` or partial,
+  and the `missing_links` a partial one lacks; a chain of co-located links is lexical
+  co-occurrence, and you say so;
 - the declared purpose (from a review record, when one covers the unit) against the
   encoded objective (the instruction the prompt carries), when either is known;
 - the `control_status` (`none`, `claimed`, `wired`, `exercised`, `demonstrated`,

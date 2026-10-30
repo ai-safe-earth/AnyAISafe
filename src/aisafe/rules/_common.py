@@ -678,37 +678,46 @@ def evaluation_demonstrates(
     ctx: AuditContext, family: str, max_age_days: int
 ) -> tuple[bool | None, ReportRecord | None]:
     """
-    What the freshest evaluation report in the tree says about `family`:
-    `(True, record)` when it sent the family within `max_age_days` and every case passed;
-    `(False, record)` when it sent the family and any case failed, was missing or errored;
-    `(None, record_or_None)` when no fresh report sent the family (absent, stale, skipped).
-    A stale report is never a demonstration; a failing one is observed behaviour.
+    What the evaluation reports in the tree say about `family`, the least favourable first:
+    `(False, record)` when any report within `max_age_days` sent the family and a case
+    failed, was missing or errored; else `(None, record)` when a fresh report sent it and a
+    case could not be judged; else `(True, record)` when a fresh report sent it and every
+    case passed; else `(None, record_or_None)` (no fresh report sent it: absent, stale, of
+    unknown age, or dated in the future). A stale or undated report is never a
+    demonstration, a failing one is observed behaviour, and a passing report never hides a
+    failing one.
     """
-    freshest: ReportRecord | None = None
+    fresh: list[tuple[ReportRecord, dict[str, Any]]] = []
+    seen: ReportRecord | None = None
     for record in getattr(ctx, "evaluation", None) or []:
-        if family not in (record.families or []):
-            by_family = (record.body or {}).get("by_family") or {}
-            if family not in by_family:
-                continue
-        if freshest is None or (record.age_days or 0) < (freshest.age_days or 0):
-            freshest = record
-    if freshest is None:
-        return None, None
-    age = freshest.age_days
-    if age is None or age > max_age_days:
-        return None, freshest
-    counts = ((freshest.body or {}).get("by_family") or {}).get(family) or {}
-    sent = int(counts.get("sent", 0) or 0)
-    if sent == 0:
-        return None, freshest
-    failed = int(counts.get("failed", 0) or 0) + int(counts.get("errors", 0) or 0)
-    skipped = int(counts.get("skipped", 0) or 0) + int(counts.get("inconclusive", 0) or 0)
-    if failed:
-        return False, freshest
-    if skipped:
-        # A case that could not be judged is not a pass: the family was not demonstrated.
-        return None, freshest
-    return True, freshest
+        by_family = (record.body or {}).get("by_family") or {}
+        if family not in (record.families or []) and family not in by_family:
+            continue
+        seen = seen or record
+        age = record.age_days
+        if age is None or age < 0 or age > max_age_days:
+            continue
+        counts = by_family.get(family) or {}
+        if int(counts.get("sent", 0) or 0) > 0:
+            fresh.append((record, counts))
+    if not fresh:
+        return None, seen
+    fresh.sort(key=lambda item: (item[0].age_days, item[0].file))
+
+    def failed(counts: dict[str, Any]) -> bool:
+        return int(counts.get("failed", 0) or 0) + int(counts.get("errors", 0) or 0) > 0
+
+    def unjudged(counts: dict[str, Any]) -> bool:
+        return int(counts.get("skipped", 0) or 0) + int(counts.get("inconclusive", 0) or 0) > 0
+
+    for record, counts in fresh:
+        if failed(counts):
+            return False, record
+    for record, counts in fresh:
+        if unjudged(counts):
+            # A case that could not be judged is not a pass: the family was not demonstrated.
+            return None, record
+    return True, fresh[0][0]
 
 
 # ---------------------------------------------------------------------------

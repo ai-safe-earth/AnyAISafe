@@ -7,8 +7,10 @@ Chain reconstruction. For every prompt in a Python unit, how far the audit can f
 and how each link was established: `ast` (the syntax tree connects it: a name the prompt
 reads, the call the prompt feeds, the return that carries the reply), `declared` (it sits
 inside the prompt text the chain reads) or `co-located` (the same file, window or unit, which
-is lexical co-occurrence and never a verified flow). `Flow.established` is True only when
-every present link is `ast` or `declared`.
+is lexical co-occurrence and never a flow). `Flow.links_supported` is True when every present
+link is supported; whether a finding's trace is complete depends on the links its policy
+pattern requires (`Finding.trace_complete`). The scan never builds `investigated` links: only
+an assessment adds them, from validated investigation records.
 
 The rules copy the flow whose prompt link is nearest to their signal onto the finding; the
 renderers print the chain with each link's status, and "lexical co-occurrence only" when
@@ -23,7 +25,13 @@ from dataclasses import dataclass
 from typing import Any, Callable
 
 from aisafe.discovery import vocabulary as vocab
-from aisafe.evidence.model import FLOW_LINK_KINDS, AuditContext, Flow, FlowLink
+from aisafe.evidence.model import (
+    FLOW_ESTABLISHED_BY,
+    FLOW_LINK_KINDS,
+    AuditContext,
+    Flow,
+    FlowLink,
+)
 
 __all__ = [
     "FEEDBACK_KINDS",
@@ -52,7 +60,7 @@ METRIC_RE = re.compile(
     re.I,
 )
 _IMPORT_LINE_RE = re.compile(r"^\s*(?:from\s+\S+\s+import\b|import\s+\S+)")
-_STATUS_ORDER = ("ast", "declared", "co-located")
+_STATUS_ORDER = FLOW_ESTABLISHED_BY
 
 
 def _posix(path: Any) -> str:
@@ -432,9 +440,9 @@ def build_flows(ctx: AuditContext) -> list[Flow]:
 def flow_summary(flow: Flow | None) -> str:
     """The chain as the renderers print it: each present kind with how it was established,
     e.g. "objective (declared) -> person data (ast) -> prompt (ast) -> intervention
-    (co-located)"; "lexical co-occurrence only" when no link is ast or declared."""
+    (co-located)"; "lexical co-occurrence only" when no link is supported."""
     links = list(getattr(flow, "links", None) or [])
-    if not links or all(link.established_by == "co-located" for link in links):
+    if not links or not any(link.supported for link in links):
         return "lexical co-occurrence only"
     parts: list[str] = []
     for kind in FLOW_LINK_KINDS:

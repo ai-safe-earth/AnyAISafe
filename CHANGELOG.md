@@ -23,6 +23,33 @@ place the version lives and moves the Unreleased entries under a dated heading;
   or the control, and add the places the sweep missed; `import-reference` writes the
   judgements, with the reviewer and the date, to `research/results/reference/`, apart from
   the finding labels. The labelling guides cover the ten 0.2.0 rules.
+- **Policy 1.1.0: patterns and required links.** Each mechanism in
+  `policy/mechanisms.yaml` is split into patterns, and each pattern names the links a
+  trace of it needs, in the influence view (`objective`, `ingress`, `person_data`,
+  `inference`, `prompt`, `intervention`, `feedback`) or the person-data view
+  (`collection`, `storage`, `retrieval`, `transformation`, `transmission`, `logging`,
+  `deletion`). The decision and severity criteria did not change.
+- **Supported links and complete traces, kept apart.** A finding now says whether every
+  link its chain holds is supported (`links_supported`: `ast`, `declared` or the new
+  `investigated`) and, separately, whether the trace holds every link its pattern requires
+  (`trace_complete`, with `pattern` and `missing_links`). A new `runtime-only` status marks
+  a link that exists only at run time; it never supports a trace. The chain line names each
+  missing link, a partial trace is never shown complete, and a finding with no chain says
+  which links a trace would need.
+
+### Changed
+
+- **`flow_established` is a deprecated alias of `trace_complete`**, and `Flow.established`
+  is gone (read `Flow.links_supported` for the old meaning). A chain of one supported link
+  read as established before; `docs/migration.md` section 5 has what to change.
+- **AUD-1101 v3**: the profile binding is a supported mechanism when the syntax tree
+  supports every link of the M1 binding pattern; a co-located link elsewhere in the file
+  no longer lowers it to a detected signal.
+- **AUD-1105, AUD-1106 and AUD-1108 v3**: among the evaluation reports inside the
+  freshness window the least favourable one decides, so a passing report never hides a
+  failing one; a report dated in the future has an unknown age and demonstrates nothing.
+- **Review records and baseline acceptances made under policy 1.0.0 are re-reviewed.** The
+  repository's own baseline reason was recorded again under 1.1.0, unchanged.
 
 ### Fixed
 

@@ -100,8 +100,8 @@ def _shape(finding) -> tuple[str, Severity, EvidenceStatus, Decision]:
 class TestContract:
     def test_ids_versions_and_mechanisms(self):
         assert IDS == ["AUD-1101", "AUD-1102", "AUD-1103"]
-        for rule, mechanism in zip(RULES, ("M1", "M2", "M3")):
-            assert rule.version == 2 and rule.changed
+        for rule, mechanism, version in zip(RULES, ("M1", "M2", "M3"), (3, 2, 2)):
+            assert rule.version == version and rule.changed
             assert rule.mechanism_id() == mechanism
             assert rule().priority == int(mechanism[1:])
             assert rule.requires_ai_surface is True
@@ -267,6 +267,29 @@ class TestProfile1101:
         )
         assert finding.flow_established and finding.person_data_use == "purchase_history"
         assert finding.coverage_gaps == ()
+
+    def test_a_co_located_link_elsewhere_does_not_lower_a_supported_binding(
+        self, tmp_path, audit_context
+    ):
+        # v3: the binding pattern needs the person data, the prompt and the model call; the
+        # syntax tree supports all three. A reward over engagement in another function of
+        # the same file adds a co-located link, which the pattern does not require.
+        code = _chat_with(
+            "    purchase_history = load_history(body['user_id'])\n",
+            "{SYSTEM_PROMPT}\\nHistory: {purchase_history}\\n{body['text']}",
+        ) + (
+            "\n\ndef weekly_reward(engagement, retention):\n"
+            "    reward = 0.3 * engagement + retention\n"
+            "    return reward\n"
+        )
+        findings = _run(audit_context, _tree(tmp_path, {"chat.py": code}), PersonProfileInPrompt)
+        finding = _one(findings, "AUD-1101")
+        assert finding.evidence_status is EvidenceStatus.SUPPORTED_MECHANISM
+        assert finding.trace_pattern.id == "binding" and finding.trace_complete is True
+        assert finding.missing_links == ()
+        co_located = [link for link in finding.flow.links if link.established_by == "co-located"]
+        assert co_located, [link.to_dict() for link in finding.flow.links]
+        assert finding.links_supported is False  # the extra link is reported, not hidden
 
     def test_grep_tier_binding_is_a_detected_signal_with_a_gap(self, tmp_path, audit_context):
         code = _chat_with(
@@ -563,7 +586,11 @@ class TestAffect1102:
             EvidenceStatus.SUPPORTED_MECHANISM,
             Decision.REVIEW,
         )
-        assert finding.encoded_objective and finding.flow_established
+        # Every link the chain holds is supported, but the M2 pattern also needs the
+        # objective the inference serves: adjusting the tone is no such objective, so the
+        # trace stays partial and the decision stays a review.
+        assert finding.encoded_objective and finding.links_supported
+        assert finding.trace_complete is False and finding.missing_links == ("objective",)
 
     def test_inference_used_for_a_pitch_violates(self, tmp_path, audit_context):
         system = (

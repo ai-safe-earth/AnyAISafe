@@ -13,9 +13,12 @@ Honesty rules carried by the types here:
   and what could not be checked (`UnknownItem`, `Finding.coverage_gaps`).
 - `Confidence.precision is None` means UNMEASURED. It never means good, and an
   unmeasured rule still fires.
-- `Finding.flow_established` is True only when every link of the reconstructed chain was
-  established by the syntax tree or declared in the same prompt literal; co-location in a
-  file is never presented as a verified data flow.
+- A reconstructed chain says two separate things. `Flow.links_supported`: every link it holds
+  is `ast`, `declared` or `investigated` (cited by a validated investigation record).
+  `Finding.trace_complete`: every link the finding's pattern requires (the policy's
+  `patterns`) is present and supported. A partial trace is never presented as complete, and
+  co-location in a file is never presented as a flow. `flow_established` survives in the JSON
+  as a deprecated alias of `trace_complete`.
 - The disclaimer is emitted on every report; it names the policy version the decisions
   were taken under and says that absence of a finding is not evidence of safety.
 """
@@ -38,7 +41,11 @@ __all__ = [
     "SEVERITY_ORDER",
     "SCOPE_KINDS",
     "FLOW_LINK_KINDS",
+    "PERSON_DATA_LINK_KINDS",
+    "LINK_KINDS_BY_VIEW",
+    "VIEWS",
     "FLOW_ESTABLISHED_BY",
+    "SUPPORTED_LINK_STATUSES",
     "REMOVES",
     "FINDING_KEYS",
     "INVENTORY_KEYS",
@@ -106,16 +113,44 @@ SNIPPET_LIMIT = 160
 
 SCOPE_KINDS = frozenset({"unit", "function", "file", "repo"})
 
-# The chain a finding may reconstruct, in order, and how each link may be established.
+# The chain a finding may reconstruct, in order, by view, and how each link may be
+# established. The values equal the policy's `link_kinds` and `link_statuses` (a test pins
+# them). The influence view is the one the scan builds; the person-data view follows data
+# about the person that feeds M1 to M3, and only investigation records build it.
 FLOW_LINK_KINDS: tuple[str, ...] = (
     "objective",
+    "ingress",
     "person_data",
     "inference",
     "prompt",
     "intervention",
     "feedback",
 )
-FLOW_ESTABLISHED_BY: tuple[str, ...] = ("ast", "declared", "co-located")
+PERSON_DATA_LINK_KINDS: tuple[str, ...] = (
+    "collection",
+    "storage",
+    "retrieval",
+    "transformation",
+    "transmission",
+    "logging",
+    "deletion",
+)
+VIEWS: tuple[str, ...] = ("influence", "person-data")
+LINK_KINDS_BY_VIEW: dict[str, tuple[str, ...]] = {
+    "influence": FLOW_LINK_KINDS,
+    "person-data": PERSON_DATA_LINK_KINDS,
+}
+FLOW_ESTABLISHED_BY: tuple[str, ...] = (
+    "ast",
+    "declared",
+    "investigated",
+    "co-located",
+    "runtime-only",
+)
+# A link is supported when the syntax tree connects it, the prompt text declares it, or a
+# validated investigation record cites it; co-located and runtime-only links are present
+# and unsupported.
+SUPPORTED_LINK_STATUSES: tuple[str, ...] = ("ast", "declared", "investigated")
 
 # What a remediation takes out of the chain.
 REMOVES: tuple[str, ...] = ("objective", "inference", "intervention", "feedback", "record")
@@ -517,8 +552,9 @@ class FlowLink:
     """One link of the reconstructed chain and how it was established.
 
     `established_by` is `ast` (the syntax tree connects it), `declared` (it sits inside the
-    same prompt literal the chain reads) or `co-located` (same file or window only, which
-    is lexical co-occurrence and never a verified flow).
+    same prompt literal the chain reads), `investigated` (a validated investigation record
+    cites it, named in `record`), `co-located` (same file or window only, which is lexical
+    co-occurrence and never a flow) or `runtime-only` (it exists only at runtime).
     """
 
     kind: str
@@ -526,49 +562,92 @@ class FlowLink:
     line: int
     snippet: str
     established_by: str
+    record: str | None = None
 
     def __post_init__(self) -> None:
-        if self.kind not in FLOW_LINK_KINDS:
-            raise ValueError(f"flow link kind {self.kind!r} not in {FLOW_LINK_KINDS}")
+        if self.kind not in FLOW_LINK_KINDS and self.kind not in PERSON_DATA_LINK_KINDS:
+            raise ValueError(
+                f"flow link kind {self.kind!r} not in {FLOW_LINK_KINDS + PERSON_DATA_LINK_KINDS}"
+            )
         if self.established_by not in FLOW_ESTABLISHED_BY:
             raise ValueError(
                 f"flow link established_by {self.established_by!r} not in {FLOW_ESTABLISHED_BY}"
             )
+        if self.established_by == "investigated" and not self.record:
+            raise ValueError("an investigated flow link names the record that cites it")
         object.__setattr__(self, "file", _posix(self.file))
         object.__setattr__(self, "snippet", truncate_snippet(self.snippet))
 
+    @property
+    def supported(self) -> bool:
+        return self.established_by in SUPPORTED_LINK_STATUSES
+
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "kind": self.kind,
             "file": self.file,
             "line": self.line,
             "snippet": self.snippet,
             "established_by": self.established_by,
         }
+        if self.record is not None:
+            out["record"] = self.record
+        return out
 
 
 @dataclass
 class Flow:
-    """The chain objective -> person data -> inference -> prompt -> intervention -> feedback,
-    as far as it could be reconstructed. `established` is True only when every present
-    link is `ast` or `declared`; a chain with any `co-located` link is reported as such."""
+    """A reconstructed chain in one view, as far as it could be followed: in the influence
+    view objective -> ingress -> person data -> inference -> prompt -> intervention ->
+    feedback; in the person-data view collection -> storage -> retrieval -> transformation ->
+    transmission -> logging -> deletion.
+
+    `links_supported` says every link present is supported (`ast`, `declared` or
+    `investigated`). Whether the chain is complete depends on what it is a trace of: the
+    pattern of a finding or a record names the links it requires, and `complete_for` checks
+    them. Neither property ever reads co-location as a flow."""
 
     links: list[FlowLink] = field(default_factory=list)
+    view: str = "influence"
 
     def __post_init__(self) -> None:
+        if self.view not in LINK_KINDS_BY_VIEW:
+            raise ValueError(f"flow view {self.view!r} not in {VIEWS}")
+        order = LINK_KINDS_BY_VIEW[self.view]
+        for link in self.links:
+            if link.kind not in order:
+                raise ValueError(f"flow link kind {link.kind!r} is not a {self.view} link")
         self.links = sorted(
-            self.links, key=lambda link: (FLOW_LINK_KINDS.index(link.kind), link.file, link.line)
+            self.links, key=lambda link: (order.index(link.kind), link.file, link.line)
         )
 
     @property
-    def established(self) -> bool:
-        return bool(self.links) and all(link.established_by != "co-located" for link in self.links)
+    def links_supported(self) -> bool:
+        """True when the chain holds at least one link and every link it holds is supported."""
+        return bool(self.links) and all(link.supported for link in self.links)
 
     def kinds(self) -> tuple[str, ...]:
         return tuple(link.kind for link in self.links)
 
+    def supported_kinds(self) -> frozenset[str]:
+        return frozenset(link.kind for link in self.links if link.supported)
+
+    def missing(self, required: Iterable[str]) -> tuple[str, ...]:
+        """The required kinds no supported link of this chain carries, in chain order."""
+        have = self.supported_kinds()
+        return tuple(kind for kind in required if kind not in have)
+
+    def complete_for(self, required: Iterable[str]) -> bool:
+        """True when `required` names at least one kind and each has a supported link."""
+        required = tuple(required)
+        return bool(required) and not self.missing(required)
+
     def to_dict(self) -> dict[str, Any]:
-        return {"links": [link.to_dict() for link in self.links], "established": self.established}
+        return {
+            "view": self.view,
+            "links": [link.to_dict() for link in self.links],
+            "links_supported": self.links_supported,
+        }
 
 
 @dataclass(frozen=True)
@@ -621,6 +700,10 @@ FINDING_KEYS: tuple[str, ...] = (
     "scope",
     "evidence",
     "flow",
+    "pattern",
+    "links_supported",
+    "trace_complete",
+    "missing_links",
     "flow_established",
     "declared_purpose",
     "encoded_objective",
@@ -706,7 +789,10 @@ class Finding:
         if isinstance(self.recommendation, dict):
             self.recommendation = Recommendation(**self.recommendation)
         if isinstance(self.flow, dict):
-            self.flow = Flow(links=[FlowLink(**link) for link in self.flow.get("links", [])])
+            self.flow = Flow(
+                links=[FlowLink(**link) for link in self.flow.get("links", [])],
+                view=self.flow.get("view", "influence"),
+            )
         if not self.fingerprint:
             self.fingerprint = self.compute_fingerprint()
 
@@ -722,9 +808,62 @@ class Finding:
             return first.file, int(first.line)
         return "", 0
 
+    # -- the trace ---------------------------------------------------------------
+    @property
+    def trace_pattern(self) -> Any:
+        """The policy pattern this finding's trace is measured against (a `Pattern`), or
+        None when its rule draws no trace (the review rules of M8). Read from the packaged
+        policy by the display id; never stored on the finding."""
+        from aisafe.policy import load_policy  # local: the model must not load YAML on import
+
+        return load_policy().pattern_of(self.display_id)
+
+    @property
+    def required_links(self) -> tuple[str, ...]:
+        pattern = self.trace_pattern
+        return () if pattern is None else tuple(pattern.links)
+
+    @property
+    def links_supported(self) -> bool:
+        return self.flow is not None and self.flow.links_supported
+
+    @property
+    def missing_links(self) -> tuple[str, ...]:
+        """The required links no supported link of the chain carries. Every required link is
+        missing when there is no chain, or the chain is of another view than the pattern."""
+        pattern = self.trace_pattern
+        if pattern is None:
+            return ()
+        if self.flow is None or self.flow.view != pattern.view:
+            return tuple(pattern.links)
+        return self.flow.missing(pattern.links)
+
+    @property
+    def trace_complete(self) -> bool | None:
+        """True when every link the finding's pattern requires is present and supported;
+        None when the rule draws no trace. A partial trace is False, never complete."""
+        pattern = self.trace_pattern
+        if pattern is None:
+            return None
+        return not self.missing_links
+
     @property
     def flow_established(self) -> bool:
-        return self.flow is not None and self.flow.established
+        """Deprecated alias of `trace_complete` (False where no trace is defined)."""
+        return self.trace_complete is True
+
+    def flow_dict(self) -> dict[str, Any] | None:
+        """The serialised chain with the trace measured against this finding's pattern."""
+        if self.flow is None:
+            return None
+        out = self.flow.to_dict()
+        pattern = self.trace_pattern
+        out["pattern"] = None if pattern is None else pattern.id
+        out["required"] = list(self.required_links)
+        out["missing"] = list(self.missing_links)
+        out["trace_complete"] = self.trace_complete
+        out["established"] = self.flow_established  # deprecated alias of trace_complete
+        return out
 
     def compute_fingerprint(self) -> str:
         if self.evidence:
@@ -750,7 +889,11 @@ class Finding:
             "confidence": _plain(self.confidence),
             "scope": _plain(self.scope),
             "evidence": [_plain(e) for e in self.evidence],
-            "flow": None if self.flow is None else self.flow.to_dict(),
+            "flow": self.flow_dict(),
+            "pattern": None if self.trace_pattern is None else self.trace_pattern.id,
+            "links_supported": self.links_supported,
+            "trace_complete": self.trace_complete,
+            "missing_links": list(self.missing_links),
             "flow_established": self.flow_established,
             "declared_purpose": self.declared_purpose,
             "encoded_objective": self.encoded_objective,

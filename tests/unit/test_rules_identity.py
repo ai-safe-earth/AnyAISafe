@@ -181,7 +181,7 @@ class TestFixtures:
         assert absence.basis is Basis.PRESENCE and absence.evidence[0].role == "absence"
         for finding in findings:
             assert LEGAL_CAVEAT in (finding.notes or "")
-            assert finding.mechanism == "M6" and finding.rule_version == 2
+            assert finding.mechanism == "M6" and finding.rule_version == 3
 
     def test_companion_check_hits_are_legs_not_findings(self, audit_context):
         findings = _run(audit_context, FIXTURES / "persons_companion")

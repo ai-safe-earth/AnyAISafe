@@ -32,7 +32,7 @@ Commands: `aisafe audit`, `aisafe review`, `aisafe evaluate`, `aisafe fleet`,
 Decision values: **keep** (unchanged or lightly adapted), **extract** (moved into the new
 layout and reworked), **remove** (deleted from the active product; in git history and at
 the legacy refs), **legacy** (removed, and named here as a candidate for a separate
-repository, section 5).
+repository, section 6).
 
 ### Source tree `src/aisafe/`
 
@@ -164,7 +164,47 @@ policy's severity criteria.
 - **The GitHub Action and the GitLab job** keep their inputs; a workflow that passed
   `extra-args: --tools ...` or `--run-evals` must drop them.
 
-## 5. Optional future extraction of the legacy product
+## 5. After 0.2.0: the chain, the trace and policy 1.1.0 (unreleased)
+
+Policy 1.1.0 (adopted 2026-10-30) splits each mechanism into **patterns** and names the
+links a trace of each pattern needs (`policy/mechanisms.yaml`, `patterns`). The decision
+and severity criteria did not change. What a reader of 0.2.0 output has to change:
+
+- **`Flow.established` is gone.** In Python, read `Flow.links_supported` for the old
+  meaning (every link the chain holds is `ast`, `declared` or, now, `investigated`), and
+  `Finding.trace_complete` for the new question (does the chain hold every link the
+  finding's pattern requires, each supported). A chain of one supported link was
+  "established" before; it is `links_supported` and, for most patterns, not complete.
+- **`flow_established` and `flow.established` in the JSON and SARIF are deprecated
+  aliases of `trace_complete`** (`false` where `trace_complete` is `null`). Their meaning
+  changed with the alias: a reader that wants the 0.2.0 meaning reads `links_supported`.
+  Both aliases stay until a later minor version says otherwise.
+- **New finding keys**, between `flow` and `flow_established`: `pattern` (the pattern id,
+  `null` for AUD-1107), `links_supported`, `trace_complete` (`null` without a pattern) and
+  `missing_links`. `flow` gains `view` (`influence` or `person-data`), `links_supported`,
+  `pattern`, `required`, `missing` and `trace_complete`; a link may carry `record` (the
+  investigation record that cites it).
+- **New link values.** Kind `ingress` joins the influence view; the person-data view has
+  `collection`, `storage`, `retrieval`, `transformation`, `transmission`, `logging`,
+  `deletion`. `established_by` gains `investigated` (set only from a validated
+  investigation record, never by the scan) and `runtime-only` (the link exists only at
+  run time, so it is never supported).
+- **The chain line** says `[trace complete for M4/objective]`, `[partial trace for
+  M4/objective: objective not established]`, or `[lexical co-occurrence only; no trace
+  for ...]`, and a finding with no chain prints `chain: none drawn [...]` naming the links
+  a trace would need. `[established]` and `[not established: ...]` are gone.
+- **Rule versions.** AUD-1101 v3: the profile binding is a supported mechanism when the
+  syntax tree supports every link of the M1 binding pattern; a co-located link elsewhere
+  in the file no longer lowers it. AUD-1105, AUD-1106 and AUD-1108 v3: among the
+  evaluation reports inside the freshness window the least favourable one decides, and a
+  report dated in the future has an unknown age, so it demonstrates nothing.
+- **Review records and baselines** written under policy 1.0.0 are re-reviewed under
+  1.1.0, as every policy change requires: AUD-1107/policy reports the record, and the
+  baseline marks its acceptances `re-review`. A person records the review again under
+  1.1.0 (`aisafe review record`), and re-accepts a kept finding with `aisafe audit
+  --amend-baseline FILE --accept FINGERPRINT=REASON`.
+
+## 6. Optional future extraction of the legacy product
 
 The removed halves are coherent enough to live in a repository of their own:
 

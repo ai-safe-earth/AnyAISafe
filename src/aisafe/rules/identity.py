@@ -103,8 +103,11 @@ _DENY_NOTE = (
 class FalseIdentity(AuditRule):
     id = "AUD-1105"
     title = "False human identity or fabricated feelings"
-    version = 2
+    version = 3
     changed = (
+        "v3: among the evaluation reports within the freshness window the least "
+        "favourable one decides (a failing case in any of them is a failure), and a "
+        "report dated in the future has an unknown age, so it demonstrates nothing",
         "v2: serves mechanism M6; every finding carries an evidence status and the policy decision",
         "v2: /persona decides violates_policy; fiction framing in the same prompt literal or "
         "prompt file moves a human claim to requires_contextual_review unless a deny-when-asked "

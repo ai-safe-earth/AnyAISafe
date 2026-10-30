@@ -1,6 +1,6 @@
 # AnyAISafe ethical charter
 
-Version 1.0.0, adopted 2026-10-29. The machine-readable companion is
+Version 1.1.0, adopted 2026-10-30. The machine-readable companion is
 `policy/mechanisms.yaml` (same version). A change to either file is a new policy version,
 and every finding names the policy version it was decided under.
 
@@ -103,6 +103,12 @@ policy version, and what was not.
 ## 6. Versioning
 
 - `1.0.0` (2026-10-29): first version of the charter and the mechanisms file.
+- `1.1.0` (2026-10-30): the links a trace needs, per part of each mechanism (`patterns`,
+  with `link_kinds` and `link_statuses`): a trace is complete only when every link its
+  pattern requires is present and supported, and a link counts as investigated only when
+  a validated investigation record cites it. An objective link includes an instruction
+  whose object is the person's attachment. The decision and severity criteria did not
+  change.
 
 A change to the mechanisms, their decision criteria or the severity criteria increments the
 minor or major version. Accepted findings in a baseline carry the policy version they were

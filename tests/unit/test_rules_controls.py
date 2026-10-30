@@ -95,9 +95,15 @@ def _shape(finding) -> tuple[str, Severity, EvidenceStatus, Decision]:
     return (finding.display_id, finding.severity, finding.evidence_status, finding.decision)
 
 
-def _evaluation_report(root: Path, family: str, status: str, age_days: int = 0) -> None:
-    """Write an `aisafe evaluate` report into the tree with every case of `family` at
-    `status`, dated `age_days` ago."""
+def _evaluation_report(
+    root: Path,
+    family: str,
+    status: str,
+    age_days: int = 0,
+    name: str = "evaluation-report.json",
+) -> None:
+    """Write an `aisafe evaluate` report named `name` into the tree with every case of
+    `family` at `status`, dated `age_days` ago (a negative age dates it in the future)."""
     from aisafe.evaluation.scenarios import CaseResult, build_report, load_corpus
 
     cases = load_corpus([family], include_scenario=True)
@@ -111,7 +117,7 @@ def _evaluation_report(root: Path, family: str, status: str, age_days: int = 0) 
     if age_days:
         when = datetime.now(timezone.utc) - timedelta(days=age_days)
         report["generated_at"] = when.strftime("%Y-%m-%dT%H:%M:%SZ")
-    (root / "evaluation-report.json").write_text(json.dumps(report), encoding="utf-8")
+    (root / name).write_text(json.dumps(report), encoding="utf-8")
 
 
 # ---------------------------------------------------------------------------
@@ -610,6 +616,44 @@ class TestCrisisEvaluation1108:
             Decision.REVIEW,
         )
         assert finding.control_status is None and finding.report is None
+
+    def test_a_passing_report_never_hides_a_failing_one(self, tmp_path, audit_context):
+        # v3: among the fresh reports the least favourable decides, whichever is newer.
+        root = _tree(tmp_path, {}, system=COMPANION)
+        _evaluation_report(root, "crisis_disclosure", "passed")
+        _evaluation_report(
+            root, "crisis_disclosure", "failed", age_days=3, name="evaluation-report-earlier.json"
+        )
+        finding = _only(_run(audit_context, root, NoCrisisPath), "AUD-1108")
+        assert finding.decision is Decision.VIOLATES
+        assert finding.evidence_status is EvidenceStatus.OBSERVED_BEHAVIOR
+        assert finding.report and finding.report["file"] == "evaluation-report-earlier.json"
+
+    def test_an_unjudged_case_beside_a_pass_demonstrates_nothing(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system=COMPANION)
+        _evaluation_report(root, "crisis_disclosure", "passed")
+        _evaluation_report(
+            root, "crisis_disclosure", "inconclusive", name="evaluation-report-rerun.json"
+        )
+        finding = _only(_run(audit_context, root, NoCrisisPath), "AUD-1108")
+        assert finding.control_status is not ControlStatus.DEMONSTRATED
+        assert finding.decision is not Decision.VIOLATES
+
+    def test_a_report_dated_in_the_future_demonstrates_nothing(self, tmp_path, audit_context):
+        root = _tree(tmp_path, {}, system=COMPANION)
+        _evaluation_report(root, "crisis_disclosure", "passed", age_days=-2)
+        ctx = audit_context(root)
+        (record,) = ctx.evaluation
+        assert record.age_days is None and record.age_source == "unknown"
+        findings, _ = run_rules([NoCrisisPath], ctx)
+        finding = _only(findings, "AUD-1108")
+        assert _shape(finding) == (
+            "AUD-1108",
+            Severity.HIGH,
+            EvidenceStatus.SUPPORTED_MECHANISM,
+            Decision.REVIEW,
+        )
+        assert finding.control_status is None
 
     def test_an_evaluation_of_another_family_changes_nothing(self, tmp_path, audit_context):
         root = _tree(tmp_path, {}, system=COMPANION)

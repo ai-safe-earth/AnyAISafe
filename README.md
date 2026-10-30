@@ -195,10 +195,14 @@ Three separate statements, never one score:
 
 Where the evidence allows, the finding also carries:
 
-- the **chain** `objective -> person data -> inference -> prompt -> intervention -> feedback`,
-  each link marked `ast` (the Python syntax tree connects it), `declared` (it sits in the
-  same prompt literal) or `co-located` (same file or window, nothing more). A chain with
-  a `co-located` link is printed as lexical co-occurrence, never as a verified flow;
+- the **chain** `objective -> ingress -> person data -> inference -> prompt -> intervention
+  -> feedback` (or, for what a person discloses, `collection -> storage -> ... ->
+  deletion`), each link marked `ast` (the Python syntax tree connects it), `declared` (it
+  sits in the same prompt literal), `investigated` (a validated investigation record cites
+  it), `co-located` (same file or window, nothing more) or `runtime-only` (built at run
+  time, not visible in the tree). The **trace** is complete only when every link the
+  finding's policy pattern requires is supported; a partial trace names what it lacks, and
+  a chain of co-located links is printed as lexical co-occurrence, never as a verified flow;
 - the **declared purpose** (from the review record, when one covers the unit) next to the
   **encoded objective** (the instruction the prompt carries);
 - the **control status** on the response path: `none`, `claimed`, `wired`, `exercised`,
@@ -274,7 +278,8 @@ walk      list files, honour .gitignore, find sub-projects by their manifests
                the reply path, which assembly feeds which model call
   -> checks    native checks over Python text (hidden-AI instruction, a decision
                function about a person, objective language, personal data in a prompt)
-  -> flows     one chain per prompt, each link ast | declared | co-located
+  -> flows     one chain per prompt, each link ast | declared | co-located,
+               measured against the rule's policy pattern (complete or partial)
   -> rules     AUD-1101 to AUD-1110: evidence status and policy decision
   -> baseline  new | unchanged | re-review, with the policy version compared
   -> report    terminal, JSON, Markdown, SARIF or HTML, with the mechanism table

@@ -1,12 +1,12 @@
 {
   "schema": "aisg/1",
   "kind": "audit-baseline",
-  "generated_at": "2026-10-29T20:53:23Z",
+  "generated_at": "2026-10-30T16:36:23Z",
   "tool": {
     "name": "aisafe-audit",
     "version": "0.1.0"
   },
-  "policy_version": "1.0.0",
+  "policy_version": "1.1.0",
   "fingerprints": [
     "5e3bd06d97536930"
   ],
@@ -16,7 +16,7 @@
       "rule": "AUD-1107/missing",
       "file": ".:0",
       "reason": "This repository is the audit tool itself, not a system that talks to a person. The person signals are entries of the benchmark and research corpus files that name third-party memory SDK repositories under study, and the prompt-like strings are the renderer templates and the model docstrings. Nothing in this tree acts on a person, so there is no reviewer to name.",
-      "policy_version": "1.0.0"
+      "policy_version": "1.1.0"
     }
   ],
   "index": {

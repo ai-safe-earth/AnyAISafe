@@ -29,12 +29,18 @@ An audit of a repository that has prompts but no recognised model SDK still runs
 material is an AI surface on its own. The report then carries a coverage item saying
 the response path, the controls and the data flows could not be read.
 
-## 2. The chain
+## 2. The chain and the trace
 
-Where the evidence allows, a finding reconstructs:
+Where the evidence allows, a finding reconstructs a chain. The influence view:
 
 ```
-objective -> person data or inference -> prompt or algorithm -> intervention -> feedback or reward
+objective -> ingress -> person data -> inference -> prompt -> intervention -> feedback
+```
+
+The person-data view, for what happens to what a person discloses:
+
+```
+collection -> storage -> retrieval -> transformation -> transmission -> logging -> deletion
 ```
 
 Each link is marked with how it was established:
@@ -44,11 +50,30 @@ Each link is marked with how it was established:
   result is returned or sent);
 - `declared`: it sits inside the same prompt literal the chain reads (an objective
   sentence in the system prompt that binds the profile);
-- `co-located`: it shares a file or a window with the rest, and nothing more.
+- `investigated`: a validated investigation record cites it, with a quote found at that
+  file and line in the audited commit; the scan itself never sets it;
+- `co-located`: it shares a file or a window with the rest, and nothing more;
+- `runtime-only`: the code builds or fetches it at run time (a remote prompt, a template
+  filled from a database), so no file in the tree shows it.
 
-A chain is **established** only when every present link is `ast` or `declared`. A chain
-with any `co-located` link is printed as such, and a finding with no established link
-says "lexical co-occurrence only". Co-occurrence is never presented as a verified flow.
+Only `ast`, `declared` and `investigated` **support** a link. Two statements follow, and
+they are kept apart:
+
+- **links supported**: every link the chain holds is supported. A chain of one supported
+  link meets this, so it says nothing about completeness.
+- **trace complete**: every link the finding's policy pattern requires is present and
+  supported. Each mechanism in `policy/mechanisms.yaml` is split into patterns, and each
+  pattern names its required links: M4 `objective` needs `objective` and `intervention`;
+  M1 `binding` needs `person_data`, `prompt` and `intervention`; M1 `storage` (person-data
+  view) needs `collection` and `storage`; M5 `confidant_without_crisis_path` needs
+  `ingress`, `prompt` and `intervention`, and a crisis path absent from that path.
+
+A partial trace is never shown as complete. The report names each required link the trace
+lacks, as `not established` or with the status of the link it has (`is co-located`, `is
+runtime-only`). A chain with no supported link says "lexical co-occurrence only", and a
+finding with no chain says which links a trace would need. Co-occurrence is never
+presented as a verified flow. `flow_established`, from 0.2.0, stays as a deprecated alias
+of `trace_complete` (`docs/migration.md`).
 
 ## 3. Evidence status, decision, severity
 

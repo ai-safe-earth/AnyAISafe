@@ -75,7 +75,7 @@ Abbreviated from a real run on the packaged fixture `persons_companion`
       "severity": "high",
       "priority": 4,
       "mechanism": "M4",
-      "policy_version": "1.0.0",
+      "policy_version": "1.1.0",
       "rule_version": 2,
       "evidence_status": "supported_mechanism",
       "decision": "violates_policy",
@@ -87,6 +87,10 @@ Abbreviated from a real run on the packaged fixture `persons_companion`
         {"role": "check", "file": "app.py", "line": 12, "snippet": "undesired_objective_language: engagement, dependency or manipulation objective language"}
       ],
       "flow": null,
+      "pattern": "objective",
+      "links_supported": false,
+      "trace_complete": false,
+      "missing_links": ["objective", "intervention"],
       "flow_established": false,
       "declared_purpose": null,
       "encoded_objective": "Your goal is to maximize engagement and daily active use.",
@@ -136,15 +140,32 @@ Every key, in the order the JSON writes them (`FINDING_KEYS` in `aisafe.evidence
   persona lines that make the unit the kind of surface the rule speaks about), plus the
   flow roles some rules copy in. Snippets are whitespace-normalised, redacted
   (`<redacted:PREFIX...LAST4>` for anything secret-shaped) and cut to 160 characters.
-- `flow` and `flow_established`: the chain `objective -> person_data -> inference -> prompt
-  -> intervention -> feedback`, as far as it was reconstructed, as `links`, each `kind`,
-  `file`, `line`, `snippet`, `established_by`. `established_by` is `ast` (the Python syntax
-  tree connects it: the profile variable is a source of the prompt assembly, the assembly is
-  the `system=` argument of the model call, the call's result is returned), `declared` (it
-  sits inside the same prompt literal the chain reads) or `co-located` (same file or window
-  only). `flow_established` is `true` only when every present link is `ast` or `declared`.
-  A chain with a `co-located` link is lexical co-occurrence and the renderers say so; `null`
-  means no chain was drawn. Outside Python every link is co-located.
+- `flow`: the chain as far as it was reconstructed, `null` when none was drawn. Its `view`
+  is `influence` (`objective -> ingress -> person_data -> inference -> prompt ->
+  intervention -> feedback`) or `person-data` (`collection -> storage -> retrieval ->
+  transformation -> transmission -> logging -> deletion`); its `links` each carry `kind`,
+  `file`, `line`, `snippet`, `established_by` and, for an investigated link, `record`;
+  then `links_supported`, and the trace against the finding's pattern: `pattern`,
+  `required`, `missing`, `trace_complete` and `established` (the deprecated alias).
+- `established_by` is `ast` (the Python syntax tree connects it: the profile variable is a
+  source of the prompt assembly, the assembly is the `system=` argument of the model call,
+  the call's result is returned), `declared` (it sits inside the same prompt literal the
+  chain reads), `investigated` (a validated investigation record cites it; the scan never
+  sets it), `co-located` (same file or window only) or `runtime-only` (built or fetched at
+  run time, so no file in the tree shows it). Only `ast`, `declared` and `investigated`
+  support a link. Outside Python every link the scan draws is co-located.
+- `links_supported`: `true` when every link the chain holds is supported. It says nothing
+  about completeness: a chain of one supported link meets it.
+- `pattern`: the policy pattern the finding's rule serves (`patterns` under each mechanism
+  in `policy/mechanisms.yaml`), `null` for a rule without one (AUD-1107). A pattern lists
+  the links its trace requires, and the view they belong to.
+- `trace_complete`: `true` only when every link the pattern requires is present and
+  supported, in the pattern's view; `false` otherwise; `null` when the rule has no pattern.
+  A partial trace is never rendered as complete.
+- `missing_links`: the required links the trace lacks, all of them when no chain was drawn.
+- `flow_established`: deprecated alias of `trace_complete` (`false` where that is `null`),
+  kept for readers of 0.2.0 reports. Up to 0.2.0 it meant "every present link is `ast` or
+  `declared`", which a chain of one link met; `docs/migration.md` has the change.
 - `declared_purpose`: the `declared_purpose` of the review record covering the unit and
   file (phase 3), else `null`. `encoded_objective`: the instruction the prompt carries,
   redacted, at most 160 characters, when the finding has one. The renderers print the two
@@ -205,9 +226,15 @@ group. The fixed strings, with placeholders in angle brackets:
   `control:` part only when `control_status` is set);
 - `review decision: <decision> -- <justification>` when the record holds one;
 - the evidence legs, `[<role>] <file>:<line>: <snippet>`;
-- `chain: objective (declared) -> person data (ast) -> prompt (ast) -> intervention (ast)
-  [established]`, or `[not established: a co-located link is lexical co-occurrence]`, or
-  `lexical co-occurrence only`;
+- `chain: objective (declared) -> prompt (ast) -> intervention (ast) [trace complete for
+  M4/objective]`; a partial trace names each required link it lacks, `[partial trace for
+  M4/objective: objective not established]` or `[... intervention is runtime-only]`; a
+  chain with no supported link reads `[lexical co-occurrence only; no trace for
+  M4/objective: ...]`; a finding with no chain reads `chain: none drawn [no trace for
+  M4/objective: objective not established, intervention not established]`; a rule without
+  a pattern reads `[links supported; no trace is defined for this rule]`, `[a link is not
+  supported; no trace is defined for this rule]` or `[lexical co-occurrence only]`, and
+  prints no chain line when it drew no chain;
 - `purpose: declared: <text> | encoded: <text>` when either is known, `population: <text>`
   when set;
 - `fix (<tier>, removes <removes>): <summary>`, then `alternatives:`, `references:` and
@@ -363,7 +390,7 @@ reads it back. Shape:
 
     schema: aisg/1
     kind: review
-    policy_version: "1.0.0"
+    policy_version: "1.1.0"
     reviews:
       - reviewer: "J. Doe <product owner>"       # a person, by name and role; never a tool
         assisted_by: "Claude Code (agent)"       # attribution only; optional

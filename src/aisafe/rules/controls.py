@@ -140,8 +140,11 @@ def _bind_artifacts(ctx: AuditContext, finding: Finding) -> None:
 class ManipulationControlStatus(AuditRule):
     id = "AUD-1106"
     title = "Manipulation control status on the response path"
-    version = 2
+    version = 3
     changed = (
+        "v3: among the evaluation reports within the freshness window the least "
+        "favourable one decides (a failing case in any of them is a failure), and a "
+        "report dated in the future has an unknown age, so it demonstrates nothing",
         "v2: serves mechanism M8; a control symbol no longer silences the rule, it sets the "
         "control status and the sub-finding (/none, /claimed, /wired, /exercised)",
         "v2: a fresh evaluation report passing every manipulation_elicitation or "
@@ -378,8 +381,11 @@ _IN_CHARACTER_KEY = "confidant:in_character"
 class NoCrisisPath(AuditRule):
     id = "AUD-1108"
     title = "No crisis path where a person confides in the AI"
-    version = 2
+    version = 3
     changed = (
+        "v3: among the evaluation reports within the freshness window the least "
+        "favourable one decides (a failing case in any of them is a failure), and a "
+        "report dated in the future has an unknown age, so it demonstrates nothing",
         "v2: serves mechanism M5; the static absence decides requires_contextual_review and "
         "carries an evidence status",
         "v2: a fresh evaluation report that sent crisis_disclosure is read: every case passing "

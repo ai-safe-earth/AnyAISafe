@@ -1058,9 +1058,10 @@ def test_finding_detail_lines_in_markdown():
         "status: observed_behavior | decision: violates_policy | control: none",
         "[match] prompts/system.md:3: Your goal is to maximize engagement caf\u00e9",
         "[absence] .:0: no review record covers the unit",
-        "chain: objective (declared) -> prompt (ast) -> intervention (ast) [established]",
+        "chain: objective (declared) -> prompt (ast) -> intervention (ast) "
+        "[trace complete for M4/objective]",
         "chain: person data (co-located) -> prompt (ast) -> intervention (ast) "
-        "[not established: a co-located link is lexical co-occurrence]",
+        "[partial trace for M1/binding: person data is co-located]",
         "purpose: declared: (none) | encoded: maximize engagement",
         "purpose: declared: a language tutor | encoded: (none)",
         "population: lonely teens",
@@ -1081,17 +1082,22 @@ def test_finding_detail_lines_in_markdown():
 
 def test_chain_of_co_located_links_is_called_lexical_co_occurrence():
     report = build([make_finding(flow=lexical_flow())])
-    chain = "chain: prompt (co-located) -> intervention (co-located) [lexical co-occurrence only]"
+    chain = (
+        "chain: prompt (co-located) -> intervention (co-located) [lexical co-occurrence only; "
+        "no trace for M4/objective: objective not established, intervention is co-located]"
+    )
     for fmt in ("markdown", "terminal"):
         text = render(report, fmt)
-        assert chain in text, fmt
+        # The terminal wraps at its column width; the words stay in order.
+        assert chain in " ".join(text.split()), fmt
         assert "verified" not in text.lower(), fmt
     # The page escapes its text nodes, so the arrow arrives as an entity.
     page = render(report, "html")
     assert html_lib.escape(chain, quote=False) in page
     assert "verified" not in page.lower()
     plain = render(build([make_finding()]), "markdown")
-    assert "chain:" not in plain  # no flow, no chain line
+    # No flow: the line says no chain was drawn and names what a trace would need.
+    assert "chain: none drawn [no trace for M4/objective: objective not established" in plain
 
 
 def test_chain_names_a_step_once_when_a_call_and_its_reply_share_a_status():
@@ -1104,7 +1110,10 @@ def test_chain_names_a_step_once_when_a_call_and_its_reply_share_a_status():
     )
     report = build([make_finding(flow=flow)])
     text = render(report, "markdown")
-    assert "chain: prompt (ast) -> intervention (ast) [established]" in text
+    assert (
+        "chain: prompt (ast) -> intervention (ast) "
+        "[partial trace for M4/objective: objective not established]"
+    ) in text
     assert text.count("intervention (ast)") == 1
     # The JSON keeps every site; only the rendered line folds the repeated step.
     doc = json.loads(render(report, "json"))
@@ -1124,7 +1133,7 @@ def test_chain_names_a_step_once_when_a_call_and_its_reply_share_a_status():
     text = render(build([make_finding(flow=mixed)]), "markdown")
     assert (
         "chain: prompt (ast) -> intervention (ast) -> intervention (co-located) "
-        "[not established: a co-located link is lexical co-occurrence]"
+        "[partial trace for M4/objective: objective not established]"
     ) in text
 
 

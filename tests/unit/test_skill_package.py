@@ -490,7 +490,21 @@ class TestReferences:
         assert f"`{status}`" in text
         fix = report._T_FIX.format(tier="<tier>", removes="<removes>", summary="<summary>")
         assert f"`{fix}`" in text
-        assert f"`{report._T_CHAIN_LEXICAL}`" in text
+        assert f"`[{report._T_CHAIN_LEXICAL}]`" in text
+        flat = " ".join(text.split())
+        pattern = "M4/objective"
+        for line in (
+            report._T_TRACE_COMPLETE.format(pattern=pattern),
+            report._T_TRACE_PARTIAL.format(
+                pattern=pattern, missing=report._T_TRACE_MISSING.format(kind="objective")
+            ),
+            report._T_TRACE_UNSUPPORTED.format(kind="intervention", by="runtime-only"),
+            report._T_TRACE_LEXICAL.format(pattern=pattern, missing="...").split(":")[0],
+            report._T_LINKS_SUPPORTED,
+            report._T_LINKS_PARTIAL,
+            report._T_CHAIN_NONE.split(" [")[0],
+        ):
+            assert line in flat, line
 
     def test_report_format_keeps_the_disclaimer_substance(self):
         text = reference("report-format.md")

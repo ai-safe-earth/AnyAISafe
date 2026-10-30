@@ -1173,14 +1173,21 @@ def _families(body: dict[str, Any]) -> list[str]:
     return []
 
 
+# Clock skew a report may carry before its date counts as being in the future: one hour.
+_FUTURE_TOLERANCE_S = 3600
+
+
 def _build_report(kind: str, path: Path, root: Path, body: dict[str, Any]) -> ReportRecord:
     relpath = _relpath(path, root)
     raw_ts = body.get("generated_at")
     generated_at = raw_ts if isinstance(raw_ts, str) else None
     parsed = _parse_timestamp(raw_ts)
     now = datetime.now(timezone.utc)
-    if parsed is not None:
-        age_source, age_days = "generated_at", (now - parsed).days
+    if parsed is not None and (now - parsed).total_seconds() < -_FUTURE_TOLERANCE_S:
+        # A report dated in the future has no age anyone can trust: it is never fresh.
+        age_source, age_days = "unknown", None
+    elif parsed is not None:
+        age_source, age_days = "generated_at", max(0, (now - parsed).days)
     else:
         when, source = walk.file_age(path, root)
         if when is not None:

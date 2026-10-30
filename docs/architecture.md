@@ -60,7 +60,7 @@ flowchart TD
     W --> D["discover<br/>pattern pass: model calls, prompts,<br/>ingress, person signals, memory,<br/>personas, review records, evaluation reports"]
     D --> P["pydeep (Python)<br/>prompt literals, assemblies,<br/>call sites, reply path"]
     P --> C["checks<br/>native checks over Python text"]
-    C --> F["flows<br/>chain per prompt, link status:<br/>ast | declared | co-located"]
+    C --> F["flows<br/>chain per prompt, link status:<br/>ast | declared | co-located;<br/>trace against the policy pattern"]
     F --> R["rules<br/>AUD-1101..1110<br/>evidence status + policy decision"]
     R --> B["baseline<br/>new | unchanged | re-review<br/>(policy version compared)"]
     B --> O["report<br/>mechanism coverage, findings,<br/>UNKNOWN, inventory"]

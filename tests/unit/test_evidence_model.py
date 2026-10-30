@@ -1,7 +1,8 @@
 """tests/unit/test_evidence_model.py
 ---------------------------------
 Pins for the evidence model: enum ranks and wire strings (equal to the policy's keys),
-fingerprint stability, redaction, the chain and its `established` rule, the finding's key
+fingerprint stability, redaction, the chain's `links_supported` and the finding's
+`trace_complete` against its policy pattern, the finding's key
 order and optional blocks, sorting by severity then mechanism order, the report envelope
 and the inventory shape, and the UNMEASURED default.
 
@@ -25,11 +26,14 @@ from aisafe.evidence.model import (
     FLOW_ESTABLISHED_BY,
     FLOW_LINK_KINDS,
     INVENTORY_KEYS,
+    LINK_KINDS_BY_VIEW,
+    PERSON_DATA_LINK_KINDS,
     REDACT_PATTERNS,
     REMOVES,
     REPORT_KEYS,
     SCHEMA_VERSION,
     SEVERITY_ORDER,
+    SUPPORTED_LINK_STATUSES,
     ArtifactRef,
     AuditContext,
     Basis,
@@ -328,7 +332,7 @@ def test_hit_artifact_and_recommendation_shapes():
         Recommendation("T2", "x", (), ("banner",))
 
 
-def test_flow_links_sort_and_established_rule():
+def test_flow_links_sort_and_links_supported_rule():
     links = [
         FlowLink("intervention", "app.py", 20, "return reply", "ast"),
         FlowLink("prompt", "app.py", 12, "prompt = f'...'", "ast"),
@@ -336,17 +340,117 @@ def test_flow_links_sort_and_established_rule():
     ]
     flow = Flow(links=links)
     assert flow.kinds() == ("person_data", "prompt", "intervention")
-    assert flow.established is True
+    assert flow.links_supported is True
     weak = Flow(links=links + [FlowLink("objective", "app.py", 1, "reward = x", "co-located")])
-    assert weak.established is False
-    assert Flow().established is False
-    assert roundtrip(flow)["established"] is True
+    assert weak.links_supported is False
+    assert Flow().links_supported is False
+    assert roundtrip(flow) == {
+        "view": "influence",
+        "links": [link.to_dict() for link in flow.links],
+        "links_supported": True,
+    }
+    # The removed property stays removed: a reader that asks for it fails loudly.
+    assert not hasattr(flow, "established")
     with pytest.raises(ValueError):
         FlowLink("banner", "a", 1, "x", "ast")
     with pytest.raises(ValueError):
         FlowLink("prompt", "a", 1, "x", "guessed")
     assert FLOW_LINK_KINDS[0] == "objective" and FLOW_LINK_KINDS[-1] == "feedback"
-    assert set(FLOW_ESTABLISHED_BY) == {"ast", "declared", "co-located"}
+    assert set(FLOW_ESTABLISHED_BY) == {
+        "ast",
+        "declared",
+        "investigated",
+        "co-located",
+        "runtime-only",
+    }
+    assert SUPPORTED_LINK_STATUSES == ("ast", "declared", "investigated")
+
+
+def test_completeness_is_measured_against_the_required_links():
+    flow = Flow(
+        links=[
+            FlowLink("objective", "app.py", 2, "keep them talking", "declared"),
+            FlowLink("prompt", "app.py", 2, "SYSTEM = ...", "ast"),
+            FlowLink("intervention", "app.py", 9, "call", "co-located"),
+        ]
+    )
+    assert flow.missing(("objective", "intervention")) == ("intervention",)
+    assert flow.complete_for(("objective", "prompt")) is True
+    assert flow.complete_for(()) is False  # nothing required is never complete
+    assert flow.complete_for(("objective", "intervention")) is False
+
+
+def test_runtime_only_and_investigated_links():
+    with pytest.raises(ValueError):
+        FlowLink("prompt", "a.py", 1, "x", "investigated")  # an investigated link names its record
+    cited = FlowLink("prompt", "a.py", 1, "x", "investigated", record="inv-1")
+    remote = FlowLink("intervention", "a.py", 4, "fetch(prompt_url)", "runtime-only")
+    assert cited.supported and not remote.supported
+    assert cited.to_dict()["record"] == "inv-1" and "record" not in remote.to_dict()
+    flow = Flow(links=[cited, remote])
+    assert flow.missing(("prompt", "intervention")) == ("intervention",)
+
+
+def test_person_data_view_takes_only_its_own_kinds():
+    assert LINK_KINDS_BY_VIEW == {
+        "influence": FLOW_LINK_KINDS,
+        "person-data": PERSON_DATA_LINK_KINDS,
+    }
+    flow = Flow(
+        links=[
+            FlowLink("storage", "store.py", 5, "db.save(mood)", "investigated", record="r"),
+            FlowLink("collection", "app.py", 3, "text = req.json", "investigated", record="r"),
+        ],
+        view="person-data",
+    )
+    assert flow.kinds() == ("collection", "storage")
+    with pytest.raises(ValueError):
+        Flow(links=[FlowLink("prompt", "a.py", 1, "x", "ast")], view="person-data")
+    with pytest.raises(ValueError):
+        Flow(view="audit")
+
+
+def test_finding_trace_follows_its_pattern():
+    prompt_only = Flow(links=[FlowLink("prompt", "prompts/system.md", 3, "x", "declared")])
+    finding = make_finding(flow=prompt_only)  # AUD-1104: pattern objective
+    assert finding.trace_pattern.id == "objective"
+    assert finding.required_links == ("objective", "intervention")
+    assert finding.links_supported is True
+    assert finding.missing_links == ("objective", "intervention")
+    assert finding.trace_complete is False and finding.flow_established is False
+    full = Flow(
+        links=[
+            FlowLink("objective", "app.py", 4, "maximise engagement", "declared"),
+            FlowLink("intervention", "app.py", 9, "call", "ast"),
+            FlowLink("feedback", "train.py", 1, "reward = engagement", "co-located"),
+        ]
+    )
+    complete = make_finding(flow=full)
+    # Complete although a link is co-located: the pattern's links are all supported.
+    assert complete.trace_complete is True and complete.links_supported is False
+    assert complete.flow_established is True
+    # No chain: every required link is missing; a rule with no pattern draws no trace.
+    assert make_finding().missing_links == ("objective", "intervention")
+    assert make_finding().trace_complete is False
+    review = make_finding("AUD-1107", sub="missing")
+    assert review.trace_pattern is None and review.trace_complete is None
+    assert review.flow_established is False and review.missing_links == ()
+
+
+def test_a_chain_of_another_view_does_not_complete_a_pattern():
+    influence = Flow(
+        links=[
+            FlowLink("person_data", "app.py", 2, "profile", "ast"),
+            FlowLink("prompt", "app.py", 3, "prompt", "ast"),
+            FlowLink("intervention", "app.py", 9, "call", "ast"),
+        ]
+    )
+    store = make_finding("AUD-1101", sub="store", flow=influence)  # pattern storage, person-data
+    assert store.trace_pattern.view == "person-data"
+    assert store.missing_links == ("collection", "storage")
+    assert store.trace_complete is False
+    binding = make_finding("AUD-1101", flow=influence)
+    assert binding.trace_pattern.id == "binding" and binding.trace_complete is True
 
 
 # ---------------------------------------------------------------------------
@@ -387,7 +491,14 @@ def test_finding_to_dict_key_order_and_new_fields():
     assert d["mechanism"] == "M4" and d["policy_version"] == "1.0.0" and d["rule_version"] == 2
     assert d["evidence_status"] == "supported_mechanism" and d["decision"] == "violates_policy"
     assert d["control_status"] == "claimed"
-    assert d["flow"]["established"] is True and d["flow_established"] is True
+    # One declared prompt link: every present link is supported, the trace is partial.
+    assert d["flow"]["links_supported"] is True and d["links_supported"] is True
+    assert d["flow"]["pattern"] == "objective" and d["pattern"] == "objective"
+    assert d["flow"]["required"] == ["objective", "intervention"]
+    assert d["flow"]["missing"] == d["missing_links"] == ["objective", "intervention"]
+    assert d["trace_complete"] is False and d["flow"]["trace_complete"] is False
+    # The deprecated aliases follow trace_complete, not the old reading.
+    assert d["flow_established"] is False and d["flow"]["established"] is False
     assert d["declared_purpose"] == "a tutor" and d["encoded_objective"] == "maximize engagement"
     assert d["artifacts"] == [{"file": "prompts/system.md", "sha256": "00" * 32}]
     assert d["references"] == ["EU:Art.5(1)(a)"]

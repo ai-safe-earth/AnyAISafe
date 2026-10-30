@@ -45,6 +45,7 @@ from typing import Any, Iterable, Sequence
 from aisafe.evidence.model import (
     DISCLAIMER,
     DISCLAIMER_TEMPLATE,
+    FLOW_ESTABLISHED_BY,
     SCHEMA_VERSION,
     SEVERITY_ORDER,
     AuditContext,
@@ -166,11 +167,20 @@ _T_STATUS_CONTROL = "status: {status} | decision: {decision} | control: {control
 _T_REVIEW_DECISION = "review decision: {decision} -- {justification}"
 _T_EVIDENCE = "[{role}] {file}:{line}: {snippet}"
 _T_CHAIN = "chain: {links} [{status}]"
+_T_CHAIN_NONE = "chain: none drawn [no trace for {pattern}: {missing}]"
 _T_CHAIN_LINK = "{kind} ({by})"
 _T_CHAIN_ARROW = " -> "
-_T_CHAIN_ESTABLISHED = "established"
-_T_CHAIN_PARTIAL = "not established: a co-located link is lexical co-occurrence"
 _T_CHAIN_LEXICAL = "lexical co-occurrence only"
+_STATUS_ORDER = FLOW_ESTABLISHED_BY
+# The trace against the finding's policy pattern: complete only when every link the pattern
+# requires is present and supported; a partial trace names each required link it lacks.
+_T_TRACE_COMPLETE = "trace complete for {pattern}"
+_T_TRACE_PARTIAL = "partial trace for {pattern}: {missing}"
+_T_TRACE_LEXICAL = "lexical co-occurrence only; no trace for {pattern}: {missing}"
+_T_TRACE_MISSING = "{kind} not established"
+_T_TRACE_UNSUPPORTED = "{kind} is {by}"
+_T_LINKS_SUPPORTED = "links supported; no trace is defined for this rule"
+_T_LINKS_PARTIAL = "a link is not supported; no trace is defined for this rule"
 _T_PURPOSE = "purpose: declared: {declared} | encoded: {encoded}"
 _T_POPULATION = "population: {text}"
 _T_FIX = "fix ({tier}, removes {removes}): {summary}"
@@ -256,11 +266,17 @@ _TEMPLATES: tuple[str, ...] = (
     _T_REVIEW_DECISION,
     _T_EVIDENCE,
     _T_CHAIN,
+    _T_CHAIN_NONE,
     _T_CHAIN_LINK,
     _T_CHAIN_ARROW,
-    _T_CHAIN_ESTABLISHED,
-    _T_CHAIN_PARTIAL,
     _T_CHAIN_LEXICAL,
+    _T_TRACE_COMPLETE,
+    _T_TRACE_PARTIAL,
+    _T_TRACE_LEXICAL,
+    _T_TRACE_MISSING,
+    _T_TRACE_UNSUPPORTED,
+    _T_LINKS_SUPPORTED,
+    _T_LINKS_PARTIAL,
     _T_PURPOSE,
     _T_POPULATION,
     _T_FIX,
@@ -755,12 +771,34 @@ def _evidence_text(evidence: Evidence) -> str:
     )
 
 
+def _missing_text(finding: Finding) -> str:
+    """Each required link the trace lacks: "not established" when no link of that kind is
+    present, else the best status a present one has (co-located, runtime-only)."""
+    flow = finding.flow
+    parts: list[str] = []
+    for kind in finding.missing_links:
+        present = [] if flow is None else [link for link in flow.links if link.kind == kind]
+        name = kind.replace("_", " ")
+        if present:
+            by = sorted({link.established_by for link in present}, key=_STATUS_ORDER.index)[0]
+            parts.append(_T_TRACE_UNSUPPORTED.format(kind=name, by=by))
+        else:
+            parts.append(_T_TRACE_MISSING.format(kind=name))
+    return ", ".join(parts)
+
+
 def _chain_text(finding: Finding) -> str | None:
-    """The reconstructed chain, link by link with how each was established, and a verdict on
-    the chain as a whole: established, partly co-located, or lexical co-occurrence only."""
+    """The reconstructed chain, link by link with how each was established, then the trace
+    measured against the finding's policy pattern: complete, partial (naming each required
+    link it lacks), or lexical co-occurrence only. A partial trace is never shown as
+    complete; a rule that draws no trace says so. With no chain at all, a finding whose
+    rule has a pattern still names the links a trace would need; one without says nothing."""
     flow = finding.flow
     if flow is None or not flow.links:
-        return None
+        pattern = finding.trace_pattern
+        if pattern is None:
+            return None
+        return _T_CHAIN_NONE.format(pattern=pattern.display_id, missing=_missing_text(finding))
     rendered: list[str] = []
     for link in flow.links:
         text = _T_CHAIN_LINK.format(kind=link.kind.replace("_", " "), by=link.established_by)
@@ -769,12 +807,21 @@ def _chain_text(finding: Finding) -> str | None:
         if not rendered or rendered[-1] != text:
             rendered.append(text)
     links = _T_CHAIN_ARROW.join(rendered)
-    if flow.established:
-        status = _T_CHAIN_ESTABLISHED
-    elif all(link.established_by == "co-located" for link in flow.links):
-        status = _T_CHAIN_LEXICAL
+    pattern = finding.trace_pattern
+    lexical = not any(link.supported for link in flow.links)
+    if pattern is None:
+        status = (
+            _T_CHAIN_LEXICAL
+            if lexical
+            else (_T_LINKS_SUPPORTED if flow.links_supported else _T_LINKS_PARTIAL)
+        )
+        return _T_CHAIN.format(links=links, status=status)
+    if finding.trace_complete:
+        status = _T_TRACE_COMPLETE.format(pattern=pattern.display_id)
+    elif lexical:
+        status = _T_TRACE_LEXICAL.format(pattern=pattern.display_id, missing=_missing_text(finding))
     else:
-        status = _T_CHAIN_PARTIAL
+        status = _T_TRACE_PARTIAL.format(pattern=pattern.display_id, missing=_missing_text(finding))
     return _T_CHAIN.format(links=links, status=status)
 
 
@@ -1098,7 +1145,11 @@ def _sarif_result(finding: Finding) -> dict[str, Any]:
         "confidence": finding.confidence.to_dict(),
         "scope": finding.scope.to_dict(),
         "sub": finding.sub,
-        "flow": None if finding.flow is None else finding.flow.to_dict(),
+        "flow": finding.flow_dict(),
+        "pattern": None if finding.trace_pattern is None else finding.trace_pattern.id,
+        "links_supported": finding.links_supported,
+        "trace_complete": finding.trace_complete,
+        "missing_links": list(finding.missing_links),
         "flow_established": finding.flow_established,
         "control_status": None if control is None else getattr(control, "value", str(control)),
         "references": list(finding.references),

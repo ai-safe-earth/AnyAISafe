@@ -507,8 +507,8 @@ def test_finding_block_head_status_chain_and_fix():
     assert "[match] app.py:12" in page
     # The arrow is a text node, so the page carries it as an entity.
     assert (
-        "chain: objective (declared) -&gt; prompt (ast) -&gt; intervention (ast) [established]"
-        in page
+        "chain: objective (declared) -&gt; prompt (ast) -&gt; intervention (ast) "
+        "[trace complete for M4/objective]" in page
     )
     assert "purpose: declared: a tutor | encoded: maximize engagement" in page
     assert "population: lonely teens" in page

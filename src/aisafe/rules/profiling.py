@@ -102,7 +102,7 @@ _INFERENCE_PROSE_KEYS = frozenset(
 _USE_KINDS_INFERENCE = ("persuasion_use", "monetisation", "attachment", "steering")
 _USE_KINDS_SENSITIVE = ("persuasion_use", "steering", "attachment")
 _USE_KINDS_CATEGORISATION = ("persuasion_use", "steering")
-_BINDING_CHAIN = frozenset({"person_data", "prompt", "intervention"})
+_BINDING_LINKS = ("person_data", "prompt", "intervention")
 
 # What makes an extracted or inferred trait psychological, emotional or sensitive. Read on
 # the sentence the extraction row matched, together with the vocabulary's special-category
@@ -416,13 +416,16 @@ def _flow_gaps(ctx: AuditContext, file: str, flow: Flow | None) -> tuple[str, ..
         return (_GREP_ONLY_GAP,)
     if flow is None:
         return ("no chain reaches this line: the model call that reads the prompt was not found",)
-    if not flow.established:
+    if not flow.links_supported:
         return (f"the chain was not established end to end: {flow_summary(flow)}",)
     return ()
 
 
 def _binding_established(flow: Flow | None) -> bool:
-    return flow is not None and flow.established and _BINDING_CHAIN <= set(flow.kinds())
+    """True when the syntax tree supports every link of the M1 binding pattern (the person
+    data, the prompt, the model call). A co-located link elsewhere in the file, such as a
+    metric objective in another function, shows in the chain and never lowers this."""
+    return flow is not None and flow.complete_for(_BINDING_LINKS)
 
 
 def _fiction_note(ctx: AuditContext, out: Facts, file: str, line: int) -> str:
@@ -491,8 +494,12 @@ def _signal_at(file: str, line: int, kind: str, key: str, symbol: str, unit: Any
 class PersonProfileInPrompt(AuditRule):
     id = "AUD-1101"
     title = "Person profile bound into or extracted for a prompt"
-    version = 2
+    version = 3
     changed = (
+        "v3: the binding is a supported mechanism when the syntax tree supports every link of "
+        "the M1 binding pattern (the person data, the prompt, the model call); a co-located "
+        "link elsewhere in the file, such as a metric objective in another function, no "
+        "longer lowers it to a detected signal",
         "v2: every finding carries an evidence status and the policy decision; the profile "
         "binding is a supported mechanism when the chain profile -> prompt -> model call is "
         "established by the syntax tree, and a detected signal otherwise",

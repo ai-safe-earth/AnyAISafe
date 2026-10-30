@@ -8,12 +8,13 @@
 #
 # Nothing here is detection logic. Detection lives in src/aisafe/rules/; evidence lives in
 # src/aisafe/evidence/. A rule names the mechanism it serves; this file says what the
-# mechanism is and what distinguishes it from ordinary behaviour.
+# mechanism is, what distinguishes it from ordinary behaviour, and which links a trace of
+# it needs before it is complete (`patterns`).
 # ---------------------------------------------------------------------------
 schema: aisg/1
 kind: policy
-version: "1.0.0"
-adopted: 2026-10-29
+version: "1.1.0"
+adopted: 2026-10-30
 charter: policy/charter.md
 
 # What a finding may say about the evidence. Order is weakest to strongest; `unknown`
@@ -100,6 +101,29 @@ severity_criteria:
 review_max_age_days: 180
 evaluation_max_age_days: 30
 
+# How a link of a trace was established. The first three are supported; the last two are
+# present and unsupported. A trace is the chain a finding or an investigation record
+# reconstructs; a mechanism's `patterns` say which links a trace of each part of the
+# mechanism needs before it is complete.
+link_statuses:
+  ast: the Python syntax tree connects it (a name the prompt reads, the call the prompt feeds, the return that carries the reply)
+  declared: it sits inside the prompt text the chain reads
+  investigated: a validated investigation record cites it, with a quote and a content hash, as read or traced in the code
+  co-located: it shares a file or a window with the rest of the chain, and nothing more; lexical co-occurrence, never a flow
+  runtime-only: it exists only at runtime (a prompt fetched from a service, a value read from the environment or a database); the tree shows where, not what
+supported_link_statuses: [ast, declared, investigated]
+
+# The links a trace may hold, by view, in chain order. The influence view follows an
+# objective through the person's input, their data and an inference to the prompt or the
+# algorithm and the intervention that reaches the person, and back as feedback. An
+# objective link includes an instruction whose object is the person's attachment to the
+# system: cultivating a relationship is in scope with no business goal written down
+# (charter, principle 3). The person-data view follows personal data that feeds M1 to M3
+# from where it is collected to where it goes, and is used for those three only.
+link_kinds:
+  influence: [objective, ingress, person_data, inference, prompt, intervention, feedback]
+  person-data: [collection, storage, retrieval, transformation, transmission, logging, deletion]
+
 # The mechanisms. `distinct_from` names what is NOT the mechanism, so a rule and its
 # tests draw the line in the same place. `rules` are the detection rules that serve it.
 mechanisms:
@@ -115,6 +139,15 @@ mechanisms:
       conversation history passed to the model to answer the person's own question;
       facts the person asked the system to remember for a task they named.
     rules: [AUD-1101]
+    patterns:
+      - id: binding
+        view: influence
+        links: [person_data, prompt, intervention]
+        rules: [AUD-1101, AUD-1101/sensitive]
+      - id: storage
+        view: person-data
+        links: [collection, storage]
+        rules: [AUD-1101/extraction, AUD-1101/store]
 
   - id: M2
     name: Vulnerability inference used for influence
@@ -126,6 +159,11 @@ mechanisms:
       Emotion or sentiment analysis the person requested on their own material; a
       safety classifier that routes a person in crisis to help and does nothing else.
     rules: [AUD-1102]
+    patterns:
+      - id: inference_for_influence
+        view: influence
+        links: [inference, objective, intervention]
+        rules: [AUD-1102]
 
   - id: M3
     name: Scoring people for susceptibility or personalised persuasion
@@ -138,6 +176,11 @@ mechanisms:
       explicit request; a decision about a person that a named human reviews, which is
       recorded for review, not treated as approved.
     rules: [AUD-1103]
+    patterns:
+      - id: scoring_for_influence
+        view: influence
+        links: [person_data, inference, intervention]
+        rules: [AUD-1103]
 
   - id: M4
     name: Optimisation of attention, retention or spending through psychological pressure
@@ -150,6 +193,16 @@ mechanisms:
       Completing the task the person asked for; a reminder the person set; a dashboard
       that measures engagement and feeds no instruction or objective.
     rules: [AUD-1104]
+    patterns:
+      - id: objective
+        view: influence
+        links: [objective, intervention]
+        rules: [AUD-1104]
+      - id: outreach
+        view: influence
+        links: [intervention]
+        absent_control: person_set_schedule
+        rules: [AUD-1104/outreach, AUD-1104/outreach-personalised]
 
   - id: M5
     name: Engineered affection, seduction, exclusivity, guilt, relationship substitution and dependency
@@ -164,6 +217,20 @@ mechanisms:
       content inside fiction the person chose, when no instruction targets the person's
       attachment to the system itself.
     rules: [AUD-1109, AUD-1108]
+    patterns:
+      - id: attachment_instruction
+        view: influence
+        links: [objective, prompt, intervention]
+        rules: [AUD-1109]
+      - id: attachment_algorithm
+        view: influence
+        links: [objective, intervention]
+        rules: []
+      - id: confidant_without_crisis_path
+        view: influence
+        links: [ingress, prompt, intervention]
+        absent_control: crisis_path
+        rules: [AUD-1108]
 
   - id: M6
     name: False human identity or fabricated feelings used to induce interpersonal trust
@@ -176,6 +243,16 @@ mechanisms:
       A named persona that says it is an AI when asked; a human character inside fiction
       the person chose, which is recorded for review and not treated as an exemption.
     rules: [AUD-1105]
+    patterns:
+      - id: concealment_instruction
+        view: influence
+        links: [prompt, intervention]
+        rules: [AUD-1105, AUD-1105/persona, AUD-1105/feelings]
+      - id: no_disclosure_on_path
+        view: influence
+        links: [ingress, intervention]
+        absent_control: ai_disclosure
+        rules: [AUD-1105/no-disclosure]
 
   - id: M7
     name: Covert commercial or political persuasion
@@ -188,6 +265,19 @@ mechanisms:
       Information the person asked for, including a product comparison or a neutral
       account of candidates' positions; a disclosed recommendation.
     rules: [AUD-1110]
+    patterns:
+      - id: covert_steering
+        view: influence
+        links: [objective, prompt, intervention]
+        rules: [AUD-1110, AUD-1110/commercial, AUD-1110/political]
+      - id: profile_keyed_steering
+        view: influence
+        links: [person_data, objective, prompt, intervention]
+        rules: []
+      - id: affiliate
+        view: influence
+        links: [objective, intervention]
+        rules: [AUD-1110/affiliate]
 
   - id: M8
     name: Missing or stale review of these mechanisms
@@ -200,3 +290,6 @@ mechanisms:
       A review record bound to the artifacts by content hash, within the window, naming
       the reviewer and the mechanisms considered.
     rules: [AUD-1107, AUD-1106]
+    # No pattern: missing review is decided from the review records and the control
+    # evidence (AUD-1106, AUD-1107), never from a trace.
+    patterns: []

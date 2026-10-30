@@ -1,9 +1,9 @@
 schema: aisg/1
 kind: review
-policy_version: "1.0.0"
+policy_version: "1.1.0"
 reviews:
   - reviewer: "A. Reviewer <product owner>"
-    reviewed_at: 2026-10-29
+    reviewed_at: 2026-10-30
     scope: [M1, M2, M3, M4, M5, M6, M7, M8]
     declared_purpose: "a conversational companion for adults who chose it"
     affected_population: "adult users of the companion app"

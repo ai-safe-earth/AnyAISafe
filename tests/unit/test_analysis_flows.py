@@ -1,9 +1,11 @@
 """tests/unit/test_analysis_flows.py
 ---
 Chain reconstruction: objective -> person data -> inference -> prompt -> intervention ->
-feedback, with how each link was established. `ast` and `declared` links make a chain
-established; a single `co-located` link does not, and a chain with nothing established
-renders as "lexical co-occurrence only". Co-location is never presented as a verified flow.
+feedback, with how each link was established. `ast` and `declared` links are supported; a
+single `co-located` link makes `links_supported` false, and a chain with nothing supported
+renders as "lexical co-occurrence only". Co-location is never presented as a flow. Whether a
+finding's trace is complete is measured against its policy pattern (tests in
+test_evidence_model.py and test_reporting_chain.py).
 """
 
 from __future__ import annotations
@@ -78,7 +80,7 @@ def test_flow_summary_says_lexical_co_occurrence_when_nothing_is_established():
             FlowLink("intervention", "a.py", 9, "call", "co-located"),
         ]
     )
-    assert weak.established is False
+    assert weak.links_supported is False
     assert flow_summary(weak) == "lexical co-occurrence only"
 
 
@@ -96,9 +98,10 @@ def test_flow_summary_orders_kinds_and_statuses():
         "objective (declared) -> person data (co-located) -> prompt (ast) -> "
         "intervention (ast, co-located)"
     )
-    assert flow.established is False
+    assert flow.links_supported is False
     assert FLOW_LINK_KINDS == (
         "objective",
+        "ingress",
         "person_data",
         "inference",
         "prompt",
@@ -122,7 +125,7 @@ def test_companion_fixture_chain_is_established(audit_fixture, audit_context):
     found = build_flows(ctx)
     assert found == ctx.flows
     flow = flow_at(found, "app.py", 19)
-    assert flow.established is True
+    assert flow.links_supported is True
     (person,) = links_of(flow, "person_data")
     assert person.established_by == "ast" and person.line == 18
     assert "user_profile" in person.snippet
@@ -136,7 +139,7 @@ def test_companion_fixture_chain_is_established(audit_fixture, audit_context):
     )
     # The system prompt literal gets its own chain; its person data is only co-located.
     literal_flow = flow_at(found, "app.py", 11)
-    assert literal_flow.established is False
+    assert literal_flow.links_supported is False
     assert any(
         link.kind == "person_data" and link.established_by == "co-located"
         for link in literal_flow.links
@@ -177,7 +180,7 @@ def test_ast_links_everywhere_make_an_established_chain(tmp_path: Path, audit_co
     flow = flow_at(ctx.flows, "app.py", 8)
     assert flow.kinds() == ("objective", "person_data", "prompt", "intervention", "intervention")
     assert {link.established_by for link in flow.links} == {"ast", "declared"}
-    assert flow.established is True
+    assert flow.links_supported is True
     assert links_of(flow, "person_data")[0].line == 7
     assert links_of(flow, "objective")[0].line == 4
 
@@ -206,7 +209,7 @@ def test_co_located_person_data_is_not_an_established_chain(tmp_path: Path, audi
     (person,) = links_of(flow, "person_data")
     assert person.established_by == "co-located" and person.line == 6
     assert [link.established_by for link in links_of(flow, "intervention")] == ["ast", "ast"]
-    assert flow.established is False
+    assert flow.links_supported is False
     assert flow_summary(flow) == "person data (co-located) -> prompt (ast) -> intervention (ast)"
 
 
@@ -230,7 +233,7 @@ def test_grep_only_prompt_in_an_unparsable_file_is_lexical_co_occurrence(
     flow = flow_at(ctx.flows, "app.py", 4)
     assert all(link.established_by == "co-located" for link in flow.links)
     assert {link.kind for link in flow.links} >= {"prompt", "intervention", "objective"}
-    assert flow.established is False
+    assert flow.links_supported is False
     assert flow_summary(flow) == "lexical co-occurrence only"
 
 
@@ -254,7 +257,7 @@ def test_feedback_link_reads_a_metric_in_the_same_unit(tmp_path: Path, audit_con
     (feedback,) = links_of(flow, "feedback")
     assert (feedback.file, feedback.line, feedback.established_by) == ("train.py", 1, "co-located")
     assert links_of(flow, "objective") == []  # the objective lives in another file
-    assert flow.established is False
+    assert flow.links_supported is False
     assert flow_summary(flow).endswith("feedback (co-located)")
 
 
@@ -280,7 +283,7 @@ def test_inference_inside_the_system_prompt_literal_is_declared(tmp_path: Path, 
     assert flow.kinds() == ("inference", "prompt", "intervention", "intervention")
     (inference,) = links_of(flow, "inference")
     assert inference.established_by == "declared" and inference.line == 3
-    assert flow.established is True
+    assert flow.links_supported is True
     assert flow_summary(flow) == "inference (declared) -> prompt (ast) -> intervention (ast)"
 
 
@@ -304,7 +307,7 @@ def test_objective_outside_the_prompt_text_is_only_co_located(tmp_path: Path, au
     flow = flow_at(ctx.flows, "app.py", 6)
     objective = links_of(flow, "objective")
     assert objective == [] or objective[0].established_by == "co-located"
-    assert flow.established is (objective == [])
+    assert flow.links_supported is (objective == [])
 
 
 def test_declared_links_come_from_candidates_inside_the_span_only(tmp_path: Path, audit_context):
@@ -328,7 +331,7 @@ def test_declared_links_come_from_candidates_inside_the_span_only(tmp_path: Path
     ctx = audit_context(root)
     flow = flow_at(ctx.flows, "app.py", 6)
     assert links_of(flow, "objective") == []
-    assert flow.established is True
+    assert flow.links_supported is True
 
 
 def test_builder_tolerates_a_context_without_hits_or_files(tmp_path: Path):
@@ -342,7 +345,7 @@ def test_builder_tolerates_a_context_without_hits_or_files(tmp_path: Path):
     ctx = AuditContext(root=tmp_path, inventory=Inventory(), pyfacts=facts)
     (flow,) = build_flows(ctx)
     assert flow.kinds() == ("prompt", "intervention")
-    assert flow.established is True
+    assert flow.links_supported is True
     assert flow.links[0].snippet == "fstring prompt assembly"  # no text: the fallback label
     assert flows.flow_summary(flow) == "prompt (ast) -> intervention (ast)"
 
