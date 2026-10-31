@@ -6,12 +6,16 @@ against the audited tree. Deterministic; no model, no network.
 A record is **rejected** when a required field is empty or malformed; when a cited file is
 not one the scan walked, or (in a git tree) not one the commit tracks; when a quote is not
 at the cited line or a content hash differs; when the record was made at another commit or
-in another mode; when its surface id names another surface of the plan, or it cites nothing
-in its surface's file; when its free text pronounces a verdict or a quote carries a
-secret-shaped string; when a remediation step already passes (it tests nothing) or a
-regression step fails; when a file it depends on has changed; when its id is used twice; or
-when it supersedes an unknown record, a record of another mechanism, or a violation with a
-weaker claim (a closing record never lowers a violation).
+in another mode; when its surface id names another surface of the plan, or no link, and no
+citation ruling out a link the pattern requires, sits in its surface's file (a person-facing
+unit: no link in one of the unit's files); when its free text pronounces a verdict or a
+quote carries a secret-shaped string; when a remediation step already passes (it tests
+nothing) or a regression step fails; when a file it depends on has changed; when its id is
+used twice; or when it supersedes an unknown record, a record of another mechanism, surface
+or pattern, or a violation with a weaker claim (a closing record never lowers a violation);
+naming a record of another commit replaces nothing, so it needs none of that. In a
+directory, every `*.json` is a record, or a rejected one, unless it carries the exact label
+of another document of the workbench: a file that may be a record is never dropped.
 
 An accepted record keeps its proposal only as far as the evidence carries it. Each
 downgrade is written down in `notes`:
@@ -26,23 +30,34 @@ downgrade is written down in `notes`:
 - a `no_violation_identified_in_scope` proposal stays one only when the record shows the
   chain broken (every required link either traced or ruled out in `absent_links`, at least
   one ruled out) or, for a pattern with an absent control, a complete chain with the control
-  on it: its location in the file of the link it sits on, or reached by `via` hops; a
-  complete trace with a benign reading is for a person to weigh, so it becomes a review; a
-  ruled-out link the scan lists in the same unit needs a citation of that row; a surface
-  fetched at run time cannot be closed from the tree.
+  on it (`_control_problem` says what that takes); a complete trace with a benign reading is
+  for a person to weigh, so it becomes a review; a ruled-out link the scan lists needs a
+  citation of each of those rows, in the units of the record's surface and links (for the
+  prompt of a prompt surface, the rows inside that surface), and of each link the scan's
+  syntax tree established for the pattern, whatever its kind; a surface fetched at run time
+  cannot be closed from the tree, a prompt, person-data, objective or inference link cannot
+  be ruled out while the tree fetches a prompt at run time, and a control cannot sit in a
+  fetched prompt: the claim is unknown and the link or control counts as runtime-only;
+- a closing by a control stays one only when the control and the link it guards are in
+  Python the syntax tree read. Elsewhere the machine cannot show a control runs, so the
+  claim is a review, and a person can still close it.
 
-A skeptic result counts only when its file sits next to the record, is bound to it
-(`record_sha256`), was written in another session than the investigation and refutes none
-of its claims; a pass with one refuted claim is a refutation.
+A skeptic result counts only when its file sits next to the record (a bare file name, a
+regular file of at most 8 MiB, checked before anything opens it), is bound to it
+(`record_sha256`), was written in another session than the investigation, and every claim in
+it says what was tried and is `upheld` or `refuted`; a pass with one refuted claim is a
+refutation.
 """
 
 from __future__ import annotations
 
+import ast
 import json
 import re
+import stat
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
-from pathlib import Path
+from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
 from aisafe.evidence.model import (
@@ -89,6 +104,33 @@ _FP_RE = re.compile(r"^[0-9a-f]{16}$")
 _SURFACE_ID_RE = re.compile(r"^s-[0-9a-f]{12}(?:-\d+)?$")
 _FUTURE_TOLERANCE = timedelta(hours=1)
 _MAX_RECORD_BYTES = 8 * 1024 * 1024
+# Documents of the workbench that are not records, by their exact label (`aisafe audit`
+# reports and evaluation reports too). Anything else in a records directory is a record, or
+# one that broke.
+_OTHER_DOCUMENTS = frozenset(
+    {
+        ("aisg/1", "audit"),
+        ("aisg/1", "inventory"),
+        ("aisg/1", "evaluation"),
+        *(
+            (f"aisg/{name}/1", name)
+            for name in (
+                "investigation-plan",
+                "investigation-validation",
+                "assessment",
+                "engagement",
+                "bundle",
+                "evidence-requests",
+                "auditee-response",
+                "qa-signoff",
+            )
+        ),
+    }
+)
+# A skeptic file is named, never reached: no separator, no drive, no stream, no `..`. The
+# name is checked as text, because opening a path that names a host starts a network sign-in.
+_SKEPTIC_NAME_RE = re.compile(r"(?!\.+$)[A-Za-z0-9._-]{1,128}")
+_OTHER_COMMIT = "the record was made at commit"
 _UNIT_SURFACES = frozenset({"person_facing_unit"})
 _RUNTIME_SURFACES = frozenset({"remote_prompt"})
 _CLOSE = Decision.NO_VIOLATION.value
@@ -114,6 +156,24 @@ _SIGNAL_ROWS = {
     "transmission": frozenset({"profile_sdk"}),
 }
 _CLAIM_RANK = {"establishes": 2, "review": 1, "closes": 0}
+# Absent controls that are a change to the data: the send must follow the transformation.
+_TRANSFORMING_CONTROLS = frozenset({"anonymisation"})
+# What leaves the service with the person's data: each must follow the transformation.
+_SEND_KINDS = frozenset({"transmission", "logging"})
+# Kinds a prompt carries: a line that fetches the prompt shows none of them, and none can be
+# ruled out while what the prompt says is not in the tree.
+_PROMPT_BORNE = ("prompt", "person_data", "objective", "inference")
+# Lines of code that name a control and run nothing: a comment, an import, a definition's
+# header. Python's are also read from its syntax tree (`_Checker.inert_lines`).
+_NAMES_ONLY_RE = re.compile(
+    r"""^\s*(?:$|#|//|/\*|\*|"{3}|'{3}|from\s+\S+\s+import\b|import\b|export\s+\{"""
+    r"""|(?:const|let|var)\s+\{?[^=]*\}?\s*=\s*require\("""
+    r"""|(?:export\s+(?:default\s+)?)?(?:async\s+)?(?:function\*?|class)\s+\w"""
+    # A function held in a name or a property: `const f = (x) => {`, `f: async x => x,`.
+    r"""|(?:export\s+)?(?:(?:const|let|var)\s+[\w$]+\s*(?::[^=]+)?=|[\w$]+\s*[:=])\s*"""
+    r"""(?:async\s+)?(?:function\b|(?:<[^>]*>\s*)?(?:\([^)]*\)|[\w$]+)\s*(?::[^=]+)?=>))"""
+)
+_IDENTIFIER_RE = re.compile(r"[A-Za-z_]\w*")
 
 
 def _surface_types() -> tuple[str, ...]:
@@ -328,6 +388,8 @@ class _Checker:
         self.result = RecordResult(path=path.as_posix(), raw=raw)
         self._lines: dict[str, list[str]] = {}
         self._hashes: dict[str, str] = {}
+        self._inert: dict[str, set[int]] = {}
+        self._trees: dict[str, ast.Module | None] = {}
         # (file, first line, last line, where) of every accepted citation
         self.citations: list[tuple[str, int, int, str]] = []
 
@@ -350,6 +412,78 @@ class _Checker:
             except OSError:
                 return None
         return self._lines[relpath]
+
+    def tree_of(self, relpath: str) -> ast.Module | None:
+        """The syntax tree of a Python file; None for any other file, or one that does not
+        parse."""
+        if relpath not in self._trees:
+            tree = None
+            if self.scan.reading_of(relpath) == "deep":
+                try:
+                    tree = ast.parse("\n".join(self.lines_of(relpath) or []))
+                except (SyntaxError, ValueError, RecursionError):
+                    tree = None
+            self._trees[relpath] = tree
+        return self._trees[relpath]
+
+    def inert_lines(self, relpath: str) -> set[int]:
+        """The lines of a Python file that run nothing: imports (all their lines), strings
+        standing as statements, the header of a definition (all of a one-line one), a lambda
+        given a name."""
+        if relpath not in self._inert:
+            lines: set[int] = set()
+            tree = self.tree_of(relpath)
+            for node in ast.walk(tree) if tree is not None else ():
+                if isinstance(node, (ast.Import, ast.ImportFrom)) or (
+                    isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
+                ):
+                    lines.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
+                elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    lines.update(range(node.lineno, max(node.body[0].lineno, node.lineno + 1)))
+                elif isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(
+                    node.value, ast.Lambda
+                ):
+                    lines.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
+            self._inert[relpath] = lines
+        return self._inert[relpath]
+
+    def names_used(self, relpath: str) -> list[tuple[int, str, bool]]:
+        """`(line, name, called)` for each name the code of a Python file reads or calls, from
+        its syntax tree, so text in a string is not one. A lambda's body is left out: it runs
+        only if something calls it, which the line does not show."""
+        tree = self.tree_of(relpath)
+        used: list[tuple[int, str, bool]] = []
+        stack: list[ast.AST] = [tree] if tree is not None else []
+        while stack:
+            node = stack.pop()
+            if isinstance(node, ast.Lambda):
+                continue
+            stack.extend(ast.iter_child_nodes(node))
+            if isinstance(node, ast.Call):
+                target = node.func
+                name = target.attr if isinstance(target, ast.Attribute) else None
+                name = target.id if isinstance(target, ast.Name) else name
+                if name:
+                    used.append((node.lineno, name, True))
+            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
+                used.append((node.lineno, node.id, False))
+            elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
+                used.append((node.lineno, node.attr, False))
+        return used
+
+    def names_only(self, cited: dict[str, Any]) -> bool:
+        """Every cited line is blank or, in code, an import, a comment or a definition's
+        header: it names something and runs nothing."""
+        lines = self.lines_of(cited["file"]) or []
+        inert = self.inert_lines(cited["file"])
+        code = self.scan.reading_of(cited["file"]) in ("deep", "read")
+        last = cited["end_line"] or cited["line"]
+        return all(
+            number in inert
+            or not lines[number - 1].strip()
+            or (code and _NAMES_ONLY_RE.match(lines[number - 1]))
+            for number in range(cited["line"], last + 1)
+        )
 
     def citation(self, item: Any, where: str, role: str = "citation") -> dict[str, Any] | None:
         """Check `{file, line, end_line?, quote, sha256}`; returns the normalised citation
@@ -483,7 +617,7 @@ def validate_record(
             check.error(f"the record names commit {result.commit}; the tree is not a git checkout")
         elif here is not None and result.commit != here:
             check.error(
-                f"the record was made at commit {result.commit or 'none'}; the tree is at {here}. "
+                f"{_OTHER_COMMIT} {result.commit or 'none'}; the tree is at {here}. "
                 "Validate it on that commit, or write a new record"
             )
 
@@ -612,6 +746,11 @@ def validate_record(
         for row in scan.ctx.inventory.prompts or []
         if str(row.get("kind")) in ("remote", "runtime")
     }
+
+    def fetched_at_run_time(cited: dict[str, Any]) -> bool:
+        last = cited["end_line"] or cited["line"]
+        return any((cited["file"], n) in remote_lines for n in range(cited["line"], last + 1))
+
     seen_ids: set[str] = set()
     links: list[dict[str, Any]] = []
     for index, item in enumerate(raw_links):
@@ -640,11 +779,7 @@ def validate_record(
                 hop_cited["step"] = _text(hop.get("step")) if isinstance(hop, dict) else ""
                 via.append(hop_cited)
         reading = scan.reading_of(cited["file"])
-        last_line = cited["end_line"] or cited["line"]
-        runtime = how == "runtime-only" or (
-            kind in ("prompt", "person_data")
-            and any((cited["file"], n) in remote_lines for n in range(cited["line"], last_line + 1))
-        )
+        runtime = how == "runtime-only" or (kind in _PROMPT_BORNE and fetched_at_run_time(cited))
         if runtime and how != "runtime-only":
             check.note(
                 f"{where}: {cited['file']}:{cited['line']} is a prompt the scan lists as fetched "
@@ -714,8 +849,11 @@ def validate_record(
         _norm_control(pattern.absent_control) if pattern and pattern.absent_control else None
     )
     control_states: list[str] = []
-    control_located = False
+    # Controls said to be on the path, each with the link it names: judged once the chain is
+    # known. Each is (where, location, link, via hops).
+    control_claims: list[tuple[str, dict[str, Any], dict[str, Any], list[dict[str, Any]]]] = []
     control_searched = False
+    control_fetched = False
     for index, item in enumerate(controls):
         where = f"controls[{index}]"
         if not isinstance(item, dict):
@@ -746,18 +884,20 @@ def validate_record(
                 on_link = links_by_id.get(_text(item.get("link")))
                 if located is None:
                     check.note(f"{where}: a control on the path needs its `location`")
+                elif fetched_at_run_time(located):
+                    control_fetched = True
+                    check.note(
+                        f"{where}: {located['file']}:{located['line']} is a prompt the scan lists "
+                        "as fetched or built at run time; what it says cannot be read from the "
+                        "tree, so it closes nothing"
+                    )
                 elif on_link is None:
                     check.note(
                         f"{where}: a control on the path names the `link` of the chain it sits "
                         "on; without one it does not close anything"
                     )
-                elif on_link["file"] != located["file"] and not hops:
-                    check.note(
-                        f"{where}: the control is in {located['file']}, the link it sits on in "
-                        f"{on_link['file']}; `via` hops cite the way between them"
-                    )
                 else:
-                    control_located = True
+                    control_claims.append((where, located, on_link, hops))
 
     absent = _list(raw.get("absent_links"))
     if absent is None:
@@ -781,8 +921,10 @@ def validate_record(
         for s in searched:
             check.free_text(s, f"{where}.searched")
         check.required_text(item.get("reason"), f"{where}.reason")
+        # A kind the pattern does not need leaves the chain as it is: it answers no surface.
+        role = "absent" if pattern is not None and kind in pattern.links else "absent-unneeded"
         for c_index, citation in enumerate(_list(item.get("citations")) or []):
-            cited = check.citation(citation, f"{where}.citations[{c_index}]", role="absent")
+            cited = check.citation(citation, f"{where}.citations[{c_index}]", role=role)
             if cited is not None:
                 ruled_citations.setdefault(kind, []).append(cited)
         ruled_out.add(kind)
@@ -813,10 +955,14 @@ def validate_record(
         elif check._hashes[relpath] != sha:
             check.error(f"{where}: {relpath} changed since the record was written")
 
-    # The record answers the surface it names: something it cites is in that file, and
-    # inside the surface's span when the plan gives one.
+    # The record answers the surface it names: a link, or a citation ruling out a link the
+    # pattern needs, is in that file, and inside the surface's span when the plan gives one.
     if surface is not None and s_type not in _UNIT_SURFACES and s_file in scan.walked:
-        in_file = [(lo, hi) for file, lo, hi, _role in check.citations if file == s_file]
+        in_file = [
+            (lo, hi)
+            for file, lo, hi, role in check.citations
+            if file == s_file and role in ("link", "absent")
+        ]
         span = result.surface.get("span")
         if not in_file:
             check.error(f"the record cites nothing in {s_file}, the file of the surface it answers")
@@ -825,6 +971,14 @@ def validate_record(
                 f"the record cites nothing in lines {span[0]}-{span[1]} of {s_file}, the "
                 "surface it answers"
             )
+    # A person-facing unit is answered by a link (or a `via` hop of one) in one of its files.
+    if surface is not None and s_type in _UNIT_SURFACES:
+        unit = _unit_of(result.surface, scan)
+        if not any(
+            role == "link" and getattr(scan.walked.get(file), "unit", None) == unit
+            for file, _lo, _hi, role in check.citations
+        ):
+            check.error(f"the record cites no link in {s_file}, the person-facing unit it answers")
     result.cited_files = sorted({file for file, _lo, _hi, _role in check.citations})
 
     # -- skeptic ----------------------------------------------------------------------------
@@ -877,7 +1031,7 @@ def validate_record(
             "passes_at_record": passes,
             "detail": detail,
         }
-        if kind in ("absent", "present") and passes is None:
+        if kind in ("absent", "present", "no_finding") and passes is None:
             check.error(f"{where}: {detail}")
         if purpose == "remediation" and passes is True:
             check.error(
@@ -924,7 +1078,8 @@ def validate_record(
     result.runtime = runtime
     result.ruled_out = sorted(ruled_out & set(required), key=required.index)
     # Runtime-only links never bridge a chain: connectedness is over supported links.
-    connected = _connected(supported, required, check)
+    chain = _chain(supported, required, check)
+    connected = bool(chain)
     result.connected = connected
     result.complete = not missing and connected
     contradictory = "yes" in control_states and (
@@ -935,12 +1090,26 @@ def validate_record(
             f"the record says {pattern.absent_control} is on the path and also that it is "
             "not, or that it cannot tell; it closes nothing"
         )
-    result.control_on_path = control_located and result.complete and not contradictory
-    if control_located and not result.complete:
+    control_located = control_read = False
+    if control_claims and not result.complete:
         check.note(
-            f"{pattern.absent_control} is shown on the path, but the chain it sits on is not "
-            "complete; it closes nothing"
+            f"{pattern.absent_control} is said to be on the path, but the chain it sits on is "
+            "not complete; it closes nothing"
         )
+    elif control_claims:
+        for where, located, on_link, hops in control_claims:
+            problem = _control_problem(
+                located, on_link, hops, supported, chain, absent_control, ruled_out, check
+            )
+            if problem is None:
+                control_located = True
+                control_read = control_read or all(
+                    scan.ctx.pyfacts is not None and check.tree_of(file) is not None
+                    for file in (located["file"], on_link["file"])
+                )
+            else:
+                check.note(f"{where}: {problem}; it closes nothing")
+    result.control_on_path = control_located and not contradictory
     cited_kinds = {x["kind"] for x in links}
     both = sorted(ruled_out & cited_kinds)
     for kind in both:
@@ -1002,6 +1171,13 @@ def validate_record(
             check.note(
                 "a closing reading must be supported by the cited code; the decision is a review"
             )
+        if decision == _CLOSE and closes_by_control and not control_read:
+            decision = _REVIEW
+            check.note(
+                f"{pattern.absent_control} is outside the Python the syntax tree read, and this "
+                "tool does no deep analysis there, so the machine cannot show it runs; a person "
+                "weighs it and can still close it"
+            )
         if decision == _CLOSE and s_type in _RUNTIME_SURFACES:
             status, decision = _UNKNOWN, _REVIEW
             check.note(
@@ -1010,6 +1186,15 @@ def validate_record(
             )
         uncovered = [k for k in required if k not in supported_kinds and k not in ruled_out]
         broken = [k for k in required if k in ruled_out and k not in cited_kinds]
+        fetched = _ruled_out_at_run_time(broken, result, scan)
+        if fetched:
+            status, decision = _UNKNOWN, _REVIEW
+            result.runtime = [*runtime, *(k for k in fetched if k not in runtime)]
+            check.note(
+                f"{', '.join(fetched)} is ruled out, and a prompt fetched at run time is in play: "
+                "what it says cannot be read from the tree, so no citation answers it; the claim "
+                "is unknown and goes to review"
+            )
         if decision == _CLOSE and not closes_by_control and both:
             decision = _REVIEW
             check.note(
@@ -1031,14 +1216,14 @@ def validate_record(
                 )
         if decision == _CLOSE and not closes_by_control:
             contradicted = _scan_contradictions(
-                broken, ruled_citations, result.surface, scan, pattern.id
+                broken, ruled_citations, result.surface, scan, pattern.id, links
             )
             if contradicted:
                 decision = _REVIEW
                 for kind, where in contradicted:
                     check.note(
                         f"the scan lists {kind} in this unit ({where}); ruling it out needs a "
-                        "citation of that row that answers it"
+                        "citation of each of those rows that answers it"
                     )
         if decision == _CLOSE and runtime and not closes_by_control:
             status, decision = _UNKNOWN, _REVIEW
@@ -1049,6 +1234,14 @@ def validate_record(
         if decision == _CLOSE and open_items:
             decision = _REVIEW
             check.note("questions stay open or evidence is missing; the decision is a review")
+    if control_fetched:
+        status, decision = _UNKNOWN, _REVIEW
+        if pattern.absent_control not in result.runtime:
+            result.runtime = [*result.runtime, pattern.absent_control]
+        check.note(
+            f"{pattern.absent_control} is said to sit in a prompt fetched at run time; the claim "
+            "is unknown and goes to review"
+        )
     result.effective = {"evidence_status": status, "decision": decision}
     result.claim = {_VIOLATES: "establishes", _CLOSE: "closes"}.get(decision, "review")
 
@@ -1057,15 +1250,14 @@ def validate_record(
     return result
 
 
-def _connected(links: list[dict[str, Any]], required: list[str], check: _Checker) -> bool:
-    """One connected component of `from` edges holds a link of every required kind; an
-    edge between two files counts only with a `via` hop."""
+def _chain(links: list[dict[str, Any]], required: list[str], check: _Checker) -> set[str]:
+    """The ids of the links in a connected component of `from` edges that holds a link of
+    every required kind; empty when none does. An edge between two files counts only with a
+    `via` hop."""
     by_id = {link["id"]: link for link in links}
     present = {link["kind"] for link in links}
     if not set(required) <= present:
-        return False
-    if len(set(required)) <= 1:
-        return True
+        return set()
     parent = {link_id: link_id for link_id in by_id}
 
     def find(x: str) -> str:
@@ -1093,10 +1285,185 @@ def _connected(links: list[dict[str, Any]], required: list[str], check: _Checker
                 )
                 continue
         parent[find(link["id"])] = find(source)
-    groups: dict[str, set[str]] = {}
+    groups: dict[str, list[dict[str, Any]]] = {}
     for link in links:
-        groups.setdefault(find(link["id"]), set()).add(link["kind"])
-    return any(set(required) <= kinds for kinds in groups.values())
+        groups.setdefault(find(link["id"]), []).append(link)
+    return {
+        link["id"]
+        for group in groups.values()
+        if set(required) <= {link["kind"] for link in group}
+        for link in group
+    }
+
+
+def _followed(
+    link: dict[str, Any], kind: str, by_id: dict[str, dict[str, Any]], chain: set[str]
+) -> list[dict[str, Any]]:
+    """The links of `kind` that `link` comes after, walking back the `from` edges of `chain`."""
+    found: list[dict[str, Any]] = []
+    seen = {link["id"]}
+    source = link.get("from")
+    while source in chain and source not in seen:
+        seen.add(source)
+        if by_id[source]["kind"] == kind:
+            found.append(by_id[source])
+        source = by_id[source].get("from")
+    return found
+
+
+def _transformation_problem(
+    control: str,
+    supported: list[dict[str, Any]],
+    chain: set[str],
+    ruled_out: set[str],
+    check: _Checker,
+) -> str | None:
+    """Why the data is not shown transformed before it leaves; None when it is.
+
+    Every send the record cites follows, on the chain, a transformation link that runs and,
+    in the same file, comes before it. A send that is no supported link cannot be shown to.
+    `logging` is cited or ruled out: a raw copy in a log is a send the chain does not show."""
+    by_id = {link["id"]: link for link in supported}
+    if "logging" not in ruled_out and not any(x["kind"] == "logging" for x in supported):
+        return (
+            f"{control} closes only with `logging` cited or ruled out: a raw copy in a log or "
+            "a trace leaves the service as a send does"
+        )
+    for send in (x for x in check.result.links if x["kind"] in _SEND_KINDS):
+        where = f"{send['file']}:{send['line']}"
+        if send["id"] not in by_id:
+            return f"the {send['kind']} at {where} is not a supported link, so it is not shown"
+        before = [
+            step
+            for step in _followed(send, "transformation", by_id, chain)
+            if not check.names_only(step)
+            and (step["file"] != send["file"] or (step["end_line"] or step["line"]) < send["line"])
+        ]
+        if not before:
+            return (
+                f"{control} needs the transformation itself cited as a link, on a line that "
+                f"runs and before the {send['kind']} at {where}, which follows it (`from`)"
+            )
+    return None
+
+
+def _control_problem(
+    located: dict[str, Any],
+    on_link: dict[str, Any],
+    hops: list[dict[str, Any]],
+    supported: list[dict[str, Any]],
+    chain: set[str],
+    control: str | None,
+    ruled_out: set[str],
+    check: _Checker,
+) -> str | None:
+    """Why a control said to be on the path is not shown there; None when it is.
+
+    It takes a line that runs (not an import, a comment or a definition's header), wholly at
+    or before the first line of the link it guards, on the chain; in the unit a unit surface
+    names, and with a link of the chain inside any other surface. In Python, the line is in
+    the function of that link; a line elsewhere needs a `via` hop in that function that the
+    syntax tree shows calling the function it sits in (or reading the constant), and a
+    function nothing on the way calls never counts. A control in another language or in a
+    config file, from Python, needs a hop that names the file. Elsewhere only the file and
+    the order can be read. A transformation (anonymisation) needs `_transformation_problem`
+    to find nothing. This is the mechanical floor: whether the line does what the record says
+    is for the skeptic pass. A control outside Python passes here at best: the claim stays a
+    review (`validate_record`).
+    """
+    scan = check.scan
+    surface = check.result.surface
+    file = on_link["file"]
+    if on_link["id"] not in chain:
+        return f"link {on_link['id']} is not on the connected chain of the pattern"
+    if surface.get("type") in _UNIT_SURFACES:
+        if getattr(scan.walked.get(file), "unit", None) != _unit_of(surface, scan):
+            return f"link {on_link['id']} is outside the unit the record answers"
+    else:
+        lo, hi = surface.get("span") or (1, 10**9)
+        if not any(
+            x["id"] in chain
+            and x["file"] == surface.get("file")
+            and x["line"] <= hi
+            and (x["end_line"] or x["line"]) >= lo
+            for x in supported
+        ):
+            return f"no link of the chain sits in the surface at {surface.get('file')}"
+    if check.names_only(located):
+        return (
+            f"{located['file']}:{located['line']} is an import, a comment or a definition's "
+            "header: it names the control and does not show it runs"
+        )
+    if control in _TRANSFORMING_CONTROLS:
+        problem = _transformation_problem(control, supported, chain, ruled_out, check)
+        if problem is not None:
+            return problem
+    facts = scan.ctx.pyfacts if scan.reading_of(file) == "deep" else None
+    function = facts.function_at(file, on_link["line"]) if facts is not None else None
+
+    def on_the_way(cited: dict[str, Any]) -> bool:
+        if cited["file"] != file or (cited["end_line"] or cited["line"]) > on_link["line"]:
+            return False
+        return facts is None or facts.function_at(file, cited["line"]) == function
+
+    if on_the_way(located):
+        return None
+    name, must_call = _callable_name(located, file, check)
+    lines = check.lines_of(file) or []
+
+    def reaches(hop: dict[str, Any]) -> bool:
+        last = hop["end_line"] or hop["line"]
+        if name is None:
+            return True
+        if facts is not None and scan.reading_of(located["file"]) == "deep":
+            return any(
+                used == name
+                and hop["line"] <= line <= last
+                and (called or not must_call)
+                and facts.function_at(file, line) == function
+                for line, used, called in check.names_used(file)
+            )
+        return bool(re.search(rf"\b{re.escape(name)}\b", " ".join(lines[hop["line"] - 1 : last])))
+
+    if any(on_the_way(hop) and not check.names_only(hop) and reaches(hop) for hop in hops):
+        return None
+    return (
+        f"{located['file']}:{located['line']} is not at or before link {on_link['id']} in its "
+        f"{'function' if facts is not None else 'file'}, and no `via` hop there "
+        + (f"reaches {name}" if name else "reaches it")
+    )
+
+
+def _callable_name(
+    located: dict[str, Any], link_file: str, check: _Checker
+) -> tuple[str | None, bool]:
+    """What a line on the way must name to reach `located`, and whether it must call it: the
+    function that holds it (a call), in Python the first name on a line at module level (a
+    constant is read, not called), or, from Python, the stem of a file Python does not read.
+    None where nothing can be read."""
+    scan = check.scan
+    facts = scan.ctx.pyfacts
+    if scan.reading_of(located["file"]) != "deep":
+        python_link = scan.reading_of(link_file) == "deep"
+        return (PurePosixPath(located["file"]).stem if python_link else None), False
+    if facts is None:
+        return None, False
+    holder = facts.function_at(located["file"], located["line"])
+    if holder is not None and holder.name:
+        return holder.name.rsplit(".", 1)[-1], True
+    first = _IDENTIFIER_RE.search((check.lines_of(located["file"]) or [""])[located["line"] - 1])
+    return (first.group(0) if first else None), False
+
+
+def _ruled_out_at_run_time(broken: list[str], result: RecordResult, scan: MachineScan) -> list[str]:
+    """The ruled-out kinds that rest on a prompt fetched at run time: what a prompt carries,
+    when the surface is such a prompt or the scan lists one anywhere in the tree. The unit
+    does not limit this: a service can fetch the prompt a unit next to it sends."""
+    kinds = [kind for kind in broken if kind in _PROMPT_BORNE]
+    fetched = result.surface.get("type") in _RUNTIME_SURFACES or any(
+        str(row.get("kind")) in ("remote", "runtime") for row in scan.ctx.inventory.prompts or []
+    )
+    return kinds if fetched else []
 
 
 def _unit_of(surface: dict[str, Any], scan: MachineScan) -> str | None:
@@ -1115,19 +1482,26 @@ def _scan_contradictions(
     surface: dict[str, Any],
     scan: MachineScan,
     pattern_id: str = "",
+    links: Iterable[dict[str, Any]] = (),
 ) -> list[tuple[str, str]]:
-    """Ruled-out kinds the scan lists in the surface's unit, when no citation of the ruled-out
-    entry is at one of those rows."""
-    unit = _unit_of(surface, scan)
+    """Ruled-out kinds the scan lists in the record's units (its surface's and its links'),
+    when a citation of the ruled-out entry is not at each of those rows. For the prompt of a
+    prompt surface, the rows are those inside that surface: the other prompts of the unit are
+    surfaces of their own."""
+    units = {str(_unit_of(surface, scan))} | {
+        str(getattr(scan.walked.get(link["file"]), "unit", None)) for link in links
+    }
+    own_prompt = surface.get("type") == "prompt"
+    line = surface.get("line") or 0
+    lo, hi = surface.get("span") or (line, line)
     out: list[tuple[str, str]] = []
     for kind in broken:
-        section = _SCAN_ROWS.get(kind)
-        if section is None:
-            continue
+        # Not every kind has rows of its own; a link the syntax tree established counts for all.
+        section = _SCAN_ROWS.get(kind, "")
         rows = [
             row
             for row in getattr(scan.ctx.inventory, section, None) or []
-            if str(row.get("unit")) == str(unit)
+            if str(row.get("unit")) in units
             and not (
                 section == "llm_calls"
                 and str(row.get("api") or "").startswith(("import ", "from "))
@@ -1144,19 +1518,24 @@ def _scan_contradictions(
                     rows.append({"file": flow_link.file, "line": flow_link.line, "kind": "ast"})
         if not rows:
             continue
-        if kind == "prompt" and any(str(r.get("kind")) in ("remote", "runtime") for r in rows):
-            first = next(r for r in rows if str(r.get("kind")) in ("remote", "runtime"))
-            out.append(("a prompt fetched at run time", f"{first.get('file')}:{first.get('line')}"))
-            continue
-        answered = any(
-            c["file"] == str(row.get("file"))
-            and c["line"] <= int(row.get("line") or 0) <= (c["end_line"] or c["line"])
-            for row in rows
-            for c in cited.get(kind, [])
-        )
-        if not answered:
-            first = rows[0]
-            out.append((kind, f"{first.get('file')}:{first.get('line')}"))
+        if kind == "prompt" and own_prompt:
+            rows = [
+                row
+                for row in rows
+                if str(row.get("file")) == surface.get("file")
+                and lo <= int(row.get("line") or 0) <= hi
+            ] or [{"file": surface.get("file"), "line": line}]
+        unanswered: list[str] = []
+        for row in rows:
+            where = f"{row.get('file')}:{row.get('line')}"
+            if where not in unanswered and not any(
+                c["file"] == str(row.get("file"))
+                and c["line"] <= int(row.get("line") or 0) <= (c["end_line"] or c["line"])
+                for c in cited.get(kind, [])
+            ):
+                unanswered.append(where)
+        if unanswered:
+            out.append((kind, ", ".join(unanswered)))
     return out
 
 
@@ -1213,15 +1592,26 @@ def _bind_skeptic(
     }
     if claimed not in ("upheld", "refuted"):
         return out
-    name = _text(skeptic.get("file")).replace("\\", "/")
+    name = _text(skeptic.get("file"))
     if not name:
         check.note("the skeptic result names no file; it is treated as not run")
         return out
-    out["file"] = name
-    base = path.parent.resolve()
-    skeptic_path = (path.parent / name).resolve()
-    if Path(name).is_absolute() or ".." in Path(name).parts or base not in skeptic_path.parents:
-        check.note("the skeptic file must sit in the record's directory; it is treated as not run")
+    outside = "the skeptic file must sit in the record's directory; it is treated as not run"
+    if not _SKEPTIC_NAME_RE.fullmatch(name):
+        check.note(outside)
+        return out
+    skeptic_path = path.parent / name
+    try:
+        info = skeptic_path.lstat()
+    except OSError as exc:
+        why = exc.strerror or exc
+        check.note(f"the skeptic file cannot be read ({why}); it is treated as not run")
+        return out
+    if not stat.S_ISREG(info.st_mode):  # a link, a device, a pipe or a directory
+        check.note(outside)
+        return out
+    if info.st_size > _MAX_RECORD_BYTES:
+        check.note("the skeptic file is larger than 8 MiB; it is treated as not run")
         return out
     try:
         doc = load_json(skeptic_path)
@@ -1251,17 +1641,23 @@ def _bind_skeptic(
         why = f"it says {_text(doc.get('result')) or 'nothing'}, the record says {claimed}"
     elif not isinstance(claims, list) or not claims:
         why = "it lists no claim it tried to refute"
+    elif not all(
+        isinstance(c, dict)
+        and _text(c.get("claim"))
+        and _text(c.get("result")).lower() in ("upheld", "refuted")
+        for c in claims
+    ):
+        why = "a claim in it is not {claim, result: upheld or refuted, reason}"
     if why is not None:
         check.note(f"the skeptic file is not bound to the record: {why}; it is treated as not run")
         return out
     parsed = [
         {
             "claim": _text(c.get("claim")),
-            "result": _text(c.get("result")),
+            "result": _text(c.get("result")).lower(),
             "reason": _text(c.get("reason")),
         }
         for c in claims
-        if isinstance(c, dict)
     ]
     effective = claimed
     if claimed == "upheld" and any(c["result"] == "refuted" for c in parsed):
@@ -1273,6 +1669,7 @@ def _bind_skeptic(
         {
             "result": effective,
             "bound": True,
+            "file": name,
             "skeptic": {k: _text(who.get(k)) for k in ("agent", "model", "version", "session")},
             "claims": parsed,
             "untrusted_text_checked": doc.get("untrusted_text_checked") is True,
@@ -1308,7 +1705,8 @@ def _step_shape(step: dict[str, Any], kind: str) -> str | None:
 
 def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]:
     """Run one verification step against `scan`. True passes, False fails, None cannot run
-    (`reinvestigate`, or an `absent`/`present` step whose file the walk does not read)."""
+    (`reinvestigate`, or an `absent`, `present` or `no_finding` step whose file the walk does
+    not read: a file that is not read has no findings, which shows nothing)."""
     kind = _text(step.get("kind"))
     if kind in ("absent", "present"):
         relpath = _text(step.get("file")).replace("\\", "/")
@@ -1328,6 +1726,12 @@ def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]
     if kind == "no_finding":
         rule = _text(step.get("rule"))
         relpath = _text(step.get("file")).replace("\\", "/") or None
+        roots = {u.root or "." for u in scan.ctx.inventory.units or []}
+        if relpath is not None and relpath not in scan.walked and relpath not in roots:
+            return None, (
+                f"{relpath} is not in the walked tree, so the step cannot run: a file the walk "
+                "does not read has no findings, which shows nothing"
+            )
         hits = [
             f
             for f in scan.findings
@@ -1359,36 +1763,37 @@ def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]
 
 
 def find_record_files(path: Path) -> tuple[list[Path], list[dict[str, str]]]:
-    """The record files under `path` (itself when it is a file), and every other `*.json`
-    there with why it is not one. Every file is parsed: where its `schema` key sits does not
-    matter. Skeptic passes are listed as such."""
+    """The record files under `path` (itself when it is a file), and the documents there
+    that are something else, with what they are. Every `*.json` is parsed: where its `schema`
+    key sits does not matter. A file that cannot be read, that is too large, or whose label is
+    not the exact one of another document may be a record that broke: it counts as one, and
+    is rejected, so the assessment lists a gap instead of dropping it."""
     path = Path(path)
-    candidates = [path] if path.is_file() else sorted(path.rglob("*.json"))
+    candidates = (
+        [path]
+        if path.is_file()
+        else sorted(p for p in path.rglob("*") if p.suffix.lower() == ".json")
+    )
     records: list[Path] = []
     skipped: list[dict[str, str]] = []
     for candidate in candidates:
         try:
-            size = candidate.stat().st_size
-        except OSError:
-            skipped.append({"path": candidate.as_posix(), "why": "cannot be read"})
-            continue
-        if size > _MAX_RECORD_BYTES:
-            skipped.append({"path": candidate.as_posix(), "why": "larger than 8 MiB"})
-            continue
-        try:
+            if candidate.stat().st_size > _MAX_RECORD_BYTES:
+                records.append(candidate)
+                continue
             doc = json.loads(candidate.read_text(encoding="utf-8-sig"))
-        except (OSError, UnicodeDecodeError, json.JSONDecodeError, RecursionError):
-            # A file that does not parse may be a record that broke: it is validated, and
-            # rejected, so the assessment counts it as a gap instead of dropping it.
+        except (OSError, ValueError, RecursionError):  # ValueError: not UTF-8, not JSON, ...
             records.append(candidate)
             continue
         schema = doc.get("schema") if isinstance(doc, dict) else None
-        if schema == SKEPTIC_SCHEMA:
+        kind = doc.get("kind") if isinstance(doc, dict) else None
+        label = (schema, kind) if isinstance(schema, str) and isinstance(kind, str) else None
+        if label == (SKEPTIC_SCHEMA, SKEPTIC_KIND):
             skipped.append({"path": candidate.as_posix(), "why": "a skeptic pass"})
-        elif schema == INVESTIGATION_SCHEMA or path.is_file():
-            records.append(candidate)
+        elif label in _OTHER_DOCUMENTS and not path.is_file():
+            skipped.append({"path": candidate.as_posix(), "why": f"a document of kind {kind}"})
         else:
-            skipped.append({"path": candidate.as_posix(), "why": f"schema {schema!r}"})
+            records.append(candidate)
     return records, skipped
 
 
@@ -1400,8 +1805,8 @@ def validate_paths(
     plan_surfaces: dict[str, dict[str, Any]] | None = None,
 ) -> ValidationRun:
     """Validate every record file under `paths` against `scan`, then the batch: ids used
-    twice, supersessions (unknown id, a cycle, another mechanism, a weaker claim over a
-    violation)."""
+    twice, supersessions (unknown id, a cycle, another mechanism, surface or pattern, a weaker
+    claim over a violation)."""
     run = ValidationRun(
         root=scan.root, state=scan.state.to_dict(), mode=scan.mode, working_tree=working_tree
     )
@@ -1428,8 +1833,10 @@ def validate_paths(
         return run
     for file in sorted(set(files), key=lambda p: p.as_posix()):
         try:
+            if file.stat().st_size > _MAX_RECORD_BYTES:
+                raise RecordError(f"{file.as_posix()}: larger than 8 MiB; not read")
             raw = load_json(file)
-        except RecordError as exc:
+        except (OSError, RecordError) as exc:
             result = RecordResult(path=file.as_posix())
             result.errors.append(str(exc))
             run.results.append(result)
@@ -1453,6 +1860,14 @@ def _upheld(result: RecordResult) -> bool:
     return bool(result.skeptic.get("bound")) and result.skeptic.get("result") == "upheld"
 
 
+def _hypothesis(result: RecordResult) -> tuple[Any, ...]:
+    """What a record answers: its pattern on its surface (the plan's id, or, for a surface the
+    plan did not list, its type, file and line)."""
+    surface = result.surface
+    place = surface.get("id") or (surface.get("type"), surface.get("file"), surface.get("line"))
+    return (result.pattern, place)
+
+
 def _batch(results: list[RecordResult]) -> None:
     owner: dict[str, RecordResult] = {}
     seen: dict[str, list[RecordResult]] = {}
@@ -1469,13 +1884,18 @@ def _batch(results: list[RecordResult]) -> None:
     for result in results:
         if result.id is not None and result.accepted:
             owner[result.id] = result
+    # Records of another commit: a fix that changes, renames or deletes what one cites gives
+    # it more errors than the commit, and a new record may still name it. That replaces
+    # nothing: it stays rejected (or, in a retest, is judged by its steps), so a violation it
+    # established is not lifted here. An error starts with these words only when the commit
+    # differs; another error can quote them from a path. An id two files claim is neither's.
     stale = {
         r.id
         for r in results
         if r.id is not None
         and r.status == "rejected"
-        and r.errors
-        and all("the record was made at commit" in e for e in r.errors)
+        and len(seen[r.id]) == 1
+        and any(e.startswith(_OTHER_COMMIT) for e in r.errors)
     }
     for result in results:
         if not result.accepted:
@@ -1494,6 +1914,12 @@ def _batch(results: list[RecordResult]) -> None:
             elif target.mechanism != result.mechanism:
                 result.status = "rejected"
                 result.errors.append(f"supersedes {sid}, a record of {target.mechanism}")
+            elif _hypothesis(target) != _hypothesis(result):
+                result.status = "rejected"
+                result.errors.append(
+                    f"supersedes {sid}, a record of another surface or pattern: a record replaces "
+                    "only a reading of the same hypothesis"
+                )
             elif (
                 target.claim == "establishes"
                 and _upheld(target)

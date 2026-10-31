@@ -224,7 +224,8 @@ def test_the_scan_violation_and_the_scan_finding_to_decide(tmp_path: Path) -> No
     covering = R(
         "r1", "M5", "confidant_without_crisis_path", "closes", {"id": "s-9"}, covers_valid=[fp]
     )
-    m5 = _m(_run([covering], findings=scan.findings, surfaces=[]), "M5")
+    carrying = _surface("s-9", priority="normal", hyps=(("M5", "confidant_without_crisis_path"),))
+    m5 = _m(_run([covering], findings=scan.findings, surfaces=[carrying]), "M5")
     assert m5.outcome == "no_violation_identified_within_assessed_scope"
 
 
@@ -239,6 +240,7 @@ def test_m8_is_read_from_the_review_facts(tmp_path: Path) -> None:
         "file": "aisafe-review.yaml",
         "policy_version": POLICY.version,
         "reviewed_at": date.today().isoformat(),
+        "stale": [],
     }
     clean = _m(_run(findings=[], review_records=[fresh]), "M8")
     assert clean.outcome == "no_violation_identified_within_assessed_scope"

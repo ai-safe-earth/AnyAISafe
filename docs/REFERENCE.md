@@ -276,12 +276,12 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
 | `--accept FINGERPRINT=REASON` | with `--amend-baseline`: the reason a listed fingerprint stays (repeatable; ASCII, no verdict language, nothing secret-shaped) |
 | `--inventory-only` | print the inventory document and exit 0; no rules run |
 | `--deep {python,none}` | the syntax-tree layer (default: `python`) |
-| `--mode {self-assessment,auditor}` | who is scanning (default: `self-assessment`); the report states it. In `auditor` mode the ignore-file marker and the own-output heads skip nothing, so the audited team cannot hide a file. Never read from `pyproject.toml` |
+| `--mode {self-assessment,auditor}` | who is scanning (default: `self-assessment`); the report states it. In `auditor` mode the ignore-file marker and the own-output heads skip nothing, and every file git tracks is read whatever a folder name says. In both modes `.gitignore` never hides a tracked file, and what stays unread is listed under UNKNOWN: a tracked file with a NUL byte, unless its type is binary by nature, and the tracked files themselves when git could not list them. Never read from `pyproject.toml` |
 | `--rules CSV` | run only these rule ids (a demoted id runs with a stderr note) |
 | `--experimental` | include rules measured below `MIN_PRECISION` (0.80) |
 | `--exclude GLOBS` | walker excludes (csv of globs; repeatable) |
 | `--review-record FILE` | the review record to read instead of `aisafe-review.yaml` at the audited root |
-| `--evaluation-report FILE` | an `aisafe evaluate` report to read as evidence, in addition to the `evaluation-report.json` files found in the tree |
+| `--evaluation-report FILE` | an `aisafe evaluate` report to read as evidence, in addition to the `evaluation-report.json` files found in the tree; in auditor mode it is the only report read, and it must lie outside the audited tree |
 | `--list-rules` | print the rule catalogue and exit 0 |
 | `--quiet`, `-q` | terminal output: summary, mechanism table and UNKNOWN items only |
 | `--debug` | tracebacks on fatal errors; also self-check the renderer templates against the banned phrases |
@@ -314,11 +314,17 @@ still findings: the summary line says how many were not counted.
 
 **Pipeline.** walk -> discover -> pydeep (Python) -> checks -> flows -> review records
 -> rules -> baseline -> report. The audit skips its own earlier output (JSON reports,
-inventory documents and SARIF files are recognised by their schema and kind keys, HTML
-pages by the marker on line 1), so a re-run does not report the previous run's snippets;
-`own_output_skipped` in the inventory names what was skipped. The baseline, the review record and the evaluation reports are not skipped: the
+inventory documents and SARIF files are recognised by parsing the file: the schema and
+kind keys at its top level, HTML pages by the marker on line 1), so a re-run does not report
+the previous run's snippets; `own_output_skipped` in the inventory names what was skipped,
+and a skip outside `.aisafe-audit/` also gets an UNKNOWN row, because anyone can write those
+keys or that line into a file of their own. `.aisafe-audit/pr-body.md` is skipped the same
+way unless the commit holds it: words the tool wrote about a helpline are not a crisis path.
+The baseline, the review record and the evaluation reports are not skipped: the
 first two are read as text, which is why a reason or a justification never quotes the
-matched text, and the third is evidence.
+matched text, and the third is evidence. The workbench's scan (`investigate`, `assess`) also
+leaves `.aisafe-audit/audit-baseline.json` unread unless the commit holds it; any other file
+in that folder that is not in the commit is read, and makes the tree dirty.
 
 ### The rules
 
@@ -642,7 +648,14 @@ step fails, a file it depends on changed, or its id is used twice. An accepted r
 keeps its claim only as far as the evidence carries it, and `notes` say why when it does
 not: a violation needs a complete, connected chain of the pattern's links and the
 pattern's absent control shown absent on the path; a closing needs the chain broken (a
-required link ruled out) or the control on the path with its location; a runtime-only
+required link ruled out) or the control on the path with its location: a line that runs, at
+or before the guarded link, in that link's Python function, or a `via` hop there that really
+calls the control's function. A closing by a control in a file that is not Python goes to
+review: the tool does no deep analysis of other languages, and the record keeps the mechanism
+inconclusive. An anonymisation control also needs a transformation on a real line before
+every send, and `logging` cited or ruled out. Where a prompt is fetched at run time, a control
+on it or a ruled-out `prompt`, `person_data`, `objective` or `inference` link gives `unknown`
+and a run-time gap. A runtime-only
 link, an unsupported language, a supported benign reading or an open question lowers the
 claim to `unknown` or a review. A skeptic pass (`aisg/skeptic/1`) counts only when it is
 bound to the record by `record_sha256` (`digest`) and was written in another session. The
@@ -722,29 +735,55 @@ items), the inputs with their hashes, and the remediation check. `assessment.md`
 | outcome | when |
 |---|---|
 | `violations_identified` | a record establishes the mechanism (a complete, connected trace, upheld by a bound skeptic pass) or the scan reports a violation on supported or observed evidence; a closing record never lowers it |
-| `inconclusive` | a blocking gap remains: a high-priority surface carrying one of the mechanism's hypotheses without a deciding record for it (left out by the budget, unreached or unsupported); a skeptic refutation; a deciding claim no bound skeptic pass upheld; runtime-only evidence for a required link; a record a person still has to weigh; a rejected record; a supported scan finding no deciding record covers; a closing record next to text addressed to auditors or AI tools |
-| `not_assessed` | no record names the mechanism and the scan holds no supported or observed finding of it |
-| `no_violation_identified_within_assessed_scope` | a record closes the mechanism, upheld by its skeptic pass, and no gap remains; it says "closed on k of n surfaces" |
+| `inconclusive` | a blocking gap remains: a high-priority surface carrying one of the mechanism's hypotheses without a deciding record for it (left out by the budget, unreached or unsupported); a skeptic refutation; a deciding claim no bound skeptic pass upheld; runtime-only evidence for a required link; a record a person still has to weigh; a rejected record; a supported scan finding no deciding record covers; a closing record next to text addressed to auditors or AI tools; a file nobody read that may hold code or prompts (a tracked file the walk skipped, a file in a language this version does not read), or a tree whose tracked files git could not list. Pictures, fonts, recordings, drawings, style sheets and dependency lock files do not block |
+| `not_assessed` | no record names the mechanism, the scan holds no supported or observed finding of it, and nothing blocks |
+| `no_violation_identified_within_assessed_scope` | a record closes the mechanism, upheld by its skeptic pass, and no gap remains; it says "closed on k of n surface hypotheses" |
 
 M8 (missing or stale review) is read from the scan's AUD-1106 and AUD-1107 facts and the
-review records. The overall outcome is the least favourable one, in the order of the
+review records. It closes only when every record stands, when between them the records bind
+every file of the plan's surfaces (a record that names units binds files of those units
+only), and when no file stayed unread as above. A record the parser dropped and a second
+record file nobody read count as records that do not stand, and a review rule that crashed
+leaves M8 `not_assessed`. Outside git there is no commit and nothing lists what the walk
+skipped (a `vendor/` directory, say), so only files in an unread language block there. The
+overall outcome is the least favourable one, in the order of the
 table. Acceptances and baselines are not inputs. Without an accepted record the command
 exits 2: an assessment never falls back to the scan.
 
 **Retest.** `--retest PREVIOUS` re-runs the verification steps of the previous
 assessment's records on the tree as it is now; it needs at least one record made at the new
-commit. A record is `remediated` only when every remediation step failed at its commit
+commit. The retest reads a record's steps, mechanism, pattern, surface and proposed decision
+from the copy embedded in the previous assessment, which must match its digest. A record is
+`remediated` only when every remediation step failed at its commit
 (re-checked there through `git show` for `absent` and `present` steps) and passes now, no
 regression step fails, no current record establishes the same hypothesis on the surface,
-and the scan reports no supported violation of the mechanism in the surface's file. The
-other statuses: `not_remediated`, `regressed`, `needs_reinvestigation` (a step that cannot
+and the scan reports no supported violation of the mechanism in the surface's file, a cited
+file, a file changed since the record's commit or, for a unit surface, the whole unit. It
+also needs a commit with no uncommitted changes, every record on that surface and pattern to
+be an upheld closing, and a step that can show the fix: `no_finding` and `present` steps
+never do so alone. A closing record at the new commit, on the same surface with nothing
+contesting it, is required when a step cannot run, when a cited file or a changed file is
+not read, or when the surface's file did not change (for a unit, no cited file changed): a
+step on another file shows nothing about a text that stayed the same. A closing next to text
+addressed to an auditor counts only if its skeptic pass says it checked that text. When the
+surface's file is gone, or its anchor line was rewritten, the plan no longer lists the old
+surface: a closing on the same type in the same file answers it, and so does a closing on
+the same mechanism and pattern whose `supersedes` names the old record. The other
+statuses: `not_remediated`, `regressed` (a regression step fails, or a record or the scan
+shows the mechanism on a closed surface), `needs_reinvestigation` (a step that cannot
 run mechanically, or only a `no_finding` step, and no record at the new commit closes the
 hypothesis), `not_verified` (a remediation step already passed at the previous commit),
-`held` (regression steps only, all passing), `same_commit`. A step on a file the walk no
-longer reads cannot run, and is never a pass. A finding that is no longer reported is
-listed as "not reported", never as remediated, and a violation the retest does not show
-remediated stands in the new assessment. The previous records are retested rather than
-counted as rejected; a mechanism closes again only through a new record on the new code.
+`held` (regression steps only, all passing, and every cited file read), `same_commit`. A
+step on a file the walk no longer reads cannot run, and is never a pass. A finding that is
+no longer reported is listed as "not reported", never as remediated, and a violation the
+retest does not show remediated stands in the new assessment, and its record is carried in
+`remediation.carried_records` to be retested again at the next retest, against its own
+commit. Only a violation whose skeptic pass was bound and upheld is carried. The previous
+assessment is an unsigned document: an entry someone removed from it leaves no trace, and
+whether a skeptic pass was bound is its word. A surface new or changed at the new commit
+counts as high priority for the outcome.
+The previous records are retested rather than counted as rejected; a mechanism closes again
+only through a new record on the new code.
 In auditor mode the auditor recommends and the auditee implements: the retest runs on the
 auditee's new commit, which the engagement's `scope.commits` must list.
 
@@ -1318,7 +1357,9 @@ per-mechanism totals), `fleet-report.csv`, `fleet-report.md`, one `<name>/audit-
 per repository, and with `--proposal` one `<name>/proposal.md`: a plan table with
 `file:line` and no code snippets, for the repository's owners. No evidence snippet
 reaches the fleet documents. Each repository runs as its own `aisafe audit` subprocess
-with the clone as working directory, so the target's own `[tool.aisafe-audit]` applies.
+with the clone as working directory, so the target's own `[tool.aisafe-audit]` applies; from
+Python 3.11 a package in the clone cannot stand in for `aisafe`. A clone may use https, http,
+ssh, git and file URLs, and nothing else: an `ext::` URL, which is a command, is refused.
 Defaults for the fleet itself go in `[tool.aisafe-fleet]`.
 
 **Exit codes.** `0` every listed repository was audited (findings in other people's

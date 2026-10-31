@@ -244,6 +244,14 @@ def test_anonymisation_on_the_path_closes_the_transmission(tmp_path: Path) -> No
                 "reason": "record_turn sends only the anonymised event and has no other branch",
             }
         ],
+        absent_links=[
+            {
+                "kind": "logging",
+                "searched": ["telemetry.py", "chat.py"],
+                "reason": "nothing in either file writes the message to a log",
+                "citations": [],
+            }
+        ],
         decision="no_violation_identified_in_scope",
         steps=[
             {
@@ -348,14 +356,15 @@ def test_a_closing_claim_that_misses_the_bypass_is_refuted_and_stays_inconclusiv
             link(root, "collection", "chat.py", 15, id="l1"),
             link(
                 root,
-                "transmission",
+                "transformation",
                 "telemetry.py",
-                22,
+                15,
                 id="l2",
                 how="traced",
                 **{"from": "l1"},
                 via=via,
             ),
+            link(root, "transmission", "telemetry.py", 22, id="l3", how="traced", **{"from": "l2"}),
         ],
         controls=[
             {
@@ -366,8 +375,16 @@ def test_a_closing_claim_that_misses_the_bypass_is_refuted_and_stays_inconclusiv
                     if k not in ("id", "kind", "how")
                 },
                 "on_path": "yes",
-                "link": "l2",
+                "link": "l3",
                 "reason": "the event is anonymised before analytics.track",
+            }
+        ],
+        absent_links=[
+            {
+                "kind": "logging",
+                "searched": ["telemetry.py"],
+                "reason": "the record says no log holds the raw message",
+                "citations": [],
             }
         ],
         decision="no_violation_identified_in_scope",

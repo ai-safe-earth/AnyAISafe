@@ -97,7 +97,9 @@ class RecordError(Exception):
 
 
 def load_json(path: Path) -> Any:
-    """Parse `path` as JSON (UTF-8, BOM tolerated). Raises RecordError."""
+    """Parse `path` as JSON (UTF-8, BOM tolerated). Raises RecordError. A document that
+    cannot be written back as UTF-8 (a lone surrogate from a `\\ud800` escape) is refused
+    here, so nothing downstream has to carry text it cannot print or hash."""
     try:
         text = Path(path).read_text(encoding="utf-8-sig")
     except OSError as exc:
@@ -105,9 +107,17 @@ def load_json(path: Path) -> Any:
     except UnicodeDecodeError as exc:
         raise RecordError(f"{Path(path).as_posix()}: not UTF-8 ({exc.reason})") from exc
     try:
-        return json.loads(text)
+        document = json.loads(text)
+        json.dumps(document, ensure_ascii=False).encode("utf-8")
     except json.JSONDecodeError as exc:
         raise RecordError(f"{Path(path).as_posix()}: invalid JSON ({exc.msg})") from exc
+    except RecursionError as exc:
+        raise RecordError(f"{Path(path).as_posix()}: nested too deeply to read") from exc
+    except UnicodeEncodeError as exc:
+        raise RecordError(f"{Path(path).as_posix()}: holds a lone surrogate") from exc
+    except ValueError as exc:  # an integer past Python's limit on digits
+        raise RecordError(f"{Path(path).as_posix()}: holds a number too long to read") from exc
+    return document
 
 
 def record_digest(record: dict[str, Any]) -> str:
@@ -115,7 +125,7 @@ def record_digest(record: dict[str, Any]) -> str:
     `skeptic` block left out: what a skeptic file names in `record_sha256`."""
     body = {key: value for key, value in record.items() if key != "skeptic"}
     canonical = json.dumps(body, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
-    return hashlib.sha256(canonical.encode("utf-8")).hexdigest()
+    return hashlib.sha256(canonical.encode("utf-8", "surrogatepass")).hexdigest()
 
 
 def verdict_words_in(text: str) -> list[str]:

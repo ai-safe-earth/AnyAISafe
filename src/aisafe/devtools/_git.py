@@ -2,7 +2,10 @@
 ---------------------
 Pinned, shallow git checkouts for `bench/run.py` and `aisafe fleet`: one implementation, two
 callers. This module opens no socket itself; `git` is a child process, and the only remotes
-it contacts are the URLs an operator wrote down in a corpus or a fleet list.
+it contacts are the URLs an operator wrote down in a corpus or a fleet list. It starts git
+the way the audit does (`walk.git_program`, `walk.GIT_SAFE`), with `CLONE_PROTOCOLS` as the
+only transports: a clone needs one, and none of these is a program (`ext::` is, and a URL
+in a list someone else wrote should not run a command).
 
 `fetch_pinned` reaches an exact commit. `git clone --depth 1` only reaches branch tips, so an
 empty repository is initialised and the SHA is fetched directly, which pins a scan to the
@@ -19,7 +22,10 @@ import shutil
 import subprocess
 from pathlib import Path
 
+from aisafe.discovery.walk import GIT_SAFE, git_env, git_program
+
 __all__ = [
+    "CLONE_PROTOCOLS",
     "DEFAULT_TIMEOUT",
     "STAMP_FILE",
     "GitError",
@@ -31,6 +37,7 @@ __all__ = [
 
 STAMP_FILE = ".aisafe-bench-sha"
 DEFAULT_TIMEOUT = 1800.0
+CLONE_PROTOCOLS = "https:http:ssh:git:file"
 _SHA_RE = re.compile(r"^[0-9a-f]{7,64}$")
 _STDERR_CHARS = 200
 
@@ -40,24 +47,28 @@ class GitError(Exception):
 
 
 def git_available() -> bool:
-    return shutil.which("git") is not None
+    return git_program() is not None
 
 
 def _run(args: list[str], *, cwd: Path | None, timeout: float) -> subprocess.CompletedProcess[str]:
     # core.longpaths: several corpus repos have paths over the Windows 260-character limit
     # (deeply nested route directories, for one) and checkout fails outright without it.
     # A no-op elsewhere.
+    program = git_program()
+    if program is None:
+        raise GitError("git is not on PATH")
     try:
         return subprocess.run(
-            ["git", "-c", "core.longpaths=true", *args],
+            [program, *GIT_SAFE, "-c", "core.longpaths=true", *args],
             cwd=str(cwd) if cwd is not None else None,
+            env=git_env(CLONE_PROTOCOLS),
             capture_output=True,
             text=True,
             check=True,
             timeout=timeout,
         )
-    except FileNotFoundError as exc:
-        raise GitError("git is not on PATH") from exc
+    except OSError as exc:
+        raise GitError(f"git {args[0]} could not start: {exc}") from exc
     except subprocess.CalledProcessError as exc:
         detail = " ".join(((exc.stderr or exc.stdout or "").strip()).split())[:_STDERR_CHARS]
         raise GitError(f"git {args[0]} failed: {detail or 'no output'}") from exc

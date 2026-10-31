@@ -29,31 +29,65 @@ investigation record made at this commit the command exits 2: an assessment neve
 back to the scan, and a retest is no exception.
 
 `--retest PREVIOUS` re-runs the verification steps of the previous assessment's records on
-this commit. A record is `remediated` only when every remediation step failed at its commit
-(re-checked there through git for the quote steps, read from the previous assessment
-otherwise, and said so) and passes now; when no remediation step is a bare `no_finding`
-(a finding that disappears is "not reported", never remediated); when no current record
-establishes the same hypothesis on the same surface; and when the scan reports no
-supported violation of the mechanism in the surface's file. A step whose file is no longer
-read cannot run, and a step that cannot run is never a pass. A violation established at the
-previous commit and not shown remediated stands in this assessment.
+this commit. The steps, the covered fingerprints, the mechanism, the pattern, the surface
+and the claim's basis come from each record's embedded copy, which must match its digest;
+the fields derived beside it are not evidence. A record is `remediated` only on a commit,
+with every walked file as that commit holds it, and only when every remediation step
+failed at its commit (re-checked there through git for the quote steps, and unknown when
+git cannot; read from the previous assessment otherwise, and said so) and passes now; when
+no current record establishes the mechanism on the surface; and when the scan reports no
+supported violation of the mechanism in the surface's file, in a file the record cites, in
+a file changed since the record's commit or, for a person-facing unit, anywhere in that
+unit. A step that cannot run is never a pass: a step on a file no longer read, a regression
+step included. A record at this commit has to close the hypothesis, with its skeptic pass
+upheld, the text addressed to auditors near it checked, and no other record contesting it,
+when a step cannot run; when a file the record cites, or a file changed since its commit,
+is not read; when the surface's file did not change (for a person-facing unit, no file the
+record cites); when another record contests it; or when the remediation steps are only
+`no_finding` and `present` (a finding that disappears is "not reported", and a quote that
+appears is not shown on the path).
+
+A record on the surface closes it: the same plan id while the plan still lists the surface,
+and otherwise the same type in the same file, or, when the surface's file is gone or was
+rewritten, a record whose `supersedes` names the old id. So a fix that deletes or renames
+the surface's file, or rewrites its anchor line, can still be shown.
+
+A violation established at the previous commit, with its skeptic pass bound and upheld, and
+not shown remediated stands in this assessment, and in the retest of this assessment: its
+record is kept in `remediation.carried_records`, and is retested again. The previous
+assessment of this same commit shows no fix. A surface new or changed since the previous
+assessment blocks like a high-priority one until a deciding record answers it.
+
+The previous assessment is an unsigned document, and the retest reads it as it stands. The
+digest binds a record's embedded copy to the digest beside it, nothing more: a person who
+removes a whole entry, or recomputes a digest, leaves no trace here. A skeptic pass is a
+separate file outside the digest, so whether it was bound and upheld is the previous
+assessment's word.
 """
 
 from __future__ import annotations
 
-import subprocess
+import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Sequence
 
-from aisafe.assessment.outcome import OUTCOMES, least_favourable, mechanism_outcomes
+from aisafe.assessment.outcome import (
+    _UNREMEDIATED,
+    OUTCOMES,
+    _skeptic_upheld,
+    _untrusted_near,
+    least_favourable,
+    mechanism_outcomes,
+)
+from aisafe.discovery.walk import run_git
 from aisafe.evidence.model import MODES, Decision, EvidenceStatus, Finding, now_iso
 from aisafe.investigation.plan import DEFAULT_BUDGET, build_plan
-from aisafe.investigation.records import RecordError, load_json
+from aisafe.investigation.records import RecordError, load_json, record_digest
 from aisafe.investigation.scan import MachineScan, machine_scan
 from aisafe.investigation.text import content_sha256, quote_in_text
-from aisafe.investigation.validate import RecordResult, run_step, validate_paths
+from aisafe.investigation.validate import RecordResult, _unit_of, run_step, validate_paths
 
 if TYPE_CHECKING:
     from aisafe.engagement.model import Engagement
@@ -76,8 +110,14 @@ _DISCLAIMER = (
     "left out. It is not legal advice, not a certification and not a compliance claim. A "
     "mechanism with no violation identified is not shown absent beyond the surfaces read."
 )
-_GIT_SAFE = ("-c", "core.fsmonitor=false")
+# A commit id from the previous assessment reaches git only as a full object id, never as
+# text git could read as an option.
+_COMMIT_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 _STRONG = frozenset({EvidenceStatus.SUPPORTED_MECHANISM, EvidenceStatus.OBSERVED_BEHAVIOR})
+# Step kinds that never show a remediation on their own: a finding that disappears is "not
+# reported", and a quote that appears is not shown on the path.
+_NOT_ALONE = frozenset({"no_finding", "present"})
+_UNIT_SURFACE = "person_facing_unit"
 
 
 def assessment_disclaimer(version: str) -> str:
@@ -257,36 +297,219 @@ def _load_previous(previous: Path) -> dict[str, Any]:
     return prev
 
 
+def _git_stdout(root: Path, *args: str) -> bytes | None:
+    """stdout of a read-only git command run in `root`, or None when it fails."""
+    return run_git(args, root, timeout=60)
+
+
 def _at_commit(root: Path, commit: str, relpath: str) -> str | None:
     """The file as the previous commit holds it, read through `git show`; None when git
     cannot say."""
-    try:
-        proc = subprocess.run(
-            ["git", *_GIT_SAFE, "-C", str(root), "show", f"{commit}:./{relpath}"],
-            capture_output=True,
-            timeout=60,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
+    if not _COMMIT_RE.fullmatch(commit or ""):
         return None
-    if proc.returncode != 0:
+    out = _git_stdout(root, "show", f"{commit}:./{relpath}")
+    return None if out is None else out.decode("utf-8", errors="replace").replace("\r\n", "\n")
+
+
+def _changed_files(scan: MachineScan, commit: str | None) -> set[str] | None:
+    """The files that differ between `commit` and the tree as read now, under the tree's
+    root; None when git cannot say."""
+    state = scan.state
+    if not state.is_git or state.status_failed or not _COMMIT_RE.fullmatch(commit or ""):
         return None
-    return proc.stdout.decode("utf-8", errors="replace").replace("\r\n", "\n")
+    out = _git_stdout(
+        scan.root,
+        "diff",
+        "--name-only",
+        "--no-renames",
+        "--no-ext-diff",
+        "--no-textconv",
+        "--relative",
+        "-z",
+        str(commit),
+        str(state.commit),
+        "--",
+    )
+    if out is None:
+        return None
+    named = out.decode("utf-8", errors="replace").split("\0")
+    return {name for name in named if name} | set(state.dirty)
 
 
 def _before(step: dict[str, Any], scan: MachineScan, commit: str | None) -> tuple[Any, str]:
-    """Whether the step passed at the previous commit: re-checked through git for a quote
-    step, else the previous assessment's own value, and which of the two it is."""
-    recorded = step.get("passes_at_record")
+    """Whether the step passed at the record's commit. A quote step is known only when git
+    re-checks it there; when git cannot, it is unknown (None), never the previous
+    assessment's word. Any other kind: the previous assessment's own value, and it says so."""
     spec = step.get("spec") or {}
-    if step.get("kind") in ("absent", "present") and commit and scan.state.is_git:
-        text = _at_commit(scan.root, commit, str(spec.get("file") or ""))
-        if text is not None:
-            found = quote_in_text(text, str(spec.get("quote") or ""))
-            return (
-                not found if step.get("kind") == "absent" else found
-            ), "re-checked at that commit"
-    return recorded, "as the previous assessment recorded it"
+    if step.get("kind") in ("absent", "present"):
+        text = None
+        if commit and scan.state.is_git:
+            text = _at_commit(scan.root, commit, str(spec.get("file") or ""))
+        if text is None:
+            return None, "not re-checked: git cannot show the file at that commit"
+        found = quote_in_text(text, str(spec.get("quote") or ""))
+        return (not found if step.get("kind") == "absent" else found), "re-checked at that commit"
+    return step.get("passes_at_record"), "as the previous assessment recorded it"
+
+
+def _retested_entries(prev: dict[str, Any]) -> list[dict[str, Any]]:
+    """The records a retest of `prev` answers for: the ones it embedded, and the ones it
+    carried because a retest before it did not show them remediated. One record is one
+    digest: an id says nothing, since a later record may reuse it for another reading."""
+    entries = list((prev.get("machine") or {}).get("records") or [])
+    seen = {entry.get("digest") for entry in entries}
+    for entry in (prev.get("remediation") or {}).get("carried_records") or []:
+        digest = entry.get("digest")
+        if digest is None or digest not in seen:
+            entries.append(entry)
+            seen.add(digest)
+    return entries
+
+
+def _embedded(entry: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
+    """Whether the entry's embedded record matches the digest stored beside it, and that
+    record (an empty one when it does not)."""
+    raw = entry.get("raw")
+    if isinstance(raw, dict) and record_digest(raw) == entry.get("digest"):
+        return True, raw
+    return False, {}
+
+
+def _claim_of(entry: dict[str, Any], raw: dict[str, Any]) -> str | None:
+    """The claim as the embedded record makes it. A violation is read from the record, with
+    the lowering the record alone can show (validation also lowers a trace it cannot follow,
+    and that is not in the record); the `claim` beside it never lowers it. Any other claim
+    decides nothing here: the derived one, for the reader."""
+    proposed = raw.get("proposed") if isinstance(raw.get("proposed"), dict) else {}
+    readings = [c for c in raw.get("counterevidence") or [] if isinstance(c, dict)]
+    if (
+        proposed.get("decision") == "violates_policy"
+        and proposed.get("evidence_status") in ("supported_mechanism", "observed_behavior")
+        and not raw.get("open_questions")
+        and not raw.get("missing_evidence")
+        and not any(reading.get("result") == "supported" for reading in readings)
+    ):
+        return "establishes"
+    return "review" if entry.get("claim") == "establishes" else entry.get("claim")
+
+
+def _surface_of(raw: dict[str, Any]) -> dict[str, Any]:
+    """The embedded record's surface, its file spelled as validation spells it."""
+    surface = raw.get("surface") if isinstance(raw.get("surface"), dict) else {}
+    return {**surface, "file": str(surface.get("file") or "").replace("\\", "/") or None}
+
+
+def _record_commit(entry: dict[str, Any], prev_commit: str | None) -> str | None:
+    """The commit the record was made at: a carried record is older than the assessment
+    that carried it."""
+    _, raw = _embedded(entry)
+    return (raw.get("target") or {}).get("commit") or prev_commit
+
+
+def _own_steps(entry: dict[str, Any], raw: dict[str, Any]) -> list[dict[str, Any]]:
+    """The record's own verification steps, from its embedded copy. Only what validation
+    measured at the record's commit comes from the derived list beside it."""
+    recorded = {
+        step.get("id"): step.get("passes_at_record")
+        for step in entry.get("steps") or []
+        if isinstance(step, dict)
+    }
+    steps = []
+    for index, item in enumerate(raw.get("verification_steps") or []):
+        if not isinstance(item, dict):
+            continue
+        step_id = str(item.get("id") or "").strip() or f"v{index + 1}"
+        steps.append(
+            {
+                "id": step_id,
+                "purpose": item.get("purpose"),
+                "kind": item.get("kind"),
+                "spec": {
+                    key: item[key]
+                    for key in ("file", "quote", "rule", "family", "note")
+                    if key in item
+                },
+                "passes_at_record": recorded.get(step_id),
+            }
+        )
+    return steps
+
+
+def _cited_files(entry: dict[str, Any], raw: dict[str, Any]) -> set[str]:
+    """Every file the record cites: the list validation wrote, and the links and their hops
+    as the embedded record holds them."""
+    files = {str(file) for file in entry.get("cited_files") or []}
+    for item in raw.get("links") or []:
+        if isinstance(item, dict):
+            hops = [hop for hop in item.get("via") or [] if isinstance(hop, dict)]
+            files |= {str(place["file"]) for place in (item, *hops) if place.get("file")}
+    return files
+
+
+def _on_surface(record: RecordResult, surface: dict[str, Any]) -> bool:
+    """One surface: the same plan id, or the same type in the same file. A surface's id
+    hashes its anchor line, so rewording that line gives it a new id, and a record may name
+    no id at all."""
+    surface_id = surface.get("id")
+    if surface_id and record.surface.get("id") == surface_id:
+        return True
+    return record.surface.get("type") == surface.get("type") and (
+        record.surface.get("file") == surface.get("file")
+    )
+
+
+def _closes_surface(
+    record: RecordResult, surface: dict[str, Any], planned: bool, moved: bool
+) -> bool:
+    """Whether an upheld closing speaks for this surface. While the plan lists the surface,
+    only a record on its id does: a closing on the prompt beside it read something else.
+    When the surface's file is gone or was rewritten, `moved`, nothing can sit on the old id,
+    so a record that supersedes the old one counts too."""
+    if planned:
+        return record.surface.get("id") == surface.get("id")
+    return moved or _on_surface(record, surface)
+
+
+def _plan_changes(
+    scan: MachineScan, plan: dict[str, Any], prev: dict[str, Any], changed: set[str] | None
+) -> dict[str, list[str]]:
+    """How the plan moved since the previous assessment. `blocking`: the surfaces new or
+    changed since then; every surface when git cannot say what changed."""
+    prev_ids = {s.get("id") for s in (prev.get("scope") or {}).get("surfaces") or []}
+    now_ids = {s["id"] for s in plan["surfaces"]}
+    new_ids = now_ids - prev_ids
+    if changed is None:
+        changed_ids = now_ids & prev_ids
+    else:
+        units = {getattr(scan.walked.get(file), "unit", None) for file in changed} - {None}
+        changed_ids = {
+            s["id"]
+            for s in plan["surfaces"]
+            if s["id"] in prev_ids
+            and (
+                s["file"] in changed
+                or (s["type"] == "person_facing_unit" and s.get("unit") in units)
+            )
+        }
+    return {
+        "new_surfaces": sorted(new_ids),
+        "new_high_surfaces": sorted(
+            s["id"] for s in plan["surfaces"] if s["id"] in new_ids and s["priority"] == "high"
+        ),
+        "changed_surfaces": sorted(changed_ids),
+        "gone_surfaces": sorted(prev_ids - now_ids),
+        "blocking": sorted(new_ids | changed_ids),
+    }
+
+
+def _outcome_surfaces(
+    surfaces: Sequence[dict[str, Any]], remediation: dict[str, Any] | None
+) -> list[dict[str, Any]]:
+    """The surfaces as the outcome reads them. In a retest a surface new or changed since
+    the previous assessment blocks like a high-priority one, whatever its priority; the
+    document keeps the priority the plan gave it."""
+    blocking = set(((remediation or {}).get("plan_changes") or {}).get("blocking") or ())
+    return [{**s, "priority": "high"} if s["id"] in blocking else s for s in surfaces]
 
 
 def _retest(
@@ -298,22 +521,39 @@ def _retest(
 ) -> dict[str, Any]:
     prev_commit = (prev.get("target") or {}).get("commit")
     same_commit = prev_commit is not None and prev_commit == scan.state.commit
+    on_commit = scan.state.is_git and scan.state.clean and scan.state.commit is not None
+    dirty = sorted(scan.state.dirty)
+    changed = _changed_files(scan, prev_commit)
+    changed_since = {prev_commit: changed}
     reported = {f.fingerprint for f in scan.findings}
-    current: dict[tuple[Any, Any, Any], list[RecordResult]] = {}
-    for record in records:
-        key = (record.surface.get("id"), record.mechanism, record.pattern)
-        current.setdefault(key, []).append(record)
+    planned_ids = {s["id"] for s in plan["surfaces"]}
+    not_walked = set(scan.tracked_not_walked or ())
     results = []
-    for entry in (prev.get("machine") or {}).get("records") or []:
-        steps = entry.get("steps") or []
-        if not steps:
+    carried_records = []
+    for entry in _retested_entries(prev):
+        intact, raw = _embedded(entry)
+        steps = _own_steps(entry, raw)
+        if intact and not steps:
             continue
-        surface = entry.get("surface") or {}
+        # A broken copy says nothing: the row keeps what the document says, as not verified.
+        recorded = raw if intact else entry
+        record_id = recorded.get("id")
+        mechanism, pattern = recorded.get("mechanism"), recorded.get("pattern")
+        surface = _surface_of(recorded)
+        claim = _claim_of(entry, raw) if intact else entry.get("claim")
+        skeptic = entry.get("skeptic") or {}
+        upheld_before = bool(skeptic.get("bound")) and skeptic.get("result") == "upheld"
+        established = claim == "establishes" and upheld_before
+        record_commit = _record_commit(entry, prev_commit)
+        if record_commit not in changed_since:
+            changed_since[record_commit] = _changed_files(scan, record_commit)
+        # A carried record is older than the previous assessment: what changed since then
+        # says nothing about what moved between its own commit and that one.
+        since = changed_since[record_commit]
         ran = []
         for step in steps:
-            spec = {"kind": step.get("kind"), **(step.get("spec") or {})}
-            now, detail = run_step(spec, scan)
-            before, source = _before(step, scan, prev_commit)
+            now, detail = run_step({"kind": step.get("kind"), **step["spec"]}, scan)
+            before, source = _before(step, scan, record_commit)
             ran.append(
                 {
                     "id": step.get("id"),
@@ -327,57 +567,147 @@ def _retest(
             )
         fixes = [s for s in ran if s["purpose"] == "remediation"]
         regressions = [s for s in ran if s["purpose"] == "regression" and s["now"] is False]
-        still = [fp for fp in entry.get("covers_valid") or [] if fp in reported]
-        gone = [fp for fp in entry.get("covers") or [] if fp not in reported]
-        key = (surface.get("id"), entry.get("mechanism"), entry.get("pattern"))
-        now_records = current.get(key, [])
-        closed_again = [
+        unrun = [s for s in ran if s["purpose"] == "regression" and s["now"] is None]
+        covers = [fp for fp in raw.get("covers") or [] if isinstance(fp, str)]
+        still = [fp for fp in covers if fp in reported]
+        gone = [fp for fp in covers if fp not in reported]
+        cited = _cited_files(entry, raw)
+        # A changed file the walk does not read may hold the text: a move out of sight.
+        unread = sorted(
+            {f for f in cited if f not in scan.walked} | (set(since or ()) & not_walked)
+        )
+        is_unit = surface.get("type") == _UNIT_SURFACE
+        # Nothing shows the surface's text changed, whatever a step on another file says.
+        same_text = since is None or (
+            not cited & since if is_unit else surface.get("file") not in since
+        )
+        planned = surface.get("id") in planned_ids
+        on_surface = [
+            r
+            for r in records
+            if r.mechanism == mechanism and (_on_surface(r, surface) or record_id in r.supersedes)
+        ]
+        now_records = [r for r in on_surface if r.pattern == pattern]
+        upheld_closings = [
             r
             for r in now_records
             if r.claim == "closes"
-            and (r.skeptic or {}).get("bound")
-            and (r.skeptic or {}).get("result") == "upheld"
+            and _skeptic_upheld(r)
+            and (
+                (r.skeptic or {}).get("untrusted_text_checked")
+                or not _untrusted_near(r, plan["untrusted_text"])
+            )
         ]
-        established_again = [r for r in now_records if r.claim == "establishes"]
+        contested = [r for r in now_records if r not in upheld_closings]
+        closed_again = [
+            r
+            for r in upheld_closings
+            if _closes_surface(r, surface, planned, moved=not planned and not same_text)
+        ]
+        established_again = [r for r in on_surface if r.claim == "establishes"]
+        unit = _unit_of(surface, scan) if is_unit else None
+        watched = {surface.get("file"), *cited, *(since or ())}
         violating = [
             f
             for f in scan.findings
-            if f.mechanism == entry.get("mechanism")
+            if f.mechanism == mechanism
             and f.decision is Decision.VIOLATES
             and f.evidence_status in _STRONG
-            and any(leg.file == surface.get("file") for leg in f.evidence)
+            and (
+                any(leg.file in watched for leg in f.evidence)
+                or (
+                    unit is not None
+                    and (
+                        f.scope.unit == unit
+                        or any(
+                            getattr(scan.walked.get(leg.file), "unit", None) == unit
+                            for leg in f.evidence
+                        )
+                    )
+                )
+            )
         ]
         why: list[str] = []
         if same_commit:
-            status = "same_commit"
-            why.append("the previous assessment is of this commit: nothing changed to retest")
+            # Nothing was fixed on a new commit: a violation the previous assessment
+            # established stands, and `same_commit` would let it drop.
+            status = "not_verified" if established else "same_commit"
+            why.append(
+                "the previous assessment is of this commit"
+                + (f" and {len(dirty)} file(s) differ from it" if dirty else "")
+                + ": a fix counts only on a new commit"
+            )
+        elif not intact:
+            status = "not_verified"
+            why.append(
+                "the previous assessment's copy of the record is missing or does not match its "
+                "digest, so the record's own steps cannot be read"
+            )
         elif regressions:
             status = "regressed"
             why.append("a regression step fails now")
         elif not fixes:
-            status = "held"
-            why.append("no remediation step; every regression step that can run passes")
+            blocked = [str(s["id"]) for s in unrun] + unread
+            if established_again:
+                status = "regressed"
+                why.append("a record at this commit establishes the mechanism on the surface")
+            elif violating:
+                status = "regressed"
+                why.append(
+                    "the scan reports " + ", ".join(sorted({f.display_id for f in violating}))
+                )
+            elif contested or (blocked and not closed_again):
+                status = "needs_reinvestigation"
+                why.append(
+                    "no uncontested record at this commit closes the hypothesis"
+                    + (f", and these cannot be checked: {', '.join(blocked)}" if blocked else "")
+                )
+                if contested:
+                    why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
+            else:
+                status = "held"
+                why.append(
+                    "no remediation step; a record at this commit closes the hypothesis and "
+                    "every regression step that can run passes"
+                    if blocked
+                    else "no remediation step; every regression step ran and passes"
+                )
         elif any(s["now"] is False for s in fixes):
             status = "not_remediated"
             why.append("a remediation step still fails")
-        elif any(s["before"] is True for s in fixes):
+        elif any(s["before"] is not False for s in fixes if s["kind"] != "reinvestigate"):
             status = "not_verified"
-            why.append("a remediation step already passed at the previous commit")
+            why.append(
+                "a remediation step already passed at the previous commit"
+                if any(s["before"] is True for s in fixes)
+                else "a remediation step was not shown to fail at the previous commit"
+            )
         elif established_again:
             status = "not_remediated"
-            why.append("a record at this commit establishes the same hypothesis on the surface")
+            why.append("a record at this commit establishes the mechanism on the surface")
         elif violating:
             status = "not_remediated"
             why.append(
                 "the scan reports "
                 + ", ".join(sorted({f.display_id for f in violating}))
-                + " in the surface's file"
+                + (
+                    " in the surface's unit"
+                    if unit is not None
+                    else " in the surface's file, a file the record cites or a changed file"
+                )
             )
         elif still:
             status = "not_remediated"
             why.append("a finding the record covers is still reported")
-        elif any(s["now"] is None for s in fixes) or all(s["kind"] == "no_finding" for s in fixes):
-            if closed_again:
+        elif (
+            unread
+            or unrun
+            or contested
+            or same_text
+            or any(s["now"] is None for s in fixes)
+            or all(s["kind"] in _NOT_ALONE for s in fixes)
+        ):
+            if closed_again and not contested:
                 status = "remediated"
                 why.append(
                     "the mechanical steps pass and a record at this commit closes the hypothesis "
@@ -387,31 +717,46 @@ def _retest(
                 status = "needs_reinvestigation"
                 why.append(
                     "a step cannot run mechanically, or the only evidence is a finding no longer "
-                    "reported; a record at this commit has to close the hypothesis"
+                    "reported or a quote now present; a record at this commit has to close the "
+                    "hypothesis, with nothing contesting it"
                 )
+                if unread:
+                    why.append("the walk does not read " + ", ".join(unread))
+                if same_text:
+                    why.append("nothing shows the text on the surface changed")
+                if contested:
+                    why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
         else:
             status = "remediated"
             why.append("every remediation step failed at the previous commit and passes now")
+        if status == "remediated" and not on_commit:
+            status = "not_verified"
+            why = [
+                "the steps ran on a tree that is not a commit"
+                + (f" ({', '.join(dirty)} differ from {scan.state.commit})" if dirty else "")
+                + ": a fix counts only when the steps pass on a commit"
+            ]
+        if established and status in _UNREMEDIATED:
+            carried_records.append(entry)
         results.append(
             {
-                "record": entry.get("id"),
-                "mechanism": entry.get("mechanism"),
-                "pattern": entry.get("pattern"),
+                "record": record_id,
+                "mechanism": mechanism,
+                "pattern": pattern,
                 "surface": surface,
-                "claim_before": entry.get("claim"),
+                # `establishes` here is what the outcome stands on: a claim no skeptic pass
+                # upheld never established anything.
+                "claim_before": "unchallenged"
+                if claim == "establishes" and not upheld_before
+                else claim,
                 "status": status,
                 "why": why,
                 "steps": ran,
                 "still_reported": still,
                 "not_reported": gone,
-                "reinvestigated_by": [{"id": r.id, "claim": r.claim} for r in now_records],
+                "reinvestigated_by": [{"id": r.id, "claim": r.claim} for r in on_surface],
             }
         )
-    prev_ids = {s.get("id") for s in (prev.get("scope") or {}).get("surfaces") or []}
-    now_ids = {s["id"] for s in plan["surfaces"]}
-    new_high = [
-        s["id"] for s in plan["surfaces"] if s["id"] not in prev_ids and s["priority"] == "high"
-    ]
     return {
         "previous": {
             "file": previous.as_posix(),
@@ -419,19 +764,20 @@ def _retest(
             "commit": prev_commit,
             "generated_at": prev.get("generated_at"),
         },
-        "same_commit": same_commit,
+        # True only when nothing changed: the same commit, and the tree as it holds it.
+        "same_commit": same_commit and scan.state.clean,
+        "dirty": dirty,
         "results": results,
-        "plan_changes": {
-            "new_surfaces": sorted(now_ids - prev_ids),
-            "new_high_surfaces": sorted(new_high),
-            "gone_surfaces": sorted(prev_ids - now_ids),
-        },
+        "carried_records": carried_records,
+        "plan_changes": _plan_changes(scan, plan, prev, changed),
         "note": (
-            "A remediation counts only when every remediation step of the record failed at "
-            "its commit and passes on this one, and nothing at this commit shows the mechanism "
-            "on that surface. A finding that is no longer reported is not reported, never "
-            "remediated. Steps that pass are evidence of a change, not proof the mechanism is "
-            "gone: a record at this commit closes it."
+            "A remediation counts only on a commit, when every remediation step of the record "
+            "failed at its commit and passes on this one, and nothing at this commit shows the "
+            "mechanism on that surface. A step on another file shows nothing when the "
+            "surface's own file did not change. A finding no longer reported is not reported, "
+            "and a quote that appears is not shown on the path: neither is ever a remediation "
+            "on its own. A step that cannot run is never a pass. Steps that pass are evidence "
+            "of a change, not proof the mechanism is gone: a record at this commit closes it."
         ),
     }
 
@@ -526,6 +872,54 @@ def _record_requests(records: Sequence[RecordResult]) -> list[dict[str, Any]]:
     return out
 
 
+def _review_facts(scan: MachineScan, today: date) -> list[dict[str, Any]]:
+    """The review records as the outcome reads them: each inventory row with `stale`, why
+    the record no longer stands, and the files it binds. The same check AUD-1107 runs, on
+    every record: that rule stays silent on a tree without person signals, and silence is
+    never a result. Every problem with the record files is a row too, so a record the parser
+    dropped, or a second record file nobody read, never reads better than a stale record.
+    Such a row's one reason is the problem: it has no date, and no policy of its own."""
+    from aisafe.rules.review import _current_hash
+
+    review = getattr(scan.ctx, "review", None)
+    max_age = scan.policy.review_max_age_days
+    rows: list[dict[str, Any]] = [
+        {
+            **record.to_inventory(),
+            "stale": record.is_stale(lambda p: _current_hash(scan.ctx, p), today, max_age),
+            "artifact_files": sorted(record.artifact_paths),
+            "units": list(record.units),
+        }
+        for record in getattr(review, "records", None) or []
+    ]
+    rows += [
+        {
+            "file": review.file,
+            "reviewed_at": None,
+            "policy_version": scan.policy.version,
+            "stale": [error],
+        }
+        for error in getattr(review, "errors", None) or []
+    ]
+    return rows
+
+
+def _rules_that_ran(scan: MachineScan) -> list[str]:
+    """The rules that were evaluated: `run_rules` skips, silently, the ones that need an AI
+    surface when the inventory has none, and turns a rule that crashed into a `rule <id>`
+    UNKNOWN item, which is no silence to read."""
+    ai_surface = any(unit.ai_surface for unit in scan.ctx.inventory.units or [])
+    crashed = {
+        item.what.removeprefix("rule ") for item in scan.unknown if item.what.startswith("rule ")
+    }
+    return [
+        rule.id
+        for rule in scan.rules
+        if rule.id not in crashed
+        and (ai_surface or not getattr(rule, "requires_ai_surface", False))
+    ]
+
+
 def run_assessment(
     path: str | Path,
     investigations: Sequence[Path],
@@ -602,13 +996,14 @@ def run_assessment(
         # The records of the previous assessment, made at its commit, are retested below
         # through their steps; here they are neither accepted nor rejected.
         prev_commit = (prev.get("target") or {}).get("commit")
-        prev_ids = {r.get("id") for r in (prev.get("machine") or {}).get("records") or []}
+        prev_commits: dict[Any, set[str | None]] = {}
+        for entry in _retested_entries(prev):
+            prev_commits.setdefault(entry.get("id"), set()).add(_record_commit(entry, prev_commit))
         for result in run.results:
             if (
                 result.status == "rejected"
-                and result.id in prev_ids
                 and result.commit is not None
-                and result.commit == prev_commit
+                and result.commit in prev_commits.get(result.id, ())
                 and result.commit != scan.state.commit
             ):
                 result.status = "previous"
@@ -639,12 +1034,14 @@ def run_assessment(
         records=accepted,
         rejected=rejected,
         findings=scan.findings,
-        surfaces=plan["surfaces"],
+        surfaces=_outcome_surfaces(plan["surfaces"], remediation),
         untrusted=plan["untrusted_text"],
-        review_records=list(scan.ctx.inventory.review_records or []),
-        rules_ran=[rule.id for rule in scan.rules],
+        review_records=_review_facts(scan, today),
+        rules_ran=_rules_that_ran(scan),
         carried=carried,
         today=today,
+        tracked_not_walked=plan["not_read"]["tracked_not_walked"],
+        unsupported_files=plan["not_read"]["unsupported_files"],
     )
     overall = least_favourable(o.outcome for o in outcomes)
     investigators, operators = _people(accepted)

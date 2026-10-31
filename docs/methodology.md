@@ -289,7 +289,8 @@ text. It does not read meaning; it lowers any claim the cited evidence does not 
 says why. A violation needs a complete, connected chain of the pattern's links (section 2)
 and, for a pattern with an absent control, the control shown absent on the path. A closing
 needs the chain broken (a required link looked for and ruled out) or the control shown on
-the path, with its location. A complete trace with a benign reading goes to a person.
+the path, with its location, and that second way works by itself only in Python: elsewhere
+the tool cannot show the control runs, so the record goes to review. A complete trace with a benign reading goes to a person.
 Personal data is in scope only where it feeds M1 to M3, and an anonymisation claim is
 accepted only after the transformation itself was read.
 

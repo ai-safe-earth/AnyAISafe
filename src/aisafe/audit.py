@@ -4,7 +4,8 @@ Parser, orchestration and exit codes for `aisafe audit`.
 
 The run is walk -> discover -> pydeep -> checks -> flows -> review records -> rules ->
 baseline -> report. Nothing here opens a socket or starts a subprocess: the audit reads
-files and nothing else, so the same tree gives the same findings. Exit codes: 0 no counted
+files, and the walk asks git what it tracks, with no program of the repository's and no
+transport, so the same tree gives the same findings. Exit codes: 0 no counted
 finding, 1 a finding at or above `--fail-on` (or an UNKNOWN item under
 `--fail-on-unknown`), 2 fatal, 130 interrupted. A zero exit says the run found nothing it
 counts; it never says the target is safe.
@@ -212,6 +213,9 @@ class AuditOptions:
     review_record: str | None = None
     evaluation_report: str | None = None
     mode: str = "self-assessment"
+    # The workbench's scan (`investigation.scan.machine_scan`): the skill's working files
+    # outside the commit are not read. Never a flag and never read from `pyproject.toml`.
+    workbench: bool = False
 
     @classmethod
     def from_namespace(cls, ns: argparse.Namespace | AuditOptions) -> AuditOptions:
@@ -441,7 +445,8 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="FILE",
         help=(
             "an `aisafe evaluate` report to read as evidence, in addition to the "
-            "evaluation-report.json files found in the tree"
+            "evaluation-report.json files found in the tree; in auditor mode it is the only "
+            "report read, and it must lie outside the audited tree"
         ),
     )
     parser.add_argument(
@@ -550,10 +555,41 @@ def _python_texts(files: Sequence[Any]) -> dict[str, str | None]:
     }
 
 
+def _rel_inside(path: Path, root: Path) -> str | None:
+    """`path` relative to `root` when it lies inside it, else None."""
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except (OSError, ValueError):
+        return None
+
+
 def _evaluation_from_flag(
-    path: str, root: Path, inventory: Any, evaluation: list[Any], unknown: list[UnknownItem]
+    path: str,
+    root: Path,
+    inventory: Any,
+    evaluation: list[Any],
+    unknown: list[UnknownItem],
+    *,
+    auditor: bool = False,
 ) -> None:
-    """Read `--evaluation-report PATH` through the same reader as the tree's reports."""
+    """Read `--evaluation-report PATH` through the same reader as the tree's reports. In
+    auditor mode a file inside the audited tree is the audited team's document, whoever
+    names it: one UNKNOWN row, and it is not read."""
+    inside = _rel_inside(Path(path), root) if auditor else None
+    if inside is not None:
+        unknown.append(
+            UnknownItem(
+                category=UnknownCategory.REPORTS,
+                what=inside,
+                why=(
+                    "--evaluation-report names a file inside the audited tree: in auditor mode "
+                    "it is the audited team's document and was not read as observed behaviour"
+                ),
+                how_to_resolve="Pass your own `aisafe evaluate` report from outside the tree.",
+                file=inside,
+            )
+        )
+        return
     record, item = discover.read_report(Path(path), root)
     if item is not None:
         unknown.append(item)
@@ -588,6 +624,8 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
             include_ignored=options.include_ignored,
             honour_marker=not auditor,
             skip_own_output=not auditor,
+            read_tracked=auditor,
+            skip_untracked=_skip_untracked(options, auditor),
         ),
         own_output_skipped=own_output_skipped,
         oversize_skipped=oversize_skipped,
@@ -609,6 +647,9 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     unknown: list[UnknownItem] = list(walk_unknown) + list(inventory.unknown)
     if marker_skipped:
         unknown.append(_marker_item(marker_skipped))
+    claimed = [rel for rel in own_output_skipped if not walk.in_audit_dir(rel)]
+    if claimed:
+        unknown.append(_own_output_item(claimed))
     pyfacts = None
     if options.deep == "python":
         pyfacts = pydeep.analyse_unit([f for f in files if f.lang == "python"], inventory)
@@ -653,7 +694,9 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
         )
         evaluation = []
     if options.evaluation_report is not None:
-        _evaluation_from_flag(options.evaluation_report, root, inventory, evaluation, unknown)
+        _evaluation_from_flag(
+            options.evaluation_report, root, inventory, evaluation, unknown, auditor=auditor
+        )
     ctx = AuditContext(
         root=root,
         inventory=inventory,
@@ -673,6 +716,32 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
 
 
 _MARKER_NAMED = 5
+
+
+def _skip_untracked(options: AuditOptions, auditor: bool) -> tuple[str, ...]:
+    """What this run leaves unread unless the commit holds it. The pull request text is the
+    tool's own words on every self-assessment run: a helpline it mentions would close
+    AUD-1108. In auditor mode the tree's files are all the audited team's."""
+    if auditor:
+        return ()
+    return walk.WORKBENCH_INPUTS if options.workbench else (walk.PR_BODY,)
+
+
+def _own_output_item(paths: Sequence[str]) -> UnknownItem:
+    """One UNKNOWN row naming what was skipped as own output outside the audit directory.
+    Anyone can put the marker line on a prompt or the right keys on a JSON file."""
+    shown = ", ".join(paths[:_MARKER_NAMED])
+    if len(paths) > _MARKER_NAMED:
+        shown += f", +{len(paths) - _MARKER_NAMED} more"
+    return UnknownItem(
+        category=UnknownCategory.COVERAGE,
+        what="own output skipped outside the audit directory",
+        why=f"{len(paths)} file(s) read as the tool's own output and not audited: {shown}",
+        how_to_resolve=(
+            f"Keep reports under {walk.AUDIT_DIR}/, and check any other file named here is a "
+            "report; --mode auditor reads every file whatever it claims to be."
+        ),
+    )
 
 
 def _marker_item(paths: Sequence[str]) -> UnknownItem:

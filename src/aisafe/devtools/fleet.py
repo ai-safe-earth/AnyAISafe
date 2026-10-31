@@ -16,7 +16,9 @@ be both a crawler and a judge of what it crawled.
 Per repository: clone (or use the local path in place), then run
 `python -m aisafe.cli audit . --format json --fail-on <level> -o <out>/<name>/
 audit-report.json` with the clone as the working directory, so the target's own
-`[tool.aisafe-audit]` applies as it does under the skill. A subprocess, because a wall-clock
+`[tool.aisafe-audit]` applies as it does under the skill. The clone is not on the child's
+import path (`PYTHONSAFEPATH`, Python 3.11 and later), so a folder called `aisafe` in it is
+not the auditor. A subprocess, because a wall-clock
 cap cannot interrupt an in-process audit and one pathological repository must not take the
 fleet down. Nothing is copied out of the per-repo report but counts, names, decisions and a
 path to it: no evidence snippet reaches the fleet documents.
@@ -433,13 +435,15 @@ def audit_argv(fail_on: str, report_path: Path, extra: Sequence[str] = ()) -> li
 
 
 def _child_env() -> dict[str, str]:
-    """The child must import the same `aisafe` this process did, installed or from `src/`."""
+    """The child must import the same `aisafe` this process did, installed or from `src/`,
+    never a package of the clone it runs in: `python -m` puts the working directory first."""
     import aisafe
 
     env = dict(os.environ)
     src = str(Path(aisafe.__file__).resolve().parents[1])
     env["PYTHONPATH"] = src + os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else src
     env.setdefault("PYTHONIOENCODING", "utf-8")
+    env["PYTHONSAFEPATH"] = "1"
     return env
 
 

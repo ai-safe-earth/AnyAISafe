@@ -16,13 +16,16 @@ Priority comes from structure, never from a model:
   scoring signal; a prompt fetched at run time inside a person-facing unit; a scheduler
   and a send in one unit, or personalised outreach; any surface whose scope holds a machine
   finding that violates the policy or is critical or high;
-- `low`: a surface in a test file;
+- `low`: a surface in a test file that nothing above ranks high (a folder name moves a
+  surface from normal to low, never from high);
 - `normal`: the rest.
 
 Order: priority, surface type, path, line, id. The budget (default 20) is how many are
 queued; the rest are `left_out` and listed, and an assessment still counts a high one left
 out as a gap. A surface in a code language the workbench does not read (anything but
-Python, JS/TS and prompt or configuration text) is `unsupported` and listed.
+Python, JS/TS and prompt or configuration text) is `unsupported` and listed. Text there that
+carries a high signal is a high prompt surface like its Python twin, so reading less never
+reads better.
 
 The plan also lists `untrusted_text`: lines addressed to an auditor or an AI tool, and
 the agent instruction files in the tree. They are evidence to record, never instructions.
@@ -233,7 +236,7 @@ def _is_test_path(relpath: str) -> bool:
     parts = {part.lower() for part in path.parts[:-1]}
     name = path.name.lower()
     return (
-        bool(parts & {"test", "tests", "__tests__", "spec", "specs"})
+        bool(parts & {"test", "tests", "__tests__"})
         or name.startswith("test_")
         or name.endswith(("_test.py", ".test.ts", ".test.js", ".spec.ts", ".spec.js"))
     )
@@ -437,15 +440,10 @@ class _Builder:
             why.append(
                 "machine findings in scope: " + ", ".join(sorted({f.display_id for f in serious}))
             )
-        # A test file is not the running system, so a surface there ranks low; never when a
-        # machine finding in its scope is serious, and never in auditor mode, where the
-        # audited team names the folders.
-        if (
-            kind != "person_facing_unit"
-            and not serious
-            and self.scan.mode != "auditor"
-            and _is_test_path(relpath)
-        ):
+        # A test file is not the running system, so a surface there ranks low; never one
+        # ranked high (a folder name must not close a gap: only high surfaces make one), and
+        # never in auditor mode, where the audited team names the folders.
+        if not high and self.scan.mode != "auditor" and _is_test_path(relpath):
             why.append("in a test file")
             return "low", why
         return ("high" if high else "normal"), why
@@ -510,16 +508,19 @@ def _surfaces(scan: MachineScan) -> list[dict[str, Any]]:
                 span=(lo, hi),
             )
         )
-    # Instruction-shaped text in JS/TS that the inventory lists as a person signal and no
-    # prompt row: a template literal the deep analysis does not read.
+    # Instruction-shaped text the inventory lists as a person signal and no prompt row: a
+    # JS/TS template literal the deep analysis does not read, or a string in a language the
+    # workbench does not read at all, which must not read better than its Python twin.
     for sig in sorted(
         inventory.person_signals or [],
         key=lambda r: (str(r.get("file")), int(r.get("line") or 0), str(r.get("kind"))),
     ):
         relpath, line = str(sig.get("file")), int(sig.get("line") or 0)
+        reading = scan.reading_of(relpath)
         if (
             str(sig.get("kind")) not in HIGH_SIGNAL_KINDS
-            or scan.reading_of(relpath) != "read"
+            or relpath not in scan.walked
+            or reading not in ("read", "unsupported")
             or relpath in prompt_files
             or (relpath, line) in seen_prompt
         ):
@@ -535,7 +536,11 @@ def _surfaces(scan: MachineScan) -> list[dict[str, Any]]:
                 name=None,
                 signals=builder.scoped_signals(relpath, lo, hi),
                 findings=builder.scoped_findings(relpath, lo, hi),
-                reasons=[f"instruction-shaped JS/TS text ({sig.get('kind')})"],
+                reasons=[
+                    f"instruction-shaped JS/TS text ({sig.get('kind')})"
+                    if reading == "read"
+                    else f"instruction-shaped text in an unsupported language ({sig.get('kind')})"
+                ],
                 span=(lo, hi),
             )
         )
@@ -860,7 +865,8 @@ def render_plan(plan: dict[str, Any]) -> str:
             f"{counts['surfaces']} surfaces: {counts['by_priority']['high']} high, "
             f"{counts['by_priority']['normal']} normal, {counts['by_priority']['low']} low; "
             f"{counts['queued']} queued (budget {plan['budget']}), {counts['left_out']} left "
-            f"out ({counts['left_out_high']} high), {counts['unsupported']} unsupported"
+            f"out ({counts['left_out_high']} high), {counts['unsupported']} unsupported, "
+            f"{counts['unsupported_files']} file(s) in an unsupported language"
         ),
         "",
     ]

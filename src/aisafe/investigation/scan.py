@@ -5,14 +5,21 @@ The scan an investigation stands on, and the state of the tree it was taken from
 `machine_scan` runs what `aisafe audit` runs, with the options fixed by the workbench and
 never by the audited tree: Python deep analysis on, every default rule, no baseline, no
 `[tool.aisafe-audit]` section applied, no recorded review decision applied. Its findings
-are the machine's; a person's decision is read separately, as a human input.
+are the machine's; a person's decision is read separately, as a human input. Two files the
+skill writes under `.aisafe-audit/` (`walk.WORKBENCH_INPUTS`) stay unread unless the commit
+holds them: their text is not the system's, and it could close a finding. Any other file in
+that folder is read and counts as dirt, because that same text would close a finding.
 
 `tree_state` asks git, read-only, which commit the tree is at, which files it tracks and
 which of them differ from the commit. A quote is checked against the files on disk, so it
 is a quote "in the audited commit" only when those files are the commit's: a cited file
-must be tracked, and a tracked file that differs makes the tree dirty. A `git status` that
-fails is never read as clean. Git runs with the repository's file-system monitor turned
-off, so the audited repository's own configuration starts no program.
+must be tracked, and a tracked file that differs makes the tree dirty. So does a walked file
+that is not in the commit, even one `git status` never lists (gitignored, excluded, inside a
+nested repository), because the rules read it; and a tracked file git does not compare
+(skip-worktree, assume-unchanged). A `git status` that fails is never read as clean, and
+neither is a root outside the work tree git is looking at (`core.worktree`). Git runs
+through `walk.run_git`, and `git status` with the repository's filter drivers blanked, so
+the audited repository's own configuration starts no program.
 
 `tracked_not_walked` are the files of the commit the walk did not read (a skipped
 directory, a binary or UTF-16 file, the size limit, the ignore marker, an exclude): every
@@ -21,11 +28,11 @@ one of them is scope an assessment did not read, and is listed as such.
 
 from __future__ import annotations
 
-import subprocess
 from dataclasses import dataclass, field
 from pathlib import Path, PurePosixPath
 from typing import Any
 
+from aisafe.discovery import walk
 from aisafe.evidence.model import AuditContext, Finding, UnknownItem
 from aisafe.policy import Policy, load_policy
 
@@ -40,9 +47,6 @@ __all__ = [
 ]
 
 _GIT_TIMEOUT = 60.0
-# The repository's configuration may name programs git would start (a file-system
-# monitor); the workbench turns them off for every command it runs.
-_GIT_SAFE = ("-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false")
 # How a cited file's language is read. Python has the syntax tree behind it; JS/TS are
 # read by the investigator with no deterministic deep analysis behind the reading; prompt
 # and configuration text is read as text. Every other code language is unsupported.
@@ -113,9 +117,10 @@ def reading_of(relpath: str, lang: str | None) -> str:
 
 @dataclass(frozen=True)
 class TreeState:
-    """`commit`: HEAD, or None outside git. `dirty`: tracked files that differ from it and
-    walked files git does not track. `tracked`: the files of the commit, None outside git.
-    `status_failed`: git could not say, so the tree is not taken for clean."""
+    """`commit`: HEAD, or None outside git. `dirty`: tracked files that differ from it or
+    that git does not compare, and walked files that are not in it. `tracked`: the files of
+    the commit, submodules included, None outside git. `status_failed`: git could not say,
+    so the tree is not taken for clean."""
 
     commit: str | None
     is_git: bool
@@ -169,52 +174,39 @@ class MachineScan:
         return relpath in self.state.tracked
 
 
-def _git(args: list[str], root: Path) -> str | None:
+def _git(args: list[str], root: Path, **kwargs: Any) -> str | None:
     """stdout of a read-only git command run in `root`, or None when it fails."""
-    try:
-        proc = subprocess.run(
-            ["git", *_GIT_SAFE, "-C", str(root), *args],
-            capture_output=True,
-            timeout=_GIT_TIMEOUT,
-            check=False,
-        )
-    except (OSError, subprocess.TimeoutExpired):
-        return None
-    if proc.returncode != 0:
-        return None
-    return proc.stdout.decode("utf-8", errors="replace")
+    kwargs.setdefault("timeout", _GIT_TIMEOUT)
+    return walk._git(args, root, **kwargs)
 
 
-def tree_state(root: Path, walked: set[str], skipped: set[str] = frozenset()) -> TreeState:
+def tree_state(
+    root: Path,
+    walked: set[str],
+    skipped: set[str] = frozenset(),
+    inputs: set[str] = frozenset(),
+) -> TreeState:
     """The commit `root` is at, the files it tracks and the paths that differ (see the
-    module docstring). `skipped` are paths the walk named as the tool's own output."""
+    module docstring). `skipped` are paths the walk named as the tool's own output. `inputs`
+    are files outside the commit that the assessment lists as inputs of its own (evaluation
+    reports, review records); they are named there, so being gitignored is no dirt. Only
+    that: an input git tracks and that differs, or an untracked one, stays dirty."""
     head = _git(["rev-parse", "HEAD"], root)
     if head is None:
         return TreeState(commit=None, is_git=False)
     commit = head.strip()
-    prefix = (_git(["rev-parse", "--show-prefix"], root) or "").strip()
-    listed = _git(["ls-files", "-z", "--", "."], root)
-    tracked = frozenset(p for p in listed.split("\0") if p) if listed is not None else None
-    status = _git(["status", "--porcelain=v1", "-z", "--untracked-files=all", "--", "."], root)
-    if status is None or tracked is None:
+    tree = walk.git_tree(root, _git)
+    tracked = None if tree.tracked is None or tree.unlisted else frozenset(tree.tracked)
+    if tracked is None or tree.status_failed:
         return TreeState(commit=commit, is_git=True, tracked=tracked, status_failed=True)
-    dirty: set[str] = set()
-    entries = status.split("\0")
-    index = 0
-    while index < len(entries):
-        entry = entries[index]
-        index += 1
-        if len(entry) < 4:
+    dirty = {rel for rel in tree.changed if rel not in skipped}
+    dirty |= {rel for rel in tree.untracked if rel in walked and rel not in skipped}
+    for rel in walked:
+        # A submodule's `.git` pointer file is walked and belongs to no commit.
+        if rel in skipped or PurePosixPath(rel).name == ".git":
             continue
-        code, path = entry[:2], entry[3:]
-        if code[0] in "RC":
-            index += 1  # the rename's source path follows; the new path is what is walked
-        rel = path[len(prefix) :] if prefix and path.startswith(prefix) else path
-        if rel in skipped:
-            continue
-        if code == "??" and rel not in walked:
-            continue
-        dirty.add(rel)
+        if rel in tree.uncompared or (rel not in tracked and rel not in inputs):
+            dirty.add(rel)
     return TreeState(commit=commit, is_git=True, dirty=tuple(sorted(dirty)), tracked=tracked)
 
 
@@ -232,12 +224,18 @@ def machine_scan(
 
     policy = policy or load_policy()
     options = AuditOptions(
-        path=str(path), deep="python", mode=mode, evaluation_report=evaluation_report
+        path=str(path),
+        deep="python",
+        mode=mode,
+        evaluation_report=evaluation_report,
+        workbench=True,
     )
     ctx, findings, unknown, rules = scan(options, policy)
     walked = {record.relpath: record for record in ctx.files}
     skipped = set(getattr(ctx.inventory, "own_output_skipped", None) or [])
-    state = tree_state(ctx.root, set(walked), skipped)
+    inputs = {str(getattr(report, "file", "")) for report in ctx.evaluation}
+    inputs |= {str(row.get("file")) for row in ctx.inventory.review_records or []}
+    state = tree_state(ctx.root, set(walked), skipped, inputs)
     not_walked: list[str] | None = None if state.is_git and state.tracked is None else []
     if state.tracked is not None:
         not_walked = sorted(p for p in state.tracked if p not in walked and p not in skipped)

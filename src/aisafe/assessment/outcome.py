@@ -17,10 +17,15 @@ Per mechanism M1 to M7, in this order:
    investigated; a skeptic pass that refuted a deciding claim; a deciding claim whose
    skeptic pass did not run or is not bound to the record; a record whose claim rests on a
    runtime-only link, or that a person still has to weigh; a record that was rejected (one
-   whose mechanism cannot be read blocks every mechanism); a supported or observed scan
-   finding no deciding record covers; a closing record next to text addressed to an auditor
-   or an AI tool (in a file it cites, in its unit's agent instruction files, or in the record
-   itself) that its skeptic pass did not say it checked; a closing on no surface of the plan.
+   that names no mechanism a record can decide blocks M1 to M7); a supported or observed
+   scan finding no deciding record covers; a closing record next to text addressed to an
+   auditor or an AI tool (in a file it cites or says it read, anywhere in the unit it closes,
+   in an agent instruction file above them, or in the record itself) that its skeptic pass
+   did not say it checked; a closing that answers no surface hypothesis of the plan, whether
+   or not the plan carries the mechanism; a file of the tree nobody read that may hold code
+   or prompts (a tracked file the walk skipped, a file in a language this version does not
+   read), or a tree whose tracked files git could not list. Pictures, fonts, recordings,
+   drawings, style sheets and dependency lock files do not count: they hold neither.
 3. `no_violation_identified_within_assessed_scope` when a record closes the mechanism and
    no gap remains. It says "closed on k of n surface hypotheses": the scope, never more.
 4. `not_assessed` otherwise: no surface of the plan carries the mechanism, or nothing
@@ -30,7 +35,13 @@ Investigating less never reads better: an uninvestigated high-priority surface i
 whether or not other records exist.
 
 M8 (missing or stale review) is read from the scan's AUD-1106 and AUD-1107 facts and the
-review records, never from an investigation record.
+review records, never from an investigation record. It closes only when every review record
+stands (under this policy, within the review window, and bound to the artifacts as they are
+now), when between them the records bind every file of the plan's surfaces (a record that
+names units binds files of those units only; the surface of a person-facing unit is a
+directory and asks for no file), and when no file stayed unread as above. A record whose
+binding nobody checked (no `stale` fact) does not stand. Neither does a record the parser
+dropped or a record file nobody read: each problem with the record files is a row of its own.
 
 The overall outcome is the least favourable of the eight: violations_identified, then
 inconclusive, then not_assessed, then no_violation_identified_within_assessed_scope.
@@ -65,6 +76,44 @@ _STRONG = frozenset({EvidenceStatus.SUPPORTED_MECHANISM, EvidenceStatus.OBSERVED
 # A violation established at the previous commit stands unless the retest shows it
 # remediated: a step still failing, a regression, or a remediation nobody could verify.
 _UNREMEDIATED = frozenset({"not_remediated", "regressed", "needs_reinvestigation", "not_verified"})
+# Unread files that block no outcome, by suffix, because they hold neither code nor prompts.
+# Binary media never reaches the walk's text, so these count only among the files the walk
+# did not read: one it read as text is not what its name says, and stays unread text.
+_BINARY_MEDIA = frozenset(
+    {
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".gif",
+        ".webp",
+        ".bmp",
+        ".ico",
+        ".tif",
+        ".tiff",
+        ".avif",
+        ".heic",
+        ".woff",
+        ".woff2",
+        ".ttf",
+        ".otf",
+        ".eot",
+        ".mp3",
+        ".wav",
+        ".ogg",
+        ".flac",
+        ".m4a",
+        ".aac",
+        ".mp4",
+        ".mov",
+        ".webm",
+        ".avi",
+        ".mkv",
+    }
+)
+# Text that no program runs and no model is sent: drawings, style sheets, dependency pins.
+_TEXT_NOT_CODE = frozenset({".svg", ".css", ".scss", ".sass", ".less", ".lock"})
+# How many files a gap names before it only counts them.
+_NAMED = 10
 
 
 @dataclass(frozen=True)
@@ -159,21 +208,32 @@ def _ancestors(relpath: str) -> set[str]:
 
 def _untrusted_near(record: Any, untrusted: Sequence[dict[str, Any]]) -> list[str]:
     """Where text addressed to auditors or AI tools sits next to a closing record: in a file
-    it cites or its surface's file, in an agent instruction file of a directory above them,
-    or in the record's own `untrusted_text`."""
+    it cites or read (`depends_on`) or its surface's file, anywhere in the person-facing unit
+    it closes (the unit is what it speaks for, so the note need not sit in a cited file), in
+    an agent instruction file of a directory above them, or in the record's own
+    `untrusted_text`."""
     files = set(getattr(record, "cited_files", None) or [])
+    raw = getattr(record, "raw", None) or {}
+    # Spelt as validation reads it, so a note there is found however the record spells it.
+    files |= {
+        str(item.get("file")).strip().replace("\\", "/") for item in raw.get("depends_on") or []
+    }
     surface_file = (record.surface or {}).get("file")
     if surface_file:
         files.add(surface_file)
     dirs: set[str] = set()
     for file in files:
         dirs |= _ancestors(file)
+    unit_root = None
     if (record.surface or {}).get("type") == "person_facing_unit":
-        dirs |= _ancestors((surface_file or ".") + "/x")
+        unit_root = str(surface_file or ".").rstrip("/") or "."
+        dirs |= _ancestors(unit_root + "/x")
     hits = []
     for item in untrusted:
         where = str(item.get("file"))
-        if int(item.get("line") or 0) == 0:
+        if unit_root is not None and (unit_root == "." or where.startswith(unit_root + "/")):
+            hits.append(f"{where}:{item.get('line')}" if item.get("line") else where)
+        elif int(item.get("line") or 0) == 0:
             # An agent instruction file speaks for its directory; one in a hidden config
             # directory (.github, .cursor, .claude) speaks for the whole repository.
             parent = str(PurePosixPath(where).parent)
@@ -188,6 +248,35 @@ def _untrusted_near(record: Any, untrusted: Sequence[dict[str, Any]]) -> list[st
     return sorted(set(hits))
 
 
+def _some(files: Sequence[str]) -> str:
+    shown = ", ".join(files[:_NAMED])
+    return f"{shown} and {len(files) - _NAMED} more" if len(files) > _NAMED else shown
+
+
+def _files_not_read(
+    tracked_not_walked: Sequence[str] | None, unsupported_files: Sequence[str]
+) -> Gap | None:
+    """The blocking gap of the files nobody read, or None. `tracked_not_walked` is None when
+    git could not list the commit's files: unknown, never empty. Outside git there is no
+    commit: nothing lists what the walk skipped, so only `unsupported_files` can block."""
+
+    def suffix(rel: str) -> str:
+        return PurePosixPath(rel).suffix.lower()
+
+    unread = {rel for rel in tracked_not_walked or () if suffix(rel) not in _BINARY_MEDIA}
+    unread |= set(unsupported_files)
+    unread = {rel for rel in unread if suffix(rel) not in _TEXT_NOT_CODE}
+    parts = []
+    if tracked_not_walked is None:
+        parts.append("git could not list the commit's files: what the walk skipped is unknown")
+    if unread:
+        parts.append(
+            f"{len(unread)} file(s) that may hold code or prompts were not read: "
+            + _some(sorted(unread))
+        )
+    return Gap("files_not_read", "; ".join(parts)) if parts else None
+
+
 def mechanism_outcomes(
     policy: Policy,
     *,
@@ -200,18 +289,27 @@ def mechanism_outcomes(
     rules_ran: Iterable[str] = (),
     carried: Sequence[dict[str, Any]] = (),
     today: date | None = None,
+    tracked_not_walked: Sequence[str] | None = (),
+    unsupported_files: Sequence[str] = (),
 ) -> list[MechanismOutcome]:
     """One outcome per policy mechanism, in policy order (see the module docstring).
     `records` are the accepted ones (superseded records left out); `rejected` the
     rejected ones; `untrusted` the plan's `untrusted_text`; `carried` the retest rows of
-    the previous assessment's records."""
+    the previous assessment's records; `tracked_not_walked` and `unsupported_files` the
+    files of the tree the scan did not read."""
     ran = set(rules_ran)
-    known = {m.id for m in policy.mechanisms}
+    not_read = _files_not_read(tracked_not_walked, unsupported_files)
+    # M8 has no patterns: no record may name it, so a rejected one naming it is unplaced too.
+    known = {m.id for m in policy.mechanisms if m.patterns}
     unplaced = [r for r in rejected if r.mechanism not in known]
     out: list[MechanismOutcome] = []
     for mechanism in policy.mechanisms:
         if not mechanism.patterns:
-            out.append(_review_mechanism(policy, mechanism, findings, review_records, ran, today))
+            out.append(
+                _review_mechanism(
+                    policy, mechanism, findings, review_records, ran, today, surfaces, not_read
+                )
+            )
             continue
         mine = [r for r in records if r.mechanism == mechanism.id]
         their_rejected = [r for r in rejected if r.mechanism == mechanism.id]
@@ -246,7 +344,8 @@ def mechanism_outcomes(
         scan_violations = [f for f in strong if f.decision is Decision.VIOLATES]
 
         # -- gaps ----------------------------------------------------------------
-        gaps: list[Gap] = []
+        # First: the terminal summary shows only the first few gaps of a mechanism.
+        gaps: list[Gap] = [not_read] if not_read else []
         deciding_on: set[tuple[str | None, str | None]] = {
             (r.surface.get("id"), r.pattern) for r in mine if r.claim in ("establishes", "closes")
         }
@@ -324,15 +423,25 @@ def mechanism_outcomes(
                             pattern=record.pattern,
                         )
                     )
-        for record in [*their_rejected, *unplaced]:
+        # A pattern that is not this mechanism's says nothing about what the record held
+        # back: the gap then reads as every pattern, and the legal section treats it so.
+        own_patterns = [pattern.id for pattern in mechanism.patterns]
+        for record in their_rejected:
+            pattern = getattr(record, "pattern", None)
             gaps.append(
                 Gap(
                     "rejected_record",
-                    "a record of this mechanism was rejected"
-                    if record in their_rejected
-                    else "a rejected record names no mechanism it could be kept apart from",
+                    "a record of this mechanism was rejected",
                     record=record.id or record.path,
-                    pattern=getattr(record, "pattern", None),
+                    pattern=pattern if pattern in own_patterns else None,
+                )
+            )
+        for record in unplaced:
+            gaps.append(
+                Gap(
+                    "rejected_record",
+                    "a rejected record names no mechanism a record can decide",
+                    record=record.id or record.path,
                 )
             )
         covered = {
@@ -354,12 +463,13 @@ def mechanism_outcomes(
         }
         n = len(set(hypotheses))
         k = len(set(hypotheses) & plan_closed)
-        if closing and n and not k:
+        if closing and not k:
+            carried_by = f"{n} carry" if n else "no surface of the plan carries"
             gaps.append(
                 Gap(
                     "closed_off_plan",
-                    f"the closing record(s) answer no surface hypothesis of the plan; {n} carry "
-                    f"{mechanism.id}",
+                    "the closing record(s) answer no surface hypothesis of the plan; "
+                    f"{carried_by} {mechanism.id}",
                 )
             )
         result.gaps = gaps
@@ -419,6 +529,8 @@ def _review_mechanism(
     review_records: Sequence[dict[str, Any]],
     ran: set[str],
     today: date | None,
+    surfaces: Sequence[dict[str, Any]],
+    not_read: Gap | None,
 ) -> MechanismOutcome:
     """M8, from the scan's review and control facts and the review records."""
     scan_m = [f for f in findings if f.mechanism == mechanism.id]
@@ -445,31 +557,85 @@ def _review_mechanism(
         result.gaps = [Gap("scan_finding_to_decide", f"{f.display_id}: {f.title}") for f in scan_m]
         result.basis.append(f"{len(scan_m)} review or control finding(s) a person decides")
         return result
-    current = [
-        row
+    if not review_records:
+        result.basis.append("no review record and no finding to read")
+        return result
+    # One standing record does not answer for another: AUD-1107 reads every record too, but
+    # only those covering a unit with person signals, so silence from it proves nothing here.
+    fallen = [
+        (row, reasons)
         for row in review_records
-        if str(row.get("policy_version")) == policy.version
-        and _fresh(row.get("reviewed_at"), policy.review_max_age_days, today)
+        if (reasons := _why_review_fell(row, policy, today))
     ]
-    if current:
+    result.gaps = [not_read] if not_read else []
+    if not_read:
+        result.basis.append("files that may hold code or prompts were not read")
+    if fallen:
+        result.gaps += [Gap("stale_review_record", _fallen_detail(*row)) for row in fallen]
+        result.basis.append(f"{len(fallen)} review record(s) no longer stand")
+    elif unreviewed := _unreviewed_files(surfaces, review_records):
+        result.gaps.append(
+            Gap(
+                "surface_not_reviewed",
+                f"no review record binds {len(unreviewed)} file(s) of the plan's surfaces: "
+                + _some(unreviewed),
+            )
+        )
+        result.basis.append("the review records do not bind every file of the plan's surfaces")
+    if result.gaps:
+        result.outcome = INCONCLUSIVE
+    else:
         result.outcome = NO_VIOLATION
         result.basis.append(
-            f"{len(current)} review record(s) under policy {policy.version}, within "
-            f"{policy.review_max_age_days} days, and no review or control finding remains"
+            f"{len(review_records)} review record(s) under policy {policy.version}, within "
+            f"{policy.review_max_age_days} days, bound to the artifacts as they are now and to "
+            "every file of the plan's surfaces, and no review or control finding remains"
         )
-    elif review_records:
-        result.outcome = INCONCLUSIVE
-        result.gaps = [
-            Gap(
-                "stale_review_record",
-                f"no review record is under policy {policy.version} and within "
-                f"{policy.review_max_age_days} days",
-            )
-        ]
-        result.basis.append("the review records are stale or under another policy")
-    else:
-        result.basis.append("no review record and no finding to read")
     return result
+
+
+def _fallen_detail(row: dict[str, Any], reasons: list[str]) -> str:
+    """A row with no date is a problem with the record files, not a record: the parser
+    dropped it, or a second file was never read. Its reason names the file."""
+    reviewed_at = row.get("reviewed_at")
+    if reviewed_at is None:
+        return "a review record that does not count: " + "; ".join(reasons)
+    return f"the review record of {reviewed_at} in {row.get('file')}: " + "; ".join(reasons)
+
+
+def _unreviewed_files(
+    surfaces: Sequence[dict[str, Any]], review_records: Sequence[dict[str, Any]]
+) -> list[str]:
+    """The files of the plan's surfaces no review record binds, read as `ReviewRecord.covers`
+    reads a file. The surface of a person-facing unit is a directory."""
+
+    def binds(row: dict[str, Any], surface: dict[str, Any]) -> bool:
+        units = row.get("units") or ()
+        return surface.get("file") in (row.get("artifact_files") or ()) and (
+            not units or surface.get("unit") in units
+        )
+
+    return sorted(
+        {
+            str(surface.get("file"))
+            for surface in surfaces
+            if surface.get("type") != "person_facing_unit"
+            and not any(binds(row, surface) for row in review_records)
+        }
+    )
+
+
+def _why_review_fell(row: dict[str, Any], policy: Policy, today: date | None) -> list[str]:
+    """Why a review record no longer stands; [] when it does. `stale` holds the reasons of
+    `ReviewRecord.is_stale`; a row without it was never checked against the artifacts."""
+    stale = row.get("stale")
+    reasons = ["its artifacts were not checked"] if stale is None else [str(r) for r in stale]
+    version = str(row.get("policy_version"))
+    if version != policy.version:
+        reasons.append(f"it is under policy {version}, not {policy.version}")
+    if not reasons and not _fresh(row.get("reviewed_at"), policy.review_max_age_days, today):
+        reasons.append(f"it is not within the {policy.review_max_age_days} day review window")
+    return reasons
 
 
 def _fresh(value: Any, max_age_days: int, today: date | None) -> bool:

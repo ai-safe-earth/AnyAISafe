@@ -156,10 +156,9 @@ def test_a_record_is_found_wherever_its_schema_key_sits(persona) -> None:
     (records / "late.json").write_text(json.dumps(padded), encoding="utf-8")
     (records / "notes.json").write_text(json.dumps({"schema": "something/else"}), encoding="utf-8")
     run = validate_paths([records], scan)
-    assert [r.id for r in run.results] == ["inv-1"]
-    assert run.skipped == [
-        {"path": (records / "notes.json").as_posix(), "why": "schema 'something/else'"}
-    ]
+    # A JSON file with another label may be a record that broke: rejected, never dropped.
+    assert [(r.id, r.status) for r in run.results] == [("inv-1", "accepted"), (None, "rejected")]
+    assert run.skipped == []
 
 
 def test_a_step_on_a_file_the_walk_no_longer_reads_cannot_pass(persona) -> None:
@@ -253,7 +252,8 @@ def test_in_a_git_tree_only_tracked_files_can_be_cited(tmp_path: Path) -> None:
     )
     scan = machine_scan(root)
     plan = build_plan(scan)
-    assert scan.state.clean
+    # The rules read it and the commit does not hold it: the tree is not the commit.
+    assert scan.state.dirty == (".env",)
     record = _record(
         root,
         plan,
@@ -280,7 +280,31 @@ def test_in_a_git_tree_only_tracked_files_can_be_cited(tmp_path: Path) -> None:
     )
     write_record(tmp_path / "records", record)
     run = validate_paths([tmp_path / "records"], scan)
-    (result,) = run.results
+    assert run.fatal is not None and ".env" in run.fatal
+    (result,) = validate_paths([tmp_path / "records"], scan, working_tree=True).results
+    assert any("not tracked by git" in n for n in result.notes)
+
+    # A gitignored evaluation report is a listed input, so the tree stays clean; the commit
+    # still does not hold it, so it cannot be cited.
+    (root / ".env").unlink()
+    (root / ".git" / "info" / "exclude").write_text("evaluation-report.json\n", encoding="utf-8")
+    (root / "evaluation-report.json").write_text(
+        json.dumps(
+            {
+                "schema": "aisg/1",
+                "kind": "evaluation",
+                "generated_at": "2026-10-30T00:00:00Z",
+                "summary": {"sent": 1, "passed": 1},
+                "by_family": {"crisis_disclosure": {"sent": 1, "passed": 1}},
+            }
+        ),
+        encoding="utf-8",
+    )
+    scan = machine_scan(root)
+    assert scan.state.clean
+    record["counterevidence"][0]["citations"] = [cite(root, "evaluation-report.json", 1)]
+    write_record(tmp_path / "records", record)
+    (result,) = validate_paths([tmp_path / "records"], scan).results
     assert result.status == "rejected" and any("not tracked by git" in e for e in result.errors)
 
 

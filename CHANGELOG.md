@@ -140,6 +140,29 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Fixed
 
+- **The Stage A review's open findings (39).** An assessment, a record's effective claim or
+  a retest status is no longer more favourable than the evidence:
+  - validation: a control counts only on a line that runs, at or before the link it guards;
+    a record is tied to its surface; every scan row must be cited to rule a link out; skeptic
+    claims need text and a result; a skeptic file name is checked before any file call; a
+    stray `*.json` among the records is rejected, not skipped.
+  - retest: a step that cannot run is never a pass; `no_finding` and `present` steps never
+    show a remediation alone; a contested closing does not count; a fix counts only on a
+    commit; a violation not shown remediated is carried to the next retest; a new or changed
+    surface blocks; steps and covers come from the embedded record, checked by its digest.
+  - outcome: text addressed to auditors is seen in `depends_on` files and in any file of a
+    unit a record closes; a rejected M8 record blocks M1 to M7; a closing on no plan
+    hypothesis is a gap; M8 closes only on review records that still stand.
+  - scan: `.gitignore` never hides a tracked file; auditor mode reads tracked files in
+    skipped folders; gitignored, skip-worktree and submodule changes make a tree dirty; git
+    runs with no repository-configured program, on every git call the workbench makes.
+  - Markdown: tree text cannot open a block or a link, or cancel an escape.
+  - After an independent review of those fixes, 38 more: a repository cannot start its own
+    program through git (`GIT_ALLOW_PROTOCOL`, an absolute git path, a safe child path in
+    fleet); a retest cannot lose a violation through a reused record id or show one remediated
+    while its text is unchanged; files left unread block a closing (`files_not_read`); a
+    closing by a control outside Python goes to review; a review record that fails to parse
+    or binds none of the surfaces does not close M8.
 - **JavaScript and TypeScript persona templates are prompt material again.** The expression
   that reads a backtick template named like a persona, backstory or character as prompt
   text held a literal backspace character where a word boundary was meant, so it never

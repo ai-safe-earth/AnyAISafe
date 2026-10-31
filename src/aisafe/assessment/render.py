@@ -24,6 +24,10 @@ __all__ = ["TEMPLATES", "render_html", "render_markdown", "render_terminal"]
 # Every character str.splitlines() breaks a line on; CommonMark ends a line at CR or LF.
 _LINE_BREAKS = re.compile("[\r\n\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]+")
 
+# What opens a block when it comes first in a list item: a heading, a code fence, a quote,
+# a list, a rule or a link definition. Group 2 is the number of an ordered list.
+_ITEM_START = re.compile(r"^( *- )\s*(\d+(?=[.)])|(?=[#~>+*_\[-]))")
+
 _T_TITLE = "aisafe assessment"
 _T_LABEL = "{label} | mode: {mode}"
 _T_FACTS = "target {path} | commit {commit} | policy {policy} | generated {generated_at} | {tool}"
@@ -44,14 +48,14 @@ _T_PEOPLE = "investigators: {investigators} | operators: {operators}"
 _T_SCOPE = (
     "{surfaces} surfaces in the plan ({high} high); {queued} queued (budget {budget}), "
     "{left_out} left out ({left_out_high} high); {investigated} investigated; "
-    "{unsupported} in an unsupported language"
+    "{unsupported} surface(s) in an unsupported language"
 )
 _T_NOT_READ = (
     "not read: {marker} file(s) skipped by the ignore-file marker, {own} as the tool's own "
     "output, {oversize} over the size limit, {unknown} UNKNOWN item(s) from the scan"
 )
 _T_MECH_ROW = "{id} {name}: {outcome}"
-_T_CLOSED_ON = "closed on {closed} of {of} surface(s) carrying it"
+_T_CLOSED_ON = "closed on {closed} of {of} surface hypotheses carrying it"
 _T_GAP = "gap ({kind}): {detail}"
 _T_GAP_RECORD = "gap ({kind}, {record}): {detail}"
 _T_UNCHALLENGED = "not counted: no skeptic pass upheld {record}"
@@ -617,12 +621,19 @@ def _outcome_lines(doc: dict[str, Any]) -> list[str]:
 
 def _md(text: str) -> str:
     """Escape a line for Markdown: every line break inside it becomes a space, so text
-    from the audited tree or a person can start no heading or list item of its own; `&`
-    and `<` become entities and backticks are escaped with a backslash, so it can open no
-    HTML comment, no raw HTML and no code span. A `>` alone opens nothing, and the
-    blockquote of the disclaimer needs it."""
-    text = _LINE_BREAKS.sub(" ", text)
-    return text.replace("&", "&amp;").replace("<", "&lt;").replace("`", "\\`")
+    from the audited tree or a person can start no heading or list item of its own; a
+    backslash is doubled, so none of the escapes here can be cancelled; `&` and `<` become
+    entities and backticks are escaped with a backslash, so it can open no HTML comment,
+    no raw HTML and no code span; `](` is broken, so it can make no link or image, which
+    would hide the text it quotes and could fetch a remote file; and text that comes first
+    in a list item cannot open a block inside that item. Elsewhere a `>` alone opens
+    nothing, and the blockquote of the disclaimer needs it. A `*`, and a `_` at the edge of
+    a word, are escaped so `pkg/__init__.py` stays what it is; a `_` inside a word opens no
+    emphasis, so `no_violation_identified` stays unchanged."""
+    text = _LINE_BREAKS.sub(" ", text).replace("\\", "\\\\")
+    text = text.replace("&", "&amp;").replace("<", "&lt;").replace("`", "\\`")
+    text = re.sub(r"\*|(?<![^\W_])_|_(?![^\W_])", lambda m: "\\" + m.group(), text)
+    return _ITEM_START.sub(r"\1\2\\", text.replace("](", "]\\("))
 
 
 def render_markdown(doc: dict[str, Any]) -> str:

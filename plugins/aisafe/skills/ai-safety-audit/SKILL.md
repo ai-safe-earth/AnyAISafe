@@ -401,17 +401,19 @@ diffs:
   look.
 - What is still UNKNOWN: the `unknown` list, verbatim.
 
-Then the retest, which is what makes a change a remediation. It re-runs the verification
-steps of the records in the phase 2 assessment against the tree as it is now (pass
-`--working-tree` when the changes are not committed; the assessment says so):
+Then the retest, which is what makes a change a remediation. Commit the change first: a fix
+counts only on a commit, so with `--working-tree` on uncommitted changes the retest runs and
+no record reads `remediated`. It re-runs the verification steps of the records in the phase
+2 assessment against the tree as it is now:
 
-    sh <skill>/scripts/assess.sh . --investigations .aisafe-audit/investigations --retest .aisafe-audit/assessment/assessment.json -o .aisafe-audit/assessment-after --working-tree
-    powershell -ExecutionPolicy Bypass -File <skill>/scripts/assess.ps1 . --investigations .aisafe-audit/investigations --retest .aisafe-audit/assessment/assessment.json -o .aisafe-audit/assessment-after --working-tree
+    sh <skill>/scripts/assess.sh . --investigations .aisafe-audit/investigations --retest .aisafe-audit/assessment/assessment.json -o .aisafe-audit/assessment-after
+    powershell -ExecutionPolicy Bypass -File <skill>/scripts/assess.ps1 . --investigations .aisafe-audit/investigations --retest .aisafe-audit/assessment/assessment.json -o .aisafe-audit/assessment-after
 
 The retest needs at least one record made on the new code: investigate the changed
 surfaces again (phase 2) before you run it. A record counts as remediated only when each of
-its remediation steps failed at its commit and passes now, no regression step fails, and
-nothing at the new commit shows the mechanism on that surface; read each `status` out
+its remediation steps failed at its commit and passes now, no regression step fails,
+nothing at the new commit shows the mechanism on that surface, and every record on that
+surface and pattern is an upheld closing; read each `status` out
 (`remediated`, `not_remediated`, `regressed`, `needs_reinvestigation`, `not_verified`,
 `held`, `same_commit`). A finding that is no longer reported is "not reported", never
 remediated, and a violation not shown remediated stands in the new assessment. A mechanism
