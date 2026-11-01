@@ -155,7 +155,8 @@ AnyAISafe/
 |                                #   log.md, results/, console/ (the owner's review console)
 |-- docs/                        # REFERENCE.md (this file), methodology.md, architecture.md, rules.md
 |                                #   (generated), legal-profiles.md, migration.md
-|-- examples/                    # README.md and companion_demo/ (a prompt-only tree to audit)
+|-- examples/                    # README.md, companion_demo/ (a small companion app to audit) and
+|                                #   companion_demo_engagement/ (an example auditor engagement)
 |-- scripts/                     # rules_md.py (generates docs/rules.md and the skill's mechanisms.md),
 |                                #   sync_skill.py (plugin mirror), bump_version.py (version sites),
 |                                #   claim_to_case.py (a confirmed claim into a bench-case skeleton)
@@ -978,7 +979,8 @@ Examples:
 | `record [path]` | `--record FILE`, `--reviewer NAME` (required), `--purpose TEXT` (required), `--scope IDS`, `--affected TEXT`, `--assisted-by TEXT` | rewrites the record for today with refreshed hashes, keeping the `decisions:` of an existing record; `--scope` defaults to every mechanism; exit 2 on an empty or verdict-shaped reviewer or purpose |
 | `check [path]` | `--record FILE` | lists stale reasons and uncovered artifacts; exit 1 when there are any |
 
-A real sequence on a copy of `examples/companion_demo`:
+A real sequence on a copy of `examples/companion_demo` as it was before it gained its Python
+files (prompts only, policy 1.0.0):
 
 ```
 $ aisafe review init demo
