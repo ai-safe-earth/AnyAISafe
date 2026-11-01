@@ -113,6 +113,13 @@ The fields:
   chain of `from` edges over supported links (a runtime-only link never bridges it), or the
   claim is unknown. A link on a comment, an import or a string standing as a statement, or a
   Python line that never runs, does not count. A file must be tracked by git to be cited.
+  A store the data goes out to, beyond the tree (an analytics vendor, a hosted database), has
+  no `how` of its own. The closest honest fit is a `storage` link with `how: runtime-only` on
+  the line that sends the data: the tree shows the send, never what is kept, for how long or
+  under which key. Such a link supports nothing, so the claim reads `unknown` and goes to
+  review. Put what would show the keeping (the vendor's contract, a retention setting) in
+  `missing_evidence`. Never write `read` or `traced` for it, and do not rule `storage` out
+  on the strength of the tree: what the vendor keeps is not in it.
 - `counterevidence`: each `{reading, result, reason, citations}`; `result` is `supported`
   or `refuted`. A deciding record weighs at least one other reading. A benign reading you
   found `supported` turns a violation into a review: a person weighs the two.
@@ -163,10 +170,12 @@ The fields:
   for and did not find, with where you looked. A closing by a broken chain lists every
   required link you did not cite here, and never a link you also cite. When the scan lists
   rows of that kind in the unit of your surface or of your links (an ingress, a model call, a
-  prompt, a memory store, a profile signal), or a link of that kind its syntax tree
-  established there for any finding, cite each of them and say why it is not the link, or the
-  record goes to review. For the `prompt` of a prompt surface, that means the rows inside the
-  surface's `span`. A prompt, person-data, objective or inference link cannot be ruled out
+  prompt, a memory store or analytics call for `storage`, a profile signal, an engagement,
+  attachment, steering or inference signal), a finding that reports an objective or an
+  inference (AUD-1102 and AUD-1103 an inference, AUD-1104, AUD-1109 and AUD-1110 an objective),
+  or a link of that kind its syntax tree established there for any finding, cite each of them and say why it is not the link, or the record goes to
+  review. For the `prompt`, `objective` or `inference` of a prompt surface, that means the rows
+  and findings inside the surface's `span`. A prompt, person-data, objective or inference link cannot be ruled out
   while a prompt is fetched at run time anywhere in the tree, in any unit: the claim is
   unknown, and the assessment lists a run-time gap. A kind the pattern does not require can
   be listed here, but its citations do not answer the surface.
@@ -222,6 +231,8 @@ text does. Say what you read.
   link cited or ruled out, at least one ruled out) or the absent control is on the path the
   way `controls` above asks, in Python. A complete trace with a benign reading goes to a
   person, and so does a control in JS/TS or any other file that is not Python.
+- A required link that is only `runtime-only` turns `supported_mechanism` into `unknown`,
+  whatever the record proposed, a review included.
 - A link in a file of an unsupported language (anything but Python, JS/TS and prompt or
   configuration text) does not count. A JS/TS link counts, with the note that no
   deterministic deep analysis backs the reading. A prompt, person-data, objective or

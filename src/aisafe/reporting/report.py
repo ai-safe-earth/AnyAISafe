@@ -39,9 +39,9 @@ from __future__ import annotations
 import json
 import re
 import textwrap
-from importlib import metadata
 from typing import Any, Iterable, Sequence
 
+from aisafe import __version__
 from aisafe.evidence.model import (
     DISCLAIMER,
     DISCLAIMER_TEMPLATE,
@@ -357,11 +357,10 @@ def check_templates() -> list[str]:
 
 
 def tool_version() -> str:
-    """Installed distribution version, or "unknown" for a source checkout. Never a literal."""
-    try:
-        return metadata.version(DISTRIBUTION)
-    except metadata.PackageNotFoundError:
-        return "unknown"
+    """The version of the code that is running, which `scripts/bump_version.py` keeps equal to
+    the release. Not the package metadata: it can describe another copy, such as an old
+    `aisafe.egg-info` next to the source, and a report would name a version that never ran."""
+    return __version__
 
 
 def _mechanism_of_rule(rule: type[AuditRule]) -> str:

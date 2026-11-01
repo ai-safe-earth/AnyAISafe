@@ -39,18 +39,22 @@ downgrade is written down in `notes`:
   on it (`_control_problem` says what that takes); a complete trace with a benign reading is
   for a person to weigh, so it becomes a review; a ruled-out link the scan lists needs a
   citation of each of those rows, in the units of the record's surface and links (for the
-  prompt of a prompt surface, the rows inside that surface), and of each link the scan's
-  syntax tree established for the pattern, whatever its kind; a surface fetched at run time
-  cannot be closed from the tree, a prompt, person-data, objective or inference link cannot
-  be ruled out while the tree fetches a prompt at run time, and a control cannot sit in a
-  fetched prompt: the claim is unknown and the link or control counts as runtime-only. A
-  fetch is the whole statement the scan's row sits on and the statements fed from a name it
-  bound; every prompt-borne link on a surface fetched at run time is runtime-only;
+  prompt, the objective or the inference of a prompt surface, the rows inside that surface),
+  and of each link the scan's syntax tree established for the pattern, whatever its kind; an
+  objective or an inference is a signal of that kind or a finding that reports it, a store a
+  memory row or an analytics row; a surface fetched at run time cannot be closed from the
+  tree, a prompt, person-data, objective or inference link cannot be ruled out while the
+  tree fetches a prompt at run time, and a control cannot sit in a fetched prompt: the claim
+  is unknown and the link or control counts as runtime-only. A fetch is the whole statement
+  the scan's row sits on and the statements fed from a name it bound; every prompt-borne link
+  on a surface fetched at run time is runtime-only;
 - a closing by a control stays one only when the control and every link of its chain (on a
   unit surface, every model call of the unit too) are in Python the syntax tree read: a file
   that parses, that the deep pass has a module for, with no lone carriage return. Elsewhere
   the machine cannot show a control runs, so the claim is a review, and a person can still
-  close it.
+  close it;
+- a `supported_mechanism` claim with a required link that is only runtime-only becomes
+  `unknown` / `requires_contextual_review`, whatever the record proposed: a review too.
 
 A skeptic result counts only when its file sits next to the record (a bare file name, a
 regular file of at most 8 MiB, checked before anything opens it), is bound to it
@@ -73,6 +77,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
 from typing import Any, Iterable
 
+from aisafe.analysis.flows import INFERENCE_KINDS, OBJECTIVE_KINDS
 from aisafe.evidence.model import (
     LINK_KINDS_BY_VIEW,
     MODES,
@@ -173,15 +178,25 @@ _SCAN_ROWS = {
     "collection": "ingress",
     "intervention": "llm_calls",
     "prompt": "prompts",
-    "storage": "memory_stores",
+    "storage": "person_signals",
     "person_data": "person_signals",
     "transmission": "person_signals",
+    "objective": "person_signals",
+    "inference": "person_signals",
 }
-# For the kinds read from the person signals, which signal kinds count.
+# For the kinds read from the person signals, which signal kinds count. A store is what
+# AUD-1101/store reports: a memory row (`inventory.memory_stores` lists those) or an analytics
+# row, whose vendor keeps what it is sent.
 _SIGNAL_ROWS = {
     "person_data": frozenset({"profile_name", "profile_placeholder", "profile_sdk"}),
     "transmission": frozenset({"profile_sdk"}),
+    "storage": frozenset({"memory", "profile_sdk"}),
+    "objective": OBJECTIVE_KINDS,
+    "inference": INFERENCE_KINDS,
 }
+# Kinds a rule can report with no inventory row: a prompt literal in Python gives a finding,
+# and the signal under it stays a candidate. A prompt surface holds these itself.
+_FINDING_ROWS = ("objective", "inference")
 _CLAIM_RANK = {"establishes": 2, "review": 1, "closes": 0}
 # Absent controls that are a change to the data: the send must follow the transformation.
 _TRANSFORMING_CONTROLS = frozenset({"anonymisation"})
@@ -1826,15 +1841,16 @@ def validate_record(
                         f"the scan lists {kind} in this unit ({where}); ruling it out needs a "
                         "citation of each of those rows that answers it"
                     )
-        if decision == _CLOSE and runtime and not closes_by_control:
-            status, decision = _UNKNOWN, _REVIEW
-            check.note("a required link is runtime-only; the claim is unknown and goes to review")
         if decision == _CLOSE and benign_supported:
             decision = _REVIEW
             check.note("a reading under which the mechanism is present was found supported")
         if decision == _CLOSE and open_items:
             decision = _REVIEW
             check.note("questions stay open or evidence is missing; the decision is a review")
+    # Whatever was proposed: the tree does not carry a link only a run can show.
+    if runtime and status == _SUPPORTED:
+        status, decision = _UNKNOWN, _REVIEW
+        check.note("a required link is runtime-only; the claim is unknown and goes to review")
     if control_fetched:
         status, decision = _UNKNOWN, _REVIEW
         if pattern.absent_control not in result.runtime:
@@ -2279,6 +2295,22 @@ def _unit_of(surface: dict[str, Any], scan: MachineScan) -> str | None:
     )
 
 
+def _finding_rows(kind: str, units: set[str], scan: MachineScan) -> list[dict[str, Any]]:
+    """Where the findings that report `kind` sit, in the units. A finding reports the first of
+    these kinds its pattern requires: AUD-1102 reports an inference, and the objective it would
+    serve is what a trace looks for, so that finding says nothing of an objective."""
+    rows: list[dict[str, Any]] = []
+    for finding in scan.findings:
+        pattern = scan.policy.pattern_of(finding.display_id)
+        links = pattern.links if pattern is not None else ()
+        if next((k for k in links if k in _FINDING_ROWS), None) != kind:
+            continue
+        for leg in finding.evidence:
+            if leg.line and str(getattr(scan.walked.get(leg.file), "unit", None)) in units:
+                rows.append({"file": leg.file, "line": leg.line, "kind": "finding"})
+    return rows
+
+
 def _scan_contradictions(
     broken: list[str],
     cited: dict[str, list[dict[str, Any]]],
@@ -2290,13 +2322,19 @@ def _scan_contradictions(
     when a citation of the ruled-out entry is not at each of those rows. A link the syntax tree
     established counts as a row whatever finding it came with: the kind is what is ruled out,
     not the pattern. For the prompt of a prompt surface, the rows are those inside that
-    surface: the other prompts of the unit are surfaces of their own."""
+    surface: the other prompts of the unit are surfaces of their own. So are the signals and
+    findings of an objective or an inference, when the plan gives the surface a span."""
     units = {str(_unit_of(surface, scan))} | {
         str(getattr(scan.walked.get(link["file"]), "unit", None)) for link in links
     }
     own_prompt = surface.get("type") == "prompt"
     line = surface.get("line") or 0
-    lo, hi = surface.get("span") or (line, line)
+    span = surface.get("span")
+    lo, hi = span or (line, line)
+
+    def in_surface(row: dict[str, Any]) -> bool:
+        return str(row.get("file")) == surface.get("file") and lo <= int(row.get("line") or 0) <= hi
+
     out: list[tuple[str, str]] = []
     for kind in broken:
         # Not every kind has rows of its own; a link the syntax tree established counts for all.
@@ -2308,6 +2346,10 @@ def _scan_contradictions(
             and not (section == "llm_calls" and _is_import_row(row))
             and (kind not in _SIGNAL_ROWS or str(row.get("kind")) in _SIGNAL_ROWS[kind])
         ]
+        if kind in _FINDING_ROWS:
+            rows += _finding_rows(kind, units, scan)
+            if own_prompt and span:
+                rows = [row for row in rows if in_surface(row)]
         # A link the syntax tree established, for any finding, in the unit.
         for finding in scan.findings:
             for flow_link in finding.flow.links if finding.flow is not None else ():
@@ -2317,12 +2359,9 @@ def _scan_contradictions(
         if not rows:
             continue
         if kind == "prompt" and own_prompt:
-            rows = [
-                row
-                for row in rows
-                if str(row.get("file")) == surface.get("file")
-                and lo <= int(row.get("line") or 0) <= hi
-            ] or [{"file": surface.get("file"), "line": line}]
+            rows = [row for row in rows if in_surface(row)] or [
+                {"file": surface.get("file"), "line": line}
+            ]
         unanswered: list[str] = []
         for row in rows:
             where = f"{row.get('file')}:{row.get('line')}"
@@ -2825,6 +2864,8 @@ def render_validation(run: ValidationRun) -> str:
         head = f"{result.status}: {result.path}"
         if result.id:
             head += f" ({result.id})"
+        if result.claim and result.status != "rejected":
+            head += f" | claim: {result.claim}"
         lines.append(head)
         if result.mechanism and result.pattern:
             lines.append(

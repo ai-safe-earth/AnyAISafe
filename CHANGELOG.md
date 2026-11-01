@@ -156,6 +156,28 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Fixed
 
+- **Ruling out an objective or an inference now needs a citation.** The validator had no scan
+  rows for these two kinds, so a closing of M4/objective on a prompt cited any other line and
+  still read `closes`. When the scan holds an engagement, attachment, steering or inference
+  signal, or a finding that reports one, the record cites it and says why it is not the link,
+  or it goes to review. On a prompt surface that means what sits inside the surface; a surface
+  the plan did not list has no span, so the whole unit counts.
+- **Ruling out `storage` reads the analytics row.** It was checked against memory stores only,
+  so a closing that cited `import analytics` stayed a closing over an AUD-1101/store finding on
+  the send. A `profile_sdk` row now counts, as it does for `transmission`.
+- **A run-time-only link lowers a proposed review too.** A required link that only a run can
+  show made a violation or a closing `unknown`, but a record proposing
+  `supported_mechanism | requires_contextual_review` kept its status, as did a closing lowered
+  to review for another reason. Each now reads `unknown`.
+- **Reports name the version of the code that ran.** `tool_version` read the package metadata,
+  so a leftover `src/aisafe.egg-info` put 0.1.0 on plans and reports made by 0.2.0 code, and a
+  checkout with no metadata said `unknown`. It now reads `aisafe.__version__`.
+- **A plan's span stops at the end of the file.** The window of 15 lines around a surface ran
+  past the last line: 1-28 for a file of 13. A span of a whole file keeps its mark.
+- **`aisafe investigate validate` prints each record's claim** (`establishes`, `closes`,
+  `review`) on the record's line in the terminal; it was in `--format json` only.
+- **The skill says what `how: runtime-only` means for a store beyond the tree**: the closest
+  honest fit for a vendor that keeps the data, and why that claim stays `unknown`.
 - **A name with an accent can sign.** Review records and sign-offs refused anything outside
   ASCII, so a person whose name has an accent, or is in another alphabet, could not be a
   reviewer or sign. Their free text now takes any alphabet and refuses hidden and control

@@ -20,13 +20,13 @@ from __future__ import annotations
 import html as html_lib
 import json
 import re
-from importlib import metadata
 from pathlib import Path
 from types import SimpleNamespace
 from typing import Any
 
 import pytest
 
+from aisafe import __version__
 from aisafe.evidence.model import (
     DISCLAIMER_TEMPLATE,
     REPORT_KEYS,
@@ -59,7 +59,6 @@ from aisafe.reporting.report import (
     _T_ACCEPTED_REASON,
     _TEMPLATES,
     BANNED_PHRASES,
-    DISTRIBUTION,
     EVALUATION_KINDS,
     FAIL_ON_CHOICES,
     FORMATS,
@@ -469,12 +468,8 @@ def test_formats_levels_and_kinds():
     assert SARIF_LEVEL[Severity.INFO] == "note"
 
 
-def test_tool_version_comes_from_package_metadata():
-    try:
-        expected = metadata.version(DISTRIBUTION)
-    except metadata.PackageNotFoundError:
-        expected = "unknown"
-    assert tool_version() == expected
+def test_tool_version_is_the_running_code():
+    assert tool_version() == __version__
 
 
 def test_catalogue_uses_attribute_values_and_the_policy_mechanism():

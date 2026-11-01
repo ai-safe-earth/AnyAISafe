@@ -269,6 +269,12 @@ class _Builder:
         lines = self._lines[relpath]
         return lines[line - 1] if 1 <= line <= len(lines) else ""
 
+    def last_line(self, relpath: str) -> int | None:
+        """The number of the file's last line; None for a file with no text to read."""
+        self.line_text(relpath, 0)
+        lines = self._lines[relpath]
+        return (len(lines) - 1 if lines[-1] == "" else len(lines)) or None
+
     # -- scope ---------------------------------------------------------------
     def _person_facing_units(self) -> set[str]:
         """A unit with an AI surface and a way in (person input, a prompt, a persona); or a
@@ -292,7 +298,9 @@ class _Builder:
         end = self.literal_spans.get((relpath, line))
         if end is not None:
             return (line, end)
-        return (max(1, line - _WINDOW), line + _WINDOW)
+        last = self.last_line(relpath)
+        hi = line + _WINDOW if last is None else min(line + _WINDOW, max(last, line))
+        return (max(1, line - _WINDOW), hi)
 
     def scoped_signals(self, relpath: str, lo: int, hi: int) -> list[dict[str, Any]]:
         rows = [s for s in self.signals.get(relpath, []) if lo <= int(s.get("line") or 0) <= hi]
