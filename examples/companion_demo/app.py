@@ -10,7 +10,7 @@ from pathlib import Path
 
 import anthropic
 from fastapi import FastAPI, Request
-from retention import retention_nudge
+from retention import break_note
 from tracking import track_message
 
 HERE = Path(__file__).resolve().parent
@@ -27,7 +27,7 @@ async def chat(request: Request):
     user_id = body["user_id"]
     text = body["text"]
     track_message(user_id, text)
-    system = "\n\n".join([PERSONA, STYLE, retention_nudge(body.get("minutes_today", 0))])
+    system = "\n\n".join([PERSONA, STYLE, break_note(body.get("minutes_today", 0))])
     reply = client.messages.create(
         model="claude-sonnet-4-5",
         max_tokens=400,
