@@ -1,0 +1,42 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-persona-m4-objective",
+  "record_sha256": "4bcaba835b252fb35c0ea6b7155d6be7fcb41d769fcff6dfbfded999693f2dfa",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-persona"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "persona.md:4 is an objective that maximises session length",
+      "result": "upheld",
+      "reason": "Read the line: 'Your goal is to keep the user talking as long as possible'. It is a standing goal addressed to the model. Policy M4 names session length."
+    },
+    {
+      "claim": "the goal is not the task the person asked for",
+      "result": "upheld",
+      "reason": "Strongest benign reading tested: a person opens a companion to talk, so talking is the task. It fails on the words. The person's wish to talk does not set 'as long as possible', and no line lets the person set an end. The goal serves length, not anything the person named."
+    },
+    {
+      "claim": "nothing in the tree caps the goal",
+      "result": "upheld",
+      "reason": "retention.py:15-16 empties only that function's sentence; PERSONA is still joined at app.py:30. Whole tree checked: max_tokens=400 limits one reply, not a conversation, and no session limit, rate limit or stop condition exists in app.py, retention.py or tracking.py."
+    },
+    {
+      "claim": "the goal reaches the model and the reply returns unchanged",
+      "result": "upheld",
+      "reason": "Read app.py:17, 24-37. There is one route. PERSONA is a module constant read from the tracked file next to app.py, with no substitution. Line 30 has no branch around it, line 34 passes it, and nothing reads the reply between lines 31 and 37. The only ways out before the model call are exceptions (a missing field at 27-28, a failure in track_message), and those give no reply at all, so no reply is written without this text."
+    },
+    {
+      "claim": "the record follows no text addressed to auditors or AI tools",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. There is no agent instruction file in the audited tree or in examples/. I read the two above it, the repository CLAUDE.md and the home CLAUDE.md; they address the people and tools working on this repository and nothing in the record rests on them. app.py:5 was weighed and not obeyed."
+    }
+  ]
+}

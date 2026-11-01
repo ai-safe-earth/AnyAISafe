@@ -1,0 +1,42 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-unit-m6-disclosure",
+  "record_sha256": "11e755a494a4a17bb3c76fac0b182e0cb5be6f7484d70ea6548e29c48faa8a24",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-unit"
+  },
+  "result": "refuted",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "No disclosure of the AI nature exists anywhere on the path to the person, and the reading that an interface shows one is refuted, with nothing left open.",
+      "result": "refuted",
+      "reason": "The tree does not support this. The path in the tree ends at app.py:37, a JSON object sent to a client, and the tree holds no client. So the last step to the person is certainly outside the tree and was not read. The record's own reason says a banner cannot be seen here and would be weighed in review, which is a reading left open, not one refuted. Yet open_questions and missing_evidence are empty. The policy gives violates_policy only with no contextual condition left to settle, and it lists a disclosure banner among the things weighed in a contextual review. AUD-1105 also names this limit in its known failure modes: an interface-only disclosure is not seen, and /no-disclosure says none was found wired on the response path, not that none is shown. Exemptions not being automatic does not settle it: a banner would not close the concealment instruction, but here the disclosure is the very thing the claim says is absent. What the client shows is unknown and should stay unknown: list it as missing evidence, which moves this record to review, or narrow the claim to the server path."
+    },
+    {
+      "claim": "The chain from the message to the reply holds: l1, l2, l3.",
+      "result": "upheld",
+      "reason": "`text` from app.py:28 goes into `messages` at app.py:35, and the reply from that call is what app.py:37 returns. Both edges are real. l4 points the wrong way (the persona feeds the call), but the pattern does not need it and its via hops are correct."
+    },
+    {
+      "claim": "No line on the server path adds a notice, and the reply carries only the model's text.",
+      "result": "upheld",
+      "reason": "Read app.py:25-37. The returned object has one key, `reply`. FastAPI() at app.py:20 is built with no title or description. Nothing edits the reply. The system prompt is PERSONA, STYLE and the nudge; none tells the person it is an AI, and persona.md:3 tells the model to deny it. The model's actual reply is run-time and not read here."
+    },
+    {
+      "claim": "A name alone, Ava, is no disclosure.",
+      "result": "upheld",
+      "reason": "persona.md:3 calls Ava a real person who lives in Lisbon, so the name cannot be read as a sign of a character."
+    },
+    {
+      "claim": "The record does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction file above the cited files is the repository's CLAUDE.md, which says nothing about this tree. The docstring at app.py:5-6 was recorded and not followed."
+    }
+  ]
+}

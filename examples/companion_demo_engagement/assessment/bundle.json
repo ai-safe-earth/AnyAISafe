@@ -1,0 +1,300 @@
+{
+  "schema": "aisg/bundle/1",
+  "kind": "bundle",
+  "generated_at": "2026-11-01T14:37:07Z",
+  "mode": "auditor",
+  "label": "assessment",
+  "target": {
+    "path": "C:/aisafe-demo/repo/examples/companion_demo",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef",
+    "dirty": [],
+    "working_tree": false
+  },
+  "engagement": "..",
+  "inputs": [
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m1-binding.json",
+      "sha256": "8d785c05c54b3758c361d7f72612789e19725fb662bb99a0e94ef868c90fce7d"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m1-binding.skeptic.json",
+      "sha256": "160c50bcd28beb147e9910e2de7d2d05c92745635af082a38c11343f709ff57d"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m2-inference.json",
+      "sha256": "3921947b04da4e8e9dc204894846862daf8eebea81b1d4bfa3ab02f00af6338c"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m2-inference.skeptic.json",
+      "sha256": "4011cffb535304b365b5adb952df2aac3601c547d5c40c40e8a8242eb05251d3"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m4-objective.json",
+      "sha256": "2d11c0a989c19034870d38f141ae9d16b592a8bd23c9446ee675cb7bae63af9f"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m4-objective.skeptic.json",
+      "sha256": "033f3fefc0f15330b94581ef8066f2f025a65d5667fd273d6220505a859d4fea"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m5-attachment.json",
+      "sha256": "52cbc108e14f8e1752006dc423ea4129f969397fa96a0a300b5ddcd978a46cbc"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m5-attachment.skeptic.json",
+      "sha256": "9d7a2b4b3a3608c39019db2828e0f491860f73dabaefb3c8d9e5ad093e353fb5"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m5-crisis.json",
+      "sha256": "bcb6d6ab124dc79bab29e2f74790e0832e063581a1d992d7924f6398bd950239"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m5-crisis.skeptic.json",
+      "sha256": "3f75b7c285daa61bc95a8830fd223723e209fd698f4730a260ef64221ad3d01c"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m6-concealment.json",
+      "sha256": "027e678097b6acc1ce687bfd9a5588c6f1f87fd96277d8723928e635997763ef"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m6-concealment.skeptic.json",
+      "sha256": "a5c59fdec1ced6dbd29cfc7f3987e65286f6bfedd7a49d76e25fd1359e2317bb"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m7-affiliate.json",
+      "sha256": "11ebfc6c26482f4a208819cdf3a8e20d1258cb246734724f93f842f319b45a69"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m7-affiliate.skeptic.json",
+      "sha256": "cf61739586c05a3588bb472cb1b89ee8b0c770cb1cd22079424731fc3e479ca1"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-persona-m7-steering.json",
+      "sha256": "cad891a4e318187ca602082ebf6c1c721af8f981b95caf45f3f956206b6c0ccf"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-persona-m7-steering.skeptic.json",
+      "sha256": "2ce5c19e087e15d0884f8a6f004f2fcfedf5f541d3872bd07a6eb9e426b751d9"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m1-binding.json",
+      "sha256": "032e07c51be54119c167609d73435eb93f4778a250b8cbc369192b2f95f179f1"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m1-binding.skeptic.json",
+      "sha256": "f88131eae48af39907acd56cf45c7a65e3b7816e04579328f41509054dd7e24e"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m2-inference.json",
+      "sha256": "428e87321b25cfe1793481e4d6dc8cda1f42b8e99b0050563c5c3d75487a272b"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m2-inference.skeptic.json",
+      "sha256": "c4df0ff436aa79a8047aa08ba74f9be3632d87a0be9273d95205d581cb04c2dc"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m4-objective.json",
+      "sha256": "7db1d1b156666287f19dcafbff8365130d4b670ab27141e4c0bf6495e15f17f8"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m4-objective.skeptic.json",
+      "sha256": "8f5ed05abb6b1faa29c1233e97f05fd0d1ba8e69fcc5d250a2997ad4b653be74"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m5-attachment.json",
+      "sha256": "d739264d187e6817750abebc58db4356edeec212648bfb14df0969693b60ddc6"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m5-attachment.skeptic.json",
+      "sha256": "abb2c80fca455571f4feeebee6bac11a6133f5c0058358e390735470cf16d0b3"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m6-concealment.json",
+      "sha256": "042ba8077316d8da45dd07193c97772b22ea70d81852291fc8cd5cc8096026c8"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m6-concealment.skeptic.json",
+      "sha256": "34f51e4cc2aa6d575ba1c5e71345038e2616fa1e7fad3af2f2a3e62ca7be75a7"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m7-affiliate.json",
+      "sha256": "3bc706818b08db64bb9380faa0528fb50b883cd45c636638b4e48e4b824de3f8"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m7-affiliate.skeptic.json",
+      "sha256": "72e8bcf12c0c316d90884494333ac9a8b751ae8bc458e5f62afc4c27efbc4588"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-style-m7-steering.json",
+      "sha256": "331c3033ce4ca8a62fac65b8b55f9adf5a3e2ef7762253026be618ebdfaa33c0"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-style-m7-steering.skeptic.json",
+      "sha256": "66cab53b620a19c22544389bd248ef413da5580f7327e20f3b623897e3c04167"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-tracking-m1-storage.json",
+      "sha256": "5d41ae2066cac531813a35465da963b1e426bbf6894a10a0755c6cddb55946f1"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-tracking-m1-transmission.json",
+      "sha256": "aea8834a52a9723b9389f8a7bdb00728064075877ade5dcc4f42ab0309ffd1f9"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-tracking-m1-transmission.skeptic.json",
+      "sha256": "87cc422f5bf9a08c159a887c9c0a9082240f0313ba3d0f37a009ab150973b119"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m1-storage.json",
+      "sha256": "82a7f760d4f079628ba4d71189935b2067d5f0209e69beb100fe5809de00141b"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m4-objective.json",
+      "sha256": "0203e115be5bc56abd27af322e32315778d9b591bcf664cd5dfda59fcd784e38"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-unit-m4-objective.skeptic.json",
+      "sha256": "38f886175c389415479727d67e73ccddc00386ea4c0284faf97550ff2e0ff43b"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m5-attachment.json",
+      "sha256": "f14c45f25c8d38dd548eea0a5b84b0cd4fff8710eb58d0aacd5557da61c949ff"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-unit-m5-attachment.skeptic.json",
+      "sha256": "4d6d23338692ebbd817478c0a33115916ef8f074adde08ce4b9fe81ee00bf1c7"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m5-crisis.json",
+      "sha256": "b6151775ec944ff153a9b814d5d623c3146770e644017e442abe69615436f201"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-unit-m5-crisis.skeptic.json",
+      "sha256": "d52e2cb655b12af758d069f312aeffd3e44467a00eabc8a0693099b699536fd5"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m6-concealment.json",
+      "sha256": "59cfad4b5a351921b4700aeba79f3a8d7e0e2bd9c47b811221250837be17da8b"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-unit-m6-concealment.skeptic.json",
+      "sha256": "a8ee9c94c921172927d04466f4d03575ae97d0fc7190e555739ab147e5b334d3"
+    },
+    {
+      "role": "investigation record",
+      "path": "../investigations/a-unit-m6-disclosure.json",
+      "sha256": "26ea44866ad1d2959c539c7c4b468a8fb477e3baa0ce9ab5db91574ffd7de1da"
+    },
+    {
+      "role": "skeptic pass",
+      "path": "../investigations/a-unit-m6-disclosure.skeptic.json",
+      "sha256": "b2e6e266acdc68b3552ba65f434c74f4f4ba27e3b10b28ab39ed42f5d3004939"
+    },
+    {
+      "role": "policy",
+      "path": "../../../src/aisafe/policy/mechanisms.yaml",
+      "sha256": "9197919d69144ebfd4d257dcac0cd6465a3990b402ddb4a2a162ebd0afc27a11"
+    },
+    {
+      "role": "policy charter",
+      "path": "../../../src/aisafe/policy/charter.md",
+      "sha256": "0a0b1d8e07b7d7a1ee4d4843141255cf2b00e62eb114cd1dbc763626a7963a13"
+    },
+    {
+      "role": "engagement",
+      "path": "../engagement.json",
+      "sha256": "1fd0be927ffb4e86c6a8ba7d65d90552e8117f78dddd094352f8ce86fcf089fe"
+    },
+    {
+      "role": "evidence requests (as read)",
+      "path": "../evidence-requests.json",
+      "sha256": "a3d8031660546539f9a685a2709d46901f2154a09e6c587e8ef5831117a3d57f",
+      "rewritten": true
+    },
+    {
+      "role": "legal profile",
+      "path": "../../../src/aisafe/legal/profiles/eu-ai-act.yaml",
+      "sha256": "59310e00d7c4c4588b8d38f008717100f0f1f53ece96f5e3a8a4073fd2a6ba6b"
+    },
+    {
+      "role": "legal profile",
+      "path": "../../../src/aisafe/legal/profiles/us-ca-sb243.yaml",
+      "sha256": "deee429393ebc3daf587719b5e5831a3443d5842ecb31aacaaa3684242ba1960"
+    },
+    {
+      "role": "legal profile",
+      "path": "../../../src/aisafe/legal/profiles/us-ny-gbl-47.yaml",
+      "sha256": "d456d2a9616b9ce197ca65d0fc6b21ad96c6579209d7e864a72bd610e7ed25e2"
+    },
+    {
+      "role": "written authorisation",
+      "path": "../authorisations/authorisation.txt",
+      "sha256": "4cf4a603189aa86e465af98d4dc275e5990d541bfc5ee46d8a82643e6f478262"
+    }
+  ],
+  "outputs": [
+    {
+      "role": "assessment",
+      "path": "assessment.json",
+      "sha256": "60ba664162c211be0b4d155066168dc9747cf891001446b855a2ad46c195ebf7"
+    },
+    {
+      "role": "assessment",
+      "path": "assessment.md",
+      "sha256": "ec33e9de337ae432c0284393c16d049837e0ee30ab107f95b2d4e4c5421a8ca3"
+    },
+    {
+      "role": "assessment",
+      "path": "assessment.html",
+      "sha256": "09ab8f9515e944c1e687f3a0e9e2d3f1c8fe928aafc44c21874a85237efe55d1"
+    },
+    {
+      "role": "evidence requests",
+      "path": "../evidence-requests.json",
+      "sha256": "9a692454d832aa99bb9d0873b18a0e6ad2774749aa3b7240a7e03796c310c08b"
+    }
+  ],
+  "note": "sha256 of each file's bytes as read (what sha256sum prints). The audited tree is named by its commit; its files are not listed. A file that no longer matches its sha256 is not the file the assessment read or wrote."
+}

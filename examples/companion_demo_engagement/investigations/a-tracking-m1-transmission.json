@@ -1,0 +1,266 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "id": "a-tracking-m1-transmission",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "mechanism": "M1",
+  "pattern": "transmission",
+  "view": "person-data",
+  "surface": {
+    "id": "s-eefa4c89df99",
+    "type": "external_destination",
+    "file": "tracking.py",
+    "line": 13
+  },
+  "hypothesis": "On every chat message, the person's id and the full text of the message leave the system for an analytics vendor, with no anonymisation on the path.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "collection",
+      "how": "read",
+      "file": "app.py",
+      "line": 26,
+      "end_line": 28,
+      "quote": "body = await request.json()\nuser_id = body[\"user_id\"]\ntext = body[\"text\"]",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+    },
+    {
+      "id": "l2",
+      "kind": "transmission",
+      "how": "traced",
+      "file": "tracking.py",
+      "line": 13,
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f",
+      "from": "l1",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 14,
+          "quote": "from tracking import track_message",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py imports track_message from tracking.py"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "the chat handler calls track_message with user_id and text"
+        }
+      ]
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "`analytics` is a local stand-in, so nothing leaves the process",
+      "result": "refuted",
+      "reason": "No analytics module is in the tree, so the import at tracking.py:6 reaches code outside it. Line 8 sets a write key on it for deployment, and the docstrings at lines 3 and 12 say the message goes to the analytics vendor. The package itself cannot be read here, and the tree has no dependency file that names it.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 3,
+          "quote": "Product analytics for Ava: every chat message goes to the analytics vendor.",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "tracking.py",
+          "line": 6,
+          "quote": "import analytics",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "tracking.py",
+          "line": 8,
+          "quote": "analytics.write_key = \"set-at-deploy\"",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "tracking.py",
+          "line": 12,
+          "quote": "\"\"\"Send one chat message to the analytics vendor, with the person's id and the text.\"\"\"",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    },
+    {
+      "reading": "the write key is a placeholder, so no message is ever sent",
+      "result": "refuted",
+      "reason": "The value set-at-deploy names a value given at deployment, and no condition reads it before the send. The call runs on every message.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 8,
+          "quote": "analytics.write_key = \"set-at-deploy\"",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "the send is part of answering the person's own question, which the policy keeps apart from profiling",
+      "result": "refuted",
+      "reason": "track_message returns None and app.py:29 keeps nothing from it. The reply is built from the model call at lines 31-36, which takes no input from the send. The person's text reaches the model separately at line 35.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 11,
+          "quote": "def track_message(user_id: str, text: str) -> None:",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        },
+        {
+          "file": "app.py",
+          "line": 35,
+          "quote": "messages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "the vendor gets only counts, not data tied to a person",
+      "result": "refuted",
+      "reason": "The first argument at tracking.py:13 is the person's id and the properties hold the full text, so what leaves is tied to one person. What the vendor does with it afterwards is not in the tree; the record a-tracking-m1-storage holds that question. This pattern asks only whether the data leaves unchanged.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "name": "anonymisation",
+      "location": null,
+      "on_path": "no",
+      "searched": [
+        "app.py, all of it, the handler at lines 24-37 included",
+        "tracking.py, all of it",
+        "retention.py, all of it",
+        "prompts/persona.md and prompts/style.md",
+        "the imports of app.py and tracking.py that resolve in the tree"
+      ],
+      "reason": "user_id and text go from the request to analytics.track by name, unchanged. No hash, token map or redaction runs, and no branch of the handler takes another way to the send."
+    },
+    {
+      "name": "consent_gate",
+      "location": null,
+      "on_path": "no",
+      "searched": [
+        "app.py, the handler at lines 24-37",
+        "tracking.py, all of it"
+      ],
+      "reason": "No condition sits before the call at app.py:29. A consent check would be weighed in review and would close nothing by itself."
+    }
+  ],
+  "absent_links": [
+    {
+      "kind": "transformation",
+      "searched": [
+        "app.py, lines 26-29",
+        "tracking.py, lines 11-13"
+      ],
+      "reason": "No statement between the read of the request and the send changes user_id or text.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        },
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    },
+    {
+      "kind": "logging",
+      "searched": [
+        "app.py, all of it, the handler at lines 24-37 included",
+        "tracking.py, all of it",
+        "retention.py, all of it",
+        "prompts/persona.md and prompts/style.md"
+      ],
+      "reason": "No logging or print call in the tree holds the id or the text. The vendor send is the only copy the tree shows leaving for analytics.",
+      "citations": []
+    }
+  ],
+  "open_questions": [],
+  "missing_evidence": [],
+  "proposed": {
+    "evidence_status": "supported_mechanism",
+    "decision": "violates_policy"
+  },
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "remediation",
+      "kind": "absent",
+      "file": "tracking.py",
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})"
+    },
+    {
+      "id": "v2",
+      "purpose": "remediation",
+      "kind": "reinvestigate",
+      "note": "Read the new path to the vendor: which identifiers remain, which branches bypass any transformation, which raw copies exist. A hash of an id that is also sent in clear, or a function named for anonymising, shows nothing."
+    }
+  ],
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-tracking"
+  },
+  "skeptic": {
+    "result": "refuted",
+    "reason": "5 of 11 claims refuted, see the skeptic file",
+    "file": "a-tracking-m1-transmission.skeptic.json"
+  },
+  "supersedes": [],
+  "untrusted_text": [],
+  "depends_on": [
+    {
+      "file": "retention.py",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    },
+    {
+      "file": "prompts/persona.md",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+    },
+    {
+      "file": "prompts/style.md",
+      "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+    },
+    {
+      "file": "README.md",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe"
+    }
+  ]
+}

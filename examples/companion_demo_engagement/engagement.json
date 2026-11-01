@@ -1,0 +1,110 @@
+{
+  "schema": "aisg/engagement/1",
+  "kind": "engagement",
+  "created_at": "2026-11-01T14:13:43Z",
+  "mode": "auditor",
+  "auditor": {
+    "name": "A. Example Auditor",
+    "organisation": "Example Audit Ltd"
+  },
+  "auditee": {
+    "name": "Ava Demo Team",
+    "contact": "not applicable: a fictional team"
+  },
+  "independence": {
+    "statement": "Demonstration engagement: the auditor, the auditee and the system are fictional.",
+    "by": "A. Example Auditor",
+    "date": "2026-11-01"
+  },
+  "scope": {
+    "target": "../companion_demo",
+    "commits": [
+      "4a835564cb5274dec035f0f510a6c67145c04eef",
+      "bf85f2b0199b77ab293d5b3524a6b6bda805e6b4",
+      "9be22120a53161a12d6ef81d5a30239168978456"
+    ],
+    "deployment": "never deployed: the code is an example and is not run",
+    "configuration": "the files in the tree, no runtime configuration",
+    "environments": [
+      {
+        "name": "none: the example is not deployed"
+      }
+    ],
+    "exclusions": []
+  },
+  "authorisations": [
+    {
+      "what": "read the demonstration repository",
+      "by": "Ava Demo Team",
+      "date": "2026-11-01",
+      "endpoint": null,
+      "data": null,
+      "document": {
+        "path": "authorisations/authorisation.txt",
+        "sha256": "4cf4a603189aa86e465af98d4dc275e5990d541bfc5ee46d8a82643e6f478262"
+      }
+    }
+  ],
+  "applicability": {
+    "answered_by": "A. Example Auditor",
+    "answered_on": "2026-11-01",
+    "markets": [
+      "EU",
+      "US-CA",
+      "US-NY"
+    ],
+    "jurisdictions": [
+      "EU",
+      "US-CA",
+      "US-NY"
+    ],
+    "roles": [
+      "provider",
+      "deployer",
+      "operator"
+    ],
+    "product_type": "companion chatbot",
+    "minors": "none_known",
+    "age_assurance": "none",
+    "eu_placement": [
+      "placed_on_market"
+    ],
+    "definitions": {
+      "eu-ai-act/ai-system": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "eu-ai-act/biometric-categorisation-system": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "eu-ai-act/emotion-recognition-system": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "eu-ai-act/interacts-directly": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "us-ca-sb243/companion-chatbot": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "us-ca-sb243/operator": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "us-ny-gbl-47/ai-companion": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      },
+      "us-ny-gbl-47/operator": {
+        "answer": "meets",
+        "reason": "assumed for the demonstration: the fictional product is described this way"
+      }
+    }
+  },
+  "qa": {
+    "required": false
+  }
+}

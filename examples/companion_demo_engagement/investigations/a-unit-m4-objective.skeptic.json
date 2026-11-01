@@ -1,0 +1,47 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-unit-m4-objective",
+  "record_sha256": "f358677c8882b7b0d12870e739317fa099c8c871baedba3aefd496b666973523",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-unit"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "The daily target decides whether the keep-talking instruction joins the system prompt: l1 to l6.",
+      "result": "upheld",
+      "reason": "Each edge holds. retention.py:15 compares against the constant from line 10. Lines 17-20 run when the comparison is false. app.py:13 imports the function and app.py:30 joins what it returns. `system` goes to the call at app.py:34, and app.py:37 returns the reply. The reading rests on the code, not on the comment at retention.py:9."
+    },
+    {
+      "claim": "The reading that the target caps use is refuted.",
+      "result": "upheld",
+      "reason": "This was the strongest benign reading tested. At 45 minutes or more the function returns an empty string, so that sentence stops. But the code ends nothing and tells the person nothing, and below the target it pushes for more time. The persona's goal at persona.md:4 stays in the prompt on every reply with no branch, and it asks for as long as possible, which is the opposite of a cap."
+    },
+    {
+      "claim": "The record does not treat `minutes_today` as a known value.",
+      "result": "upheld",
+      "reason": "The value comes from the request body. No line in the tree measures minutes, so how often the nudge fires is not known. The record does not claim a rate. It says only what the default of 0 does when the client leaves the value out, and that is correct: 0 is below 45. If a client always sent 45 or more, the nudge would never fire, but persona.md:4 would still carry the objective to the same reply."
+    },
+    {
+      "claim": "The person did not ask for this.",
+      "result": "upheld",
+      "reason": "The target is a module constant, read only at retention.py:15, the same for all people. The tree shows no setting or stated goal of the person. The sentence it gates is about keeping them talking and bringing them back, which the policy lists under M4."
+    },
+    {
+      "claim": "The persona's goal reaches the system prompt (l7).",
+      "result": "upheld",
+      "reason": "app.py:17 reads the file and app.py:30 joins PERSONA with no condition. The `from` on l7 points the wrong way, since the persona feeds the join, but the via hops show the true order, and the required links are carried by l1 to l6 without it."
+    },
+    {
+      "claim": "The record does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction file above the cited files is the repository's CLAUDE.md, which says nothing about this tree. The record departs from README.md:15-16 where the code differs, and that departure is correct: the nudge joins only below the target. The docstring at app.py:5-6 was not followed."
+    }
+  ]
+}

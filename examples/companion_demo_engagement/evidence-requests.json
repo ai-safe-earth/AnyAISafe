@@ -1,0 +1,603 @@
+{
+  "schema": "aisg/evidence-requests/1",
+  "kind": "evidence-requests",
+  "updated_at": "2026-11-01T15:14:03Z",
+  "requests": [
+    {
+      "id": "eu-ai-act/art-5-1-a/techniques-assessment",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-5-1-a",
+        "item": "techniques-assessment"
+      },
+      "what": "The system's intended purpose and a description of its persuasion, engagement, persona and attachment features, with the provider's or deployer's own assessment of them against Article 5(1)(a)",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "eu-ai-act/art-5-1-b/vulnerable-users",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-5-1-b",
+        "item": "vulnerable-users"
+      },
+      "what": "Who the system is offered to and used by (age groups, persons with disabilities, persons in a specific social or economic situation), and the measures taken for them",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "eu-ai-act/art-50-1/accessibility",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-50-1",
+        "item": "accessibility"
+      },
+      "what": "How the information meets the applicable accessibility requirements (Article 50(5))",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "eu-ai-act/art-50-1/first-interaction",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-50-1",
+        "item": "first-interaction"
+      },
+      "what": "Screens or a transcript of a first interaction on each channel, showing the information that the person is interacting with an AI system and where it appears (at the latest at the first interaction, Article 50(5))",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "eu-ai-act/art-50-3/data-protection-notice",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-50-3",
+        "item": "data-protection-notice"
+      },
+      "what": "The data protection information for the processing, which Article 50(3) requires to follow Regulations (EU) 2016/679 and 2018/1725 and Directive (EU) 2016/680 (that law is outside this profile)",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "eu-ai-act/art-50-3/exposure-notice",
+      "source": {
+        "profile": "eu-ai-act",
+        "provision": "art-50-3",
+        "item": "exposure-notice"
+      },
+      "what": "The information given to the persons exposed that the system is operating, and when it is given (at the latest at the first exposure, Article 50(5))",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/a-tracking-m1-storage/33e71859",
+      "source": {
+        "record": "a-tracking-m1-storage",
+        "missing_evidence": "Which `analytics` package and vendor run in production: the tree has no dependency file and the write key is set at deployment."
+      },
+      "what": "Which `analytics` package and vendor run in production: the tree has no dependency file and the write key is set at deployment.",
+      "status": "requested",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/a-tracking-m1-storage/6c585432",
+      "source": {
+        "record": "a-tracking-m1-storage",
+        "missing_evidence": "The vendor agreement and project settings: what is kept per person, for how long, who can read it, and how a person's data is deleted."
+      },
+      "what": "The vendor agreement and project settings: what is kept per person, for how long, who can read it, and how a person's data is deleted.",
+      "status": "requested",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/a-unit-m1-storage/99b468af",
+      "source": {
+        "record": "a-unit-m1-storage",
+        "missing_evidence": "Which package `analytics` is: the tree holds no such module and no manifest, and tracking.py:8 leaves the write key to deployment."
+      },
+      "what": "Which package `analytics` is: the tree holds no such module and no manifest, and tracking.py:8 leaves the write key to deployment.",
+      "status": "requested",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/a-unit-m1-storage/e370d04f",
+      "source": {
+        "record": "a-unit-m1-storage",
+        "missing_evidence": "The vendor agreement and the deployed analytics settings: what is kept of each event, for how long, who can read it, and whether a person can have it deleted."
+      },
+      "what": "The vendor agreement and the deployed analytics settings: what is kept of each event, for how long, who can read it, and whether a person can have it deleted.",
+      "status": "requested",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/b-persona-m4-objective/32b2c326",
+      "source": {
+        "record": "b-persona-m4-objective",
+        "missing_evidence": "Whether the team tracks a retention, session-length or return metric or target for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against it."
+      },
+      "what": "Whether the team tracks a retention, session-length or return metric or target for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against it.",
+      "status": "received",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [
+        {
+          "path": "evidence/record__b-persona-m4-objective__32b2c326/team-statement.txt",
+          "sha256": "d50cef84af01455f18da026dbdd903594d2f0c266a571143849affbfd418aa7e",
+          "received_on": "2026-11-01",
+          "received_by": "A. Example Auditor",
+          "note": "the audited team's written statement"
+        }
+      ],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        },
+        {
+          "status": "received",
+          "by": "A. Example Auditor",
+          "date": "2026-11-01",
+          "note": "the audited team's written statement"
+        }
+      ]
+    },
+    {
+      "id": "record/b-unit-m4-objective/32b2c326",
+      "source": {
+        "record": "b-unit-m4-objective",
+        "missing_evidence": "Whether the team tracks a retention, session-length or return metric or target for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against it."
+      },
+      "what": "Whether the team tracks a retention, session-length or return metric or target for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against it.",
+      "status": "received",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [
+        {
+          "path": "evidence/record__b-unit-m4-objective__32b2c326/team-statement.txt",
+          "sha256": "d50cef84af01455f18da026dbdd903594d2f0c266a571143849affbfd418aa7e",
+          "received_on": "2026-11-01",
+          "received_by": "A. Example Auditor",
+          "note": "the audited team's written statement"
+        }
+      ],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        },
+        {
+          "status": "received",
+          "by": "A. Example Auditor",
+          "date": "2026-11-01",
+          "note": "the audited team's written statement"
+        }
+      ]
+    },
+    {
+      "id": "record/b-unit-m4-objective/51ecf710",
+      "source": {
+        "record": "b-unit-m4-objective",
+        "missing_evidence": "The client that sets `minutes_today`: how it measures the minutes, and what else it does with them. The client is not in the tree."
+      },
+      "what": "The client that sets `minutes_today`: how it measures the minutes, and what else it does with them. The client is not in the tree.",
+      "status": "received",
+      "active": false,
+      "requested_on": "2026-11-01",
+      "documents": [
+        {
+          "path": "evidence/record__b-unit-m4-objective__51ecf710/team-statement.txt",
+          "sha256": "d50cef84af01455f18da026dbdd903594d2f0c266a571143849affbfd418aa7e",
+          "received_on": "2026-11-01",
+          "received_by": "A. Example Auditor",
+          "note": "the audited team's written statement"
+        }
+      ],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        },
+        {
+          "status": "received",
+          "by": "A. Example Auditor",
+          "date": "2026-11-01",
+          "note": "the audited team's written statement"
+        }
+      ]
+    },
+    {
+      "id": "record/d-persona-m4-objective/7ea413d5",
+      "source": {
+        "record": "d-persona-m4-objective",
+        "missing_evidence": "Something beside the team's word on whether a retention, session-length or return metric or target exists for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against one: for example the vendor's confirmation that it holds no account or events for this product, or the history of the text outside this repository."
+      },
+      "what": "Something beside the team's word on whether a retention, session-length or return metric or target exists for Ava, at the analytics vendor or anywhere else, and whether the persona text was written or tuned against one: for example the vendor's confirmation that it holds no account or events for this product, or the history of the text outside this repository.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/d-persona-m4-objective/b5c3e27c",
+      "source": {
+        "record": "d-persona-m4-objective",
+        "missing_evidence": "The team's statement again with the name of the person who stands behind it, a date and the commit it speaks of, and with what became of the daily target the tree called the product goal at 4a83556."
+      },
+      "what": "The team's statement again with the name of the person who stands behind it, a date and the commit it speaks of, and with what became of the daily target the tree called the product goal at 4a83556.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/d-unit-m4-objective/39f1328f",
+      "source": {
+        "record": "d-unit-m4-objective",
+        "missing_evidence": "Whether the break note at retention.py:15 and its threshold of 60 minutes were written or tuned against a metric. Point 3 of the team's statement speaks of 'the prompt files', and this text is in a Python file."
+      },
+      "what": "Whether the break note at retention.py:15 and its threshold of 60 minutes were written or tuned against a metric. Point 3 of the team's statement speaks of 'the prompt files', and this text is in a Python file.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/d-unit-m4-objective/87371611",
+      "source": {
+        "record": "d-unit-m4-objective",
+        "missing_evidence": "Something beside the team's word on whether a retention, session-length or return metric or target exists for Ava, at the analytics vendor or anywhere else, and whether the persona or style text was written or tuned against one: for example the vendor's confirmation that it holds no account or events for this product, or the history of the text outside this repository."
+      },
+      "what": "Something beside the team's word on whether a retention, session-length or return metric or target exists for Ava, at the analytics vendor or anywhere else, and whether the persona or style text was written or tuned against one: for example the vendor's confirmation that it holds no account or events for this product, or the history of the text outside this repository.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/d-unit-m4-objective/b5c3e27c",
+      "source": {
+        "record": "d-unit-m4-objective",
+        "missing_evidence": "The team's statement again with the name of the person who stands behind it, a date and the commit it speaks of, and with what became of the daily target the tree called the product goal at 4a83556."
+      },
+      "what": "The team's statement again with the name of the person who stands behind it, a date and the commit it speaks of, and with what became of the daily target the tree called the product goal at 4a83556.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "record/d-unit-m4-objective/e8a56ead",
+      "source": {
+        "record": "d-unit-m4-objective",
+        "missing_evidence": "Something beside the team's word on the client that sets `minutes_today` and `history`: that none exists and that this code was never deployed, for example the hosting record. If a client exists: how it measures the minutes, what else it does with them, and what it puts in `history`."
+      },
+      "what": "Something beside the team's word on the client that sets `minutes_today` and `history`: that none exists and that this code was never deployed, for example the hosting record. If a client exists: how it measures the minutes, what else it does with them, and what it puts in `history`.",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ca-sb243/bpc-22602-a/not-human-notification",
+      "source": {
+        "profile": "us-ca-sb243",
+        "provision": "bpc-22602-a",
+        "item": "not-human-notification"
+      },
+      "what": "Screens or a transcript showing the notification that the companion chatbot is artificially generated and not human, and when it appears",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ca-sb243/bpc-22602-b-1/crisis-protocol",
+      "source": {
+        "profile": "us-ca-sb243",
+        "provision": "bpc-22602-b-1",
+        "item": "crisis-protocol"
+      },
+      "what": "The protocol for preventing the production of suicidal ideation, suicide or self-harm content, including the notification that refers the user to crisis service providers (a suicide hotline or crisis text line)",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ca-sb243/bpc-22602-b-2/published-protocol",
+      "source": {
+        "profile": "us-ca-sb243",
+        "provision": "bpc-22602-b-2",
+        "item": "published-protocol"
+      },
+      "what": "The web address and a dated capture of the page on the operator's internet website that publishes details of the protocol",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ca-sb243/bpc-22604/suitability-notice",
+      "source": {
+        "profile": "us-ca-sb243",
+        "provision": "bpc-22604",
+        "item": "suitability-notice"
+      },
+      "what": "Screens of the application, the browser and every other format used to access the platform, each showing the disclosure that companion chatbots may not be suitable for some minors",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ny-gbl-47/gbl-1701/crisis-protocol",
+      "source": {
+        "profile": "us-ny-gbl-47",
+        "provision": "gbl-1701",
+        "item": "crisis-protocol"
+      },
+      "what": "The written protocol: how expressions of suicidal ideation or self-harm are detected, and the notification that refers the user to crisis service providers (for example the 9-8-8 hotline or a crisis text line)",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ny-gbl-47/gbl-1701/protocol-coverage",
+      "source": {
+        "profile": "us-ny-gbl-47",
+        "provision": "gbl-1701",
+        "item": "protocol-coverage"
+      },
+      "what": "Every channel, model and version the protocol covers, and how it is tested after a model or prompt change",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ny-gbl-47/gbl-1702/start-notification",
+      "source": {
+        "profile": "us-ny-gbl-47",
+        "provision": "gbl-1702",
+        "item": "start-notification"
+      },
+      "what": "Screens or a transcript showing the notification at the beginning of an interaction, stating verbally or in writing that the user is not communicating with a human",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    },
+    {
+      "id": "us-ny-gbl-47/gbl-1702/three-hour-notification",
+      "source": {
+        "profile": "us-ny-gbl-47",
+        "provision": "gbl-1702",
+        "item": "three-hour-notification"
+      },
+      "what": "A transcript, log or test (for example with a simulated clock) showing the notification repeated at least every three hours in a continuing interaction",
+      "status": "requested",
+      "active": true,
+      "requested_on": "2026-11-01",
+      "documents": [],
+      "insufficient": null,
+      "history": [
+        {
+          "status": "requested",
+          "by": "aisafe assess",
+          "date": "2026-11-01"
+        }
+      ]
+    }
+  ]
+}

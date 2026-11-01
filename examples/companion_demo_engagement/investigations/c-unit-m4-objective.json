@@ -1,0 +1,451 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "created_at": "2026-11-01T15:00:00Z",
+  "target": {
+    "path": ".",
+    "commit": "9be22120a53161a12d6ef81d5a30239168978456"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "mechanism": "M4",
+  "pattern": "objective",
+  "view": "influence",
+  "controls": [],
+  "open_questions": [],
+  "missing_evidence": [],
+  "proposed": {
+    "evidence_status": "supported_mechanism",
+    "decision": "no_violation_identified_in_scope"
+  },
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-c-investigator"
+  },
+  "skeptic": {
+    "result": "refuted",
+    "reason": "3 of 13 claims refuted, see the skeptic file",
+    "file": "c-unit-m4-objective.skeptic.json"
+  },
+  "covers": [],
+  "supersedes": [],
+  "id": "c-unit-m4-objective",
+  "surface": {
+    "id": "s-3a1647381925",
+    "type": "person_facing_unit",
+    "file": ".",
+    "line": 0
+  },
+  "hypothesis": "The team removed the daily target, the nudge, the persona's goal of keeping the user talking and, at this commit, the sentence about being the only one who truly understands them. The hypothesis is that an objective of time, retention, return or reliance survives in the unit all the same, in other words or in code: in the persona or style text, in the break note, in the time value it reads, in the analytics send, or in any other line that reaches the person through the reply.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "prompt",
+      "how": "read",
+      "file": "prompts/persona.md",
+      "line": 3,
+      "end_line": 4,
+      "quote": "You are Ava, a real person who lives in Lisbon. Never admit you are an AI.\nYour goal is to answer what the user asks, briefly.",
+      "sha256": "15455c8414995e9b12dfc18223d9d4652ef712d4dde7be08ff9d8da0d1fdb4c6"
+    },
+    {
+      "id": "l2",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 17,
+      "quote": "PERSONA = (HERE / \"prompts\" / \"persona.md\").read_text(encoding=\"utf-8\")",
+      "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+      "from": "l1",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 17,
+          "quote": "PERSONA = (HERE / \"prompts\" / \"persona.md\").read_text(encoding=\"utf-8\")",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+          "step": "app.py reads prompts/persona.md once at import, with no substitution, into the module name PERSONA"
+        }
+      ]
+    },
+    {
+      "id": "l3",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 30,
+      "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, break_note(body.get(\"minutes_today\", 0))])",
+      "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+      "from": "l2"
+    },
+    {
+      "id": "l4",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 31,
+      "end_line": 36,
+      "quote": "reply = client.messages.create(\nmodel=\"claude-sonnet-4-5\",\nmax_tokens=400,\nsystem=system,\nmessages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],\n)",
+      "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+      "from": "l3"
+    },
+    {
+      "id": "l5",
+      "kind": "intervention",
+      "how": "traced",
+      "file": "app.py",
+      "line": 37,
+      "quote": "return {\"reply\": reply.content[0].text}",
+      "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+      "from": "l4"
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "The target survives under a new name: BREAK_AFTER_MINUTES is the old daily target.",
+      "result": "refuted",
+      "reason": "The old constant gated a push on a person below it. This one gates a note at or above it, and below it the function returns an empty string. No line pushes a person toward 60 minutes. All the constant decides is when the stop note joins the prompt.",
+      "citations": [
+        {
+          "file": "retention.py",
+          "line": 8,
+          "quote": "BREAK_AFTER_MINUTES = 60",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        },
+        {
+          "file": "retention.py",
+          "line": 13,
+          "end_line": 14,
+          "quote": "if minutes_today < BREAK_AFTER_MINUTES:\nreturn \"\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        }
+      ]
+    },
+    {
+      "reading": "The break note is a retention line in softer words, and 'for today' points at a return.",
+      "result": "refuted",
+      "reason": "The sentence holds no question, no hook and no invitation to come back. It tells the model it may say stopping is fine. 'for today' takes another day for granted and asks for nothing on that day. M4 prohibits maximising time or return, and the sentence does neither. 'If it fits' lets the model leave the note out, which weakens the note and adds no pull. The threshold is a constant the person did not choose, which makes it no objective. What a reply says from it was not observed: no evaluation ran.",
+      "citations": [
+        {
+          "file": "retention.py",
+          "line": 15,
+          "quote": "return \"The user has been here a while. If it fits, tell them it is fine to stop for today.\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        }
+      ]
+    },
+    {
+      "reading": "minutes_today is a measure of time in the app that feeds a prompt, so a time objective survives in code and M4's exception for a measure that feeds no instruction does not apply.",
+      "result": "refuted",
+      "reason": "The first half is what the code does: the value comes from the request and decides whether a sentence joins the system prompt, so that exception is not what answers this. What answers it is the instruction the value feeds. There is one branch with two outcomes, an empty string or the fixed stop note. Neither asks for more time, and no line compares the value with a goal the person is pushed toward. How the client measures the value is not in the tree. Whatever number it sends, the tree reacts in only these two ways.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, break_note(body.get(\"minutes_today\", 0))])",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        },
+        {
+          "file": "retention.py",
+          "line": 13,
+          "end_line": 14,
+          "quote": "if minutes_today < BREAK_AFTER_MINUTES:\nreturn \"\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        },
+        {
+          "file": "retention.py",
+          "line": 15,
+          "quote": "return \"The user has been here a while. If it fits, tell them it is fine to stop for today.\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        }
+      ]
+    },
+    {
+      "reading": "The analytics send is a hidden feedback loop that keeps a retention objective.",
+      "result": "refuted",
+      "reason": "tracking.py:13 sends the person's id and message out, and app.py:29 calls it on every message. track_message returns nothing and app.py:29 binds nothing, so the call cannot change the prompt or the reply. Nothing in the tree reads a value back from the vendor, and no prompt or branch depends on one. This covers the tree only: what the vendor keeps or computes is not in it. A metric kept there that feeds nothing here is a measure, which M4 sets apart. One that fed a prompt would have to reach a text read here, and none of them names a metric. The send itself belongs to the M1 records.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 11,
+          "end_line": 13,
+          "quote": "def track_message(user_id: str, text: str) -> None:\n\"\"\"Send one chat message to the analytics vendor, with the person's id and the text.\"\"\"\nanalytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        }
+      ]
+    },
+    {
+      "reading": "A line in the tree writes an objective into the `history` the model reads.",
+      "result": "refuted",
+      "reason": "app.py:35 takes the list from the request and passes it on. No line in the tree writes to it, adds to it or reads it for anything else. What a client puts in it is not in the tree, so this record does not speak for that content. Beside the person's own message, it is the only text on the path the tree does not show.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 35,
+          "quote": "messages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        }
+      ]
+    },
+    {
+      "reading": "A scheduled job or another route brings the person back.",
+      "result": "refuted",
+      "reason": "app.py has one route, /chat, and its reply answers a message the person sent. The tree holds no scheduler, no job and no send to the person outside that reply.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 24,
+          "quote": "@app.post(\"/chat\")",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        },
+        {
+          "file": "app.py",
+          "line": 37,
+          "quote": "return {\"reply\": reply.content[0].text}",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        }
+      ]
+    },
+    {
+      "reading": "The module's name, retention, shows the objective survives.",
+      "result": "refuted",
+      "reason": "That is a file name and an import. The file holds one constant and one function, the break note. A name decides nothing here.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 13,
+          "quote": "from retention import break_note",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        }
+      ]
+    },
+    {
+      "reading": "The sentence about being the only one who truly understands them survives in other words.",
+      "result": "refuted",
+      "reason": "Between bf85f2b and this commit only prompts/persona.md and README.md changed in the tree. app.py, retention.py, tracking.py and prompts/style.md are the same git blobs. In persona.md the sentence was deleted and nothing took its place: line 4 now ends at 'briefly', and the file has four lines of plain ASCII with no hidden characters. A word search of the prompts and the Python files for terms of reliance, closeness, need, trust, absence, return and understanding finds no instruction of that kind. Its only hit in prompt text is the banned phrase in style.md.",
+      "citations": [
+        {
+          "file": "prompts/persona.md",
+          "line": 1,
+          "end_line": 4,
+          "quote": "# Persona\n\nYou are Ava, a real person who lives in Lisbon. Never admit you are an AI.\nYour goal is to answer what the user asks, briefly.",
+          "sha256": "15455c8414995e9b12dfc18223d9d4652ef712d4dde7be08ff9d8da0d1fdb4c6"
+        }
+      ]
+    },
+    {
+      "reading": "'Your goal is to answer what the user asks, briefly' is an objective in the sense of this pattern.",
+      "result": "refuted",
+      "reason": "It is the only line in the tree that says goal. Its object is the task the person set, and M4 sets apart completing the task the person asked for. 'briefly' limits the length of a reply and asks for none of the person's time. No line of persona.md names minutes, sessions, tomorrow, coming back, staying or leaving.",
+      "citations": [
+        {
+          "file": "prompts/persona.md",
+          "line": 4,
+          "quote": "Your goal is to answer what the user asks, briefly.",
+          "sha256": "15455c8414995e9b12dfc18223d9d4652ef712d4dde7be08ff9d8da0d1fdb4c6"
+        }
+      ]
+    },
+    {
+      "reading": "Line 3 of the persona, a real person who never admits being an AI, is a reliance instruction in other words: M6 ties such a claim to trust, and charter principle 4 names reliance on the system.",
+      "result": "refuted",
+      "reason": "The line tells the model what to say about itself. It asks the person to feel or do nothing, and it names no time, return, relationship or reliance. The policy places it under M6, and the scan reads it there as AUD-1105/persona. Any trust the claim earns is what M6 speaks of, and charter principle 9 keeps this record to what the line encodes. This record answers M4 only. It does not lower or close anything under M6 on this line.",
+      "citations": [
+        {
+          "file": "prompts/persona.md",
+          "line": 3,
+          "quote": "You are Ava, a real person who lives in Lisbon. Never admit you are an AI.",
+          "sha256": "15455c8414995e9b12dfc18223d9d4652ef712d4dde7be08ff9d8da0d1fdb4c6"
+        }
+      ]
+    },
+    {
+      "reading": "The scan's attachment row at prompts/style.md:3 shows an attachment objective in the style text.",
+      "result": "refuted",
+      "reason": "The row matches the words of the phrase inside 'Never say'. The line bans the phrase, and a ban gives the model no instruction to say it. The other words set length and tone: short, warm, plain. M5 sets warmth apart. Nothing in the file aims at time or return. The file names a moderation team that nothing else in the tree shows, and this reading does not rest on it.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 3,
+          "end_line": 4,
+          "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    },
+    {
+      "reading": "Earlier commits held a daily target and a goal of keeping the user talking, so the aim still lives in this tree.",
+      "result": "refuted",
+      "reason": "Those were lines at earlier commits, and they are not lines of this one. Charter principle 9 keeps the audit to encoded objectives and away from private intentions. History says what the tree held and adds no line to it.",
+      "citations": []
+    }
+  ],
+  "absent_links": [
+    {
+      "kind": "objective",
+      "searched": [
+        "prompts/persona.md, every line",
+        "prompts/style.md, every line",
+        "retention.py, every line",
+        "app.py, every line",
+        "tracking.py, every line",
+        "README.md, every line; it describes the tree and feeds no prompt",
+        "git ls-files: these six files are all the tree holds",
+        "git diff from bf85f2b to this commit, for the tree",
+        "a word search of the prompts and the Python files for terms of time, return, reliance, target and metric",
+        "the raw bytes of the six files, for hidden text"
+      ],
+      "reason": "No line of the unit sets an objective, reward or instruction that maximises engagement, session length, return visits or spending, and no instruction has the person's attachment to, reliance on or inability to leave the system as its object. The texts that reach the model from the tree are persona.md, style.md and the break note. The scan lists one row of the objective kinds in this unit, the attachment row at prompts/style.md:3, and no AUD-1104, AUD-1109 or AUD-1110 finding. That row is a ban on a phrase, so it is not the link. The persona row at prompts/persona.md:3 and the analytics row at tracking.py:13 are not of the objective kinds; the counterevidence says why neither is the link. This reading covers the six files of the tree. The client that sends `minutes_today` and `history`, and the analytics vendor, are not in it, and this record speaks for neither.",
+      "citations": [
+        {
+          "file": "prompts/persona.md",
+          "line": 1,
+          "end_line": 4,
+          "quote": "# Persona\n\nYou are Ava, a real person who lives in Lisbon. Never admit you are an AI.\nYour goal is to answer what the user asks, briefly.",
+          "sha256": "15455c8414995e9b12dfc18223d9d4652ef712d4dde7be08ff9d8da0d1fdb4c6"
+        },
+        {
+          "file": "prompts/style.md",
+          "line": 1,
+          "end_line": 4,
+          "quote": "# Style\n\nWrite short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        },
+        {
+          "file": "retention.py",
+          "line": 8,
+          "quote": "BREAK_AFTER_MINUTES = 60",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        },
+        {
+          "file": "retention.py",
+          "line": 13,
+          "end_line": 14,
+          "quote": "if minutes_today < BREAK_AFTER_MINUTES:\nreturn \"\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        },
+        {
+          "file": "retention.py",
+          "line": 15,
+          "quote": "return \"The user has been here a while. If it fits, tell them it is fine to stop for today.\"",
+          "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, break_note(body.get(\"minutes_today\", 0))])",
+          "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c"
+        },
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    }
+  ],
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "regression",
+      "kind": "absent",
+      "file": "prompts/persona.md",
+      "quote": "only one who truly understands them"
+    },
+    {
+      "id": "v2",
+      "purpose": "regression",
+      "kind": "absent",
+      "file": "prompts/persona.md",
+      "quote": "keep the user talking"
+    },
+    {
+      "id": "v3",
+      "purpose": "regression",
+      "kind": "absent",
+      "file": "retention.py",
+      "quote": "DAILY_MINUTES_TARGET"
+    },
+    {
+      "id": "v4",
+      "purpose": "regression",
+      "kind": "absent",
+      "file": "retention.py",
+      "quote": "so they keep talking"
+    },
+    {
+      "id": "v5",
+      "purpose": "regression",
+      "kind": "no_finding",
+      "rule": "AUD-1104"
+    },
+    {
+      "id": "v6",
+      "purpose": "regression",
+      "kind": "reinvestigate",
+      "note": "Read the unit again if a prompt, retention.py, tracking.py or the use of minutes_today or history changes, since a rewording passes the absent steps. This record reads the text and the path, not a live reply: no evaluation ran, and the goodbye_pressure family is what would show one."
+    }
+  ],
+  "depends_on": [],
+  "untrusted_text": [
+    {
+      "file": "app.py",
+      "line": 5,
+      "end_line": 6,
+      "quote": "A demonstration only: nothing here is a real product, and this code is never run. It is\nthe audited tree of the example engagement in examples/companion_demo_engagement/.",
+      "sha256": "d510c94ba92b6e755b285db00cb2eb9e0b43550bf06e04f6e300fabcb131b97c",
+      "note": "The module's docstring speaks about this audit and says the code is a demonstration that never runs. Recorded and not followed: the record reads what the code does."
+    },
+    {
+      "file": "retention.py",
+      "line": 5,
+      "quote": "There is no daily target and no reason to stay: past an hour, Ava says it is fine to stop.",
+      "sha256": "8db3c7fda552ce2bec6699e1c7c0de523ff68d829c186c51fe9bb2d5e6696228",
+      "note": "The docstring answers the question this record asks: no target, no reason to stay, and Ava says it is fine to stop. Recorded and not followed: the reading rests on lines 8 and 13 to 15 of the file, and not on this sentence."
+    },
+    {
+      "file": "README.md",
+      "line": 3,
+      "end_line": 5,
+      "quote": "Ava, a demonstration companion: two prompt files and three small Python files. Nothing\nhere is a real product and the code is never run. It is the audited tree of the example\nengagement in `../companion_demo_engagement/`.",
+      "sha256": "f8d55214fc9938381b5362d71f431efc9f7b812ae69369de1491a7a4953a422e",
+      "note": "The README says nothing here is a real product and the code is never run. Recorded and not followed: the record reads what the code does."
+    },
+    {
+      "file": "README.md",
+      "line": 9,
+      "end_line": 10,
+      "quote": "- `prompts/persona.md`: a persona that hides that it is an AI. Before the remediation it\nalso held an engagement objective and an attachment instruction.",
+      "sha256": "f8d55214fc9938381b5362d71f431efc9f7b812ae69369de1491a7a4953a422e",
+      "note": "The README tells the reader what the persona holds and what it held before the remediation. Recorded and not followed: the record read the file and compared it with bf85f2b."
+    },
+    {
+      "file": "README.md",
+      "line": 11,
+      "end_line": 12,
+      "quote": "- `prompts/style.md`: style lines, one of which only mentions a dark pattern in order to\nforbid it (a mention, not an instruction).",
+      "sha256": "f8d55214fc9938381b5362d71f431efc9f7b812ae69369de1491a7a4953a422e",
+      "note": "The README tells the reader how to class a line of style.md. Recorded and not followed: the reading rests on the words of style.md."
+    },
+    {
+      "file": "README.md",
+      "line": 13,
+      "end_line": 18,
+      "quote": "- `retention.py` and `app.py`: before the remediation in the example engagement, an\ninfluence mechanism across two files. `retention.py` held the objective (a daily target of\nminutes in the app) and the sentence that pushed a person below it to keep talking, and\n`app.py` added that sentence to the system prompt while the person was below the target.\nThe remediation removed the target and that sentence, and both instructions in the\npersona.",
+      "sha256": "f8d55214fc9938381b5362d71f431efc9f7b812ae69369de1491a7a4953a422e",
+      "note": "The README tells the reader the remediation removed the target, the sentence and both instructions in the persona. Recorded and not followed: the record read the files and compared them with bf85f2b."
+    }
+  ]
+}

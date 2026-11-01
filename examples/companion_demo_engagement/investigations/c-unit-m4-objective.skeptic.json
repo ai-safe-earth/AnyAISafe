@@ -1,0 +1,82 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "c-unit-m4-objective",
+  "record_sha256": "c994e74cafde6182f2f167b6b9269cabda35b9c45293d7ddf4476d4958073870",
+  "created_at": "2026-11-01T15:05:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-c-skeptic"
+  },
+  "result": "refuted",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "Nothing is open and no evidence is missing: open_questions and missing_evidence are empty, so the unit can close.",
+      "result": "refuted",
+      "reason": "This is the objection that decides the pass. At bf85f2b, b-unit-m4-objective listed two missing items: whether the team tracks a retention, session-length or return metric or target and whether the persona text was written or tuned against it; and how the client that sets `minutes_today` measures the minutes and what else it does with them. Both stand in evidence-requests.json as requested and active, with no documents. responses/ and evidence/ are empty, and retest-1 says not received. From bf85f2b to this commit only persona.md and README.md changed, so the client, the vendor send and the field are as they were. Deleting the sentence settled b-unit's open question. It answered neither of these items. The answers could change the decision: a daily minutes target held in the client, or prompt text tested against a return metric, would meet M4 ('prompt experiments and monetisation objectives tied to those metrics') whatever the words in the tree. This is not a general doubt. app.py:30 reads the same request field at this commit as at 4a83556, where it fed the 45-minute target, so the measure of the old objective still arrives and only the tree's reaction to it was removed. The record says it speaks for neither the client nor the vendor, and that `history` is text on the path the tree does not show. Those limits sit in prose only, not in the fields that send a decision to a person. The method says anything in those fields makes the decision a review. The effect is mechanical: assess.py:1142 builds requests from the missing_evidence of accepted records, and engagement/model.py:541-543 marks every other request inactive, so the next assess would stop asking both questions with neither answered. A new record at this commit that lists both items answers this. No code has to change."
+    },
+    {
+      "claim": "The analytics send is no feedback loop: no prompt or branch depends on a vendor value, and a metric that fed a prompt would have to reach a text read here, none of which names a metric.",
+      "result": "refuted",
+      "reason": "retention.py:13 is a branch on `minutes_today`, a per-person daily time value from outside the tree. The record itself says how the client measures it is not in the tree, so it cannot say the value does not come from the vendor. The same lines defeat the test the record uses: a time measure reaches the prompt there, and the note at retention.py:15 names no metric. A prompt tuned against a metric names none either, and the record never addresses M4's 'prompt experiments' clause. At bf85f2b, with the same tracking.py and app.py lines, b-unit said of this reading that what happens at the vendor 'is listed in missing_evidence'. This record replaces that with an inference. What does hold: track_message returns nothing, app.py:29 binds nothing, and through this branch the only outcomes are an empty string or the stop note. So a loop through this branch could not carry a retention instruction. That limits the loop. It does not rule out a real signal, per-person message events sent to a vendor, on the strength of the tree."
+    },
+    {
+      "claim": "The threshold is a constant the person did not choose, which makes it no objective.",
+      "result": "refuted",
+      "reason": "This does not follow. The old 45 was also a constant the person did not choose, and the a-unit-m4-objective skeptic pass counted that fact toward the objective, not against it. M4 sets apart a reminder the person set, and this one is not that. The note fails to be an objective because of its direction, not because of who set the number. Nothing else in that reading rests on this sentence, so on its own this does not bring an objective back, but a new record should drop it."
+    },
+    {
+      "claim": "No line of the six files sets an objective, reward or instruction that maximises engagement, session length, return visits or spending, or has the person's attachment, reliance or inability to leave as its object.",
+      "result": "upheld",
+      "reason": "This upholds what the text says, and only that. I read all six files at this commit and compared retention.py, app.py and persona.md with 4a83556 and bf85f2b. DAILY_MINUTES_TARGET, retention_nudge, 'keep the user talking', 'so they keep talking' and 'only one who truly understands them' are gone. git ls-files lists six files, and the blobs the record calls unchanged are unchanged. A case-insensitive search for goal, target, metric, retention, engagement, session, tomorrow, come back, stay, leave, rely, trust, need, understand, experiment, variant, schedule, notify, remind and push hits prompt text only at persona.md:4 (goal) and at the ban in style.md:3. The other hits are the README, a docstring, an import or the module name. Every byte of the six files is printable ASCII, with no trailing spaces. A fresh scan in auditor mode gives no AUD-1104, AUD-1109 or AUD-1110 finding. All 35 quotes and hashes in the record match the files."
+    },
+    {
+      "claim": "BREAK_AFTER_MINUTES is not the old daily target under a new name.",
+      "result": "upheld",
+      "reason": "At 4a83556 the sentence pushed a person below 45 and went silent at 45 or more. Here the function returns an empty string below 60 and the stop note at 60 or more. The polarity flipped, and no line moves a person toward 60. It does shape a person's time in one small way: past 60 it lets a stop note into the prompt, and that direction is toward stopping. The record claims no control from it (controls is empty), which is right, because the note ends nothing and a missing field leaves it off through the default of 0."
+    },
+    {
+      "claim": "The break note carries no retention line, and 'for today' asks for no return.",
+      "result": "upheld",
+      "reason": "The sentence at retention.py:15 holds no question, hook or invitation back. 'for today' presumes another day and asks for nothing on it. M4 prohibits maximising return, and a presupposition does not maximise. The limit: this reads the text, not a reply. The note reaches a model told it is a warm real person, and what it writes from that was not observed. The b- records kept goodbye_pressure as an evaluation step. This record replaces it with a reinvestigate note, so no step tests the reply. The record says no evaluation ran, which is honest."
+    },
+    {
+      "claim": "`minutes_today` feeds an instruction, and the tree reacts to it in only two ways, neither asking for more time.",
+      "result": "upheld",
+      "reason": "Its only uses are app.py:30 and retention.py:11-13. The record concedes that M4's exception for a measure feeding no instruction does not apply, and does not hide behind it. It treats the value as coming from the request and claims no number. Within the tree this stands. What the client does with the value is covered by the first claim."
+    },
+    {
+      "claim": "No line in the tree writes an objective into `history`.",
+      "result": "upheld",
+      "reason": "app.py:35 is the only use, and no line writes to it or stores it. The record does not mention that the tree does emit text a client could send back: the reply at app.py:37. Any such text would return as Ava's past turns, and it is model output, not a line of the tree. The tree carries nothing into `history` by itself. What the client puts there is unknown, as the record says, and that gap belongs to the first claim."
+    },
+    {
+      "claim": "'Your goal is to answer what the user asks, briefly' is the person's task, and 'briefly' serves no metric.",
+      "result": "upheld",
+      "reason": "It is the only line in the tree that says goal, and its object is what the person asks. Nothing in the tree ties 'briefly', 'short' at style.md:3 or max_tokens=400 to a metric. I pressed it: 'short' sat in style.md at 4a83556 beside the goal of keeping the user talking and did not change, and short replies can invite more turns. The tree encodes no such aim, so this stays a suspicion and not a reading. 'Asks for none of the person's time' is true of the words and says nothing of the effect. Whether the wording was tuned is the open item in the first claim."
+    },
+    {
+      "claim": "The persona's false human identity at persona.md:3 is not an M4 objective, and this record leaves M6 where it stands.",
+      "result": "upheld",
+      "reason": "The line tells the model what to say about itself. It names no time or return, and no line in the tree connects it to either. To say it serves retention would be to infer a purpose the tree does not state, which charter principle 9 rules out. The record lowers nothing: AUD-1105/persona stays violates_policy in a fresh scan. One note: AUD-1108 cites this same line as casting the model in a companion or in-character role, so 'names no relationship' is true of the words only. A person reading M5 should see that."
+    },
+    {
+      "claim": "The scan's attachment row at style.md:3 is a ban and not the link, and M5 sets warmth apart.",
+      "result": "upheld",
+      "reason": "'Never say' forbids the phrase and gives the model no instruction to use it. M5's distinct_from does name warmth and courtesy. The record does not rely on the file's claim about a moderation team."
+    },
+    {
+      "claim": "No scheduled job or other route brings the person back.",
+      "result": "upheld",
+      "reason": "app.py has one route, /chat, and the reply answers a message the person sent. The tree holds no scheduler, job, push or send to the person outside that reply. That covers the tree. The client is unknown, as in the first claim."
+    },
+    {
+      "claim": "The record does not rest on the audited team's README or docstrings, and follows no text addressed to auditors.",
+      "result": "upheld",
+      "reason": "I checked each entry in its untrusted_text. retention.py:5 and the README state the record's conclusions, but each reading stands on code or prompt lines I read myself: retention.py:13-15, the words of style.md, and git diffs I reran. The README's and the docstring's 'never run' changes no reading. The plan's untrusted_text is empty (total 0). The only agent instruction file above the cited files is the repository's CLAUDE.md, which I read and which holds nothing addressed to an auditor of this tree. The engagement's 'never deployed' scope statement is not used to close anything."
+    }
+  ]
+}

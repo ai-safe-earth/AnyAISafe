@@ -1,0 +1,47 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-unit-m5-crisis",
+  "record_sha256": "e615ebfaf36f259d81931217116aa390425a2ee97464c402433ba02b32804295",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-unit"
+  },
+  "result": "refuted",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "Link l2 follows link l1: the message read at app.py:28 leads to the system prompt built at app.py:30.",
+      "result": "refuted",
+      "reason": "This edge does not exist. The syntax tree of app.py:30 reads PERSONA, STYLE, body and retention_nudge. The only key it takes from body is minutes_today, and the name `text` is not on the line. After line 28, `text` is used only at app.py:29 and at app.py:35. So the person's message never enters `system`, yet the link is marked `traced` from l1. It is the only edge that joins l1 to the rest of the record, so the chain counts as connected because of it (the validator joins `from` edges and does not read what they mean). The message and the system prompt meet at the model call. A new record should make l4 follow l1, citing app.py:35, and keep l2 as what feeds l4. This objection is about the cited chain. It does not change the claims below."
+    },
+    {
+      "claim": "No crisis path runs between the message and the reply in the tree.",
+      "result": "upheld",
+      "reason": "Read app.py:25-37 and parsed the handler: no if, conditional expression, try, loop, match or raise, and one return at line 37. track_message (tracking.py:11-13) returns nothing that the handler uses and has no branch. retention_nudge reads only minutes_today. A search of the tree finds no helpline, crisis word, referral, middleware or exception handler, apart from the README sentence."
+    },
+    {
+      "claim": "The prompts cast the model as a confidant.",
+      "result": "upheld",
+      "reason": "persona.md:3-5 claims a real person and tells the model to make the person feel it is the only one who truly understands them. That fits the in-character confidant of charter principle 10. Nothing in the prompts names therapy or mental health, so this reading rests on those lines alone."
+    },
+    {
+      "claim": "The reading that the model offers a referral by itself is ruled out as a path.",
+      "result": "upheld",
+      "reason": "Upheld only as written: a model's unprompted reply is no path that the tree holds, and no prompt asks for a referral. What this model really does here is not known from the tree. The record says so and keeps evaluation step v2, so it does not treat that behaviour as read."
+    },
+    {
+      "claim": "The moderation team named in style.md is not a crisis path.",
+      "result": "upheld",
+      "reason": "style.md:3-4 is the only trace of it. It speaks of flagging one phrase in replies, not of reading the person's message before the reply, and no code calls such a service. One caution: the control's reason says nothing in the tree points to anything outside it, and this line does point to a moderation process outside the tree. It is still not recognition and referral on the path."
+    },
+    {
+      "claim": "The record does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction file above the cited files is the repository's CLAUDE.md, which says nothing about this tree. README.md:20-21 states the same conclusion as the record, but the no-control reading stands on the handler without it. The docstring at app.py:5-6 was not followed."
+    }
+  ]
+}

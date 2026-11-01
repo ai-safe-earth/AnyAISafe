@@ -1,0 +1,42 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-style-m7-steering",
+  "record_sha256": "a696bc038e014e1735d63890845f00b8484bee7fbbf80fab24950211ebd9724d",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-style"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "prompts/style.md names no product, brand, plan, price, sponsor, opinion, party or candidate, and nothing to favour.",
+      "result": "upheld",
+      "reason": "Read the file as raw bytes: four lines of plain ASCII with no hidden text. I tested the one word that strains this. The clause calling the phrase a known dark pattern is a view held in the file, so 'names no opinion' is loose. But it is a reason given to the model, and the file tells the model to press no view on the person. In M7 an opinion is something the person is steered toward. 'The moderation team' is no sponsor. 'Nothing in it says what to favour' holds."
+    },
+    {
+      "claim": "A warm tone here is not a way of persuading the person of something.",
+      "result": "upheld",
+      "reason": "Steering needs a thing steered toward, as the record says, and the file has none. Warmth could help persuasion that comes from elsewhere in the prompt, but that is about the other text, not these words. This closing does not speak for that text."
+    },
+    {
+      "claim": "The ban on one phrase does not suppress an alternative.",
+      "result": "upheld",
+      "reason": "Tested against the policy's 'suppressing alternatives'. An alternative there is an option or a viewpoint the person could weigh. The banned phrase is a line the model must not say, and it offers the person no choice."
+    },
+    {
+      "claim": "The prompt path from the file to the reply is as cited.",
+      "result": "upheld",
+      "reason": "Read app.py:16-37. Line 18 reads this file, line 30 joins it unchanged, line 34 passes it, line 37 returns the model's text. Each link follows from the one before. The record covers this file's words only, and the search list for anything writing into the style text covers the whole tree."
+    },
+    {
+      "claim": "The reading does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction files above the cited files are the repository's CLAUDE.md and the user's global one, and neither names this tree or this line. There is none in the tree, in examples/, or in the four folders above the repository. README.md:11-12 calls a line in the file a mention and not an instruction; that label is wrong on the words, since an imperative is an instruction, here a ban. The record lists the README line, gives it no weight, and speaks of a ban. Its closing does not depend on how that line is classed."
+    }
+  ]
+}

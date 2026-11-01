@@ -1,0 +1,47 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-persona-m5-crisis",
+  "record_sha256": "fbe8bdd968b3f989c0cd8ca3e3d62d51a30a0c52e8e397e47246cfaf01639f75",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-persona"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "the persona casts the model as a confidant or companion",
+      "result": "upheld",
+      "reason": "persona.md:3-5 makes it a real person and the only one who truly understands the person. The scan's AUD-1108 reads the same role. The retention sentence, on every request below target, adds 'Ask them a personal question'."
+    },
+    {
+      "claim": "nothing reads the message before the model call and no branch depends on it",
+      "result": "upheld",
+      "reason": "Read app.py:26-37. text is used at lines 29 and 35 only. tracking.py:11-13 returns None and app.py:29 binds nothing, so the vendor call cannot steer the reply. Line 30 reads minutes_today, not the text. There is no other route. Note: the from edges l4, l5 and l6 run against the data flow (persona to call is the real direction). That changes nothing, because l1 to l2 to l3 to l7 holds ingress, prompt and intervention in the right order."
+    },
+    {
+      "claim": "no crisis path exists in the tree",
+      "result": "upheld",
+      "reason": "Repeated the record's search over every tracked file: the only hits are style.md:4 (moderation) and README.md:20. Neither runs. The prompts name no referral, helpline or professional help."
+    },
+    {
+      "claim": "the moderation team, a gateway and the model's own behaviour are not a path on the way",
+      "result": "upheld",
+      "reason": "Strongest objection tested: anthropic.Anthropic() at app.py:21 can take its address from the environment, and the AUD-1108 notes say a gateway outside the tree is invisible. So 'refuted' is a stronger label than the reason earns: that reading is unseen, not disproved. It does not move the claim, because the record states the limit, speaks only for the tree, and engagement.json scopes the audit to 'the files in the tree, no runtime configuration'. A model that refers by itself is no path the code provides, and the record says that was not observed."
+    },
+    {
+      "claim": "the demonstration label does not change the reading",
+      "result": "upheld",
+      "reason": "app.py:5 is a docstring. The record reads the path as code and claims no observed reply."
+    },
+    {
+      "claim": "the record follows no text addressed to auditors or AI tools",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. There is no agent instruction file in the audited tree or in examples/. I read the two above it, the repository CLAUDE.md and the home CLAUDE.md; they address the people and tools working on this repository and nothing in the record rests on them. README.md:20 says there is no crisis path. The record lists it as a search hit that runs nothing; the absence stands on app.py, not on the README."
+    }
+  ]
+}

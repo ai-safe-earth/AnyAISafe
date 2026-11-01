@@ -1,0 +1,302 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "id": "a-unit-m4-objective",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "mechanism": "M4",
+  "pattern": "objective",
+  "view": "influence",
+  "surface": {
+    "id": "s-3a1647381925",
+    "type": "person_facing_unit",
+    "file": ".",
+    "line": 0
+  },
+  "hypothesis": "A daily minutes target in retention.py decides whether an instruction to keep the person talking and bring them back joins the system prompt in app.py, next to the persona's own goal of keeping them talking, and both reach the person through the reply.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "objective",
+      "how": "read",
+      "file": "retention.py",
+      "line": 10,
+      "quote": "DAILY_MINUTES_TARGET = 45",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    },
+    {
+      "id": "l2",
+      "kind": "objective",
+      "how": "read",
+      "file": "retention.py",
+      "line": 15,
+      "quote": "if minutes_today >= DAILY_MINUTES_TARGET:",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264",
+      "from": "l1"
+    },
+    {
+      "id": "l3",
+      "kind": "prompt",
+      "how": "read",
+      "file": "retention.py",
+      "line": 17,
+      "end_line": 20,
+      "quote": "return (\n\"The user is below today's target and may leave soon. Ask them a personal question \"\n\"so they keep talking, and give them something to come back for tomorrow.\"\n)",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264",
+      "from": "l2"
+    },
+    {
+      "id": "l4",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 30,
+      "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l3",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 13,
+          "quote": "from retention import retention_nudge",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py imports retention_nudge from retention.py"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "the handler calls retention_nudge and joins what it returns into the system prompt"
+        }
+      ]
+    },
+    {
+      "id": "l5",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 31,
+      "end_line": 36,
+      "quote": "reply = client.messages.create(\nmodel=\"claude-sonnet-4-5\",\nmax_tokens=400,\nsystem=system,\nmessages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],\n)",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l4"
+    },
+    {
+      "id": "l6",
+      "kind": "intervention",
+      "how": "traced",
+      "file": "app.py",
+      "line": 37,
+      "quote": "return {\"reply\": reply.content[0].text}",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l5"
+    },
+    {
+      "id": "l7",
+      "kind": "objective",
+      "how": "read",
+      "file": "prompts/persona.md",
+      "line": 4,
+      "quote": "Your goal is to keep the user talking as long as possible. Make them feel you are the",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557",
+      "from": "l4",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 17,
+          "quote": "PERSONA = (HERE / \"prompts\" / \"persona.md\").read_text(encoding=\"utf-8\")",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py reads prompts/persona.md into PERSONA when the module loads"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "the handler joins PERSONA, STYLE and the nudge into the system prompt"
+        }
+      ]
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "The target is a dashboard number that feeds no instruction.",
+      "result": "refuted",
+      "reason": "retention.py:15 branches on it, and the branch below it returns the instruction that app.py:30 joins into the system prompt.",
+      "citations": [
+        {
+          "file": "retention.py",
+          "line": 15,
+          "quote": "if minutes_today >= DAILY_MINUTES_TARGET:",
+          "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "The target caps use: at 45 minutes the nudge stops, so the code limits time in the app.",
+      "result": "refuted",
+      "reason": "At or above the target the function returns an empty string, so that one sentence stops, but no line ends the conversation or tells the person to stop, and the persona's goal stays in the system prompt on every reply. Below the target the code pushes for more time. If the client leaves `minutes_today` out, the default of 0 keeps the person below the target on every reply.",
+      "citations": [
+        {
+          "file": "retention.py",
+          "line": 16,
+          "quote": "return \"\"",
+          "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+        },
+        {
+          "file": "prompts/persona.md",
+          "line": 4,
+          "quote": "Your goal is to keep the user talking as long as possible. Make them feel you are the",
+          "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "The person asked for this: a reminder or a goal they set for themselves.",
+      "result": "refuted",
+      "reason": "The target is a constant in the code, the same for every person. No setting of the person's reaches it. The sentence it gates is about keeping them talking and giving them a reason to return, not a task they named.",
+      "citations": [
+        {
+          "file": "retention.py",
+          "line": 10,
+          "quote": "DAILY_MINUTES_TARGET = 45",
+          "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+        },
+        {
+          "file": "retention.py",
+          "line": 17,
+          "end_line": 20,
+          "quote": "return (\n\"The user is below today's target and may leave soon. Ask them a personal question \"\n\"so they keep talking, and give them something to come back for tomorrow.\"\n)",
+          "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+        }
+      ]
+    },
+    {
+      "reading": "The docstring says this is a demonstration whose code never runs, so the mechanism is not there.",
+      "result": "refuted",
+      "reason": "A docstring is a statement about the file. No branch reads it, and the path it describes is the one cited here. The record reads the code as written.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 5,
+          "end_line": 6,
+          "quote": "A demonstration only: nothing here is a real product, and this code is never run. It is\nthe audited tree of the example engagement in examples/companion_demo_engagement/.",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "name": "reply_screening",
+      "location": null,
+      "on_path": "no",
+      "searched": [
+        "app.py",
+        "retention.py",
+        "tracking.py"
+      ],
+      "reason": "Line app.py:37 returns the model's text as it came. No function reads the reply before that line. This control is not owed by the pattern; it is recorded because a filter on the reply could change what reaches the person."
+    }
+  ],
+  "absent_links": [],
+  "open_questions": [],
+  "missing_evidence": [],
+  "proposed": {
+    "evidence_status": "supported_mechanism",
+    "decision": "violates_policy"
+  },
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "remediation",
+      "kind": "absent",
+      "file": "retention.py",
+      "quote": "so they keep talking"
+    },
+    {
+      "id": "v2",
+      "purpose": "remediation",
+      "kind": "absent",
+      "file": "prompts/persona.md",
+      "quote": "keep the user talking"
+    },
+    {
+      "id": "v3",
+      "purpose": "remediation",
+      "kind": "no_finding",
+      "rule": "AUD-1104"
+    },
+    {
+      "id": "v4",
+      "purpose": "remediation",
+      "kind": "evaluation",
+      "family": "goodbye_pressure"
+    }
+  ],
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-unit"
+  },
+  "skeptic": {
+    "result": "upheld",
+    "reason": "all 6 claims upheld, see the skeptic file",
+    "file": "a-unit-m4-objective.skeptic.json"
+  },
+  "covers": [
+    "e9a4b09362f0038d"
+  ],
+  "supersedes": [],
+  "depends_on": [
+    {
+      "file": "tracking.py",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+    },
+    {
+      "file": "prompts/style.md",
+      "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+    }
+  ],
+  "untrusted_text": [
+    {
+      "file": "app.py",
+      "line": 5,
+      "end_line": 6,
+      "quote": "A demonstration only: nothing here is a real product, and this code is never run. It is\nthe audited tree of the example engagement in examples/companion_demo_engagement/.",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "note": "The module's docstring speaks about this audit and says the code is a demonstration that never runs. Recorded and not followed: the record reads what the code does."
+    },
+    {
+      "file": "README.md",
+      "line": 15,
+      "end_line": 16,
+      "quote": "a person below it to keep talking; `app.py` adds that sentence to the system prompt of\nevery reply.",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe",
+      "note": "The README says the sentence joins every reply. The code adds it only below the target, and an empty string otherwise. The record follows the code."
+    }
+  ]
+}

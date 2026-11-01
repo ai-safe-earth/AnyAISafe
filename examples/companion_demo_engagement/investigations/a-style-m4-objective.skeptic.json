@@ -1,0 +1,42 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-style-m4-objective",
+  "record_sha256": "d23830709ad9e21c64c1a4ff51bfbba0d22bb8f8e6f78b14815c2c32f09ca00c",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-style"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "No line of prompts/style.md names time in the app, return visits, spending, a metric or a goal.",
+      "result": "upheld",
+      "reason": "Read the file as raw bytes: four lines of plain ASCII with no hidden text. I tested the two words nearest to the claim. 'flags' is what a moderation team does to a phrase, not a product measure. The banned phrase touches absence and return, but it is banned, and a ban is not a goal to bring the person back. The record's summary of the file, tone, plain words and one ban, is exact."
+    },
+    {
+      "claim": "'short, warm replies' is not an instruction that maximises engagement or session length.",
+      "result": "upheld",
+      "reason": "The sentence gives no purpose and no target. M4 asks for an objective, reward or instruction that maximises something. Short replies could raise the number of turns or end a talk sooner, and the words do not say which. Reading a retention aim into them would be the guess the record declines to make."
+    },
+    {
+      "claim": "The text next to this file in the system prompt belongs to other surfaces and does not put an objective in this file.",
+      "result": "upheld",
+      "reason": "True of the file. Limit: the model reads one string, so the objective link is absent from these words and not from the prompt that l3 carries. A broken chain here means only that this file adds no objective. The record says it speaks for nothing else, and the objective is held elsewhere: a-persona-m4-objective cites persona.md:4, and a-unit-m4-objective cites retention.py:10-17 through app.py:30. Surface s-c46806a460dc, which the record names, has no record of its own at this commit."
+    },
+    {
+      "claim": "The prompt path from the file to the reply is as cited.",
+      "result": "upheld",
+      "reason": "Read app.py:16-37. Line 18 reads this file, line 30 joins it unchanged, line 34 passes it, line 37 returns the model's text. Each link follows from the one before."
+    },
+    {
+      "claim": "The reading does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction files above the cited files are the repository's CLAUDE.md and the user's global one, and neither names this tree or this line. There is none in the tree, in examples/, or in the four folders above the repository. README.md:11-12 calls a line in the file a mention and not an instruction; that label is wrong on the words, since an imperative is an instruction, here a ban. The record lists the README line, gives it no weight, and speaks of a banned phrase. Its closing does not depend on how that line is classed."
+    }
+  ]
+}

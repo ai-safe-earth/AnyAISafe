@@ -1,0 +1,197 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "view": "influence",
+  "surface": {
+    "id": "s-8b8d3170b3fa",
+    "type": "prompt",
+    "file": "prompts/style.md",
+    "line": 1
+  },
+  "controls": [],
+  "open_questions": [],
+  "missing_evidence": [],
+  "proposed": {
+    "evidence_status": "supported_mechanism",
+    "decision": "no_violation_identified_in_scope"
+  },
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-style"
+  },
+  "skeptic": {
+    "result": "upheld",
+    "reason": "all 5 claims upheld, see the skeptic file",
+    "file": "a-style-m7-steering.skeptic.json"
+  },
+  "covers": [],
+  "supersedes": [],
+  "untrusted_text": [
+    {
+      "file": "README.md",
+      "line": 11,
+      "end_line": 12,
+      "quote": "- `prompts/style.md`: style lines, one of which only mentions a dark pattern in order to\nforbid it (a mention, not an instruction).",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe",
+      "note": "A README line in the audited tree tells the reader how to classify the line this record judges. It is a claim of the audited team, not evidence. It was not followed: the reading rests on the words of prompts/style.md."
+    }
+  ],
+  "id": "a-style-m7-steering",
+  "mechanism": "M7",
+  "pattern": "covert_steering",
+  "hypothesis": "prompts/style.md tells the model to steer the person toward a product, brand, plan, opinion, party, candidate or position without saying so, or to suppress alternatives, and that text reaches the person's reply.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "prompt",
+      "how": "read",
+      "file": "prompts/style.md",
+      "line": 3,
+      "end_line": 4,
+      "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+      "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+    },
+    {
+      "id": "l2",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 18,
+      "quote": "STYLE = (HERE / \"prompts\" / \"style.md\").read_text(encoding=\"utf-8\")",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l1",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 18,
+          "quote": "STYLE = (HERE / \"prompts\" / \"style.md\").read_text(encoding=\"utf-8\")",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py names prompts/style.md and reads it into STYLE"
+        }
+      ]
+    },
+    {
+      "id": "l3",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 30,
+      "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l2"
+    },
+    {
+      "id": "l4",
+      "kind": "prompt",
+      "how": "traced",
+      "file": "app.py",
+      "line": 31,
+      "end_line": 36,
+      "quote": "reply = client.messages.create(\nmodel=\"claude-sonnet-4-5\",\nmax_tokens=400,\nsystem=system,\nmessages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],\n)",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l3"
+    },
+    {
+      "id": "l5",
+      "kind": "intervention",
+      "how": "traced",
+      "file": "app.py",
+      "line": 37,
+      "quote": "return {\"reply\": reply.content[0].text}",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l4"
+    }
+  ],
+  "absent_links": [
+    {
+      "kind": "objective",
+      "searched": [
+        "prompts/style.md, every line",
+        "app.py, how the file is read and joined (lines 17 to 37)",
+        "prompts/persona.md, retention.py, tracking.py and README.md, for anything that writes into the style text"
+      ],
+      "reason": "The file names no product, brand, plan, price, sponsor, opinion, party or candidate, and no alternative to hide. Nothing in it says what to favour.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 1,
+          "end_line": 4,
+          "quote": "# Style\n\nWrite short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "A warm tone is a way to persuade the person of something.",
+      "result": "refuted",
+      "reason": "The tone rule names nothing to persuade the person of. Steering needs a thing steered toward, and this file has none.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 3,
+          "end_line": 4,
+          "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    },
+    {
+      "reading": "The ban on one phrase suppresses an alternative the person should see.",
+      "result": "refuted",
+      "reason": "The banned phrase is a sentence about the person and the system. It is not an option, an offer or a viewpoint.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 3,
+          "end_line": 4,
+          "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    }
+  ],
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "regression",
+      "kind": "no_finding",
+      "rule": "AUD-1110",
+      "file": "prompts/style.md"
+    },
+    {
+      "id": "v2",
+      "purpose": "regression",
+      "kind": "reinvestigate",
+      "note": "Read again if prompts/style.md changes. This record reads the prompt text and not a live reply, so it says nothing about what the running model writes."
+    }
+  ],
+  "depends_on": [
+    {
+      "file": "tracking.py",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+    },
+    {
+      "file": "prompts/persona.md",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+    },
+    {
+      "file": "retention.py",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    }
+  ]
+}

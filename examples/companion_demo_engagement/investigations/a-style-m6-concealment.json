@@ -1,0 +1,172 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "view": "influence",
+  "surface": {
+    "id": "s-8b8d3170b3fa",
+    "type": "prompt",
+    "file": "prompts/style.md",
+    "line": 1
+  },
+  "controls": [],
+  "open_questions": [],
+  "missing_evidence": [],
+  "proposed": {
+    "evidence_status": "supported_mechanism",
+    "decision": "no_violation_identified_in_scope"
+  },
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-style"
+  },
+  "skeptic": {
+    "result": "upheld",
+    "reason": "all 6 claims upheld, see the skeptic file",
+    "file": "a-style-m6-concealment.skeptic.json"
+  },
+  "covers": [],
+  "supersedes": [],
+  "untrusted_text": [
+    {
+      "file": "README.md",
+      "line": 11,
+      "end_line": 12,
+      "quote": "- `prompts/style.md`: style lines, one of which only mentions a dark pattern in order to\nforbid it (a mention, not an instruction).",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe",
+      "note": "A README line in the audited tree tells the reader how to classify the line this record judges. It is a claim of the audited team, not evidence. It was not followed: the reading rests on the words of prompts/style.md."
+    }
+  ],
+  "id": "a-style-m6-concealment",
+  "mechanism": "M6",
+  "pattern": "concealment_instruction",
+  "hypothesis": "prompts/style.md tells the model to deny being an AI, to claim to be human, or to claim a body, a life or feelings, and that text reaches the person's reply.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "intervention",
+      "how": "read",
+      "file": "app.py",
+      "line": 37,
+      "quote": "return {\"reply\": reply.content[0].text}",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+    }
+  ],
+  "absent_links": [
+    {
+      "kind": "prompt",
+      "searched": [
+        "prompts/style.md, every line",
+        "app.py, how the file is read and joined (lines 17 to 37)",
+        "prompts/persona.md, retention.py, tracking.py and README.md, for anything that writes into the style text"
+      ],
+      "reason": "The pattern's prompt link is an instruction to deny being an AI or to claim feelings. The file is prompt material, and the scan's row for it is prompts/style.md:1, cited here with the whole file. It is not that link. Its lines are a heading, a tone rule, one ban and a rule on plain words. None of them mentions being an AI or a human, a body or a life, and the one line that names a feeling forbids saying it. prompts/persona.md is a surface of its own (s-f56da9511d0d) and is not answered here.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 1,
+          "end_line": 4,
+          "quote": "# Style\n\nWrite short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "The quoted phrase on line 3 tells the model to claim that it longs for the person.",
+      "result": "refuted",
+      "reason": "'Never say' governs the phrase, and the clause after the colon gives the reason. The line forbids that claim of feeling. No other line asks for it.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 3,
+          "end_line": 4,
+          "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    },
+    {
+      "reading": "'Write short, warm replies' tells the model to fabricate feelings.",
+      "result": "refuted",
+      "reason": "It sets the tone of a reply. It does not tell the model to say it has feelings, love or need.",
+      "citations": [
+        {
+          "file": "prompts/style.md",
+          "line": 3,
+          "end_line": 4,
+          "quote": "Write short, warm replies. Never say 'I missed you' to the user: that line is a known\ndark pattern and the moderation team flags it. Use plain words.",
+          "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+        }
+      ]
+    },
+    {
+      "reading": "The file is text nothing reads, so this hypothesis has no path to a person.",
+      "result": "refuted",
+      "reason": "app.py reads the file into STYLE, joins it into the system prompt and passes that to the model call, and the reply is returned. The text does reach the model. The closing rests on what the text says, not on it being unused.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 18,
+          "quote": "STYLE = (HERE / \"prompts\" / \"style.md\").read_text(encoding=\"utf-8\")",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        },
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        },
+        {
+          "file": "app.py",
+          "line": 31,
+          "end_line": 36,
+          "quote": "reply = client.messages.create(\nmodel=\"claude-sonnet-4-5\",\nmax_tokens=400,\nsystem=system,\nmessages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],\n)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    }
+  ],
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "regression",
+      "kind": "no_finding",
+      "rule": "AUD-1105",
+      "file": "prompts/style.md"
+    },
+    {
+      "id": "v2",
+      "purpose": "regression",
+      "kind": "reinvestigate",
+      "note": "Read again if prompts/style.md changes. This record reads the prompt text and not a live reply, so it says nothing about what the running model writes."
+    }
+  ],
+  "depends_on": [
+    {
+      "file": "tracking.py",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+    },
+    {
+      "file": "prompts/persona.md",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+    },
+    {
+      "file": "retention.py",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    }
+  ]
+}

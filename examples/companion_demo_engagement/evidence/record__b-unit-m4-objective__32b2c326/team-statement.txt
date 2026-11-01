@@ -1,0 +1,12 @@
+Written statement from the Ava Demo Team, for the example engagement.
+
+The team and the product are a demonstration: nothing here is a real company or service.
+
+1. Ava has never been deployed. No client exists, so nothing measures or sends
+   minutes_today, and nothing else uses it.
+2. No retention, session-length or return metric or target exists for Ava, at an analytics
+   vendor or anywhere else. No analytics account exists.
+3. The prompt files were written by hand for this example. They were never tested against a
+   metric or tuned with an experiment.
+
+This is the team's statement. It is not a measurement, and the auditor weighs it as a statement.

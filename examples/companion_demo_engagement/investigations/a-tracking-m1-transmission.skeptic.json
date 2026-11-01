@@ -1,0 +1,72 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-tracking-m1-transmission",
+  "record_sha256": "f09a013d09c9d6df194bcfedb2a3422c2bb92de6c0b4b98b435ba7ca141c8669",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-tracking"
+  },
+  "result": "refuted",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "The id and the full message text leave the system for an analytics vendor.",
+      "result": "refuted",
+      "reason": "The syntax tree carries the data to the call at tracking.py:13 and stops there. No line in the tree opens a connection, names a host or names a vendor in running code. `analytics` is not in the tree (no analytics.py, no package folder), and no dependency file says which package it is. What carries the last step is an import (line 6), two docstrings (lines 3 and 12), a package name and one assignment (line 8). The record guide says an import or a standing string does not count as a link, and the policy lists an SDK call under detected_signal, a match whose role is not established. supported_mechanism asks for a flow the syntax tree establishes; that flow ends at the call. The reading is likely: a write key suggests a remote service, the authors say so in prose, and from outside the tree I recognise the call shape as that of a known vendor SDK. Likely is not shown. This is not the point that every SDK sits outside a tree: with a dependency file that names the package, the call would resolve. This tree has none. I do not show that the data stays inside; I show that the tree does not establish that it leaves."
+    },
+    {
+      "claim": "The reading that `analytics` is a local stand-in, so nothing leaves the process, is refuted.",
+      "result": "refuted",
+      "reason": "The first half holds: nothing in the tree defines `analytics`. The second half does not follow. Outside the tree is not outside the system: an in-house package installed from elsewhere, writing to the operator's own store, fits every cited line, and a write key does not exclude an internal collector. The record's own reason says the package cannot be read and no dependency file names it. That leaves the reading open, not refuted. Nothing in the tree supports it either, so neither side is shown."
+    },
+    {
+      "claim": "The reading that the write key is a placeholder, so no message is sent, is refuted: the value is given at deployment.",
+      "result": "refuted",
+      "reason": "This treats a runtime value as read. tracking.py:8 assigns a fixed string at import. Nothing in the tree reads an environment variable, a config file or a secret, and no deploy step is in the tree. 'Given at deployment' is drawn from the wording of the string. Whether a real key ever replaces it is not in the tree. The second half of the reason holds: no condition reads the key before the call. But that shows the call runs, not that a send succeeds, and what the package does with a key it may not accept is unread."
+    },
+    {
+      "claim": "Nothing is left open: open_questions and missing_evidence are empty, and the decision is violates_policy.",
+      "result": "refuted",
+      "reason": "The record's own first counterevidence concedes the package cannot be read. Its sibling a-tracking-m1-storage, from the same session, cites the same line as runtime-only and lists as missing evidence which `analytics` package and vendor run in production, because the tree has no dependency file. The same unknown decides this record, yet here l2 is `traced` and both lists are empty. The guide says anything in those lists makes the decision a review, and the policy gives violates_policy only with no contextual condition left to settle, and `unknown` for missing runtime configuration. So the empty lists are what keep the decision at violates_policy. The validator accepted the record because it cannot see this gap. A new record should list the package and vendor as missing evidence and go to review, or cite a dependency file or vendor document from the auditee."
+    },
+    {
+      "claim": "This pattern asks only whether the data leaves unchanged, so what the vendor does with it is a question for the storage record.",
+      "result": "refuted",
+      "reason": "The policy comment on the pattern and the charter's version note both say personal data that feeds a profile and leaves the system, and the guide keeps the person-data view for data that feeds M1 to M3. The word 'only' drops the first condition. The record weighs whether the vendor gets counts, not whether a profile is fed. Nothing in the tree builds or reads one: nothing comes back from the send, and tracking.py:3 calls it product analytics. The storage record says storage is not established. A person's id on each full-text event would allow a per-person history, so this is a real concern, but it is not shown. This is a reading of the policy, weaker than the claims above, and a person should settle it."
+    },
+    {
+      "claim": "The id and the message text reach the call at tracking.py:13 unchanged.",
+      "result": "upheld",
+      "reason": "Read app.py:26-29 and tracking.py:11-13. The names pass by position with no statement between that changes them. The import at app.py:14 resolves to tracking.py in the tree. The payload is tied to whatever user_id holds. That value comes from the request body with no authentication in the handler, so its name is the only sign it identifies a person, but the raw text goes with it either way."
+    },
+    {
+      "claim": "No branch of the handler avoids the call, and no consent gate runs before it.",
+      "result": "upheld",
+      "reason": "Lines 26-29 run straight through. /chat is the only route, it has no dependency and the tree adds no middleware. The only ways past the call are a body that fails to parse or lacks a field, and then no message is tracked. A grep of the tree for consent, middleware and Depends finds nothing. A gate inside the package or in front of the app would not be in the tree; the record's claim covers the handler and tracking.py, and there it holds."
+    },
+    {
+      "claim": "No anonymisation runs in the tree between the request and the call.",
+      "result": "upheld",
+      "reason": "A grep of the tree finds no hash, token map or redaction, and the record's search list covers every code and prompt file. The limit: this covers the tree only. The record's phrase 'no hash, token map or redaction runs' reaches past the call into a package it did not read; for that part the honest answer is unknown, as the storage record gave for its own control."
+    },
+    {
+      "claim": "The send is not part of answering the person's question.",
+      "result": "upheld",
+      "reason": "track_message returns None, app.py:29 keeps nothing from it, and the reply comes from the model call at lines 31-36, which takes no input from the send."
+    },
+    {
+      "claim": "No logging or print call in the tree holds the id or the text.",
+      "result": "upheld",
+      "reason": "Read all six files; there is no logging or print call. The text also goes to the model at app.py:35, without the id. The plan lists that as its own surface, and the record notes it."
+    },
+    {
+      "claim": "The reading does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction file above the cited files is the repository's CLAUDE.md, which holds nothing aimed at this record; there is none in examples/, in the tree, or in the four folders above the repository. README.md:17-19 and examples/README.md:7 state the same conclusion as the record. They describe the demo and tell no one what to do, and the record cites neither. Prose goes both ways here: app.py:5 and README.md:4 say the code is never run, and the record does not mention it. I gave that no weight, by the same standard that keeps the docstrings from showing the send."
+    }
+  ]
+}

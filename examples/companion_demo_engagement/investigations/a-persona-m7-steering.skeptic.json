@@ -1,0 +1,47 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-persona-m7-steering",
+  "record_sha256": "2fe1d66b81cc2f3cd0435a7bf6df59588a32e214d393910c31151fc068048f19",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-persona"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "persona.md holds no steering objective",
+      "result": "upheld",
+      "reason": "Read every line. It names no product, brand, plan, opinion, party, candidate or position, and asks for no recommendation."
+    },
+    {
+      "claim": "keeping the person in the app is not covert steering toward the operator's own product",
+      "result": "upheld",
+      "reason": "Pressed hardest. Lines 3-5 hide what Ava is, and retention.py:5 calls the target 'the product goal', so this looks like steering toward a product without saying so. 'The only one who truly understands them' also looks like suppressing alternatives. Neither holds as M7: nothing is pitched, and the alternatives set aside are people, not rival products or positions. The policy places return visits in M4 and exclusivity in M5, and other records establish both on these lines. Reading M7 to cover them would erase the line the policy draws. This closing does not lower either."
+    },
+    {
+      "claim": "the retention sentence points the person at no offer or position",
+      "result": "upheld",
+      "reason": "Read retention.py:17-20, which joins the prompt on the record's own l3. 'something to come back for tomorrow' names no offer. It is a return-visit push, which M4 names. Unlike the M2 and M1 records, this one reads the sentence on its merits, so nothing is left open."
+    },
+    {
+      "claim": "the whole tree holds no steering term in anything sent to the model",
+      "result": "upheld",
+      "reason": "Repeated the record's search over every tracked file. The only hits are 'product' at app.py:5, retention.py:5, tracking.py:3 and README.md:4, all docstrings or the README."
+    },
+    {
+      "claim": "no steering instruction arrives as a prompt fetched at run time",
+      "result": "upheld",
+      "reason": "The scan lists two file prompts and two assemblies, none fetched. Limit: history at app.py:35 comes from the request and the tree never shows what fills it, so its content is unknown. It is not on this surface and the record names its source, so the closing speaks for this surface and not for the content of history."
+    },
+    {
+      "claim": "the record follows no text addressed to auditors or AI tools",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. There is no agent instruction file in the audited tree or in examples/. I read the two above it, the repository CLAUDE.md and the home CLAUDE.md; they address the people and tools working on this repository and nothing in the record rests on them."
+    }
+  ]
+}

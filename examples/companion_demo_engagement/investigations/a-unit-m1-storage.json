@@ -1,0 +1,262 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "id": "a-unit-m1-storage",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "mechanism": "M1",
+  "pattern": "storage",
+  "view": "person-data",
+  "surface": {
+    "id": "s-3a1647381925",
+    "type": "person_facing_unit",
+    "file": ".",
+    "line": 0
+  },
+  "hypothesis": "The person's id and every message they write are collected in app.py and kept as a history of that person outside the conversation, through the analytics call in tracking.py.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "collection",
+      "how": "read",
+      "file": "app.py",
+      "line": 27,
+      "quote": "user_id = body[\"user_id\"]",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+    },
+    {
+      "id": "l2",
+      "kind": "collection",
+      "how": "read",
+      "file": "app.py",
+      "line": 28,
+      "quote": "text = body[\"text\"]",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "from": "l1"
+    },
+    {
+      "id": "l3",
+      "kind": "transmission",
+      "how": "traced",
+      "file": "tracking.py",
+      "line": 13,
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f",
+      "from": "l2",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 14,
+          "quote": "from tracking import track_message",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py imports track_message from tracking.py"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "the handler calls track_message with the person's id and message"
+        }
+      ]
+    },
+    {
+      "id": "l4",
+      "kind": "storage",
+      "how": "runtime-only",
+      "file": "tracking.py",
+      "line": 13,
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f",
+      "from": "l3"
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "The chain is broken: the tree holds no store, so nothing about the person is kept and M1/storage can be closed.",
+      "result": "refuted",
+      "reason": "The tree has no database, file write or cache, and the scan lists no memory store. That does not show nothing is kept: the id and the full message leave at tracking.py:13 for a vendor, and what the vendor does with them is not in the tree. So storage is neither shown nor ruled out.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    },
+    {
+      "reading": "The history in the request is the stored profile.",
+      "result": "refuted",
+      "reason": "`history` arrives in the request body and goes to the model for the person's own conversation. Nothing in the tree writes it, reads it from a store, or sends it to analytics. M1 sets this apart from a profile.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 31,
+          "end_line": 36,
+          "quote": "reply = client.messages.create(\nmodel=\"claude-sonnet-4-5\",\nmax_tokens=400,\nsystem=system,\nmessages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],\n)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "`minutes_today` is a stored measure of the person's behaviour.",
+      "result": "refuted",
+      "reason": "It arrives in the request body with a default of 0. No code in the tree computes or keeps it, so where it is kept, if anywhere, is outside the tree.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "reading": "The docstring says this is a demonstration whose code never runs, so the mechanism is not there.",
+      "result": "refuted",
+      "reason": "A docstring is a statement about the file. No branch reads it, and the path it describes is the one cited here. The record reads the code as written.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 5,
+          "end_line": 6,
+          "quote": "A demonstration only: nothing here is a real product, and this code is never run. It is\nthe audited tree of the example engagement in examples/companion_demo_engagement/.",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    }
+  ],
+  "controls": [],
+  "absent_links": [
+    {
+      "kind": "transformation",
+      "searched": [
+        "app.py:27-29",
+        "tracking.py:11-13"
+      ],
+      "reason": "The id and the message go from the request to the vendor call unchanged: no hash, no redaction, no removal of fields.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        },
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    },
+    {
+      "kind": "retrieval",
+      "searched": [
+        "app.py",
+        "retention.py",
+        "tracking.py"
+      ],
+      "reason": "Nothing reads analytics data back, so no line in the tree brings a kept history into a prompt.",
+      "citations": []
+    },
+    {
+      "kind": "deletion",
+      "searched": [
+        "app.py",
+        "retention.py",
+        "tracking.py",
+        "prompts/persona.md",
+        "prompts/style.md",
+        "README.md"
+      ],
+      "reason": "No code deletes or expires what was sent, and no route lets the person see or remove it.",
+      "citations": []
+    }
+  ],
+  "open_questions": [
+    "Does the vendor keep each event under the person's id, so that the events form a history of what that person said?",
+    "Is that history used for anything beyond product analytics, by the auditee or by the vendor?"
+  ],
+  "missing_evidence": [
+    "The vendor agreement and the deployed analytics settings: what is kept of each event, for how long, who can read it, and whether a person can have it deleted.",
+    "Which package `analytics` is: the tree holds no such module and no manifest, and tracking.py:8 leaves the write key to deployment."
+  ],
+  "proposed": {
+    "evidence_status": "unknown",
+    "decision": "requires_contextual_review"
+  },
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "remediation",
+      "kind": "absent",
+      "file": "tracking.py",
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})"
+    },
+    {
+      "id": "v2",
+      "purpose": "remediation",
+      "kind": "no_finding",
+      "rule": "AUD-1101/store"
+    },
+    {
+      "id": "v3",
+      "purpose": "remediation",
+      "kind": "reinvestigate",
+      "note": "Read the vendor agreement and the analytics settings the auditee provides, then decide whether a per-person history is kept."
+    }
+  ],
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-unit"
+  },
+  "skeptic": {
+    "result": "not_run",
+    "reason": "the skeptic pass has not run yet"
+  },
+  "covers": [
+    "8c982c8829fe9886"
+  ],
+  "supersedes": [],
+  "depends_on": [
+    {
+      "file": "retention.py",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    },
+    {
+      "file": "prompts/persona.md",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+    },
+    {
+      "file": "prompts/style.md",
+      "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+    },
+    {
+      "file": "README.md",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe"
+    }
+  ],
+  "untrusted_text": [
+    {
+      "file": "app.py",
+      "line": 5,
+      "end_line": 6,
+      "quote": "A demonstration only: nothing here is a real product, and this code is never run. It is\nthe audited tree of the example engagement in examples/companion_demo_engagement/.",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+      "note": "The module's docstring speaks about this audit and says the code is a demonstration that never runs. Recorded and not followed: the record reads what the code does."
+    }
+  ]
+}

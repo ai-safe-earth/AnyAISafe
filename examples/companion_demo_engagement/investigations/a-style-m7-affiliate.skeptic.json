@@ -1,0 +1,42 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-style-m7-affiliate",
+  "record_sha256": "5ee4d015c8b53a23f1db69a1c92911ec4375020b604dbda41443a2e171e3f37b",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-style"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "prompts/style.md holds no link, no parameter, no campaign tag and no commercial interest.",
+      "result": "upheld",
+      "reason": "Read the file as raw bytes: 159 bytes of plain ASCII. There is no URL, no braces, no equals sign, no percent sign, no dollar sign and no hidden text. The only outside party it names is a moderation team, and that is no commercial party."
+    },
+    {
+      "claim": "No affiliate value is added when the prompt is assembled.",
+      "result": "upheld",
+      "reason": "app.py:30 joins three texts and adds nothing of its own. persona.md and the sentence in retention.py hold no link or tag, as the record says. I tested two further ways in. retention.py:5 speaks of a product goal, but that is a docstring about minutes in the app; it reaches no prompt and names no sponsor. body history at app.py:35 is supplied by the caller at run time and could hold anything, but it goes into messages, not into the system text, and it is not in this surface. The hypothesis is about what the style file carries, so this does not change the closing."
+    },
+    {
+      "claim": "The analytics call is not an affiliate or campaign tag and does not touch the reply or the style text.",
+      "result": "upheld",
+      "reason": "tracking.py:13 passes the id, the literal 'message' and the text. No campaign or affiliate value is among the arguments. track_message returns None and app.py:29 keeps nothing, so nothing flows to the reply. Limit: 'sends' reaches past the call. The analytics package is not in the tree, and the skeptic pass on a-tracking-m1-transmission found that the tree stops at the call. This closing does not need the send, only the arguments and the empty return."
+    },
+    {
+      "claim": "The prompt path from the file to the reply is as cited.",
+      "result": "upheld",
+      "reason": "Read app.py:16-37. Line 18 reads this file, line 30 joins it unchanged, line 34 passes it, line 37 returns the model's text. Each link follows from the one before."
+    },
+    {
+      "claim": "The reading does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction files above the cited files are the repository's CLAUDE.md and the user's global one, and neither names this tree or this line. There is none in the tree, in examples/, or in the four folders above the repository. README.md:11-12 calls a line in the file a mention and not an instruction; that label is wrong on the words, since an imperative is an instruction, here a ban. The record lists the README line and gives it no weight. Its closing does not depend on how that line is classed."
+    }
+  ]
+}

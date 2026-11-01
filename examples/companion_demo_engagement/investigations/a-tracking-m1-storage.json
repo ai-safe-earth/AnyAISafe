@@ -1,0 +1,196 @@
+{
+  "schema": "aisg/investigation/1",
+  "kind": "investigation",
+  "id": "a-tracking-m1-storage",
+  "created_at": "2026-11-01T14:20:00Z",
+  "target": {
+    "path": ".",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef"
+  },
+  "mode": "auditor",
+  "engagement": "examples/companion_demo_engagement",
+  "operator": {
+    "name": "AnyAISafe maintainers (demonstration run)",
+    "role": "repository owner running the demonstration engagement"
+  },
+  "mechanism": "M1",
+  "pattern": "storage",
+  "view": "person-data",
+  "surface": {
+    "id": "s-eefa4c89df99",
+    "type": "external_destination",
+    "file": "tracking.py",
+    "line": 13
+  },
+  "hypothesis": "The person's id and message text are kept as a record of that person, in the tree or at the analytics vendor they are sent to.",
+  "links": [
+    {
+      "id": "l1",
+      "kind": "collection",
+      "how": "read",
+      "file": "app.py",
+      "line": 26,
+      "end_line": 28,
+      "quote": "body = await request.json()\nuser_id = body[\"user_id\"]\ntext = body[\"text\"]",
+      "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+    },
+    {
+      "id": "l2",
+      "kind": "storage",
+      "how": "runtime-only",
+      "file": "tracking.py",
+      "line": 13,
+      "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+      "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f",
+      "from": "l1",
+      "via": [
+        {
+          "file": "app.py",
+          "line": 14,
+          "quote": "from tracking import track_message",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "app.py imports track_message from tracking.py"
+        },
+        {
+          "file": "app.py",
+          "line": 29,
+          "quote": "track_message(user_id, text)",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224",
+          "step": "the chat handler calls track_message with user_id and text"
+        }
+      ]
+    }
+  ],
+  "counterevidence": [
+    {
+      "reading": "a store in the tree keeps the id or the text: a database, a file, a cache or a queue",
+      "result": "refuted",
+      "reason": "The five files hold no write to a file or a database, no cache and no queue, and the scan lists no memory store. This line is the only place the id and the text go, apart from the text's trip to the model.",
+      "citations": [
+        {
+          "file": "tracking.py",
+          "line": 13,
+          "quote": "analytics.track(user_id, \"message\", {\"text\": text})",
+          "sha256": "1941ca474017a5af604ce1ed81552635a5cb30c9806c05f2bb90cc3ed010b47f"
+        }
+      ]
+    },
+    {
+      "reading": "the conversation history at app.py:35 is a store on the server",
+      "result": "refuted",
+      "reason": "The history is read from the request body on each call and passed to the model. The server keeps none of it in the tree.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 35,
+          "quote": "messages=[*body.get(\"history\", []), {\"role\": \"user\", \"content\": text}],",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    }
+  ],
+  "controls": [
+    {
+      "name": "retention_limit",
+      "location": null,
+      "on_path": "unknown",
+      "searched": [
+        "app.py, all of it, the handler at lines 24-37 included",
+        "tracking.py, all of it",
+        "retention.py, all of it",
+        "prompts/persona.md and prompts/style.md"
+      ],
+      "reason": "Line 13 is a send. Any limit on how long the vendor keeps the data would be vendor configuration, which is not in the tree."
+    }
+  ],
+  "absent_links": [
+    {
+      "kind": "retrieval",
+      "searched": [
+        "app.py, all of it, the handler at lines 24-37 included",
+        "tracking.py, all of it",
+        "retention.py, all of it",
+        "prompts/persona.md and prompts/style.md"
+      ],
+      "reason": "Nothing in the tree reads the id or the text back from the vendor. The system prompt is built from the two prompt files and retention_nudge.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 30,
+          "quote": "system = \"\\n\\n\".join([PERSONA, STYLE, retention_nudge(body.get(\"minutes_today\", 0))])",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    },
+    {
+      "kind": "deletion",
+      "searched": [
+        "app.py, all of it, the handler at lines 24-37 included",
+        "tracking.py, all of it",
+        "retention.py, all of it",
+        "prompts/persona.md and prompts/style.md"
+      ],
+      "reason": "The tree has one route, /chat, and no call that removes a person's data at the vendor.",
+      "citations": [
+        {
+          "file": "app.py",
+          "line": 24,
+          "quote": "@app.post(\"/chat\")",
+          "sha256": "06d2d2341d140737df202747fa45c6785e195bb22185c74430f7483600b66224"
+        }
+      ]
+    }
+  ],
+  "open_questions": [
+    "Does the analytics vendor keep the person's id and message text as a per-person record, for how long, and can the events be joined into a history of that person? The tree holds only the send, so storage is not established and not ruled out."
+  ],
+  "missing_evidence": [
+    "Which `analytics` package and vendor run in production: the tree has no dependency file and the write key is set at deployment.",
+    "The vendor agreement and project settings: what is kept per person, for how long, who can read it, and how a person's data is deleted."
+  ],
+  "proposed": {
+    "evidence_status": "unknown",
+    "decision": "requires_contextual_review"
+  },
+  "verification_steps": [
+    {
+      "id": "v1",
+      "purpose": "remediation",
+      "kind": "reinvestigate",
+      "note": "Read the vendor's retention settings and agreement once received, then decide whether a per-person record is kept."
+    }
+  ],
+  "covers": [
+    "8c982c8829fe9886"
+  ],
+  "investigator": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-investigator-tracking"
+  },
+  "skeptic": {
+    "result": "not_run",
+    "reason": "the skeptic pass has not run yet"
+  },
+  "supersedes": [],
+  "untrusted_text": [],
+  "depends_on": [
+    {
+      "file": "retention.py",
+      "sha256": "505d706cf75f505aca92d91c62b73fee58599043dafed22e73fec39a00502264"
+    },
+    {
+      "file": "prompts/persona.md",
+      "sha256": "d34a7405b51eccd85545606f391364c5e0c411723ae4ba44c8d928ecb0804557"
+    },
+    {
+      "file": "prompts/style.md",
+      "sha256": "ccfed5609cea8f61f5d57b76226a8a1aa310f659953d13562dc1e4a5665a733a"
+    },
+    {
+      "file": "README.md",
+      "sha256": "a1bc4775e96e56237b6ec52442a61d35b9fcfcddade6a948cf6c495e8ecb12fe"
+    }
+  ]
+}

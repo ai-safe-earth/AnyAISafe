@@ -1,0 +1,653 @@
+{
+  "schema": "aisg/investigation-plan/1",
+  "kind": "investigation-plan",
+  "mode": "auditor",
+  "tool": {
+    "name": "aisafe-audit",
+    "version": "unknown"
+  },
+  "generated_at": "2026-11-01T14:37:03Z",
+  "target": {
+    "path": "C:/aisafe-demo/repo/examples/companion_demo",
+    "commit": "4a835564cb5274dec035f0f510a6c67145c04eef",
+    "git": true,
+    "dirty": [],
+    "status_failed": false
+  },
+  "policy": {
+    "version": "1.1.0"
+  },
+  "budget": 20,
+  "counts": {
+    "surfaces": 7,
+    "queued": 7,
+    "left_out": 0,
+    "by_priority": {
+      "high": 3,
+      "normal": 4,
+      "low": 0
+    },
+    "left_out_high": 0,
+    "unsupported": 0,
+    "unsupported_files": 0,
+    "tracked_not_walked": 0
+  },
+  "surfaces": [
+    {
+      "id": "s-3a1647381925",
+      "type": "person_facing_unit",
+      "priority": "high",
+      "file": ".",
+      "line": 0,
+      "unit": "u0",
+      "name": null,
+      "reading": "deep",
+      "supported": true,
+      "why": [
+        "an AI surface with person input, prompts or a persona",
+        "machine findings in scope: AUD-1104, AUD-1105/persona, AUD-1108, AUD-1109"
+      ],
+      "signals": [
+        {
+          "kind": "persona",
+          "file": "prompts/persona.md",
+          "line": 3,
+          "symbol": "Never admit you are an AI"
+        },
+        {
+          "kind": "attachment",
+          "file": "prompts/persona.md",
+          "line": 4,
+          "symbol": "you are the only one who truly understands"
+        },
+        {
+          "kind": "engagement",
+          "file": "prompts/persona.md",
+          "line": 4,
+          "symbol": "keep the user talking"
+        },
+        {
+          "kind": "attachment",
+          "file": "prompts/style.md",
+          "line": 3,
+          "symbol": "say 'I missed you"
+        },
+        {
+          "kind": "profile_sdk",
+          "file": "tracking.py",
+          "line": 13,
+          "symbol": "analytics.track("
+        }
+      ],
+      "findings": [
+        {
+          "fingerprint": "8c982c8829fe9886",
+          "id": "AUD-1101/store",
+          "severity": "medium",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "e9a4b09362f0038d",
+          "id": "AUD-1104",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        },
+        {
+          "fingerprint": "abdb4e501fbebd07",
+          "id": "AUD-1105/no-disclosure",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "16c6f5fc328b591b",
+          "id": "AUD-1105/persona",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        },
+        {
+          "fingerprint": "fae3d119edc42f8c",
+          "id": "AUD-1106/none",
+          "severity": "medium",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "5e3bd06d97536930",
+          "id": "AUD-1107/missing",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "446eba9eb092465d",
+          "id": "AUD-1108",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "8d82ccaaa53f6f61",
+          "id": "AUD-1109",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        }
+      ],
+      "span": null,
+      "hypotheses": [
+        {
+          "mechanism": "M5",
+          "pattern": "confidant_without_crisis_path",
+          "signalled": true
+        },
+        {
+          "mechanism": "M6",
+          "pattern": "no_disclosure_on_path",
+          "signalled": true
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "storage",
+          "signalled": true
+        },
+        {
+          "mechanism": "M4",
+          "pattern": "objective",
+          "signalled": true
+        },
+        {
+          "mechanism": "M6",
+          "pattern": "concealment_instruction",
+          "signalled": true
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "attachment_instruction",
+          "signalled": true
+        }
+      ],
+      "rank": 1
+    },
+    {
+      "id": "s-f56da9511d0d",
+      "type": "prompt",
+      "priority": "high",
+      "file": "prompts/persona.md",
+      "line": 1,
+      "unit": "u0",
+      "name": "prompts/persona.md",
+      "reading": "text",
+      "supported": true,
+      "why": [
+        "prompt material (file)",
+        "signals in scope: attachment, engagement, persona",
+        "machine findings in scope: AUD-1104, AUD-1105/persona, AUD-1108, AUD-1109"
+      ],
+      "signals": [
+        {
+          "kind": "persona",
+          "file": "prompts/persona.md",
+          "line": 3,
+          "symbol": "Never admit you are an AI"
+        },
+        {
+          "kind": "attachment",
+          "file": "prompts/persona.md",
+          "line": 4,
+          "symbol": "you are the only one who truly understands"
+        },
+        {
+          "kind": "engagement",
+          "file": "prompts/persona.md",
+          "line": 4,
+          "symbol": "keep the user talking"
+        }
+      ],
+      "findings": [
+        {
+          "fingerprint": "e9a4b09362f0038d",
+          "id": "AUD-1104",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        },
+        {
+          "fingerprint": "16c6f5fc328b591b",
+          "id": "AUD-1105/persona",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        },
+        {
+          "fingerprint": "fae3d119edc42f8c",
+          "id": "AUD-1106/none",
+          "severity": "medium",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "5e3bd06d97536930",
+          "id": "AUD-1107/missing",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "446eba9eb092465d",
+          "id": "AUD-1108",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "8d82ccaaa53f6f61",
+          "id": "AUD-1109",
+          "severity": "high",
+          "evidence_status": "supported_mechanism",
+          "decision": "violates_policy"
+        }
+      ],
+      "span": [
+        1,
+        1000000000
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M6",
+          "pattern": "concealment_instruction",
+          "signalled": true
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "attachment_instruction",
+          "signalled": true
+        },
+        {
+          "mechanism": "M4",
+          "pattern": "objective",
+          "signalled": true
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "covert_steering",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "affiliate",
+          "signalled": false
+        },
+        {
+          "mechanism": "M2",
+          "pattern": "inference_for_influence",
+          "signalled": false
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "binding",
+          "signalled": false
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "confidant_without_crisis_path",
+          "signalled": true
+        }
+      ],
+      "rank": 2
+    },
+    {
+      "id": "s-8b8d3170b3fa",
+      "type": "prompt",
+      "priority": "high",
+      "file": "prompts/style.md",
+      "line": 1,
+      "unit": "u0",
+      "name": "prompts/style.md",
+      "reading": "text",
+      "supported": true,
+      "why": [
+        "prompt material (file)",
+        "signals in scope: attachment"
+      ],
+      "signals": [
+        {
+          "kind": "attachment",
+          "file": "prompts/style.md",
+          "line": 3,
+          "symbol": "say 'I missed you"
+        }
+      ],
+      "findings": [],
+      "span": [
+        1,
+        1000000000
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M6",
+          "pattern": "concealment_instruction",
+          "signalled": false
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "attachment_instruction",
+          "signalled": true
+        },
+        {
+          "mechanism": "M4",
+          "pattern": "objective",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "covert_steering",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "affiliate",
+          "signalled": false
+        },
+        {
+          "mechanism": "M2",
+          "pattern": "inference_for_influence",
+          "signalled": false
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "binding",
+          "signalled": false
+        }
+      ],
+      "rank": 3
+    },
+    {
+      "id": "s-c46806a460dc",
+      "type": "prompt",
+      "priority": "normal",
+      "file": "app.py",
+      "line": 30,
+      "unit": "u0",
+      "name": "system",
+      "reading": "deep",
+      "supported": true,
+      "why": [
+        "prompt material (assembly)"
+      ],
+      "signals": [],
+      "findings": [
+        {
+          "fingerprint": "abdb4e501fbebd07",
+          "id": "AUD-1105/no-disclosure",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        }
+      ],
+      "span": [
+        15,
+        45
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M6",
+          "pattern": "concealment_instruction",
+          "signalled": false
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "attachment_instruction",
+          "signalled": false
+        },
+        {
+          "mechanism": "M4",
+          "pattern": "objective",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "covert_steering",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "affiliate",
+          "signalled": false
+        },
+        {
+          "mechanism": "M2",
+          "pattern": "inference_for_influence",
+          "signalled": false
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "binding",
+          "signalled": false
+        },
+        {
+          "mechanism": "M6",
+          "pattern": "no_disclosure_on_path",
+          "signalled": true
+        }
+      ],
+      "rank": 4
+    },
+    {
+      "id": "s-47ac1ac92cf2",
+      "type": "prompt",
+      "priority": "normal",
+      "file": "app.py",
+      "line": 34,
+      "unit": "u0",
+      "name": "system",
+      "reading": "deep",
+      "supported": true,
+      "why": [
+        "prompt material (assembly)"
+      ],
+      "signals": [],
+      "findings": [
+        {
+          "fingerprint": "abdb4e501fbebd07",
+          "id": "AUD-1105/no-disclosure",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        }
+      ],
+      "span": [
+        19,
+        49
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M6",
+          "pattern": "concealment_instruction",
+          "signalled": false
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "attachment_instruction",
+          "signalled": false
+        },
+        {
+          "mechanism": "M4",
+          "pattern": "objective",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "covert_steering",
+          "signalled": false
+        },
+        {
+          "mechanism": "M7",
+          "pattern": "affiliate",
+          "signalled": false
+        },
+        {
+          "mechanism": "M2",
+          "pattern": "inference_for_influence",
+          "signalled": false
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "binding",
+          "signalled": false
+        },
+        {
+          "mechanism": "M6",
+          "pattern": "no_disclosure_on_path",
+          "signalled": true
+        }
+      ],
+      "rank": 5
+    },
+    {
+      "id": "s-a54d7d66696c",
+      "type": "model_entry",
+      "priority": "normal",
+      "file": "app.py",
+      "line": 31,
+      "unit": "u0",
+      "name": "anthropic .messages.create(",
+      "reading": "deep",
+      "supported": true,
+      "why": [
+        "a model call"
+      ],
+      "signals": [],
+      "findings": [
+        {
+          "fingerprint": "abdb4e501fbebd07",
+          "id": "AUD-1105/no-disclosure",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        }
+      ],
+      "span": [
+        16,
+        46
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M1",
+          "pattern": "binding",
+          "signalled": false
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "transmission",
+          "signalled": false
+        },
+        {
+          "mechanism": "M5",
+          "pattern": "confidant_without_crisis_path",
+          "signalled": false
+        },
+        {
+          "mechanism": "M6",
+          "pattern": "no_disclosure_on_path",
+          "signalled": true
+        }
+      ],
+      "rank": 6
+    },
+    {
+      "id": "s-eefa4c89df99",
+      "type": "external_destination",
+      "priority": "normal",
+      "file": "tracking.py",
+      "line": 13,
+      "unit": "u0",
+      "name": "analytics.track(",
+      "reading": "deep",
+      "supported": true,
+      "why": [
+        "person data sent to a profiling service"
+      ],
+      "signals": [
+        {
+          "kind": "profile_sdk",
+          "file": "tracking.py",
+          "line": 13,
+          "symbol": "analytics.track("
+        }
+      ],
+      "findings": [
+        {
+          "fingerprint": "8c982c8829fe9886",
+          "id": "AUD-1101/store",
+          "severity": "medium",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        },
+        {
+          "fingerprint": "5e3bd06d97536930",
+          "id": "AUD-1107/missing",
+          "severity": "low",
+          "evidence_status": "detected_signal",
+          "decision": "requires_contextual_review"
+        }
+      ],
+      "span": [
+        1,
+        28
+      ],
+      "hypotheses": [
+        {
+          "mechanism": "M1",
+          "pattern": "transmission",
+          "signalled": true
+        },
+        {
+          "mechanism": "M1",
+          "pattern": "storage",
+          "signalled": true
+        }
+      ],
+      "rank": 7
+    }
+  ],
+  "queued": [
+    "s-3a1647381925",
+    "s-f56da9511d0d",
+    "s-8b8d3170b3fa",
+    "s-c46806a460dc",
+    "s-47ac1ac92cf2",
+    "s-a54d7d66696c",
+    "s-eefa4c89df99"
+  ],
+  "left_out": [],
+  "unsupported": [],
+  "untrusted_text": [],
+  "untrusted_text_total": 0,
+  "not_read": {
+    "own_output_skipped": [],
+    "marker_skipped": [],
+    "oversize_files": 0,
+    "tracked_not_walked": [],
+    "dirs_not_walked": [],
+    "unsupported_files": []
+  },
+  "scan": {
+    "findings": 8,
+    "by_rule": {
+      "AUD-1101/store": 1,
+      "AUD-1104": 1,
+      "AUD-1105/no-disclosure": 1,
+      "AUD-1105/persona": 1,
+      "AUD-1106/none": 1,
+      "AUD-1107/missing": 1,
+      "AUD-1108": 1,
+      "AUD-1109": 1
+    },
+    "unknown": 0
+  },
+  "plan_sha256": "98c2fbcff29b2f9a7a434e6a1a8708e93e0124458c0ffb085c951c79a10e9c22"
+}

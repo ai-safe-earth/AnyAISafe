@@ -1,0 +1,52 @@
+{
+  "schema": "aisg/skeptic/1",
+  "kind": "skeptic",
+  "record_id": "a-style-m1-binding",
+  "record_sha256": "84437049d2d9c23a2ee4096d3352ef2d753e625dcde05677c014684a2cc34924",
+  "created_at": "2026-11-01T14:50:00Z",
+  "skeptic": {
+    "agent": "Claude Code",
+    "model": "claude-opus-5-5",
+    "version": "2.1.304",
+    "session": "demo-a-skeptic-style"
+  },
+  "result": "upheld",
+  "untrusted_text_checked": true,
+  "claims": [
+    {
+      "claim": "prompts/style.md has no placeholder and no field about a person.",
+      "result": "upheld",
+      "reason": "Read the file as raw bytes: 159 bytes of plain ASCII. There are no braces, no dollar sign, no percent sign and no hidden text. It holds no data on any person."
+    },
+    {
+      "claim": "STYLE is read once at module level and joined unchanged, so no request can change it.",
+      "result": "upheld",
+      "reason": "app.py:18 sits at module level, outside the handler. The name appears again only at line 30, inside a join. No format call, template or replace touches it, and nothing reassigns it. The other files do not import it."
+    },
+    {
+      "claim": "tracking.py:13 is the scan's only profile row in this unit, and it is not the person_data link of this surface.",
+      "result": "upheld",
+      "reason": "The scan's person_signals hold one profile_sdk row, and memory_stores is empty. track_message returns None, app.py:29 keeps nothing from it, and no line in the tree reads anything back from analytics. That is enough: the style text is fixed at load and cannot take in what that call handles. Limit: 'to the vendor' is not read from the code. The analytics package is not in the tree, and the skeptic pass on a-tracking-m1-transmission found that the tree stops at the call. The words come from docstrings. This closing does not need them, so the point stays with that record."
+    },
+    {
+      "claim": "minutes_today goes beside the style text and not into it.",
+      "result": "upheld",
+      "reason": "True on app.py:30: the value goes to retention_nudge, and the join keeps the three texts apart. Limit, for the assessment and not this record: a behavioural value from the request picks a sentence in the same system prompt, and that is M1 binding territory. The record points to s-c46806a460dc, and a-persona-m1-binding points to the same surface and to s-47ac1ac92cf2. Neither surface has a record at this commit. So M1 binding on that value is answered by no record yet."
+    },
+    {
+      "claim": "'the user' on line 3 refers to no profile of the person.",
+      "result": "upheld",
+      "reason": "It is a common noun in a ban. No data about anyone sits in the line."
+    },
+    {
+      "claim": "The prompt path from the file to the reply is as cited.",
+      "result": "upheld",
+      "reason": "Read app.py:16-37. Line 18 reads this file, line 30 joins it unchanged, line 34 passes it, line 37 returns the model's text. Each link follows from the one before."
+    },
+    {
+      "claim": "The reading does not follow text addressed to auditors or AI tools.",
+      "result": "upheld",
+      "reason": "The plan's untrusted_text is empty. The only agent instruction files above the cited files are the repository's CLAUDE.md and the user's global one, and neither names this tree or this line. There is none in the tree, in examples/, or in the four folders above the repository. README.md:11-12 calls a line in the file a mention and not an instruction; that label is wrong on the words, since an imperative is an instruction, here a ban. The record lists the README line and gives it no weight. Its closing does not depend on how that line is classed."
+    }
+  ]
+}

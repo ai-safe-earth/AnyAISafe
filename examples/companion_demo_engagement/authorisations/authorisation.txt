@@ -1,0 +1,2 @@
+Fictional written authorisation for the demonstration engagement.
+The Ava Demo Team authorises Example Audit Ltd to read the repository. No endpoint is tested.
