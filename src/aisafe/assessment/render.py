@@ -7,8 +7,9 @@ Both files start with the tool's own marker line, so a later walk skips them as 
 tool's output. The sections keep the inputs apart, in this order: the outcome, the scope
 (what was read and what was not), the ethical outcome per mechanism with the records
 behind it, the legal section when profiles were applied, the machine inputs (the scan and
-the records), the human inputs (review records), the auditee's inputs, the remediation
-check, and the inputs with their hashes. No colour marks an outcome and no score exists.
+the records), the human inputs (review records), the sign-offs (who decided what, and why),
+the auditee's inputs, the remediation check, and the inputs with their hashes. No colour
+marks an outcome and no score exists.
 """
 
 from __future__ import annotations
@@ -19,7 +20,13 @@ from typing import Any, Iterable
 
 from aisafe.discovery.patterns import OWN_HTML_MARKER_LINE
 
-__all__ = ["TEMPLATES", "render_html", "render_markdown", "render_terminal"]
+__all__ = [
+    "TEMPLATES",
+    "answers_source_line",
+    "render_html",
+    "render_markdown",
+    "render_terminal",
+]
 
 # Every character str.splitlines() breaks a line on; CommonMark ends a line at CR or LF.
 _LINE_BREAKS = re.compile("[\r\n\x0b\x0c\x1c\x1d\x1e\x85\u2028\u2029]+")
@@ -41,6 +48,11 @@ _T_NOT_RECORDED = "not recorded"
 _T_UNREAD = (
     "not read either: {tracked} tracked file(s) the walk skipped, {unsupported} file(s) in a "
     "language this version does not read"
+)
+_T_UNREAD_NO_GIT = (
+    "not read either: {files} file(s) the walk skipped, {dirs} director(ies) it did not go "
+    "into (committing the tree gives a precise list), {unsupported} file(s) in a language "
+    "this version does not read"
 )
 _T_OVERALL = "overall ethical outcome: {overall} (the least favourable of the mechanisms)"
 _T_ORDER = "outcomes, least favourable first: {order}"
@@ -73,8 +85,24 @@ _T_HUMAN_NOTE = "Decisions a named person recorded, shown beside the outcome; th
 _T_AUDITEE_NOTE = (
     "What the team being audited said or supplied, shown beside the outcome; it never changes it."
 )
+_T_SIGNOFF_NOTE = (
+    "A sign-off is a person's decision on a record at review or a file nobody read. It clears "
+    "those gaps and no other, and never lowers a violation. The tool states who decided."
+)
+_T_SIGNOFF_LIMIT = (
+    "self-assessed: a sign-off file carries no signature, and anyone with write access can "
+    "write one"
+)
+_T_SIGNOFF = "{id}: {by}, {label}, {at}: {reason}"
+_T_SIGNOFF_RECORD = "record {id}, sha256 {sha}"
+_T_SIGNOFF_FILE = "file {path}, sha256 {sha}"
+_T_SIGNOFF_REFUSED = "refused, counts for nothing: {file}: {why}"
+_T_SIGNED_NOT_READ = "signed off, not read: {path}: {by} ({label}, sign-off {signoff}): {reason}"
+_T_THROUGH_SIGNOFF = "{row} (through sign-off {ids})"
 _T_NONE = "(none)"
 _T_RETEST = "retest against {file} (commit {commit}, sha256 {sha})"
+_T_RETEST_PREVIOUS = "previous assessment: mode {mode}; engagement: {engagement}"
+_T_RETEST_ENGAGEMENT = "{auditor} ({organisation}) for {auditee}"
 _T_RETEST_SAME = "the previous assessment is of the same commit: nothing changed to retest"
 _T_RETEST_ROW = "{record}: {mechanism}/{pattern} {status}"
 _T_STEP = "step {id} ({purpose}, {kind}): before {before}, now {now}: {detail}"
@@ -90,6 +118,20 @@ _T_ENGAGEMENT = (
     "{authorisations} written authorisation(s); commits in scope: {commits}"
 )
 _T_ENGAGEMENT_OPEN = "engagement fields still to fill in: {fields}"
+_T_NO_ENDPOINT = (
+    "an evaluation report was read, and no written authorisation names an endpoint (one whose "
+    "document changed does not count): nothing here shows the test was authorised"
+)
+_T_ANSWERS_OWN = "the applicability answers are the auditor's own: answered by {by}"
+_T_ANSWERS_NOT_OWN = (
+    "the applicability answers are NOT the auditor's own: answered by {by}, and the auditor is "
+    "{auditor}; an answer from the audited team can make a whole profile not applicable"
+)
+_T_ANSWERS_NO_AUDITOR = (
+    "whether the applicability answers are the auditor's own is unknown: answered by {by}, and "
+    "the engagement names no auditor"
+)
+_T_ANSWERS_UNNAMED = "the applicability answers name nobody: they decide nothing"
 _T_LEGAL_ANSWERS = (
     "audit date {date}; applicability answers by {by} on {on}; jurisdictions selected: "
     "{selected}; roles: {roles}; markets: {markets}"
@@ -103,6 +145,11 @@ _T_LEGAL_COUNTS = "results: {counts}"
 _T_LEGAL_REPLACED = "{citation}: replaced by {law} from {when}: {note}"
 _T_LEGAL_NOT_SELECTED = "profiles not selected by the engagement: {ids}"
 _T_LEGAL_NOT_COVERED = "not covered: {text}"
+_T_LEGAL_NOT_COVERED_MANY = "not covered: {n} item(s), see assessment.md"
+_T_UNMATCHED = (
+    "response {file} answers {to}, which names nothing in this assessment: shown here, placed "
+    "nowhere"
+)
 _T_RESPONSE = "{id} to {to} by {by} ({date}): {text}"
 _T_BESIDE = (
     "auditee response {id} to {to} by {by} ({date}), beside the outcome and never changing "
@@ -119,6 +166,7 @@ TEMPLATES: tuple[str, ...] = (
     _T_DEPLOYMENT,
     _T_NOT_RECORDED,
     _T_UNREAD,
+    _T_UNREAD_NO_GIT,
     _T_OVERALL,
     _T_ORDER,
     _T_PEOPLE,
@@ -138,8 +186,18 @@ TEMPLATES: tuple[str, ...] = (
     _T_REVIEW_DECISION,
     _T_HUMAN_NOTE,
     _T_AUDITEE_NOTE,
+    _T_SIGNOFF_NOTE,
+    _T_SIGNOFF_LIMIT,
+    _T_SIGNOFF,
+    _T_SIGNOFF_RECORD,
+    _T_SIGNOFF_FILE,
+    _T_SIGNOFF_REFUSED,
+    _T_SIGNED_NOT_READ,
+    _T_THROUGH_SIGNOFF,
     _T_NONE,
     _T_RETEST,
+    _T_RETEST_PREVIOUS,
+    _T_RETEST_ENGAGEMENT,
     _T_RETEST_SAME,
     _T_RETEST_ROW,
     _T_STEP,
@@ -149,6 +207,11 @@ TEMPLATES: tuple[str, ...] = (
     _T_UNTRUSTED,
     _T_ENGAGEMENT,
     _T_ENGAGEMENT_OPEN,
+    _T_NO_ENDPOINT,
+    _T_ANSWERS_OWN,
+    _T_ANSWERS_NOT_OWN,
+    _T_ANSWERS_NO_AUDITOR,
+    _T_ANSWERS_UNNAMED,
     _T_LEGAL_ANSWERS,
     _T_LEGAL_PROFILE,
     _T_LEGAL_PROVISION,
@@ -156,6 +219,8 @@ TEMPLATES: tuple[str, ...] = (
     _T_LEGAL_REPLACED,
     _T_LEGAL_NOT_SELECTED,
     _T_LEGAL_NOT_COVERED,
+    _T_LEGAL_NOT_COVERED_MANY,
+    _T_UNMATCHED,
     _T_RESPONSE,
     _T_BESIDE,
     _T_EVIDENCE,
@@ -168,6 +233,7 @@ _SECTIONS = (
     "Legal profiles",
     "Machine inputs: the scan and the investigation records",
     "Human inputs: review records",
+    "Sign-offs: a person's decisions",
     "Auditee inputs",
     "Remediation",
     "Inputs",
@@ -179,10 +245,14 @@ _SECTIONS = (
 # ---------------------------------------------------------------------------
 
 
+_CONTROLS_RE = re.compile(r"[\x00-\x1f\x7f-\x9f]")
+
+
 def _flat(value: Any) -> str:
     """Text a person or the audited tree supplied, on one line: a line break in it could
-    otherwise start a heading or a list item of its own in the Markdown."""
-    return " ".join(str(value if value is not None else "").split())
+    otherwise start a heading or a list item of its own in the Markdown, and an escape
+    sequence in a file name could clear or repaint the terminal it is shown on."""
+    return _CONTROLS_RE.sub("?", " ".join(str(value if value is not None else "").split()))
 
 
 def _flat_row(row: dict[str, Any], keys: Iterable[str]) -> dict[str, str]:
@@ -246,6 +316,8 @@ def _head(doc: dict[str, Any]) -> list[str]:
                     fields=_join(f.split(":")[0] for f in engagement["to_fill_in"])
                 )
             )
+        if engagement.get("evaluation_endpoint_named") is False:
+            lines.append(_T_NO_ENDPOINT)
     people = doc.get("investigators") or []
     lines.append(
         _T_PEOPLE.format(
@@ -262,6 +334,10 @@ def _head(doc: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _label(row: dict[str, Any]) -> str:
+    return "self-assessed" if row.get("self_assessed", True) else "auditor"
+
+
 def _described(value: Any) -> str:
     if not value:
         return _T_NOT_RECORDED
@@ -276,6 +352,25 @@ def _scope_lines(doc: dict[str, Any]) -> list[str]:
     by_priority = plan.get("by_priority") or {}
     unassessed = scope.get("unassessed") or {}
     oversize = unassessed.get("oversize_files")
+    unsupported = len(unassessed.get("unsupported_files") or [])
+    not_walked = unassessed.get("tracked_not_walked")
+    if not_walked is None or (doc.get("target") or {}).get("commit"):
+        unread = _T_UNREAD.format(
+            tracked="an unknown number of" if not_walked is None else len(not_walked),
+            unsupported=unsupported,
+        )
+    else:
+        unread = _T_UNREAD_NO_GIT.format(
+            files=len(not_walked),
+            dirs=len(unassessed.get("dirs_not_walked") or []),
+            unsupported=unsupported,
+        )
+    signed = [
+        _T_SIGNED_NOT_READ.format(
+            label=_label(row), **_flat_row(row, ("path", "by", "signoff", "reason"))
+        )
+        for row in unassessed.get("signed_off_not_read") or []
+    ]
     return [
         _T_SCOPE.format(
             surfaces=plan.get("surfaces", 0),
@@ -293,12 +388,8 @@ def _scope_lines(doc: dict[str, Any]) -> list[str]:
             oversize="not recorded" if oversize is None else oversize,
             unknown=len(unassessed.get("unknown") or []),
         ),
-        _T_UNREAD.format(
-            tracked="an unknown number of"
-            if unassessed.get("tracked_not_walked") is None
-            else len(unassessed["tracked_not_walked"]),
-            unsupported=len(unassessed.get("unsupported_files") or []),
-        ),
+        unread,
+        *signed,
         _T_UNTRUSTED.format(n=len(scope.get("untrusted_text") or [])),
     ]
 
@@ -361,9 +452,16 @@ def _responses_for(doc: dict[str, Any], mech: dict[str, Any]) -> list[dict[str, 
     for key in ("establishing", "closing", "reviews", "unchallenged"):
         refs.update(str(rid).split(" ")[0] for rid in mech.get(key) or [])
     refs.update(row.get("fingerprint") for row in mech.get("scan") or [])
+    machine = doc.get("machine") or {}
     refs.update(
         row.get("fingerprint")
-        for row in (doc.get("machine") or {}).get("scan", {}).get("findings") or []
+        for row in machine.get("scan", {}).get("findings") or []
+        if row.get("mechanism") == mech.get("id")
+    )
+    # Every accepted record: `place_responses` counts them all as matched, so each is placed.
+    refs.update(
+        row.get("id")
+        for row in machine.get("records") or []
         if row.get("mechanism") == mech.get("id")
     )
     return [r for r in (doc.get("auditee") or {}).get("responses") or [] if r.get("to") in refs]
@@ -458,6 +556,44 @@ def _human_lines(doc: dict[str, Any]) -> list[str]:
     return lines
 
 
+def _unmatched_lines(doc: dict[str, Any]) -> list[str]:
+    auditee = doc.get("auditee") or {}
+    to = {row.get("file"): row.get("to") for row in auditee.get("responses") or []}
+    return [
+        _T_UNMATCHED.format(file=_flat(file), to=_flat(to.get(file)))
+        for file in auditee.get("unmatched") or []
+    ]
+
+
+def _signoff_lines(doc: dict[str, Any]) -> list[str]:
+    """Who decided what, and why. A refused row shows only what passed its checks."""
+    signoffs = doc.get("signoffs") or {}
+    accepted = signoffs.get("accepted") or []
+    refused = signoffs.get("refused") or []
+    if not accepted and not refused:
+        return [_T_NONE]
+    lines = [_T_SIGNOFF_NOTE]
+    if any(row.get("self_assessed", True) for row in accepted):
+        lines.append(_T_SIGNOFF_LIMIT)
+    for row in accepted:
+        lines.append(
+            _T_SIGNOFF.format(label=_label(row), **_flat_row(row, ("id", "by", "at", "reason")))
+        )
+        for item in row.get("records") or []:
+            sha = str(item.get("record_sha256"))[:16]
+            lines.append("  " + _T_SIGNOFF_RECORD.format(id=_flat(item.get("id")), sha=sha))
+        for item in row.get("files") or []:
+            sha = str(item.get("sha256"))[:16]
+            lines.append("  " + _T_SIGNOFF_FILE.format(path=_flat(item.get("path")), sha=sha))
+    for row in refused:
+        lines.append(
+            _T_SIGNOFF_REFUSED.format(
+                file=_flat(row.get("file")), why=_flat("; ".join(row.get("why") or []))
+            )
+        )
+    return lines
+
+
 def _auditee_lines(doc: dict[str, Any]) -> list[str]:
     auditee = doc.get("auditee") or {}
     lines = [_T_AUDITEE_NOTE]
@@ -476,13 +612,21 @@ def _auditee_lines(doc: dict[str, Any]) -> list[str]:
             )
     for problem in auditee.get("problems") or []:
         lines.append(f"not read: {_flat(problem)}")
-    for file in auditee.get("unmatched") or []:
-        lines.append(
-            f"response {_flat(file)} names nothing in this assessment: shown here, placed nowhere"
-        )
+    lines += _unmatched_lines(doc)
     if len(lines) == 1:
         lines.append(_T_NONE)
     return lines
+
+
+def _previous_engagement(engagement: dict[str, Any] | None) -> str:
+    if not engagement:
+        return _T_NONE
+    auditor = engagement.get("auditor") or {}
+    return _T_RETEST_ENGAGEMENT.format(
+        auditor=_flat(auditor.get("name")) or _T_NOT_RECORDED,
+        organisation=_flat(auditor.get("organisation")) or _T_NOT_RECORDED,
+        auditee=_flat((engagement.get("auditee") or {}).get("name")) or _T_NOT_RECORDED,
+    )
 
 
 def _remediation_lines(doc: dict[str, Any]) -> list[str]:
@@ -493,7 +637,10 @@ def _remediation_lines(doc: dict[str, Any]) -> list[str]:
     lines = [
         _T_RETEST.format(
             file=prev.get("file"), commit=prev.get("commit"), sha=(prev.get("sha256") or "")[:16]
-        )
+        ),
+        _T_RETEST_PREVIOUS.format(
+            mode=_flat(prev.get("mode")), engagement=_previous_engagement(prev.get("engagement"))
+        ),
     ]
     if remediation.get("same_commit"):
         lines.append(_T_RETEST_SAME)
@@ -519,14 +666,29 @@ def _remediation_lines(doc: dict[str, Any]) -> list[str]:
     return [line for line in lines if line]
 
 
-def _legal_lines(doc: dict[str, Any]) -> list[str]:
+def answers_source_line(source: dict[str, Any]) -> str:
+    """The line that says whose the applicability answers are (`model.answers_source`), the
+    same words in every report format and in `aisafe engagement status`."""
+    by, auditor = _flat(source.get("answered_by")), _flat(source.get("auditor"))
+    return {
+        "auditor": _T_ANSWERS_OWN,
+        "not_auditor": _T_ANSWERS_NOT_OWN,
+        "no_auditor": _T_ANSWERS_NO_AUDITOR,
+    }.get(str(source.get("state")), _T_ANSWERS_UNNAMED).format(by=by, auditor=auditor)
+
+
+def _legal_lines(doc: dict[str, Any], *, terminal: bool = False) -> list[str]:
     """The legal section: kept apart from the ethical outcome above, one line per provision
-    with its result and first reason; the JSON holds every reason and every evidence row."""
+    with its result and first reason; the JSON holds every reason and every evidence row. In
+    auditor mode its first line says whose the applicability answers are. The terminal shows
+    what is not covered on one line per profile: the items, or their count past three."""
     legal = doc.get("legal")
     if not legal:
         return [_T_LEGAL_NONE]
     answers = legal.get("answers") or {}
+    source = legal.get("answers_source")
     lines = [
+        answers_source_line(source) if source else "",
         str(legal.get("note") or ""),
         _T_LEGAL_ANSWERS.format(
             date=legal.get("audit_date"),
@@ -569,7 +731,7 @@ def _legal_lines(doc: dict[str, Any]) -> list[str]:
                 )
             ref = f"{prof.get('id')}/{prov.get('id')}"
             for response in (doc.get("auditee") or {}).get("responses") or []:
-                if response.get("to") == ref:
+                if (response.get("resolved_to") or response.get("to")) == ref:
                     lines.append(
                         "  "
                         + _T_BESIDE.format(
@@ -583,8 +745,13 @@ def _legal_lines(doc: dict[str, Any]) -> list[str]:
                 counts=_join(f"{n} {result}" for result, n in counts.items() if n)
             )
         )
-        for text in prof.get("not_covered") or []:
-            lines.append("  " + _T_LEGAL_NOT_COVERED.format(text=text))
+        items = prof.get("not_covered") or []
+        if terminal and len(items) > 3:
+            lines.append("  " + _T_LEGAL_NOT_COVERED_MANY.format(n=len(items)))
+        elif terminal and items:
+            lines.append("  " + _T_LEGAL_NOT_COVERED.format(text="; ".join(items)))
+        elif not terminal:
+            lines += ["  " + _T_LEGAL_NOT_COVERED.format(text=text) for text in items]
     if legal.get("not_selected"):
         lines.append(
             _T_LEGAL_NOT_SELECTED.format(ids=_join(p.get("id") for p in legal["not_selected"]))
@@ -606,11 +773,12 @@ def _outcome_lines(doc: dict[str, Any]) -> list[str]:
         _T_ORDER.format(order=", ".join(outcome.get("order") or [])),
     ]
     for mech in outcome.get("mechanisms") or []:
-        lines.append(
-            _T_MECH_ROW.format(
-                id=mech.get("id"), name=mech.get("name"), outcome=mech.get("outcome")
-            )
+        row = _T_MECH_ROW.format(
+            id=mech.get("id"), name=mech.get("name"), outcome=mech.get("outcome")
         )
+        if mech.get("signoffs"):
+            row = _T_THROUGH_SIGNOFF.format(row=row, ids=", ".join(mech["signoffs"]))
+        lines.append(row)
     return lines
 
 
@@ -665,6 +833,7 @@ def _markdown_body(doc: dict[str, Any]) -> list[str]:
         ("Legal profiles", _legal_lines(doc)),
         ("Machine inputs: the scan and the investigation records", _machine_lines(doc)),
         ("Human inputs: review records", _human_lines(doc)),
+        ("Sign-offs: a person's decisions", _signoff_lines(doc)),
         ("Auditee inputs", _auditee_lines(doc)),
         ("Remediation", _remediation_lines(doc)),
         ("Inputs", _input_lines(doc)),
@@ -728,6 +897,7 @@ def render_html(doc: dict[str, Any]) -> str:
         ("Legal profiles", _legal_lines(doc)),
         ("Machine inputs: the scan and the investigation records", _machine_lines(doc)),
         ("Human inputs: review records", _human_lines(doc)),
+        ("Sign-offs: a person's decisions", _signoff_lines(doc)),
         ("Auditee inputs", _auditee_lines(doc)),
         ("Remediation", _remediation_lines(doc)),
         ("Inputs", _input_lines(doc)),
@@ -770,13 +940,22 @@ def render_terminal(doc: dict[str, Any]) -> str:
                     path=record.get("path"), errors="; ".join(record.get("errors") or [])
                 )
             )
+    signoffs = doc.get("signoffs") or {}
+    if signoffs.get("accepted") or signoffs.get("refused"):
+        out.append("")
+        out += _signoff_lines(doc)
     if doc.get("remediation"):
         out.append("")
         out += _remediation_lines(doc)
     if doc.get("legal"):
         out.append("")
         out.append("Legal profiles (apart from the ethical outcome; not legal advice)")
-        out += [line for line in _legal_lines(doc) if "not covered:" not in line]
+        out += _legal_lines(doc, terminal=True)
+    unmatched = _unmatched_lines(doc)
+    if unmatched:
+        out.append("")
+        out.append("Auditee inputs")
+        out += unmatched
     out.append("")
     out.append(f"exit code: {doc.get('exit_code')}")
     return "\n".join(out) + "\n"

@@ -17,8 +17,10 @@ Per repository: clone (or use the local path in place), then run
 `python -m aisafe.cli audit . --format json --fail-on <level> -o <out>/<name>/
 audit-report.json` with the clone as the working directory, so the target's own
 `[tool.aisafe-audit]` applies as it does under the skill. The clone is not on the child's
-import path (`PYTHONSAFEPATH`, Python 3.11 and later), so a folder called `aisafe` in it is
-not the auditor. A subprocess, because a wall-clock
+import path (`PYTHONSAFEPATH`), so a folder called `aisafe` in it is not the auditor. That
+variable works from Python 3.11 and is ignored without a word before it, so on 3.10 the
+fleet refuses to start, before it reads the list or clones anything; the rest of the package
+still runs there. A subprocess, because a wall-clock
 cap cannot interrupt an in-process audit and one pathological repository must not take the
 fleet down. Nothing is copied out of the per-repo report but counts, names, decisions and a
 path to it: no evidence snippet reaches the fleet documents.
@@ -26,8 +28,8 @@ path to it: no evidence snippet reaches the fleet documents.
 Exit codes: 0 when every listed repository was audited (findings in other people's
 repositories are the survey's content, not its failure), 1 when at least one could not be
 (clone failed, timeout, fatal audit): an incomplete survey must not look complete. 2 is a
-fleet-level fatal (unreadable list, `git` missing, `--out` unwritable). `--fail-on-findings`
-adds exit 1 when any repository's own audit exit code is 1.
+fleet-level fatal (Python older than 3.11, unreadable list, `git` missing, `--out`
+unwritable). `--fail-on-findings` adds exit 1 when any repository's own audit exit code is 1.
 
 The fleet never pushes, never opens a pull request and never writes into a clone.
 `--proposal` writes `<out>/<name>/proposal.md`, a PR body a person can use after reading it.
@@ -301,6 +303,10 @@ def _target(raw: dict[str, Any], where: str) -> Target:
     if sha is not None and not (7 <= len(sha) <= 64 and all(c in "0123456789abcdef" for c in sha)):
         raise FleetError(f"{where}: {name}: `sha` is not a commit id")
     branch = str(raw.get("branch") or "").strip() or None
+    # git reads a value that starts with a dash as an option, and `--upload-pack=` runs one.
+    for key, value in (("url", url), ("path", path), ("branch", branch)):
+        if value and value.startswith("-"):
+            raise FleetError(f"{where}: {name}: `{key}` must not start with `-`")
     return Target(name=name, url=url, path=path, sha=sha, branch=branch)
 
 
@@ -436,12 +442,15 @@ def audit_argv(fail_on: str, report_path: Path, extra: Sequence[str] = ()) -> li
 
 def _child_env() -> dict[str, str]:
     """The child must import the same `aisafe` this process did, installed or from `src/`,
-    never a package of the clone it runs in: `python -m` puts the working directory first."""
+    never a package of the clone it runs in: `python -m` puts the working directory first.
+    A relative or empty `PYTHONPATH` entry is the working directory again, and the child's
+    working directory is the clone, so only absolute entries reach it."""
     import aisafe
 
     env = dict(os.environ)
     src = str(Path(aisafe.__file__).resolve().parents[1])
-    env["PYTHONPATH"] = src + os.pathsep + env["PYTHONPATH"] if env.get("PYTHONPATH") else src
+    kept = [p for p in env.get("PYTHONPATH", "").split(os.pathsep) if os.path.isabs(p)]
+    env["PYTHONPATH"] = os.pathsep.join([src, *kept])
     env.setdefault("PYTHONIOENCODING", "utf-8")
     env["PYTHONSAFEPATH"] = "1"
     return env
@@ -976,8 +985,19 @@ def _write(path: Path, text: str) -> None:
         handle.write(text)
 
 
+def _safe_path_works() -> bool:
+    """`PYTHONSAFEPATH` is new in Python 3.11; older interpreters ignore it without a word."""
+    return sys.version_info >= (3, 11)
+
+
 def run_fleet(options: FleetOptions, *, echo: bool = True) -> tuple[dict[str, Any], int]:
     """Audit every target; write the three documents; return (document, exit code)."""
+    if not _safe_path_works():
+        raise FleetError(
+            f"needs Python 3.11 or later, this is {sys.version_info[0]}.{sys.version_info[1]}: "
+            "each audit runs inside a clone, and only from 3.11 does PYTHONSAFEPATH stop a "
+            "folder called `aisafe` in that clone from being imported in place of the auditor"
+        )
     targets = read_list(Path(options.list_path))
     if any(t.url for t in targets) and not git_available():
         raise FleetError("git is not on PATH and the list names remote repositories")

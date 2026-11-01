@@ -31,8 +31,8 @@ files without the index still load; they simply yield less detail.
 
 A reason is checked on the way in (`amend_baseline`, the one writer that takes free text
 from the operator) and again on the way out (`read_baseline`, so a hand-edited file is held
-to the same bar): it must be non-empty, a single line of printable ASCII (no newline,
-tab or other control character: it is rendered as one `accepted: <reason>` line), carry
+to the same bar): it must be non-empty, a single line in any alphabet (no newline, tab,
+control or hidden character: it is rendered as one `accepted: <reason>` line), carry
 no verdict language (the `report.BANNED_PHRASES` list and the banned word) and contain
 nothing secret-shaped, because the baseline file is itself scanned by the audit and would
 otherwise reproduce the finding it accepts.
@@ -500,15 +500,16 @@ def _check_reason(fingerprint: str, reason: str) -> str:
     text = reason.strip()
     if not text:
         raise BaselineError(f"accepted reason for {fingerprint} is empty")
-    if not text.isascii():
-        raise BaselineError(f"accepted reason for {fingerprint} is not ASCII")
     if _CONTROL_RE.search(text):
-        # A newline, tab or other control character is ASCII too, but the reason is
-        # rendered as one `accepted: <reason>` line in the terminal and markdown reports
-        # (a newline there breaks out of the markdown list item).
-        raise BaselineError(
-            f"accepted reason for {fingerprint} must be a single line of printable ASCII"
-        )
+        # The reason is rendered as one `accepted: <reason>` line in the terminal and
+        # markdown reports (a newline there breaks out of the markdown list item).
+        raise BaselineError(f"accepted reason for {fingerprint} must be a single line")
+    # Local import: the same check a review record's text passes, in any alphabet.
+    from aisafe.review.records import check_text
+
+    problem = check_text(f"accepted reason for {fingerprint}", text)
+    if problem:
+        raise BaselineError(problem)
     lowered = text.lower()
     if _BANNED_WORD_RE.search(text) or any(phrase in lowered for phrase in BANNED_PHRASES):
         raise BaselineError(

@@ -199,7 +199,7 @@ every file carrying a person signal.
 The reviewer is a named person with a role; the agent is `assisted_by`. `scope` lists the
 mechanisms considered (`--scope M1,M4,M5,M6`; default all eight). A contextual decision on a
 finding goes under `decisions:` with the finding's fingerprint and the reviewer's
-justification in their own words, ASCII, describing the evidence without quoting the matched
+justification in their own words, describing the evidence without quoting the matched
 text (the file is scanned like any other). The next audit shows `declared_purpose` on every
 finding the record covers, `review_decision` where one was recorded, and AUD-1107 answered;
 it reports `/stale` as soon as a listed file changes.

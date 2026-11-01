@@ -120,9 +120,9 @@ def test_agreements_and_disagreements_are_counted_and_listed(tmp_path: Path, cap
         == 0
     )
     out = capsys.readouterr().out
-    assert "- agree: 1" in out and "- disagree: 1" in out
-    # The attachment record has no prompt link and no `via` hop: its claim is a review,
-    # and the case's label wants the pattern established.
+    # Nothing in the tree reads persona.md, so neither record's chain joins the two files:
+    # each claim is a review, and the case's labels want the patterns established.
+    assert "- agree: 0" in out and "- disagree: 2" in out
     assert "disagree: attachment-romantic-escalation: AUD-1109/* violates_policy" in out
     assert "precision: unreviewed" in out and "recall: unreviewed" in out
 

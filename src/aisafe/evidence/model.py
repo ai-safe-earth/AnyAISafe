@@ -1223,3 +1223,7 @@ class AuditContext:
     review: object | None = None
     # analysis.flows: the reconstructed chains, per prompt. Rules attach the matching one.
     flows: list[Flow] = field(default_factory=list, repr=False, compare=False)
+    # What the walk left unread (`walk.walk`): the workbench's list outside git, where no
+    # commit gives one. Never serialised: the audit's report does not carry them.
+    unread_files: list[str] = field(default_factory=list, repr=False, compare=False)
+    unread_dirs: list[str] = field(default_factory=list, repr=False, compare=False)

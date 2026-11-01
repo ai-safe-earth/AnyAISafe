@@ -33,7 +33,6 @@ from __future__ import annotations
 import argparse
 import csv
 import json
-import os
 import shutil
 import subprocess
 import sys
@@ -45,6 +44,7 @@ ROOT = BENCH.parent
 sys.path.insert(0, str(ROOT / "src"))
 
 from aisafe.devtools._git import GitError, fetch_pinned  # noqa: E402
+from aisafe.devtools.fleet import _child_env, _safe_path_works  # noqa: E402
 
 CORPUS = BENCH / "corpus.yaml"
 CACHE = BENCH / ".cache"
@@ -122,15 +122,6 @@ def fetch(repo: dict) -> Path:
         return dest
     fetch_pinned(repo["url"], repo["sha"], dest, branch=repo.get("branch"), timeout=1800)
     return dest
-
-
-def _child_env() -> dict[str, str]:
-    # PYTHONPATH keeps aisafe importable in the child without requiring an install.
-    env = dict(os.environ)
-    src = str(ROOT / "src")
-    env["PYTHONPATH"] = src + os.pathsep + env.get("PYTHONPATH", "")
-    env.setdefault("PYTHONIOENCODING", "utf-8")
-    return env
 
 
 def audit_argv(out_file: Path, rules: str | None = None, experimental: bool = False) -> list[str]:
@@ -335,6 +326,11 @@ def main(argv: list[str] | None = None) -> int:
 
     results_dir, csv_path, csv_all_path, columns = paths_for(args.tool, args.out_dir)
 
+    if not _safe_path_works():
+        sys.exit(
+            "bench/run.py needs Python 3.11 or later: each audit runs inside a clone, and only "
+            "from 3.11 does PYTHONSAFEPATH stop a folder of that clone standing in for aisafe"
+        )
     repos = load_corpus(args.corpus)
     if args.only:
         wanted = {n.lower() for n in args.only}

@@ -411,7 +411,7 @@ reads it back. Shape:
         decisions:
           - fingerprint: "494b8d2efb84b87b"
             decision: requires_contextual_review
-            justification: "<the reviewer's words: ASCII, no verdict language>"
+            justification: "<the reviewer's words: no verdict language>"
         notes: null
 
 What the audit does with it:
@@ -429,9 +429,10 @@ What the audit does with it:
   the current policy);
 - a malformed record covers nothing: each problem is one UNKNOWN (runtime) item with
   `rule_ids: ["AUD-1107"]`, never a half-trusted record;
-- the free text (reviewer, purpose, justification, notes) is held to the baseline's bar:
-  printable ASCII, no verdict language, nothing secret-shaped. `record` exits 2 on a
-  verdict-shaped reviewer or purpose; it cannot tell a tool's name from a person's, so rule 4
+- the free text (reviewer, purpose, justification, notes) may be in any alphabet; it holds no
+  hidden or control character, no word that mixes two alphabets, no verdict language and
+  nothing secret-shaped. `record` exits 2 on a verdict-shaped reviewer or purpose; its list of
+  tool names can never be complete, so it cannot tell a tool's name from a person's, and rule 4
   of SKILL.md is yours to keep.
 
 `aisafe review` exit codes: 0 nothing to report; 1 (`check`) a listed artifact changed or

@@ -32,8 +32,9 @@ could not be checked would carry `verified: false` and its reason, and would rea
 selects (`applicability.jurisdictions`). Selecting a jurisdiction only selects the profile:
 it never makes a provision apply. Markets and jurisdictions use the profiles' codes (`EU`,
 `US-NY`, `US-CA`) and `other` for every market no profile covers; a code outside that list
-is refused rather than read as a no. Answers that name nobody (`answered_by` empty) decide
-nothing. Each provision gets one result, in this order:
+is refused rather than read as a no. In auditor mode the legal section says on its first
+line whether the answers are the auditor's own. Answers that name nobody (`answered_by`
+empty) decide nothing. Each provision gets one result, in this order:
 
 1. **Not in force on the audit date.** On a date the law states: `not_applicable`, with
    the reason "not in force on the audit date". On a date that was counted or inferred

@@ -304,6 +304,18 @@ blocking gap until a new record answers it.
 addressed to auditors or AI tools is listed by the plan and recorded in the records, and a
 closing record next to such text is a gap until a person checks it.
 
+**A person's decision.** Two things stay out of the machine's reach: a record it sent to a
+person, and a file nobody read. A named person can decide either with a sign-off
+(`aisafe investigate signoff`), with a reason, bound to one commit, one policy version and the
+exact records and files they looked at. It clears those two gaps and no other. It never lowers
+a violation, never answers a refuted or missing skeptic pass, a runtime-only link, a rejected
+record or a scan finding, and what could not be read stays unknown. A signed file is still
+listed as not read. A mechanism closed this way says who decided, never that the system is
+safe, and the sign-off does not carry to the next commit. It is not signed in the cryptographic
+sense: in self-assessment anyone with write access could write the file, so reports label it
+self-assessed, and an agent is told to print the command for the person, never to run it. In
+auditor mode only the engagement's auditor can sign, in a file outside the audited tree.
+
 **The assessment.** `aisafe assess` takes one outcome per mechanism, from least to most
 favourable: `violations_identified`, `inconclusive`, `not_assessed`,
 `no_violation_identified_within_assessed_scope`. The overall outcome is the least
@@ -319,9 +331,10 @@ there is no assessment.
 **Remediation.** A finding that is no longer reported is "not reported", never
 remediated: a rename produces it as readily as a fix. A change counts as a remediation only
 when the record's remediation steps, run again on the new commit, pass where they failed
-before (`aisafe assess --retest`), no regression step fails, and nothing at the new commit
-shows the mechanism on that surface. A violation that is not shown remediated stands. A
-mechanism closes again only through a new record on the new code.
+before (`aisafe assess --retest`), no regression step fails, nothing at the new commit
+shows the mechanism on that surface, and a new record on the new code closes it, upheld by
+its own skeptic pass. Passing steps alone never show a remediation: reworded or encoded text
+passes them too. A violation that is not shown remediated stands.
 
 ## 12. The engagement and the legal profiles
 

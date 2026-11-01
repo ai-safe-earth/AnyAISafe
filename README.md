@@ -403,7 +403,7 @@ aisafe audit --amend-baseline audit-baseline.json \
 ```
 
 A fingerprint with a reason is an acceptance, recorded with the policy version of the day.
-A fingerprint without one is a suppression. A reason that is not plain ASCII, reads as a
+A fingerprint without one is a suppression. A reason that hides a character, reads as a
 verdict or looks like a secret is refused, and a reason never quotes the matched text,
 because the baseline is walked like any other file. Under a newer policy a suppression is
 reported again as `re-review` and counts toward the exit code; a reasoned acceptance stays
@@ -641,12 +641,13 @@ could not be audited, so an incomplete survey never looks complete.
 
 - `aisafe audit PATH` scans the prompts and the code around them; evidence and a policy
   decision per finding, never a verdict. Its output is a scan report.
-- `aisafe investigate plan|cite|validate|digest` plans the surfaces an investigation
-  reads and checks the records a host coding agent writes, mechanically.
+- `aisafe investigate plan|cite|validate|digest|signoff` plans the surfaces an investigation
+  reads, checks the records a host coding agent writes, mechanically, and records a named
+  person's decision the machine cannot make.
 - `aisafe assess PATH --investigations DIR` turns the scan and the validated records into
   an assessment: one outcome per mechanism, the gaps, the scope read and left out; with
   `--engagement DIR`, a separate legal section and the evidence requests.
-- `aisafe engagement init|status|receive|insufficient|respond|qa --engagement DIR` keeps
+- `aisafe engagement init|status|authorise|receive|insufficient|respond|qa --engagement DIR` keeps
   the auditor's workspace: scope, authorisations, applicability answers, evidence received
   and hashed, the auditee's responses, a second auditor's sign-off.
 - `aisafe review init|record|check` writes and checks the review record that binds a

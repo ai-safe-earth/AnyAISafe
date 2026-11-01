@@ -672,7 +672,8 @@ def test_what_a_fetched_prompt_may_say_cannot_be_ruled_out(
     )
     write_record(records, record, skeptic="upheld")
     result = _results(scan, plan, records)["inv-x"]
-    assert result.effective == UNKNOWN_REVIEW and result.runtime == [ruled_out]
+    # The model call on line 14 reads the fetched prompt: a prompt link there is run-time too.
+    assert result.effective == UNKNOWN_REVIEW and ruled_out in result.runtime
     assert _mechanism(root, records, mechanism)["closing"] == []
 
 

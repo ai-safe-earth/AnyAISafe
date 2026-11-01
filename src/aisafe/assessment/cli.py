@@ -34,6 +34,7 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from aisafe.discovery.walk import crosses_link
 from aisafe.evidence.model import MODES
 
 __all__ = ["build_parser", "main"]
@@ -161,6 +162,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 else Path(ns.path) / DEFAULT_OUTPUT
             )
         )
+        # `.aisafe-audit` can be a link the audited tree delivered.
+        if crosses_link(str(output_dir)):
+            _note(f"refused: the output {output_dir.as_posix()} goes through a link")
+            return 2
         if mode == "auditor" and _inside(output_dir, Path(ns.path)):
             _note("in auditor mode the audited tree is read-only; pass -o outside it")
             return 2

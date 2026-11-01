@@ -10,6 +10,7 @@ which scope, and carries the answers a person gave; the assessment reads them.
     DIR/evidence-requests.json  aisg/evidence-requests/1
     DIR/responses/*.json        aisg/auditee-response/1
     DIR/qa.json                 aisg/qa-signoff/1 (optional second-auditor sign-off)
+    DIR/authorisations/         written authorisations, copied in and hashed
     DIR/assessment/             the assessment and its bundle manifest (aisg/bundle/1)
 
 Every field a person answers starts empty: `init` never writes a statement, an answer or
@@ -33,6 +34,7 @@ from aisafe.legal.profile import ANSWER_VALUES, DEFINITION_ANSWERS, LIST_ANSWERS
 
 __all__ = [
     "ASSESSMENT_DIR",
+    "AUTHORISATIONS_DIR",
     "BUNDLE_FILE",
     "BUNDLE_KIND",
     "BUNDLE_SCHEMA",
@@ -54,8 +56,10 @@ __all__ = [
     "RESPONSE_SCHEMA",
     "Engagement",
     "EngagementError",
+    "add_authorisation",
     "add_response",
     "add_signoff",
+    "answers_source",
     "check_engagement",
     "file_sha256",
     "inside",
@@ -69,6 +73,8 @@ __all__ = [
     "mark_insufficient",
     "merge_requests",
     "missing_fields",
+    "place_responses",
+    "read_assessment",
     "receive",
     "request_states",
     "skeleton",
@@ -92,6 +98,7 @@ BUNDLE_KIND = "bundle"
 BUNDLE_FILE = "bundle.json"
 EVIDENCE_DIR = "evidence"
 INVESTIGATIONS_DIR = "investigations"
+AUTHORISATIONS_DIR = "authorisations"
 ASSESSMENT_DIR = "assessment"
 
 REQUEST_STATUSES: tuple[str, ...] = ("requested", "received", "insufficient")
@@ -383,6 +390,25 @@ def missing_fields(data: dict[str, Any], *, definitions: Iterable[str] = ()) -> 
         elif not entry.get("reason"):
             out.append(f"applicability.definitions.{key}.reason: an answer needs its reason")
     return out
+
+
+def answers_source(data: dict[str, Any]) -> dict[str, Any] | None:
+    """Whose the applicability answers are, in auditor mode; None in self-assessment mode,
+    where nobody audits anyone. An auditee's answer can be legitimate input, and a
+    self-serving one can make a whole profile not applicable: so this is said, never refused.
+    The names must match exactly (case and spacing aside): anything else reads as not the
+    auditor's own, never as a likely match."""
+    if data.get("mode") != "auditor":
+        return None
+    by = " ".join(str((data.get("applicability") or {}).get("answered_by") or "").split())
+    auditor = " ".join(str((data.get("auditor") or {}).get("name") or "").split())
+    if not by:
+        state = "unnamed"
+    elif not auditor:
+        state = "no_auditor"
+    else:
+        state = "auditor" if by.casefold() == auditor.casefold() else "not_auditor"
+    return {"state": state, "answered_by": by or None, "auditor": auditor or None}
 
 
 @dataclass
@@ -734,6 +760,48 @@ def add_response(
     return path
 
 
+def read_assessment(path: Path) -> dict[str, Any] | None:
+    """The assessment document at `path`, or None when it cannot be read as one."""
+    try:
+        data = _read_json(Path(path))
+    except EngagementError:
+        return None
+    return data if isinstance(data, dict) else None
+
+
+def place_responses(responses: Sequence[dict[str, Any]], document: dict[str, Any]) -> list[str]:
+    """The files of the responses that name nothing in this assessment document: no
+    mechanism, record (accepted, or carried by a retest), finding fingerprint or
+    `profile/provision` of it. A bare provision id that exactly one applied profile holds
+    gets `resolved_to` on its row, the full reference, and is placed there; one that several
+    hold says nothing about which, so it stays unmatched. `respond` cannot know these ids
+    when it runs, so the check is here, where the assessment is known."""
+    machine = document.get("machine") or {}
+    known: set[Any] = {m.get("id") for m in (document.get("outcome") or {}).get("mechanisms") or []}
+    known |= {record.get("id") for record in machine.get("records") or []}
+    known |= {row.get("fingerprint") for row in (machine.get("scan") or {}).get("findings") or []}
+    carried = (document.get("remediation") or {}).get("carried_records") or []
+    known |= {entry.get("id") for entry in carried}
+    bare: dict[str, list[str]] = {}
+    for profile in (document.get("legal") or {}).get("profiles") or []:
+        for provision in profile.get("provisions") or []:
+            ref = f"{profile.get('id')}/{provision.get('id')}"
+            known.add(ref)
+            bare.setdefault(str(provision.get("id")), []).append(ref)
+    known.discard(None)
+    unmatched = []
+    for response in responses:
+        to = response.get("to")
+        if to in known:
+            continue
+        refs = bare.get(str(to)) or []
+        if len(refs) == 1:
+            response["resolved_to"] = refs[0]
+        else:
+            unmatched.append(str(response.get("file")))
+    return unmatched
+
+
 # ---------------------------------------------------------------------------
 # QA sign-off
 # ---------------------------------------------------------------------------
@@ -830,6 +898,64 @@ def qa_state(qa: dict[str, Any], current: str | None) -> dict[str, Any]:
     return {"signoffs": rows, "standing": standing}
 
 
+def add_authorisation(
+    directory: Path,
+    *,
+    what: str,
+    by: str,
+    on: str,
+    document: Path,
+    endpoint: str | None = None,
+    data: str | None = None,
+) -> dict[str, Any]:
+    """Copy a written authorisation into DIR/authorisations/, hash it and add its entry to
+    engagement.json. Returns the entry. `by` is who gave it; `on` its date. Entries written
+    by hand stay as they are."""
+    directory = Path(directory)
+    if not what.strip() or not by.strip():
+        raise EngagementError("--what and --by must both say something")
+    try:
+        day = date.fromisoformat(on).isoformat()
+    except ValueError:
+        raise EngagementError(f"--date must be an ISO date (YYYY-MM-DD), not {on!r}") from None
+    source = Path(document)
+    if not source.is_file():
+        raise EngagementError(f"no such file: {source.as_posix()}")
+    eng = load_engagement(directory)
+    folder = directory / AUTHORISATIONS_DIR
+    if inside(source, folder):
+        target = source.resolve()
+    else:
+        folder.mkdir(parents=True, exist_ok=True)
+        target = folder / source.name
+        if target.exists() and file_sha256(target) != file_sha256(source):
+            raise EngagementError(
+                f"{target.as_posix()} already holds another document; rename the file"
+            )
+        shutil.copyfile(source, target)
+
+    def text(value: str | None) -> str | None:
+        return value.strip() if value and value.strip() else None
+
+    entry = {
+        "what": what,
+        "by": by,
+        "date": day,
+        "endpoint": text(endpoint),
+        "data": text(data),
+        "document": {
+            "path": target.resolve().relative_to(directory.resolve()).as_posix(),
+            "sha256": file_sha256(target),
+        },
+    }
+    entries = eng.data.setdefault("authorisations", [])
+    if entry in entries:
+        raise EngagementError("that authorisation is already in the engagement")
+    entries.append(entry)
+    write_json(eng.path, eng.data)
+    return entry
+
+
 def authorisation_states(directory: Path, data: dict[str, Any]) -> list[dict[str, Any]]:
     """Each written authorisation, and whether its document (when it names one) still
     matches the sha256 recorded for it."""
@@ -852,6 +978,8 @@ def authorisation_states(directory: Path, data: dict[str, Any]) -> list[dict[str
                 "what": auth.get("what"),
                 "by": auth.get("by"),
                 "date": auth.get("date"),
+                "endpoint": auth.get("endpoint"),
+                "data": auth.get("data"),
                 "document": document,
                 "state": state,
             }

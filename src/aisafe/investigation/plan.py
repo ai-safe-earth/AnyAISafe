@@ -815,10 +815,12 @@ def build_plan(scan: MachineScan, *, budget: int = DEFAULT_BUDGET) -> dict[str, 
             "oversize_files": target.get("oversize_files"),
             # Files of the commit the walk never read (a skipped directory, a binary or
             # UTF-16 file, the size limit, the marker, an exclude), and walked files in a
-            # language this version does not read.
+            # language this version does not read. Outside git: the files the walk says it
+            # stepped over, and the directories it did not go into.
             "tracked_not_walked": None
             if scan.tracked_not_walked is None
             else list(scan.tracked_not_walked),
+            "dirs_not_walked": list(scan.dirs_not_walked),
             "unsupported_files": sorted(
                 rel for rel in scan.walked if scan.reading_of(rel) == "unsupported"
             ),
@@ -903,15 +905,21 @@ def render_plan(plan: dict[str, Any]) -> str:
     if len(untrusted) > _UNTRUSTED_SHOWN:
         lines.append(f"  - +{len(untrusted) - _UNTRUSTED_SHOWN} more in the JSON")
     not_read = plan["not_read"]
+    dirs = not_read.get("dirs_not_walked") or []
+    tracked = "tracked " if (plan.get("target") or {}).get("git") else ""
     lines.append("")
     lines.append(
         f"not read: {len(not_read['marker_skipped'])} file(s) skipped by the ignore-file "
         f"marker, {len(not_read['own_output_skipped'])} as the tool's own output, "
-        f"{_count(not_read['tracked_not_walked'])} tracked file(s) the walk did not read, "
-        f"{len(not_read['unsupported_files'])} file(s) in a language this version does not read"
+        f"{_count(not_read['tracked_not_walked'])} {tracked}file(s) the walk did not read, "
+        + (f"{len(dirs)} director(ies) it did not go into, " if dirs else "")
+        + f"{len(not_read['unsupported_files'])} file(s) in a language this version does not "
+        "read"
     )
     for rel in (not_read["tracked_not_walked"] or [])[:10]:
         lines.append(f"  - not walked: {rel}")
+    for rel in dirs[:10]:
+        lines.append(f"  - not walked: {rel}/")
     for rel in not_read["unsupported_files"][:10]:
         lines.append(f"  - unsupported: {rel}")
     return "\n".join(lines) + "\n"

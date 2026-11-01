@@ -435,7 +435,7 @@ class TestFileGuards:
 
         _, _, unknown = walk(tmp_path, WalkOptions(max_size=100))
 
-        assert [u.what for u in unknown] == ["oversize files skipped"]
+        assert [u.what for u in unknown] == ["oversize files skipped", "files and folders not read"]
 
     def test_no_oversize_row_when_nothing_is_over(self, tmp_path: Path) -> None:
         _touch(tmp_path, "small.py", "x" * 50 + "\n")

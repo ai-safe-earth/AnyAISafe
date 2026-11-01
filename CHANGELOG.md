@@ -10,6 +10,17 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Added
 
+- **A person's sign-off** (`aisafe investigate signoff`, `aisg/signoff/1`). Two gaps had no way
+  to clear: a record the machine sent to a person (`record_at_review`) and a file nobody read
+  (`files_not_read`). A named person now decides either, with a reason, bound to one commit, one
+  policy version, one mode and the exact record digests and file hashes. `aisafe assess` checks
+  each sign-off again and lists it as accepted or refused, with why; a refused one counts for
+  nothing. A signed record at review becomes a closing that says who decided; a signed file
+  stays listed as "signed off, not read". A sign-off clears those two gaps and no other: it
+  lowers no violation, shows no remediation in a retest, answers no scan finding, does not carry
+  to a new commit and does not move the legal section. In auditor mode only the engagement's
+  auditor signs. It carries no cryptographic signature, so reports label one self-assessed, and
+  the skill prints the command for the person and never runs it.
 - **Run 4 of the persons study** (`research/results/run4/`): the ten 0.2.0 rules over the
   33 pinned repositories, 941 findings, 243 in the labelling sample. Its CSV replaces
   run 3's as the file to label; run 3 stays as the state before the 0.2.0 rules.
@@ -110,6 +121,11 @@ place the version lives and moves the Unreleased entries under a dated heading;
   target commit, the mode and the sha256 of every input and output, so a third party can
   check them. Inputs are hashed as they were read, before any output is written; an input
   the run writes over (the evidence requests) is marked `rewritten`.
+- **`aisafe engagement authorise`.** Records a written authorisation instead of a hand edit:
+  it copies the document into `DIR/authorisations/`, hashes it and adds an entry with what,
+  by, date, endpoint, data and document. `status` and the bundle read these documents, and
+  entries written by hand stay valid. An evaluation report passed in auditor mode when no
+  authorisation names an endpoint adds a line to the report, without refusing.
 
 ### Changed
 
@@ -140,6 +156,27 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Fixed
 
+- **A name with an accent can sign.** Review records and sign-offs refused anything outside
+  ASCII, so a person whose name has an accent, or is in another alphabet, could not be a
+  reviewer or sign. Their free text now takes any alphabet and refuses hidden and control
+  characters and a word that mixes two alphabets; the verdict, secret and tool-name checks
+  read it with accents and compatibility forms removed. A record file keeps the name as
+  typed. A baseline reason stays ASCII.
+- **Outside git, what the walk skipped now blocks an assessment.** No commit lists such a
+  tree, so code under `vendor/` or a prompt under the ignore-file marker could read
+  `no_violation_identified_within_assessed_scope`, where the same tree in git read
+  `inconclusive`. The walk now names every file it left unread and every directory it did
+  not go into, and the `files_not_read` gap blocks on them, in every report format.
+  Directories are named, not walked, so a large `node_modules` stays fast; the gap says that
+  committing the tree gives a precise list. `vendor`, `build`, `dist`, `node_modules` and a
+  directory a `.gitignore` line hides count; version control data and tool caches do not.
+  The assessment and the plan gain `dirs_not_walked`, and outside git their
+  `tracked_not_walked` holds the files the walk skipped. Trees in git read as before, and
+  the output of `aisafe audit` does not change.
+- **`aisafe fleet` refuses Python 3.10.** It sets `PYTHONSAFEPATH` so a folder called
+  `aisafe` in a clone cannot be imported in place of the auditor, and that variable works
+  only from Python 3.11. On 3.10 the fleet now exits 2 and says why, before it clones
+  anything. The rest of the package still supports 3.10.
 - **The Stage A review's open findings (39).** An assessment, a record's effective claim or
   a retest status is no longer more favourable than the evidence:
   - validation: a control counts only on a line that runs, at or before the link it guards;
@@ -163,6 +200,32 @@ place the version lives and moves the Unreleased entries under a dated heading;
     while its text is unchanged; files left unread block a closing (`files_not_read`); a
     closing by a control outside Python goes to review; a review record that fails to parse
     or binds none of the surfaces does not close M8.
+- **Six gaps left over from Stage B**, each one reading more favourable than the evidence:
+  - whose answers: in auditor mode the legal section's first line, in every format, and
+    `engagement status` say whether the applicability answers are the auditor's own. An
+    auditee's answers are still read, and shown for what they are.
+  - a response that names nothing is flagged in the Auditee inputs of every format, the
+    terminal included, and in `engagement status` (exit 1). A bare provision id that exactly
+    one applied profile holds is placed beside that provision.
+  - a retest in auditor mode is refused for another auditor or auditee, or a previous commit
+    that is not an ancestor of this one, or when git cannot say. Paths are no longer compared:
+    a clone in another folder, or an engagement moved whole, can retest. The remediation
+    section prints the previous assessment's mode and engagement.
+  - the terminal's legal block says what each profile does not cover, and a line holding the
+    words "not covered:" can no longer be dropped from it by accident.
+  - M8: a review record bound to a file but scoped only to M1 no longer closes M8. A record
+    binds a surface only when its `scope` holds every mechanism of the surface's hypotheses.
+- **A second independent review, 55 more.** A repository cannot start a program through an
+  LFS filter, a committed bare repository or a planted module; a fleet list cannot pass a
+  git option; a report cannot be written through a link or a setting of the audited tree. A
+  prompt cannot hide behind a report label, a cache folder name, a byte order mark, an LFS
+  pointer or a junction. A closing no longer counts on code that never runs, a mock of the
+  same name, or a comment. `remediated` now always needs an upheld closing record on the
+  new code; a step alone never shows it. A sign-off cannot move a legal item, or lift a
+  proposed violation through `supersedes`.
+- **Names and reasons in any alphabet.** Review records, sign-offs and baseline reasons
+  take accents and other scripts. The verdict, secret and tool-name checks read a folded
+  form, and a word mixing two alphabets is refused.
 - **JavaScript and TypeScript persona templates are prompt material again.** The expression
   that reads a backtick template named like a persona, backstory or character as prompt
   text held a literal backspace character where a word boundary was meant, so it never

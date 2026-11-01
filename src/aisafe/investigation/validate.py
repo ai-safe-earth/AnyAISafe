@@ -12,16 +12,22 @@ unit: no link in one of the unit's files); when its free text pronounces a verdi
 quote carries a secret-shaped string; when a remediation step already passes (it tests
 nothing) or a regression step fails; when a file it depends on has changed; when its id is
 used twice; or when it supersedes an unknown record, a record of another mechanism, surface
-or pattern, or a violation with a weaker claim (a closing record never lowers a violation);
-naming a record of another commit replaces nothing, so it needs none of that. In a
+or pattern, a violation with a weaker claim (a closing record never lowers a violation), or
+a proposed violation with a record that does not propose one, whatever became of the
+proposal; naming a record of another commit replaces nothing, so it needs none of that. In a
 directory, every `*.json` is a record, or a rejected one, unless it carries the exact label
-of another document of the workbench: a file that may be a record is never dropped.
+of another document of the workbench: a file that may be a record is never dropped. A
+skeptic pass and a sign-off are skipped even when named one by one; `signoff.py` reads the
+sign-offs.
 
 An accepted record keeps its proposal only as far as the evidence carries it. Each
 downgrade is written down in `notes`:
 
 - `observed_behavior` becomes `supported_mechanism`: a record reads code, and observed
   behaviour comes only from an evaluation report;
+- a link does not count on a comment, an import, a string standing as a statement or, in
+  Python, a line that never runs; an edge between two files counts only with a hop that
+  imports or calls the other file;
 - a `violates_policy` proposal becomes `unknown` / `requires_contextual_review` when a link
   the pattern requires is missing, only runtime-only, in an unsupported language, or not
   connected to the rest of the chain by supported links; when a pattern's absent control is
@@ -37,24 +43,31 @@ downgrade is written down in `notes`:
   syntax tree established for the pattern, whatever its kind; a surface fetched at run time
   cannot be closed from the tree, a prompt, person-data, objective or inference link cannot
   be ruled out while the tree fetches a prompt at run time, and a control cannot sit in a
-  fetched prompt: the claim is unknown and the link or control counts as runtime-only;
-- a closing by a control stays one only when the control and the link it guards are in
-  Python the syntax tree read. Elsewhere the machine cannot show a control runs, so the
-  claim is a review, and a person can still close it.
+  fetched prompt: the claim is unknown and the link or control counts as runtime-only. A
+  fetch is the whole statement the scan's row sits on and the statements fed from a name it
+  bound; every prompt-borne link on a surface fetched at run time is runtime-only;
+- a closing by a control stays one only when the control and every link of its chain (on a
+  unit surface, every model call of the unit too) are in Python the syntax tree read: a file
+  that parses, that the deep pass has a module for, with no lone carriage return. Elsewhere
+  the machine cannot show a control runs, so the claim is a review, and a person can still
+  close it.
 
 A skeptic result counts only when its file sits next to the record (a bare file name, a
 regular file of at most 8 MiB, checked before anything opens it), is bound to it
 (`record_sha256`), was written in another session than the investigation, and every claim in
-it says what was tried and is `upheld` or `refuted`; a pass with one refuted claim is a
+it says what was tried, why, and is `upheld` or `refuted`; a pass with one refuted claim is a
 refutation.
 """
 
 from __future__ import annotations
 
 import ast
+import io
 import json
+import operator
 import re
 import stat
+import tokenize
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
@@ -77,6 +90,8 @@ from aisafe.investigation.records import (
     INVESTIGATION_SCHEMA,
     ON_PATH,
     SHA_RE,
+    SIGNOFF_KIND,
+    SIGNOFF_SCHEMA,
     SKEPTIC_KIND,
     SKEPTIC_RESULTS,
     SKEPTIC_SCHEMA,
@@ -88,22 +103,33 @@ from aisafe.investigation.records import (
     verdict_words_in,
 )
 from aisafe.investigation.scan import MachineScan
-from aisafe.investigation.text import content_sha256, file_lines, quote_at, quote_in_text
+from aisafe.investigation.text import (
+    content_sha256,
+    file_lines,
+    normalise,
+    quote_at,
+    quote_in_text,
+)
 
 __all__ = [
+    "SIGNOFF_SKIPPED",
     "RecordResult",
     "ValidationRun",
     "find_record_files",
+    "quote_copies",
     "render_validation",
     "run_step",
     "validate_paths",
     "validate_record",
 ]
 
+# How `find_record_files` lists a sign-off: `aisafe assess` reads the sign-offs from it.
+SIGNOFF_SKIPPED = "a sign-off"
 _FP_RE = re.compile(r"^[0-9a-f]{16}$")
 _SURFACE_ID_RE = re.compile(r"^s-[0-9a-f]{12}(?:-\d+)?$")
 _FUTURE_TOLERANCE = timedelta(hours=1)
 _MAX_RECORD_BYTES = 8 * 1024 * 1024
+_MAX_SEARCHED_BYTES = 8 * 1024 * 1024
 # Documents of the workbench that are not records, by their exact label (`aisafe audit`
 # reports and evaluation reports too). Anything else in a records directory is a record, or
 # one that broke.
@@ -123,6 +149,7 @@ _OTHER_DOCUMENTS = frozenset(
                 "evidence-requests",
                 "auditee-response",
                 "qa-signoff",
+                "signoff",
             )
         ),
     }
@@ -173,7 +200,28 @@ _NAMES_ONLY_RE = re.compile(
     r"""|(?:export\s+)?(?:(?:const|let|var)\s+[\w$]+\s*(?::[^=]+)?=|[\w$]+\s*[:=])\s*"""
     r"""(?:async\s+)?(?:function\b|(?:<[^>]*>\s*)?(?:\([^)]*\)|[\w$]+)\s*(?::[^=]+)?=>))"""
 )
-_IDENTIFIER_RE = re.compile(r"[A-Za-z_]\w*")
+# What names a thing and is no code to cite as a link: a comment, an import. In a text file a
+# `#` is a heading, so this is read in code only.
+_COMMENT_OR_IMPORT_RE = re.compile(
+    r"""^\s*(?:$|#|//|/\*|\*|from\s+\S+\s+import\b|import\b"""
+    r"""|(?:const|let|var)\s+\{?[^=]*\}?\s*=\s*require\()"""
+)
+_CALL_TEXT_RE = re.compile(r"[A-Za-z_][\w.]*\s*\(")
+# What a control guards: what reaches the person, what leaves the service.
+_GUARDED_KINDS = frozenset({"intervention", "transmission"})
+_REMOTE_KINDS = frozenset({"remote", "runtime"})
+_DEFS = (ast.FunctionDef, ast.AsyncFunctionDef)
+_SCOPES = (*_DEFS, ast.ClassDef)
+_COMPREHENSIONS = (ast.ListComp, ast.SetComp, ast.DictComp)
+_TRIES = (ast.Try, getattr(ast, "TryStar", ast.Try))  # `except*` came with Python 3.11
+_COMPARISONS = {
+    ast.Eq: operator.eq,
+    ast.NotEq: operator.ne,
+    ast.Lt: operator.lt,
+    ast.LtE: operator.le,
+    ast.Gt: operator.gt,
+    ast.GtE: operator.ge,
+}
 
 
 def _surface_types() -> tuple[str, ...]:
@@ -227,6 +275,10 @@ class RecordResult:
     readings: list[str] = field(default_factory=list)
     digest: str | None = None
     raw: dict[str, Any] | None = None
+    # Set only by `investigation.signoff.apply_signoffs`: who closed this record at review,
+    # and the machine's own reading, which `effective` no longer shows.
+    signoffs: list[dict[str, Any]] = field(default_factory=list)
+    machine_effective: dict[str, str] = field(default_factory=dict)
 
     @property
     def accepted(self) -> bool:
@@ -293,6 +345,8 @@ class RecordResult:
             "cited_files": list(self.cited_files),
             "readings": list(self.readings),
             "digest": self.digest,
+            "signoffs": [dict(row) for row in self.signoffs],
+            "machine_effective": dict(self.machine_effective),
         }
 
 
@@ -374,6 +428,483 @@ def _parse_time(value: str) -> datetime | None:
     return when if when.tzinfo else None
 
 
+# ---------------------------------------------------------------------------
+# What the syntax tree of a Python file shows
+# ---------------------------------------------------------------------------
+
+
+def _truth(node: ast.AST | None) -> bool | None:
+    """An expression as a condition, when the syntax alone decides it; None when it takes a
+    run."""
+    if isinstance(node, ast.Constant):
+        return bool(node.value)
+    if isinstance(node, (ast.List, ast.Tuple, ast.Set)):
+        return False if not node.elts else None
+    if isinstance(node, ast.Dict):
+        return False if not node.keys else None
+    if isinstance(node, ast.UnaryOp) and isinstance(node.op, ast.Not):
+        inner = _truth(node.operand)
+        return None if inner is None else not inner
+    if isinstance(node, ast.BoolOp):
+        values = [_truth(value) for value in node.values]
+        decider = isinstance(node.op, ast.Or)  # True settles an `or`, False an `and`
+        if decider in values:
+            return decider
+        return None if None in values else not decider
+    if isinstance(node, ast.Compare) and len(node.ops) == 1:
+        left, right = node.left, node.comparators[0]
+        compare = _COMPARISONS.get(type(node.ops[0]))
+        if compare and isinstance(left, ast.Constant) and isinstance(right, ast.Constant):
+            try:
+                return bool(compare(left.value, right.value))
+            except TypeError:
+                return None
+        return None
+    name = node.attr if isinstance(node, ast.Attribute) else getattr(node, "id", None)
+    return False if name == "TYPE_CHECKING" else None
+
+
+def _leaves(stmt: ast.stmt) -> bool:
+    """`stmt` never hands over to the statement after it."""
+    if isinstance(stmt, (ast.Return, ast.Raise, ast.Break, ast.Continue)):
+        return True
+    if isinstance(stmt, ast.If):
+        truth = _truth(stmt.test)
+        return (truth is False or _ends(stmt.body)) and (truth is True or _ends(stmt.orelse))
+    if isinstance(stmt, ast.While):
+        return _truth(stmt.test) is True and not any(
+            isinstance(node, ast.Break) for node in ast.walk(stmt)
+        )
+    if isinstance(stmt, _TRIES):
+        return _ends(stmt.finalbody) or (
+            _ends(stmt.body + stmt.orelse) and all(_ends(h.body) for h in stmt.handlers)
+        )
+    if isinstance(stmt, (ast.With, ast.AsyncWith)):
+        return any(isinstance(item, ast.Return) for item in stmt.body)
+    return False
+
+
+def _ends(body: list[ast.stmt]) -> bool:
+    return any(_leaves(stmt) for stmt in body)
+
+
+def _branches(node: ast.AST) -> tuple[list[ast.AST], list[ast.AST]]:
+    """The parts of an expression that run, and those a constant condition shuts off."""
+    if isinstance(node, ast.IfExp):
+        truth = _truth(node.test)
+        if truth is not None:
+            return [node.body if truth else node.orelse], [node.orelse if truth else node.body]
+    elif isinstance(node, ast.BoolOp):
+        decider = isinstance(node.op, ast.Or)
+        for index, value in enumerate(node.values[:-1]):
+            if _truth(value) is decider:
+                return list(node.values[: index + 1]), list(node.values[index + 1 :])
+    return list(ast.iter_child_nodes(node)), []
+
+
+def _dotted(node: ast.AST) -> tuple[str, ...]:
+    """`a.b.c` as its parts; empty for anything that does not hang off a plain name."""
+    parts: list[str] = []
+    while isinstance(node, ast.Attribute):
+        parts.append(node.attr)
+        node = node.value
+    if not isinstance(node, ast.Name):
+        return ()
+    parts.append(node.id)
+    return tuple(reversed(parts))
+
+
+def _span(node: Any) -> range:
+    """The lines of a statement or an expression, a definition's decorators included."""
+    first = min((d.lineno for d in getattr(node, "decorator_list", [])), default=node.lineno)
+    return range(first, (node.end_lineno or node.lineno) + 1)
+
+
+def _statement_lines(stmt: ast.stmt) -> tuple[int, int]:
+    """A statement's lines; for one that holds a block, its header's."""
+    body = getattr(stmt, "body", None)
+    if isinstance(body, list) and body:
+        return stmt.lineno, max(stmt.lineno, body[0].lineno - 1)
+    return stmt.lineno, stmt.end_lineno or stmt.lineno
+
+
+@dataclass(eq=False)
+class _Scope:
+    """A function, a class or the module, and what each name is bound to in it."""
+
+    node: Any
+    parent: _Scope | None
+    lo: int
+    hi: int
+    bindings: dict[str, list[_Binding]] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class _Binding:
+    """A line that binds a name: `path` is the dotted thing an import names (`level` its
+    leading dots); None for a definition in the file."""
+
+    line: int
+    path: tuple[str, ...] | None = None
+    level: int = 0
+
+
+@dataclass(frozen=True)
+class _Use:
+    """A name read or called in code that runs; `parts` as spelled: `request.json` is two."""
+
+    line: int
+    parts: tuple[str, ...]
+    called: bool
+    scope: _Scope
+
+
+@dataclass(frozen=True)
+class _Target:
+    """What a hop must reach to reach a control: `name`, bound on lines `lo` to `hi` of the
+    control's file, called (a function) or only read (a constant)."""
+
+    name: str
+    must_call: bool
+    lo: int = 0
+    hi: int = 0
+
+
+class _Tree:
+    """What one parsed Python file shows, by line, with no name match anywhere.
+
+    `inert` lines run nothing: imports, a definition's header and its decorators, an
+    expression with no effect, `pass`, the inside of a string that is no prompt, a header
+    whose condition the syntax settles, a line whose only action is inside a lambda or a
+    generator expression, a line that calls nothing and whose comment holds a call. `dead`
+    lines never run: after a return, under `if False:`, in `for _ in ():`. `uses` are the
+    names read or called in code that runs; a lambda's body, a generator's, a decorator, a
+    default value and an annotation give none.
+    """
+
+    def __init__(self, tree: ast.Module, lines: list[str], prompts: list[tuple[int, int]]) -> None:
+        self.lines = lines
+        self.module = _Scope(tree, None, 1, max(len(lines), 1))
+        self.scopes: list[_Scope] = []
+        self.inert: set[int] = set()
+        self.dead: set[int] = set()
+        self.imported: set[int] = set()
+        self.text_statements: set[int] = set()
+        self.calling: set[int] = set()
+        self.uses: list[_Use] = []
+        self.imports: list[tuple[int, int, tuple[str, ...], int]] = []
+        self.exits: list[tuple[int, _Scope]] = []
+        # (statement, arm, first line, last line): two arms of one statement exclude each other
+        self.arms: list[tuple[int, int, int, int]] = []
+        self.excepts: list[tuple[int, int]] = []
+        self.comments = self._comments("\n".join(lines))
+        self._statements = [node for node in ast.walk(tree) if isinstance(node, ast.stmt)]
+        self._in_strings: set[int] = set()
+        self._block(tree.body, self.module)
+        self._bind()
+        self.inert |= self.dead
+        self.inert |= (
+            self._in_strings - self.calling - {n for lo, hi in prompts for n in range(lo, hi + 1)}
+        )
+        self.inert |= {
+            line
+            for line, start in self.comments.items()
+            if line not in self.calling and _CALL_TEXT_RE.search(lines[line - 1][start:])
+        }
+
+    @staticmethod
+    def _comments(text: str) -> dict[int, int]:
+        return {
+            token.start[0]: token.start[1]
+            for token in tokenize.generate_tokens(io.StringIO(text).readline)
+            if token.type == tokenize.COMMENT
+        }
+
+    def code(self, line: int) -> str:
+        """The line without its comment."""
+        return self.lines[line - 1][: self.comments.get(line)]
+
+    # -- reading ----------------------------------------------------------------------
+    def _block(self, body: list[ast.stmt], scope: _Scope) -> None:
+        ended = False
+        for stmt in body:
+            if ended:
+                self._kill(stmt)
+            else:
+                self._statement(stmt, scope)
+                ended = _leaves(stmt)
+
+    def _kill(self, *stmts: ast.stmt) -> None:
+        for stmt in stmts:
+            self.dead.update(_span(stmt))
+
+    def _header(self, stmt: Any) -> None:
+        self.inert.update(range(stmt.lineno, max(stmt.body[0].lineno, stmt.lineno + 1)))
+
+    def _arm(self, stmt: ast.stmt, arm: int, body: list[ast.stmt]) -> None:
+        if body:
+            last = body[-1].end_lineno or body[-1].lineno
+            self.arms.append((id(stmt), arm, _span(body[0]).start, last))
+
+    def _branch(self, stmt: Any, scope: _Scope, truth: bool | None) -> None:
+        """The two blocks of an `if` or a `while`, as a condition settled by syntax leaves
+        them. A settled condition's header runs nothing."""
+        if truth is None:
+            self._read([stmt.test], scope)
+        else:
+            self._header(stmt)
+        if truth is False:
+            self._kill(*stmt.body)
+        else:
+            self._block(stmt.body, scope)
+        if truth is True:
+            self._kill(*stmt.orelse)
+        else:
+            self._block(stmt.orelse, scope)
+
+    def _statement(self, stmt: Any, scope: _Scope) -> None:
+        if isinstance(stmt, _SCOPES):
+            self.inert.update(range(_span(stmt).start, max(stmt.body[0].lineno, stmt.lineno + 1)))
+            inner = _Scope(stmt, scope, stmt.lineno, stmt.end_lineno or stmt.lineno)
+            self.scopes.append(inner)
+            self._block(stmt.body, inner)
+        elif isinstance(stmt, ast.If):
+            truth = _truth(stmt.test)
+            if truth is None:
+                self._arm(stmt, 0, stmt.body)
+                self._arm(stmt, 1, stmt.orelse)
+            self._branch(stmt, scope, truth)
+        elif isinstance(stmt, ast.While):
+            self._branch(stmt, scope, _truth(stmt.test))
+        elif isinstance(stmt, (ast.For, ast.AsyncFor)):
+            if _truth(stmt.iter) is False:
+                self._header(stmt)
+                self._kill(*stmt.body)
+            else:
+                self._read([stmt.iter], scope)
+                self._block(stmt.body, scope)
+            self._block(stmt.orelse, scope)
+        elif isinstance(stmt, _TRIES):
+            self._arm(stmt, 0, stmt.body)
+            self._arm(stmt, 0, stmt.orelse)
+            self._block(stmt.body, scope)
+            for index, handler in enumerate(stmt.handlers, 1):
+                self.excepts.append((handler.lineno, handler.end_lineno or handler.lineno))
+                self._arm(stmt, index, handler.body)
+                self._read([handler.type], scope)
+                self._block(handler.body, scope)
+            self._block(stmt.orelse, scope)
+            self._block(stmt.finalbody, scope)
+        elif isinstance(stmt, (ast.With, ast.AsyncWith)):
+            self._read([item.context_expr for item in stmt.items], scope)
+            self._block(stmt.body, scope)
+        elif isinstance(stmt, ast.Match):
+            self._read([stmt.subject], scope)
+            for index, case in enumerate(stmt.cases):
+                self._arm(stmt, index, case.body)
+                self._read([case.guard], scope)
+                self._block(case.body, scope)
+        elif isinstance(stmt, (ast.Import, ast.ImportFrom)):
+            self.inert.update(_span(stmt))
+            self.imported.update(_span(stmt))
+            for path, level in self._imported_paths(stmt):
+                self.imports.append((stmt.lineno, stmt.end_lineno or stmt.lineno, path, level))
+        elif isinstance(stmt, ast.Pass):
+            self.inert.update(_span(stmt))
+        elif isinstance(stmt, ast.Expr):
+            if not self._read([stmt.value], scope):
+                self.inert.update(_span(stmt))
+            if isinstance(stmt.value, ast.Constant):
+                self.text_statements.update(_span(stmt))
+        elif isinstance(stmt, ast.Assert):
+            self._read([stmt.test], scope, shut=[stmt.msg] if stmt.msg else [])
+        else:
+            if isinstance(stmt, (ast.Return, ast.Raise)):
+                self.exits.append((stmt.lineno, scope))
+            annotated = isinstance(stmt, ast.AnnAssign)
+            parts = [stmt.target, stmt.value] if annotated else list(ast.iter_child_nodes(stmt))
+            self._read(parts, scope)
+
+    def _read(self, nodes: list[Any], scope: _Scope, *, shut: Iterable[ast.AST] = ()) -> bool:
+        """Take in a statement's expressions: their uses, and the lines where all that happens
+        is shut away (a lambda, a generator, a branch a constant rules out). Says whether any
+        of it acts: a call, an await, a yield."""
+        stack = [node for node in nodes if node is not None]
+        closed = list(shut)
+        calls: list[ast.Call] = []
+        acts = False
+        while stack:
+            node = stack.pop()
+            if isinstance(node, (ast.Lambda, ast.GeneratorExp)) or (
+                isinstance(node, _COMPREHENSIONS) and _truth(node.generators[0].iter) is False
+            ):
+                closed.append(node)
+                continue
+            live, off = _branches(node)
+            closed.extend(off)
+            stack.extend(live)
+            if isinstance(node, ast.Call):
+                calls.append(node)
+                self.calling.add(node.lineno)
+                self._use(node.func, node.lineno, True, scope)
+            elif isinstance(node, (ast.Await, ast.Yield, ast.YieldFrom)):
+                acts = True
+            elif isinstance(node, (ast.Name, ast.Attribute)):
+                if isinstance(node.ctx, ast.Load):
+                    self._use(node, node.lineno, False, scope)
+            elif isinstance(node, (ast.Constant, ast.JoinedStr)):
+                self._in_strings.update(range(node.lineno + 1, (node.end_lineno or 0) + 1))
+        if closed:
+            ids = {id(node) for node in closed}
+            clear = {c.lineno for c in calls if not any(id(n) in ids for n in ast.walk(c))}
+            for node in closed:
+                self.inert.update(set(_span(node)) - clear)
+        return acts or bool(calls)
+
+    def _use(self, target: ast.AST, line: int, called: bool, scope: _Scope) -> None:
+        parts = _dotted(target)
+        if parts:
+            self.uses.append(_Use(line, parts, called, scope))
+
+    @staticmethod
+    def _imported_paths(stmt: ast.Import | ast.ImportFrom) -> list[tuple[tuple[str, ...], int]]:
+        if isinstance(stmt, ast.Import):
+            return [(tuple(alias.name.split(".")), 0) for alias in stmt.names]
+        base = tuple(stmt.module.split(".")) if stmt.module else ()
+        return [((*base, alias.name), stmt.level) for alias in stmt.names]
+
+    def _bind(self) -> None:
+        """What each name is bound to, scope by scope; code that never runs binds nothing."""
+        for scope in (self.module, *self.scopes):
+            node = scope.node
+            stack: list[Any] = [*node.body, *([node.args] if isinstance(node, _DEFS) else [])]
+            while stack:
+                item = stack.pop()
+                if getattr(item, "lineno", 0) in self.dead:
+                    continue
+                if isinstance(item, _SCOPES):
+                    scope.bindings.setdefault(item.name, []).append(_Binding(item.lineno))
+                elif isinstance(item, ast.Import):
+                    for alias in item.names:
+                        head = alias.name.split(".")
+                        path = tuple(head) if alias.asname else (head[0],)
+                        name = alias.asname or head[0]
+                        scope.bindings.setdefault(name, []).append(_Binding(item.lineno, path))
+                elif isinstance(item, ast.ImportFrom):
+                    base = tuple(item.module.split(".")) if item.module else ()
+                    for alias in item.names:
+                        binding = _Binding(item.lineno, (*base, alias.name), item.level)
+                        scope.bindings.setdefault(alias.asname or alias.name, []).append(binding)
+                elif not isinstance(item, (ast.Lambda, ast.GeneratorExp, *_COMPREHENSIONS)):
+                    self._bind_plain(item, scope)
+                    stack.extend(ast.iter_child_nodes(item))
+
+    @staticmethod
+    def _bind_plain(item: Any, scope: _Scope) -> None:
+        name = None
+        if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Store):
+            name = item.id
+        elif isinstance(item, ast.arg):
+            name = item.arg
+        elif isinstance(item, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+            name = item.name
+        if name:
+            scope.bindings.setdefault(name, []).append(_Binding(getattr(item, "lineno", 0)))
+
+    # -- asking -----------------------------------------------------------------------
+    def scope_at(self, line: int) -> _Scope:
+        """The innermost function or class that holds `line`, else the module. Every
+        definition has its own span, so a name defined twice loses no line."""
+        best = self.module
+        for scope in self.scopes:
+            if scope.lo <= line <= scope.hi and scope.lo >= best.lo:
+                best = scope
+        return best
+
+    def statement_at(self, line: int) -> ast.stmt | None:
+        """The innermost statement at `line`; a line of a block is the block's own."""
+        best = None
+        size = 0
+        for stmt in self._statements:
+            lo, hi = _statement_lines(stmt)
+            if lo <= line <= hi and (best is None or hi - lo <= size):
+                best, size = stmt, hi - lo
+        return best
+
+    def in_except(self, line: int) -> bool:
+        return any(lo <= line <= hi for lo, hi in self.excepts)
+
+    def same_path(self, line: int, target: int) -> bool:
+        """`line` can run on the way to `target`: the same function, no two arms of one `if`,
+        `try` or `match`, and no `except` branch unless `target` is in it too."""
+        if self.scope_at(line) is not self.scope_at(target):
+            return False
+        if any(lo <= line <= hi and not lo <= target <= hi for lo, hi in self.excepts):
+            return False
+        arms = {group: arm for group, arm, lo, hi in self.arms if lo <= line <= hi}
+        return not any(
+            group in arms and arms[group] != arm
+            for group, arm, lo, hi in self.arms
+            if lo <= target <= hi
+        )
+
+    def exits_between(self, line: int, target: int) -> bool:
+        """A `return` or `raise` of the same function stands from `line` up to `target`."""
+        scope = self.scope_at(line)
+        return any(where is scope and line <= at < target for at, where in self.exits)
+
+    def bindings_of(self, name: str, scope: _Scope) -> list[_Binding]:
+        """What `name` means where it is used: a local binding hides the module's."""
+        current: _Scope | None = scope
+        while current is not None:
+            found = current.bindings.get(name)
+            if found and (current is scope or not isinstance(current.node, ast.ClassDef)):
+                return found
+            current = current.parent
+        return []
+
+    def paths_in(self, lo: int, hi: int) -> Iterable[tuple[tuple[str, ...], int]]:
+        """Each dotted thing lines `lo` to `hi` import, or use through an import."""
+        for first, last, path, level in self.imports:
+            if first <= hi and last >= lo:
+                yield path, level
+        for use in self.uses:
+            if lo <= use.line <= hi:
+                for binding in self.bindings_of(use.parts[0], use.scope):
+                    if binding.path is not None:
+                        yield (*binding.path, *use.parts[1:]), binding.level
+
+    def bound_from(self, line: int, calls: set[int]) -> set[int]:
+        """The lines of the statement at `line`, and of each statement after it, in its
+        scope, that takes a value from a name that statement bound. A model call on `calls`
+        takes the prompt in and hands back a reply, so the names stop there."""
+        stmt = self.statement_at(line)
+        if stmt is None:
+            return {line}
+        lo, hi = _statement_lines(stmt)
+        found = set(range(lo, hi + 1))
+        names: set[str] = set()
+        if not getattr(stmt, "body", None):
+            names = {
+                node.id
+                for node in ast.walk(stmt)
+                if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
+            }
+        kinds = (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.NamedExpr)
+        later = [n for n in ast.walk(self.scope_at(line).node) if isinstance(n, kinds)]
+        for node in sorted(later, key=lambda n: n.lineno):
+            if node.lineno <= hi or node.value is None:
+                continue
+            if any(isinstance(n, ast.Name) and n.id in names for n in ast.walk(node.value)):
+                found.update(_span(node))
+                if not calls.intersection(_span(node)):
+                    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+                    names.update(
+                        n.id for t in targets for n in ast.walk(t) if isinstance(n, ast.Name)
+                    )
+        return found
+
+
 class _Checker:
     """Validates one record against one scan; collects errors and notes."""
 
@@ -388,8 +919,7 @@ class _Checker:
         self.result = RecordResult(path=path.as_posix(), raw=raw)
         self._lines: dict[str, list[str]] = {}
         self._hashes: dict[str, str] = {}
-        self._inert: dict[str, set[int]] = {}
-        self._trees: dict[str, ast.Module | None] = {}
+        self._trees: dict[str, _Tree | None] = {}
         # (file, first line, last line, where) of every accepted citation
         self.citations: list[tuple[str, int, int, str]] = []
 
@@ -413,76 +943,136 @@ class _Checker:
                 return None
         return self._lines[relpath]
 
-    def tree_of(self, relpath: str) -> ast.Module | None:
-        """The syntax tree of a Python file; None for any other file, or one that does not
-        parse."""
+    def tree_of(self, relpath: str) -> _Tree | None:
+        """What the syntax tree shows of a Python file, on the very text the citations are
+        checked against. None for any other file, one that does not parse, one the deep pass
+        has no module for (it gave up on the file, so its facts say nothing), and text with a
+        lone carriage return, which the parser counts as a line and a citation does not."""
         if relpath not in self._trees:
-            tree = None
-            if self.scan.reading_of(relpath) == "deep":
-                try:
-                    tree = ast.parse("\n".join(self.lines_of(relpath) or []))
-                except (SyntaxError, ValueError, RecursionError):
-                    tree = None
-            self._trees[relpath] = tree
+            self._trees[relpath] = self._read_tree(relpath)
         return self._trees[relpath]
 
-    def inert_lines(self, relpath: str) -> set[int]:
-        """The lines of a Python file that run nothing: imports (all their lines), strings
-        standing as statements, the header of a definition (all of a one-line one), a lambda
-        given a name."""
-        if relpath not in self._inert:
-            lines: set[int] = set()
-            tree = self.tree_of(relpath)
-            for node in ast.walk(tree) if tree is not None else ():
-                if isinstance(node, (ast.Import, ast.ImportFrom)) or (
-                    isinstance(node, ast.Expr) and isinstance(node.value, ast.Constant)
-                ):
-                    lines.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
-                elif isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
-                    lines.update(range(node.lineno, max(node.body[0].lineno, node.lineno + 1)))
-                elif isinstance(node, (ast.Assign, ast.AnnAssign)) and isinstance(
-                    node.value, ast.Lambda
-                ):
-                    lines.update(range(node.lineno, (node.end_lineno or node.lineno) + 1))
-            self._inert[relpath] = lines
-        return self._inert[relpath]
+    def _read_tree(self, relpath: str) -> _Tree | None:
+        facts = self.scan.ctx.pyfacts
+        if facts is None or self.scan.reading_of(relpath) != "deep":
+            return None
+        lines = self.lines_of(relpath)
+        if lines is None or f"module:{relpath}" not in facts.functions:
+            return None
+        text = "\n".join(lines)
+        if "\r" in text:
+            return None
+        prompts = [(p.line, p.end_line) for p in facts.prompt_literals if p.file == relpath]
+        try:
+            return _Tree(ast.parse(text), lines, prompts)
+        except (SyntaxError, ValueError, RecursionError, MemoryError, tokenize.TokenError):
+            return None
 
-    def names_used(self, relpath: str) -> list[tuple[int, str, bool]]:
-        """`(line, name, called)` for each name the code of a Python file reads or calls, from
-        its syntax tree, so text in a string is not one. A lambda's body is left out: it runs
-        only if something calls it, which the line does not show."""
+    def inert_lines(self, relpath: str) -> set[int]:
+        """The lines of a Python file that run nothing (`_Tree`); none for any other file."""
         tree = self.tree_of(relpath)
-        used: list[tuple[int, str, bool]] = []
-        stack: list[ast.AST] = [tree] if tree is not None else []
-        while stack:
-            node = stack.pop()
-            if isinstance(node, ast.Lambda):
-                continue
-            stack.extend(ast.iter_child_nodes(node))
-            if isinstance(node, ast.Call):
-                target = node.func
-                name = target.attr if isinstance(target, ast.Attribute) else None
-                name = target.id if isinstance(target, ast.Name) else name
-                if name:
-                    used.append((node.lineno, name, True))
-            elif isinstance(node, ast.Name) and isinstance(node.ctx, ast.Load):
-                used.append((node.lineno, node.id, False))
-            elif isinstance(node, ast.Attribute) and isinstance(node.ctx, ast.Load):
-                used.append((node.lineno, node.attr, False))
-        return used
+        return tree.inert if tree is not None else set()
+
+    def runs(self, relpath: str, number: int) -> bool:
+        """The line is code that runs, as far as a line can show: not blank, not a comment, an
+        import or a definition's header, not in `_Tree.inert`."""
+        text = (self.lines_of(relpath) or [""] * number)[number - 1]
+        code = self.scan.reading_of(relpath) in ("deep", "read")
+        return not (
+            number in self.inert_lines(relpath)
+            or not text.strip()
+            or (code and _NAMES_ONLY_RE.match(text))
+        )
+
+    def quoted_in_comment(self, cited: dict[str, Any]) -> bool:
+        """Python: each line of the quote sits in that line's comment and not in its code."""
+        tree = self.tree_of(cited["file"])
+        quote = cited.get("quote")
+        if tree is None or not quote:
+            return False
+        for number, part in enumerate(str(quote).split("\n"), cited["line"]):
+            start = tree.comments.get(number)
+            if start is None:
+                return False
+            text, wanted = tree.lines[number - 1], normalise(part)
+            if wanted in normalise(text[:start]) or wanted not in normalise(text[start:]):
+                return False
+        return True
 
     def names_only(self, cited: dict[str, Any]) -> bool:
-        """Every cited line is blank or, in code, an import, a comment or a definition's
-        header: it names something and runs nothing."""
-        lines = self.lines_of(cited["file"]) or []
-        inert = self.inert_lines(cited["file"])
-        code = self.scan.reading_of(cited["file"]) in ("deep", "read")
+        """No cited line shows anything run: each is blank, or, in code, an import, a comment,
+        a definition's header, or (Python) another line of `_Tree.inert`; or the quote is only
+        in a comment. It names something and runs nothing."""
         last = cited["end_line"] or cited["line"]
-        return all(
-            number in inert
-            or not lines[number - 1].strip()
-            or (code and _NAMES_ONLY_RE.match(lines[number - 1]))
-            for number in range(cited["line"], last + 1)
+        return self.quoted_in_comment(cited) or not any(
+            self.runs(cited["file"], number) for number in range(cited["line"], last + 1)
+        )
+
+    def not_code(self, cited: dict[str, Any]) -> bool:
+        """The citation is no link: only comments, imports, strings standing as statements,
+        or, in Python, lines that never run. A definition's header stays one (a route is an
+        ingress); so does the inside of a string (a prompt)."""
+        relpath = cited["file"]
+        numbers = range(cited["line"], (cited["end_line"] or cited["line"]) + 1)
+        tree = self.tree_of(relpath)
+        if tree is not None:
+            return self.quoted_in_comment(cited) or all(
+                n in tree.dead
+                or n in tree.imported
+                or n in tree.text_statements
+                or not tree.code(n).strip()
+                for n in numbers
+            )
+        if self.scan.reading_of(relpath) not in ("deep", "read"):
+            return False
+        lines = self.lines_of(relpath) or []
+        return all(_COMMENT_OR_IMPORT_RE.match(lines[n - 1]) for n in numbers)
+
+    def run_time_lines(self) -> set[tuple[str, int]]:
+        """(file, line) of what holds a prompt fetched at run time: the whole statement of
+        each row the scan lists, in Python, and the statements fed from a name it bound."""
+        lines: set[tuple[str, int]] = set()
+        inventory = self.scan.ctx.inventory
+        for row in inventory.prompts or []:
+            if str(row.get("kind")) in _REMOTE_KINDS:
+                file, line = str(row.get("file")), int(row.get("line") or 0)
+                lines.add((file, line))
+                tree = self.tree_of(file)
+                if tree is not None:
+                    calls = {
+                        int(call.get("line") or 0)
+                        for call in inventory.llm_calls or []
+                        if str(call.get("file")) == file
+                    }
+                    lines.update((file, number) for number in tree.bound_from(line, calls))
+        return lines
+
+    def module_file(self, importer: str, parts: tuple[str, ...], level: int = 0) -> str | None:
+        """The walked file a dotted module names, seen from `importer`: next to it, or the
+        only one with that path anywhere. Two candidates and none near: unknown."""
+        if not parts and not level:
+            return None
+        path = "/".join(parts)
+        names = (f"{path}.py", f"{path}/__init__.py") if path else ("__init__.py",)
+        folder = PurePosixPath(importer).parent
+        for _ in range(level - 1):
+            folder = folder.parent
+        near = [(folder / name).as_posix() for name in names]
+        found = next((file for file in near if file in self.scan.walked), None)
+        if found is not None or level:
+            return found
+        anywhere = [
+            file
+            for file in self.scan.walked
+            if any(file == name or file.endswith(f"/{name}") for name in names)
+        ]
+        return anywhere[0] if len(anywhere) == 1 else None
+
+    def imports_file(self, importer: str, path: tuple[str, ...], level: int, other: str) -> bool:
+        """`path` (a module, or a thing inside one) is in the file `other`."""
+        return any(
+            self.module_file(importer, path[:size], level) == other
+            for size in range(len(path), 0, -1)
         )
 
     def citation(self, item: Any, where: str, role: str = "citation") -> dict[str, Any] | None:
@@ -741,11 +1331,14 @@ def validate_record(
     if raw_links is None:
         check.error("`links` must be a list")
         raw_links = []
-    remote_lines = {
-        (str(row.get("file")), int(row.get("line") or 0))
-        for row in scan.ctx.inventory.prompts or []
-        if str(row.get("kind")) in ("remote", "runtime")
-    }
+    remote_lines = check.run_time_lines()
+    # Decided from the scan's rows too: a fetch line recorded as a plain prompt, or as a surface
+    # the plan never listed, is still one. A model call the plan lists stays what it is.
+    surface_fetched = s_type in _RUNTIME_SURFACES or (
+        surface is not None
+        and (s_file, s_line) in remote_lines
+        and (s_type == "prompt" or s_id is None)
+    )
 
     def fetched_at_run_time(cited: dict[str, Any]) -> bool:
         last = cited["end_line"] or cited["line"]
@@ -779,11 +1372,19 @@ def validate_record(
                 hop_cited["step"] = _text(hop.get("step")) if isinstance(hop, dict) else ""
                 via.append(hop_cited)
         reading = scan.reading_of(cited["file"])
-        runtime = how == "runtime-only" or (kind in _PROMPT_BORNE and fetched_at_run_time(cited))
+        runtime = how == "runtime-only" or (
+            kind in _PROMPT_BORNE and (surface_fetched or fetched_at_run_time(cited))
+        )
         if runtime and how != "runtime-only":
             check.note(
                 f"{where}: {cited['file']}:{cited['line']} is a prompt the scan lists as fetched "
                 "or built at run time; the link counts as runtime-only"
+            )
+        no_code = check.not_code(cited)
+        if no_code:
+            check.note(
+                f"{where}: {cited['file']}:{cited['line']} is a comment, an import or a line "
+                "that never runs, so the link does not count"
             )
         if reading == "unsupported":
             lang = scan.lang_of(cited["file"]) or "unknown"
@@ -810,7 +1411,7 @@ def validate_record(
                 "from": _text(item.get("from")) or None,
                 "via": via,
                 "established_by": "runtime-only" if runtime else "investigated",
-                "counted": reading != "unsupported" and kind in kinds_of_view,
+                "counted": reading != "unsupported" and kind in kinds_of_view and not no_code,
             }
         )
     result.links = links
@@ -1104,8 +1705,8 @@ def validate_record(
             if problem is None:
                 control_located = True
                 control_read = control_read or all(
-                    scan.ctx.pyfacts is not None and check.tree_of(file) is not None
-                    for file in (located["file"], on_link["file"])
+                    check.tree_of(file) is not None
+                    for file in _closing_files(located, supported, chain, result.surface, scan)
                 )
             else:
                 check.note(f"{where}: {problem}; it closes nothing")
@@ -1178,7 +1779,7 @@ def validate_record(
                 "tool does no deep analysis there, so the machine cannot show it runs; a person "
                 "weighs it and can still close it"
             )
-        if decision == _CLOSE and s_type in _RUNTIME_SURFACES:
+        if decision == _CLOSE and surface_fetched:
             status, decision = _UNKNOWN, _REVIEW
             check.note(
                 "the surface is a prompt fetched at run time: what it says cannot be ruled out "
@@ -1216,7 +1817,7 @@ def validate_record(
                 )
         if decision == _CLOSE and not closes_by_control:
             contradicted = _scan_contradictions(
-                broken, ruled_citations, result.surface, scan, pattern.id, links
+                broken, ruled_citations, result.surface, scan, links
             )
             if contradicted:
                 decision = _REVIEW
@@ -1253,7 +1854,7 @@ def validate_record(
 def _chain(links: list[dict[str, Any]], required: list[str], check: _Checker) -> set[str]:
     """The ids of the links in a connected component of `from` edges that holds a link of
     every required kind; empty when none does. An edge between two files counts only with a
-    `via` hop."""
+    `via` hop, in one of them, that imports or calls the other (`_hop_joins`)."""
     by_id = {link["id"]: link for link in links}
     present = {link["kind"] for link in links}
     if not set(required) <= present:
@@ -1278,10 +1879,13 @@ def _chain(links: list[dict[str, Any]], required: list[str], check: _Checker) ->
             continue
         if by_id[source]["file"] != link["file"]:
             joined = {by_id[source]["file"], link["file"]}
-            if not any(hop["file"] in joined for hop in link["via"]):
+            if not any(
+                hop["file"] in joined and _hop_joins(hop, next(iter(joined - {hop["file"]})), check)
+                for hop in link["via"]
+            ):
                 check.note(
                     f"the edge from {source} to {link['id']} crosses files with no `via` hop "
-                    "in either file (the import or the call between them); it does not count"
+                    "that imports or calls the other file; it does not count"
                 )
                 continue
         parent[find(link["id"])] = find(source)
@@ -1294,6 +1898,30 @@ def _chain(links: list[dict[str, Any]], required: list[str], check: _Checker) ->
         if set(required) <= {link["kind"] for link in group}
         for link in group
     }
+
+
+def _hop_joins(hop: dict[str, Any], other: str, check: _Checker) -> bool:
+    """The hop imports `other` or calls it, on a line that runs. Between two Python files the
+    syntax tree shows it, through the import. Anywhere else a line can only name the file: the
+    stem of `other`, in code, on a line that is no comment."""
+    scan = check.scan
+    file = hop["file"]
+    lo, hi = hop["line"], hop["end_line"] or hop["line"]
+    tree = check.tree_of(file)
+    if tree is not None and scan.reading_of(other) == "deep":
+        return any(
+            check.imports_file(file, path, level, other) for path, level in tree.paths_in(lo, hi)
+        )
+    numbers = range(lo, hi + 1)
+    if tree is not None:
+        text = " ".join(tree.code(n) for n in numbers if check.runs(file, n))
+    else:
+        lines = check.lines_of(file) or []
+        comment = ("#", "//", "/*", "*")
+        text = " ".join(
+            lines[n - 1] for n in numbers if not lines[n - 1].strip().startswith(comment)
+        )
+    return bool(re.search(rf"\b{re.escape(PurePosixPath(other).stem)}\b", text))
 
 
 def _followed(
@@ -1313,6 +1941,8 @@ def _followed(
 
 def _transformation_problem(
     control: str,
+    located: dict[str, Any],
+    hops: list[dict[str, Any]],
     supported: list[dict[str, Any]],
     chain: set[str],
     ruled_out: set[str],
@@ -1320,9 +1950,11 @@ def _transformation_problem(
 ) -> str | None:
     """Why the data is not shown transformed before it leaves; None when it is.
 
-    Every send the record cites follows, on the chain, a transformation link that runs and,
-    in the same file, comes before it. A send that is no supported link cannot be shown to.
-    `logging` is cited or ruled out: a raw copy in a log is a send the chain does not show."""
+    Every send the record cites follows, on the chain, a transformation link that runs and
+    is on the way to it, by the test a control passes (`_shown_before`): in its function
+    before it, or reached by a real call there. The location of the control can be that call.
+    A send that is no supported link cannot be shown to. `logging` is cited or ruled out: a
+    raw copy in a log is a send the chain does not show."""
     by_id = {link["id"]: link for link in supported}
     if "logging" not in ruled_out and not any(x["kind"] == "logging" for x in supported):
         return (
@@ -1338,6 +1970,13 @@ def _transformation_problem(
             for step in _followed(send, "transformation", by_id, chain)
             if not check.names_only(step)
             and (step["file"] != send["file"] or (step["end_line"] or step["line"]) < send["line"])
+            and _shown_before(
+                step,
+                send["file"],
+                send["line"],
+                [located, *hops, *step["via"], *send["via"]],
+                check,
+            )
         ]
         if not before:
             return (
@@ -1359,100 +1998,259 @@ def _control_problem(
 ) -> str | None:
     """Why a control said to be on the path is not shown there; None when it is.
 
-    It takes a line that runs (not an import, a comment or a definition's header), wholly at
-    or before the first line of the link it guards, on the chain; in the unit a unit surface
-    names, and with a link of the chain inside any other surface. In Python, the line is in
-    the function of that link; a line elsewhere needs a `via` hop in that function that the
-    syntax tree shows calling the function it sits in (or reading the constant), and a
-    function nothing on the way calls never counts. A control in another language or in a
-    config file, from Python, needs a hop that names the file. Elsewhere only the file and
-    the order can be read. A transformation (anonymisation) needs `_transformation_problem`
-    to find nothing. This is the mechanical floor: whether the line does what the record says
-    is for the skeptic pass. A control outside Python passes here at best: the claim stays a
-    review (`validate_record`).
+    The link it guards is the chain's intervention or transmission: a control on the prompt or
+    on the way in says nothing of what reaches the person. It takes a line that runs (not an
+    import, a comment, a definition's header, an expression with no effect, code that never
+    runs: `_Tree`), wholly at or before every intervention and transmission of the chain, on
+    the path to it; in the unit a unit surface names, and with a link of the chain on the
+    surface's own line for any other surface. On a unit surface, every model call of the unit
+    is answered (`_call_answered`). In Python, the line is in the function of that link, not
+    in another arm of an `if` or a `try`, not in an `except` branch the link is outside; a
+    line elsewhere needs a `via` hop that meets the same test and that the syntax tree shows
+    reaching it through an import, with no local definition hiding the name (`_hop_reaches`).
+    A control in another language or in a config file, from Python, needs a hop that names the
+    file. Elsewhere only the file and the order can be read. A transformation (anonymisation)
+    needs `_transformation_problem` to find nothing. This is the mechanical floor: whether the
+    line does what the record says is for the skeptic pass. A control outside Python passes
+    here at best: the claim stays a review (`validate_record`).
     """
     scan = check.scan
     surface = check.result.surface
     file = on_link["file"]
     if on_link["id"] not in chain:
         return f"link {on_link['id']} is not on the connected chain of the pattern"
+    if on_link["kind"] not in _GUARDED_KINDS:
+        return (
+            f"link {on_link['id']} is a {on_link['kind']} link: a control guards the chain's "
+            "intervention or transmission, what reaches the person or leaves the service"
+        )
     if surface.get("type") in _UNIT_SURFACES:
         if getattr(scan.walked.get(file), "unit", None) != _unit_of(surface, scan):
             return f"link {on_link['id']} is outside the unit the record answers"
-    else:
-        lo, hi = surface.get("span") or (1, 10**9)
-        if not any(
-            x["id"] in chain
-            and x["file"] == surface.get("file")
-            and x["line"] <= hi
-            and (x["end_line"] or x["line"]) >= lo
-            for x in supported
-        ):
-            return f"no link of the chain sits in the surface at {surface.get('file')}"
+    elif not _chain_on_surface(surface, supported, chain, check):
+        return f"no link of the chain sits in the surface at {surface.get('file')}"
     if check.names_only(located):
         return (
-            f"{located['file']}:{located['line']} is an import, a comment or a definition's "
-            "header: it names the control and does not show it runs"
+            f"{located['file']}:{located['line']} is an import, a comment, a definition's header "
+            "or a line that never runs: it names the control and does not show it runs"
         )
     if control in _TRANSFORMING_CONTROLS:
-        problem = _transformation_problem(control, supported, chain, ruled_out, check)
+        problem = _transformation_problem(
+            control, located, hops, supported, chain, ruled_out, check
+        )
         if problem is not None:
             return problem
-    facts = scan.ctx.pyfacts if scan.reading_of(file) == "deep" else None
-    function = facts.function_at(file, on_link["line"]) if facts is not None else None
-
-    def on_the_way(cited: dict[str, Any]) -> bool:
-        if cited["file"] != file or (cited["end_line"] or cited["line"]) > on_link["line"]:
-            return False
-        return facts is None or facts.function_at(file, cited["line"]) == function
-
-    if on_the_way(located):
-        return None
-    name, must_call = _callable_name(located, file, check)
-    lines = check.lines_of(file) or []
-
-    def reaches(hop: dict[str, Any]) -> bool:
-        last = hop["end_line"] or hop["line"]
-        if name is None:
-            return True
-        if facts is not None and scan.reading_of(located["file"]) == "deep":
-            return any(
-                used == name
-                and hop["line"] <= line <= last
-                and (called or not must_call)
-                and facts.function_at(file, line) == function
-                for line, used, called in check.names_used(file)
+    guarded = [x for x in supported if x["id"] in chain and x["kind"] in _GUARDED_KINDS]
+    for link in guarded:
+        if not _shown_before(located, link["file"], link["line"], hops, check):
+            target = _target_of(located, link["file"], check)
+            return (
+                f"{located['file']}:{located['line']} is not at or before link {link['id']} on "
+                f"the way to it in its "
+                f"{'function' if check.tree_of(link['file']) is not None else 'file'}, and no "
+                f"`via` hop there reaches {target.name if target else 'it'}"
             )
-        return bool(re.search(rf"\b{re.escape(name)}\b", " ".join(lines[hop["line"] - 1 : last])))
+    for where, line in _unit_calls(surface, scan):
+        if not _call_answered(where, line, located, hops, guarded, check):
+            return (
+                f"the model call at {where}:{line} is in the unit, and the control is not on the "
+                "way to it nor to a guarded link that call's reply reaches"
+            )
+    return None
 
-    if any(on_the_way(hop) and not check.names_only(hop) and reaches(hop) for hop in hops):
-        return None
-    return (
-        f"{located['file']}:{located['line']} is not at or before link {on_link['id']} in its "
-        f"{'function' if facts is not None else 'file'}, and no `via` hop there "
-        + (f"reaches {name}" if name else "reaches it")
+
+def _chain_on_surface(
+    surface: dict[str, Any],
+    supported: list[dict[str, Any]],
+    chain: set[str],
+    check: _Checker,
+) -> bool:
+    """A link of the chain covers the surface's own line (its whole statement, in Python): the
+    window around it holds what the surface is near, not what it is. A surface that is a whole
+    file (line 0, or a span to its end) is covered by a link anywhere in it."""
+    file = surface.get("file")
+    line = surface.get("line") or 0
+    span = surface.get("span")
+    lo, hi = 1, 10**9
+    if line and not (span and span[1] >= 10**9):
+        tree = check.tree_of(file)
+        stmt = tree.statement_at(line) if tree is not None else None
+        lo, hi = _statement_lines(stmt) if stmt is not None else (line, line)
+    return any(
+        x["id"] in chain
+        and x["file"] == file
+        and x["line"] <= hi
+        and (x["end_line"] or x["line"]) >= lo
+        for x in supported
     )
 
 
-def _callable_name(
-    located: dict[str, Any], link_file: str, check: _Checker
-) -> tuple[str | None, bool]:
-    """What a line on the way must name to reach `located`, and whether it must call it: the
-    function that holds it (a call), in Python the first name on a line at module level (a
-    constant is read, not called), or, from Python, the stem of a file Python does not read.
-    None where nothing can be read."""
+def _unit_calls(surface: dict[str, Any], scan: MachineScan) -> list[tuple[str, int]]:
+    """The model calls of the unit a unit surface names; none for any other surface."""
+    if surface.get("type") not in _UNIT_SURFACES:
+        return []
+    unit = str(_unit_of(surface, scan))
+    return sorted(
+        {
+            (str(row.get("file")), int(row.get("line") or 0))
+            for row in scan.ctx.inventory.llm_calls or []
+            if str(row.get("unit")) == unit and not _is_import_row(row)
+        }
+    )
+
+
+def _closing_files(
+    located: dict[str, Any],
+    supported: list[dict[str, Any]],
+    chain: set[str],
+    surface: dict[str, Any],
+    scan: MachineScan,
+) -> set[str]:
+    """What the machine must have read for a control to close: the control, every link of the
+    chain, every model call a unit surface answers for."""
+    return {
+        located["file"],
+        *(x["file"] for x in supported if x["id"] in chain),
+        *(file for file, _line in _unit_calls(surface, scan)),
+    }
+
+
+def _comes_before(cited: dict[str, Any], file: str, line: int, check: _Checker) -> bool:
+    """`cited` is wholly at or before `line` of `file`, and in Python a line of it that runs
+    is on the path to that line."""
+    last = cited["end_line"] or cited["line"]
+    if cited["file"] != file or last > line:
+        return False
+    tree = check.tree_of(file)
+    return tree is None or any(
+        check.runs(file, number) and tree.same_path(number, line)
+        for number in range(cited["line"], last + 1)
+    )
+
+
+def _shown_before(
+    cited: dict[str, Any], file: str, line: int, hops: list[dict[str, Any]], check: _Checker
+) -> bool:
+    """`cited` runs on the way to `line` of `file`: it sits there, or a hop there reaches it."""
+    return _comes_before(cited, file, line, check) or any(
+        _hop_reaches(hop, cited, file, line, check) for hop in hops
+    )
+
+
+def _hop_reaches(
+    hop: dict[str, Any], located: dict[str, Any], file: str, line: int, check: _Checker
+) -> bool:
+    """The hop runs on the way to `line` of `file` and reaches `located`. From parsed Python to
+    parsed Python, a call (or, for a constant, a read) on the hop must be bound to `located`
+    (`_bound_to`). Otherwise only the text of the hop can be read: it names what `_target_of`
+    gives. No name at all reaches nothing from Python."""
+    if not _comes_before(hop, file, line, check) or check.names_only(hop):
+        return False
+    target = _target_of(located, file, check)
+    python = check.scan.reading_of(file) == "deep"
+    if target is None:
+        return not python
+    lo, hi = hop["line"], hop["end_line"] or hop["line"]
+    tree = check.tree_of(file)
+    if tree is not None and check.tree_of(located["file"]) is not None:
+        return any(
+            lo <= use.line <= hi
+            and tree.same_path(use.line, line)
+            and (use.called or not target.must_call)
+            and _bound_to(use, tree, file, target, located["file"], check)
+            for use in tree.uses
+        )
+    numbers = range(lo, hi + 1)
+    if tree is not None:
+        text = " ".join(tree.code(n) for n in numbers if tree.same_path(n, line))
+    else:
+        text = " ".join((check.lines_of(file) or [])[lo - 1 : hi])
+    return bool(re.search(rf"\b{re.escape(target.name)}\b", text))
+
+
+def _bound_to(
+    use: _Use, tree: _Tree, file: str, target: _Target, target_file: str, check: _Checker
+) -> bool:
+    """Every binding of the name the code uses leads to the target: the definition itself in
+    the file, or, through an import, the target's name in the target's file, which binds that
+    name there and nowhere else. A local name, a stub, an object's attribute or an import of
+    another file does not."""
+    bindings = tree.bindings_of(use.parts[0], use.scope)
+    held = check.tree_of(target_file)
+    if not bindings or held is None:
+        return False
+    for binding in bindings:
+        if binding.path is None:
+            if (
+                file != target_file
+                or use.parts != (target.name,)
+                or not target.lo <= binding.line <= target.hi
+            ):
+                return False
+            continue
+        path = (*binding.path, *use.parts[1:])
+        if (
+            path[-1] != target.name
+            or check.module_file(file, path[:-1], binding.level) != target_file
+        ):
+            return False
+        others = held.module.bindings.get(target.name, [])
+        if not others or not all(target.lo <= other.line <= target.hi for other in others):
+            return False
+    return True
+
+
+def _target_of(located: dict[str, Any], link_file: str, check: _Checker) -> _Target | None:
+    """What a line on the way must reach to reach `located`: in Python the function that holds
+    it (called), or at module level the name that statement binds (read); from Python, the
+    stem of a file Python does not read. None where nothing can be named: a class body, a
+    line at module level that binds no name, an `except` branch, a file that does not parse."""
     scan = check.scan
-    facts = scan.ctx.pyfacts
-    if scan.reading_of(located["file"]) != "deep":
+    file = located["file"]
+    if scan.reading_of(file) != "deep":
         python_link = scan.reading_of(link_file) == "deep"
-        return (PurePosixPath(located["file"]).stem if python_link else None), False
-    if facts is None:
-        return None, False
-    holder = facts.function_at(located["file"], located["line"])
-    if holder is not None and holder.name:
-        return holder.name.rsplit(".", 1)[-1], True
-    first = _IDENTIFIER_RE.search((check.lines_of(located["file"]) or [""])[located["line"] - 1])
-    return (first.group(0) if first else None), False
+        return _Target(PurePosixPath(file).stem, False) if python_link else None
+    tree = check.tree_of(file)
+    if tree is None:
+        return None
+    last = located["end_line"] or located["line"]
+    running = [
+        n for n in range(located["line"], last + 1) if check.runs(file, n) and not tree.in_except(n)
+    ]
+    if not running:
+        return None
+    scope = tree.scope_at(running[0])
+    if isinstance(scope.node, _DEFS):
+        return _Target(scope.node.name, True, scope.lo, scope.hi)
+    stmt = tree.statement_at(running[0])
+    if scope is not tree.module or not isinstance(stmt, (ast.Assign, ast.AnnAssign)):
+        return None
+    targets = stmt.targets if isinstance(stmt, ast.Assign) else [stmt.target]
+    names = [target.id for target in targets if isinstance(target, ast.Name)]
+    return _Target(names[0], False, *_statement_lines(stmt)) if names else None
+
+
+def _call_answered(
+    file: str,
+    line: int,
+    located: dict[str, Any],
+    hops: list[dict[str, Any]],
+    guarded: list[dict[str, Any]],
+    check: _Checker,
+) -> bool:
+    """The control is on the way to the model call, or, in the same function, the call's reply
+    can only go on to a guarded link: nothing returns or raises between them. A second handler,
+    or a raw call that returns early, is neither."""
+    if _shown_before(located, file, line, hops, check):
+        return True
+    tree = check.tree_of(file)
+    return tree is not None and any(
+        link["file"] == file
+        and line <= link["line"]
+        and tree.same_path(line, link["line"])
+        and not tree.exits_between(line, link["line"])
+        for link in guarded
+    )
 
 
 def _ruled_out_at_run_time(broken: list[str], result: RecordResult, scan: MachineScan) -> list[str]:
@@ -1464,6 +2262,11 @@ def _ruled_out_at_run_time(broken: list[str], result: RecordResult, scan: Machin
         str(row.get("kind")) in ("remote", "runtime") for row in scan.ctx.inventory.prompts or []
     )
     return kinds if fetched else []
+
+
+def _is_import_row(row: dict[str, Any]) -> bool:
+    """An `llm_calls` row that is the import of a client, not a call of it."""
+    return str(row.get("api") or "").startswith(("import ", "from "))
 
 
 def _unit_of(surface: dict[str, Any], scan: MachineScan) -> str | None:
@@ -1481,13 +2284,13 @@ def _scan_contradictions(
     cited: dict[str, list[dict[str, Any]]],
     surface: dict[str, Any],
     scan: MachineScan,
-    pattern_id: str = "",
     links: Iterable[dict[str, Any]] = (),
 ) -> list[tuple[str, str]]:
     """Ruled-out kinds the scan lists in the record's units (its surface's and its links'),
-    when a citation of the ruled-out entry is not at each of those rows. For the prompt of a
-    prompt surface, the rows are those inside that surface: the other prompts of the unit are
-    surfaces of their own."""
+    when a citation of the ruled-out entry is not at each of those rows. A link the syntax tree
+    established counts as a row whatever finding it came with: the kind is what is ruled out,
+    not the pattern. For the prompt of a prompt surface, the rows are those inside that
+    surface: the other prompts of the unit are surfaces of their own."""
     units = {str(_unit_of(surface, scan))} | {
         str(getattr(scan.walked.get(link["file"]), "unit", None)) for link in links
     }
@@ -1502,19 +2305,14 @@ def _scan_contradictions(
             row
             for row in getattr(scan.ctx.inventory, section, None) or []
             if str(row.get("unit")) in units
-            and not (
-                section == "llm_calls"
-                and str(row.get("api") or "").startswith(("import ", "from "))
-            )
+            and not (section == "llm_calls" and _is_import_row(row))
             and (kind not in _SIGNAL_ROWS or str(row.get("kind")) in _SIGNAL_ROWS[kind])
         ]
-        # A link the syntax tree established for a finding of this pattern in the unit.
+        # A link the syntax tree established, for any finding, in the unit.
         for finding in scan.findings:
-            pattern = scan.policy.pattern_of(finding.display_id)
-            if finding.flow is None or pattern is None or pattern.id != pattern_id:
-                continue
-            for flow_link in finding.flow.links:
-                if flow_link.kind == kind and flow_link.supported:
+            for flow_link in finding.flow.links if finding.flow is not None else ():
+                in_unit = str(getattr(scan.walked.get(flow_link.file), "unit", None)) in units
+                if flow_link.kind == kind and flow_link.supported and in_unit:
                     rows.append({"file": flow_link.file, "line": flow_link.line, "kind": "ast"})
         if not rows:
             continue
@@ -1645,6 +2443,7 @@ def _bind_skeptic(
         isinstance(c, dict)
         and _text(c.get("claim"))
         and _text(c.get("result")).lower() in ("upheld", "refuted")
+        and _text(c.get("reason"))
         for c in claims
     ):
         why = "a claim in it is not {claim, result: upheld or refuted, reason}"
@@ -1757,6 +2556,30 @@ def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]
     return None, "read again by a person or an agent; never passes mechanically"
 
 
+def quote_copies(step: dict[str, Any], files: Iterable[str], scan: MachineScan) -> list[str]:
+    """The files among `files` that hold the quote of an `absent` step, its own file aside.
+    The step reads one file, so a copy beside a stub passes it. A file the walk does not read
+    is read here too, since a move out of its sight is the case this is for; one over
+    `_MAX_SEARCHED_BYTES` is not, and stays in the `files_not_read` gap."""
+    quote = str(step.get("quote") or "")
+    own = _text(step.get("file")).replace("\\", "/")
+    hits = []
+    for relpath in sorted(set(files) - {own}):
+        record = scan.walked.get(relpath)
+        path = record.path if record is not None else scan.root / relpath
+        try:
+            if record is None and (
+                path.is_symlink() or not path.is_file() or path.stat().st_size > _MAX_SEARCHED_BYTES
+            ):
+                continue
+            text = "\n".join(file_lines(path))
+        except OSError:
+            continue
+        if quote_in_text(text, quote):
+            hits.append(relpath)
+    return hits
+
+
 # ---------------------------------------------------------------------------
 # Files and the batch
 # ---------------------------------------------------------------------------
@@ -1790,6 +2613,8 @@ def find_record_files(path: Path) -> tuple[list[Path], list[dict[str, str]]]:
         label = (schema, kind) if isinstance(schema, str) and isinstance(kind, str) else None
         if label == (SKEPTIC_SCHEMA, SKEPTIC_KIND):
             skipped.append({"path": candidate.as_posix(), "why": "a skeptic pass"})
+        elif label == (SIGNOFF_SCHEMA, SIGNOFF_KIND):
+            skipped.append({"path": candidate.as_posix(), "why": SIGNOFF_SKIPPED})
         elif label in _OTHER_DOCUMENTS and not path.is_file():
             skipped.append({"path": candidate.as_posix(), "why": f"a document of kind {kind}"})
         else:
@@ -1907,7 +2732,10 @@ def _batch(results: list[RecordResult]) -> None:
                 continue
             if target is None:
                 result.status = "rejected"
-                result.errors.append(f"supersedes {sid}, which is not an accepted record here")
+                result.errors.append(
+                    f"supersedes {sid}, which is not an accepted record here: to supersede a "
+                    "record of an earlier commit, keep its record file in this folder"
+                )
             elif target is result:
                 result.status = "rejected"
                 result.errors.append("a record cannot supersede itself")
@@ -1929,6 +2757,17 @@ def _batch(results: list[RecordResult]) -> None:
                 result.errors.append(
                     f"supersedes {sid}, a violation its skeptic pass upheld, with a record that "
                     "is not one: a violation is replaced only by another upheld violation"
+                )
+            elif (
+                target.proposed.get("decision") == _VIOLATES
+                and result.proposed.get("decision") != _VIOLATES
+            ):
+                # Whatever the machine made of it: a closing that replaced a proposal lowered
+                # to a review could then be signed, and the violation would be gone by name.
+                result.status = "rejected"
+                result.errors.append(
+                    f"supersedes {sid}, which proposes a violation, with a record that does not: "
+                    "a proposed violation is replaced only by another proposed violation"
                 )
             elif _CLAIM_RANK.get(result.claim or "", 0) < _CLAIM_RANK.get(target.claim or "", 0):
                 result.status = "rejected"
@@ -1952,13 +2791,13 @@ def _batch(results: list[RecordResult]) -> None:
                     stack = []
                     break
                 stack.append(nxt)
-    for result in results:
-        if result.accepted:
-            for sid in result.supersedes:
-                target = owner.get(sid)
-                if target is not None and target.accepted:
-                    target.status = "superseded"
-                    target.notes.append(f"superseded by {result.id}")
+    # Taken before the loop: a record superseded in it still replaces what it names.
+    for result in [r for r in results if r.accepted]:
+        for sid in result.supersedes:
+            target = owner.get(sid)
+            if target is not None and target.accepted:
+                target.status = "superseded"
+                target.notes.append(f"superseded by {result.id}")
 
 
 def render_validation(run: ValidationRun) -> str:

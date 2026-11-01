@@ -5,6 +5,8 @@
     aisafe engagement init --engagement ../acme-engagement --target . --auditor "A. Auditor" \\
         --organisation "Audit Org" --auditee "Acme Ltd"
     aisafe engagement status --engagement ../acme-engagement
+    aisafe engagement authorise --engagement ../acme-engagement --what "audit and test" \\
+        --by "B. Owner <CTO>" --date 2026-10-29 --file signed.pdf --endpoint https://test.example
     aisafe engagement receive --engagement ../acme-engagement --request ID --file protocol.pdf \\
         --by "A. Auditor"
     aisafe engagement insufficient --engagement ../acme-engagement --request ID \\
@@ -16,16 +18,19 @@
 `init` writes `engagement.json` with the names given and every other field empty: the
 independence statement, the scope, the authorisations and the applicability answers are
 written by a person, never prefilled. In auditor mode the engagement directory must be
-outside the audited tree. `status` says what is still to fill in, the state of every
-evidence request and received document, the auditee's responses, whether the last
-assessment's bundle still matches, and the QA sign-offs.
+outside the audited tree. `authorise` copies a written authorisation in, hashes it and adds
+its entry; an entry written by hand stays valid. `status` says what is still to fill in,
+whether the applicability answers are the auditor's own, the state of every evidence
+request and received document, the auditee's responses (and which of them name nothing in
+the last assessment), whether the last assessment's bundle still matches, and the QA
+sign-offs.
 
 The auditor decides. The auditee's evidence and responses are shown beside the outcome and
-never change it; `receive`, `insufficient`, `respond` and `qa` record what a named person
-did or said, on that person's instruction.
+never change it; `authorise`, `receive`, `insufficient`, `respond` and `qa` record what a
+named person did or said, on that person's instruction.
 
 Exit codes: 0 done (status: complete and nothing changed); 1 status found something to
-fill in, a changed document or a stale bundle; 2 fatal.
+fill in, a changed document, a response that names nothing or a stale bundle; 2 fatal.
 """
 
 from __future__ import annotations
@@ -76,6 +81,14 @@ def build_parser() -> argparse.ArgumentParser:
 
     p = add("status", "what is still to fill in, and the state of every file")
     p.add_argument("--format", choices=("terminal", "json"), default="terminal")
+
+    p = add("authorise", "record a written authorisation (the document copied and hashed)")
+    p.add_argument("--what", required=True, metavar="TEXT", help="what it authorises")
+    p.add_argument("--by", required=True, metavar="NAME", help="who gave it")
+    p.add_argument("--date", required=True, metavar="ISO", help="its date, YYYY-MM-DD")
+    p.add_argument("--file", required=True, metavar="PATH", help="the signed document")
+    p.add_argument("--endpoint", default=None, metavar="URL", help="the endpoint it covers")
+    p.add_argument("--data", default=None, metavar="TEXT", help="the data it covers")
 
     p = add("receive", "record documents received for an evidence request (copied and hashed)")
     p.add_argument("--request", required=True, metavar="ID")
@@ -132,6 +145,7 @@ def _init(ns: argparse.Namespace) -> int:
             model.EVIDENCE_DIR,
             model.RESPONSES_DIR,
             model.INVESTIGATIONS_DIR,
+            model.AUTHORISATIONS_DIR,
         )
         if (directory / name).is_file()
         or ((directory / name).is_dir() and any((directory / name).iterdir()))
@@ -170,13 +184,20 @@ def _init(ns: argparse.Namespace) -> int:
     _note(f"wrote {(directory / model.ENGAGEMENT_FILE).as_posix()}")
     print(
         "Fill in engagement.json by hand: the independence statement, the scope (commits, "
-        "deployment, configuration, environments), the written authorisations and the "
-        "applicability answers. Then run `aisafe engagement status`."
+        "deployment, configuration, environments) and the applicability answers. Record each "
+        "written authorisation with `aisafe engagement authorise`. Then run `aisafe engagement "
+        "status`."
     )
     return 0
 
 
+def _one_line(value: Any) -> str:
+    """Text a person supplied, on one line: a line break could fake a line of the status."""
+    return " ".join(str(value).split())
+
+
 def _status(ns: argparse.Namespace) -> int:
+    from aisafe.assessment.render import answers_source_line
     from aisafe.engagement.bundle import verify_bundle
     from aisafe.legal.profile import definition_questions, load_profiles
 
@@ -214,8 +235,19 @@ def _status(ns: argparse.Namespace) -> int:
             for doc in state["documents"]:
                 if (directory / str(doc["path"])).resolve() not in bundled:
                     unread.append(str(doc["path"]))
+        for auth in authorisations:
+            path = (auth["document"] or {}).get("path")
+            if path and (directory / str(path)).resolve() not in bundled:
+                unread.append(str(path))
     outstanding = [s for s in states.values() if s["active"] and s["status"] == "requested"]
     changed_auth = [a for a in authorisations if a["state"] in ("changed", "missing")]
+    source = model.answers_source(eng.data)
+    # Read against the last assessment; with none, which responses match is unknown, not "none".
+    document = model.read_assessment(assessment) if current is not None else None
+    unmatched: list[dict[str, Any]] | None = None
+    if document is not None:
+        named = set(model.place_responses(responses, document))
+        unmatched = [{"file": r["file"], "to": r["to"]} for r in responses if r["file"] in named]
     report: dict[str, Any] = {
         "engagement": eng.path.as_posix(),
         "sha256": eng.sha256,
@@ -234,6 +266,7 @@ def _status(ns: argparse.Namespace) -> int:
             for p in profiles
         ],
         "to_fill_in": missing,
+        "applicability_source": source,
         "definition_questions": questions,
         "requests": list(states.values()),
         "changed_documents": changed_docs,
@@ -242,6 +275,7 @@ def _status(ns: argparse.Namespace) -> int:
             for r in responses
         ],
         "response_problems": response_problems,
+        "unmatched_responses": unmatched,
         "assessment": None
         if current is None
         else {"path": assessment.as_posix(), "sha256": current},
@@ -266,6 +300,8 @@ def _status(ns: argparse.Namespace) -> int:
             or changed_docs
             or stale
             or response_problems
+            or unmatched
+            or (current is not None and document is None)
             or qa_open
             or unread
             or outstanding
@@ -297,6 +333,8 @@ def _status(ns: argparse.Namespace) -> int:
             lines.append(f"    {key}: {questions[key]}")
     else:
         lines.append("to fill in: nothing")
+    if source is not None and source["state"] != "unnamed":
+        lines.append(_one_line(answers_source_line(source)))
     counts: dict[str, int] = {}
     for state in states.values():
         counts[state["status"]] = counts.get(state["status"], 0) + 1
@@ -311,10 +349,17 @@ def _status(ns: argparse.Namespace) -> int:
         lines.append(f"  ! {doc['path']} is {doc['state']}: it no longer counts")
     lines.append(f"auditee responses: {len(responses)}")
     lines.extend(f"  ! {problem}" for problem in response_problems)
+    for row in unmatched or []:
+        lines.append(
+            f"  ! {row['file']} answers {_one_line(row['to'])}, which names nothing in the last "
+            "assessment: it is shown there and placed nowhere"
+        )
+    if responses and unmatched is None:
+        lines.append("  which responses name something is unknown: no assessment could be read")
     lines.append(f"written authorisations: {len(authorisations)}")
     for auth in authorisations:
         if auth["state"] is not None:
-            lines.append(f"  - {auth['what']}: document {auth['state']}")
+            lines.append(f"  - {_one_line(auth['what'])}: document {auth['state']}")
     if current is None:
         lines.append("assessment: none yet")
     else:
@@ -356,6 +401,18 @@ def main(argv: Sequence[str] | None = None) -> int:
             return _status(ns)
         directory = Path(ns.engagement)
         eng = model.load_engagement(directory)
+        if ns.action == "authorise":
+            entry = model.add_authorisation(
+                directory,
+                what=ns.what,
+                by=ns.by,
+                on=ns.date,
+                document=Path(ns.file),
+                endpoint=ns.endpoint,
+                data=ns.data,
+            )
+            _note(f"authorisation by {ns.by} recorded: {entry['document']['path']}")
+            return 0
         if ns.action == "receive":
             model.receive(directory, ns.request, [Path(f) for f in ns.file], by=ns.by, note=ns.note)
             _note(f"received {len(ns.file)} document(s) for {ns.request}")

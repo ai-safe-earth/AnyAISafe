@@ -4,7 +4,7 @@ The review record (`aisafe.review.records`) and the `aisafe review` command
 (`aisafe.review.cli`): the schema and its field checks, a record that covers a file by
 unit and by listed artifact, staleness by content hash and by age, the contextual
 decisions a person recorded, the finder (default names, `.aisafe/`, an override, never an
-exception), the writer (stable layout, ASCII, round trip), and the command's exit codes
+exception), the writer (stable layout, round trip), and the command's exit codes
 on a scratch copy of the `persons_companion` fixture: `init` writes a skeleton nobody has
 signed, `record` binds a named person to the current hashes, `check` says what changed.
 
@@ -170,10 +170,9 @@ def test_fallback_phrases_mirror_the_renderer_list():
         (7, "must be a string"),
         ("TODO", "is the placeholder TODO"),
         (" todo ", "is the placeholder TODO"),
-        ("caf" + chr(0xE9), "is not ASCII"),
-        ("two\nlines", "must be a single line of printable ASCII"),
-        ("tab\there", "must be a single line of printable ASCII"),
-        ("control \x7f here", "must be a single line of printable ASCII"),
+        ("two\nlines", "must be a single line of printable text"),
+        ("tab\there", "must be a single line of printable text"),
+        ("control \x7f here", "must be a single line of printable text"),
         (f"the system is {banned_word()}", "reads as a verdict"),
         (f"reviewed and it {banned_phrase()}", "reads as a verdict"),
         (f"key {secret_shaped()} in a prompt", "contains a secret-shaped token"),
@@ -189,9 +188,10 @@ def test_check_text_refuses(value, why):
 
 def test_check_text_passes_plain_text_and_multiline_notes():
     assert check_text("x", REVIEWER) is None
-    assert check_text("x", "line one\nline two") == "x must be a single line of printable ASCII"
+    assert check_text("x", "line one\nline two") == "x must be a single line of printable text"
     assert check_text("x", "line one\nline two", multiline=True) is None
-    assert check_text("x", "tab\there", multiline=True) == "x must be printable ASCII"
+    assert check_text("x", "tab\there", multiline=True) == "x must be printable text"
+    assert check_text("x", "caf" + chr(0xE9)) is None
     assert check_text("x", "a tool helped: an LLM reviewer") is None
 
 
@@ -323,9 +323,12 @@ def test_a_document_of_the_wrong_shape_yields_no_record(doc, message):
             {"declared_purpose": f"a {banned_phrase()} tutor"},
             "reviews[0].declared_purpose reads as a verdict",
         ),
-        ({"affected_population": "caf" + chr(0xE9)}, "reviews[0].affected_population is not ASCII"),
+        (
+            {"affected_population": "caf" + chr(0x200B) + "e"},
+            "reviews[0].affected_population must be a single line of printable text",
+        ),
         ({"assisted_by": "  "}, "reviews[0].assisted_by is empty"),
-        ({"notes": "tab\there"}, "reviews[0].notes must be printable ASCII"),
+        ({"notes": "tab\there"}, "reviews[0].notes must be printable text"),
         ({"artifacts": []}, "reviews[0].artifacts must be a non-empty list"),
         ({"artifacts": "prompts/system.md"}, "reviews[0].artifacts must be a non-empty list"),
         ({"artifacts": ["prompts/system.md"]}, "reviews[0].artifacts[0] is not a mapping"),
@@ -900,7 +903,11 @@ def test_record_refuses_a_bad_scope(companion, capsys, args, message):
         (f"J. Doe {secret_shaped()}", PURPOSE, "reviewer contains a secret-shaped token"),
         ("TODO", PURPOSE, "reviewer is the placeholder TODO"),
         ("   ", PURPOSE, "reviewer is empty"),
-        (REVIEWER, "caf" + chr(0xE9), "declared_purpose is not ASCII"),
+        (
+            REVIEWER,
+            "caf" + chr(0x200B) + "e",
+            "declared_purpose must be a single line of printable text",
+        ),
     ],
 )
 def test_record_refuses_a_verdict_a_secret_or_a_placeholder(

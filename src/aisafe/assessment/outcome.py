@@ -24,8 +24,11 @@ Per mechanism M1 to M7, in this order:
    did not say it checked; a closing that answers no surface hypothesis of the plan, whether
    or not the plan carries the mechanism; a file of the tree nobody read that may hold code
    or prompts (a tracked file the walk skipped, a file in a language this version does not
-   read), or a tree whose tracked files git could not list. Pictures, fonts, recordings,
-   drawings, style sheets and dependency lock files do not count: they hold neither.
+   read), or a tree whose tracked files git could not list. Outside git no commit lists the
+   tree, so a file the walk says it skipped counts the same way, and so does a directory it
+   did not go into (`vendor`, `build`, one a `.gitignore` line hides): the directory is
+   named, not walked. Caches, pictures, fonts, recordings, drawings, style sheets and
+   dependency lock files do not count: they hold neither.
 3. `no_violation_identified_within_assessed_scope` when a record closes the mechanism and
    no gap remains. It says "closed on k of n surface hypotheses": the scope, never more.
 4. `not_assessed` otherwise: no surface of the plan carries the mechanism, or nothing
@@ -39,9 +42,16 @@ review records, never from an investigation record. It closes only when every re
 stands (under this policy, within the review window, and bound to the artifacts as they are
 now), when between them the records bind every file of the plan's surfaces (a record that
 names units binds files of those units only; the surface of a person-facing unit is a
-directory and asks for no file), and when no file stayed unread as above. A record whose
-binding nobody checked (no `stale` fact) does not stand. Neither does a record the parser
-dropped or a record file nobody read: each problem with the record files is a row of its own.
+directory and asks for no file; a record binds a surface only when its `scope` holds every
+mechanism among the surface's hypotheses, so a review of M1 says nothing about a surface
+that carries M5), and when no file stayed unread as above. A record whose binding nobody
+checked (no `stale` fact) does not stand. Neither does a record the parser dropped or a
+record file nobody read: each problem with the record files is a row of its own.
+
+A sign-off (`investigation.signoff`) is a person's decision, and it clears two gaps and no
+other: `record_at_review`, for a record `apply_signoffs` turned into a closing (which also
+decides that record's own surface hypothesis), and the files it names in `files_not_read`.
+It lowers no violation and answers no scan finding, and the basis line names who decided.
 
 The overall outcome is the least favourable of the eight: violations_identified, then
 inconclusive, then not_assessed, then no_violation_identified_within_assessed_scope.
@@ -53,7 +63,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import PurePosixPath
-from typing import Any, Iterable, Sequence
+from typing import Any, Collection, Iterable, Sequence
 
 from aisafe.evidence.model import Decision, EvidenceStatus, Finding
 from aisafe.policy import Policy
@@ -64,6 +74,7 @@ __all__ = [
     "MechanismOutcome",
     "least_favourable",
     "mechanism_outcomes",
+    "unread_files",
 ]
 
 VIOLATIONS = "violations_identified"
@@ -149,6 +160,11 @@ class MechanismOutcome:
     unchallenged: list[str] = field(default_factory=list)
     scan: list[dict[str, Any]] = field(default_factory=list)
     closed_on: dict[str, int] | None = None
+    # The sign-offs this outcome stands on, by id.
+    signoffs: list[str] = field(default_factory=list)
+    # The `files_not_read` gap sign-offs emptied: gone from the outcome, kept for the legal
+    # section, which a person's sign-off does not move. Not part of the document.
+    signed_gap: Gap | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -163,6 +179,7 @@ class MechanismOutcome:
             "unchallenged": list(self.unchallenged),
             "scan": [dict(row) for row in self.scan],
             "closed_on": self.closed_on,
+            "signoffs": list(self.signoffs),
         }
 
 
@@ -253,19 +270,42 @@ def _some(files: Sequence[str]) -> str:
     return f"{shown} and {len(files) - _NAMED} more" if len(files) > _NAMED else shown
 
 
-def _files_not_read(
+def _signed(record: Any) -> list[dict[str, Any]]:
+    """The sign-offs that turned this record into a closing; [] for any other record."""
+    return getattr(record, "signoffs", None) or []
+
+
+def _who(row: dict[str, Any]) -> str:
+    label = "auditor" if row.get("mode") == "auditor" else "self-assessed"
+    return f"{row.get('by')} ({label}, sign-off {row.get('id')})"
+
+
+def unread_files(
     tracked_not_walked: Sequence[str] | None, unsupported_files: Sequence[str]
-) -> Gap | None:
-    """The blocking gap of the files nobody read, or None. `tracked_not_walked` is None when
-    git could not list the commit's files: unknown, never empty. Outside git there is no
-    commit: nothing lists what the walk skipped, so only `unsupported_files` can block."""
+) -> set[str]:
+    """The files of the tree nobody read that may hold code or prompts: what `files_not_read`
+    counts, and the only files a sign-off can name."""
 
     def suffix(rel: str) -> str:
         return PurePosixPath(rel).suffix.lower()
 
     unread = {rel for rel in tracked_not_walked or () if suffix(rel) not in _BINARY_MEDIA}
     unread |= set(unsupported_files)
-    unread = {rel for rel in unread if suffix(rel) not in _TEXT_NOT_CODE}
+    return {rel for rel in unread if suffix(rel) not in _TEXT_NOT_CODE}
+
+
+def _files_not_read(
+    tracked_not_walked: Sequence[str] | None,
+    unsupported_files: Sequence[str],
+    signed: Collection[str] = (),
+    dirs_not_walked: Sequence[str] = (),
+) -> Gap | None:
+    """The blocking gap of the files nobody read, or None. `tracked_not_walked` is None when
+    git could not list the commit's files: unknown, never empty, and no sign-off clears it.
+    Outside git there is no commit: it holds the files the walk says it skipped, and
+    `dirs_not_walked` the directories it did not go into, each of which may hold anything.
+    `signed`: files a bound sign-off took out of the count."""
+    unread = unread_files(tracked_not_walked, unsupported_files) - set(signed)
     parts = []
     if tracked_not_walked is None:
         parts.append("git could not list the commit's files: what the walk skipped is unknown")
@@ -273,6 +313,13 @@ def _files_not_read(
         parts.append(
             f"{len(unread)} file(s) that may hold code or prompts were not read: "
             + _some(sorted(unread))
+        )
+    if dirs_not_walked:
+        parts.append(
+            f"{len(dirs_not_walked)} director(ies) outside git that may hold code or prompts "
+            "were not walked: "
+            + _some([f"{rel}/" for rel in sorted(dirs_not_walked)])
+            + " (committing the tree gives a precise list)"
         )
     return Gap("files_not_read", "; ".join(parts)) if parts else None
 
@@ -291,25 +338,41 @@ def mechanism_outcomes(
     today: date | None = None,
     tracked_not_walked: Sequence[str] | None = (),
     unsupported_files: Sequence[str] = (),
+    dirs_not_walked: Sequence[str] = (),
+    signed_files: Sequence[dict[str, Any]] = (),
 ) -> list[MechanismOutcome]:
     """One outcome per policy mechanism, in policy order (see the module docstring).
     `records` are the accepted ones (superseded records left out); `rejected` the
     rejected ones; `untrusted` the plan's `untrusted_text`; `carried` the retest rows of
     the previous assessment's records; `tracked_not_walked` and `unsupported_files` the
-    files of the tree the scan did not read."""
+    files of the tree the scan did not read, `dirs_not_walked` its directories outside git;
+    `signed_files` the bound sign-offs, whose files leave that count."""
     ran = set(rules_ran)
-    not_read = _files_not_read(tracked_not_walked, unsupported_files)
+    file_signoffs = [row for row in signed_files if row.get("files")]
+    signed = {item["path"] for row in file_signoffs for item in row["files"]}
+    not_read = _files_not_read(tracked_not_walked, unsupported_files, signed, dirs_not_walked)
+    # Nothing is left of the gap, and a person's decision is why: the basis says so.
+    signed_gap = None
+    if signed and not_read is None:
+        signed_gap = _files_not_read(tracked_not_walked, unsupported_files)
+    by_person = [
+        f"{len(row['files'])} unread file(s) left out by a person's decision: {_who(row)}"
+        for row in file_signoffs
+    ]
     # M8 has no patterns: no record may name it, so a rejected one naming it is unplaced too.
     known = {m.id for m in policy.mechanisms if m.patterns}
     unplaced = [r for r in rejected if r.mechanism not in known]
     out: list[MechanismOutcome] = []
     for mechanism in policy.mechanisms:
         if not mechanism.patterns:
-            out.append(
-                _review_mechanism(
-                    policy, mechanism, findings, review_records, ran, today, surfaces, not_read
-                )
+            review = _review_mechanism(
+                policy, mechanism, findings, review_records, ran, today, surfaces, not_read
             )
+            review.signed_gap = signed_gap
+            if signed_gap is not None and review.outcome == NO_VIOLATION:
+                review.signoffs = [str(row.get("id")) for row in file_signoffs]
+                review.basis.extend(by_person)
+            out.append(review)
             continue
         mine = [r for r in records if r.mechanism == mechanism.id]
         their_rejected = [r for r in rejected if r.mechanism == mechanism.id]
@@ -327,6 +390,7 @@ def mechanism_outcomes(
             name=mechanism.name,
             outcome=NOT_ASSESSED,
             scan=[_scan_row(f) for f in strong],
+            signed_gap=signed_gap,
         )
         establishing = [
             r for r in mine if r.claim == "establishes" and r.complete and _skeptic_upheld(r)
@@ -444,8 +508,12 @@ def mechanism_outcomes(
                     record=record.id or record.path,
                 )
             )
+        # A sign-off answers a record at review, never a finding of the scan.
         covered = {
-            fp for r in mine if r.claim in ("establishes", "closes") for fp in r.covers_valid
+            fp
+            for r in mine
+            if r.claim in ("establishes", "closes") and not _signed(r)
+            for fp in r.covers_valid
         }
         for finding in strong:
             if finding.decision is Decision.REVIEW and finding.fingerprint not in covered:
@@ -509,6 +577,14 @@ def mechanism_outcomes(
                 + ", ".join(r.id for r in closing)
                 + f" on {k} of {n} surface hypothesis(es) of the plan carrying it"
             )
+            for record in closing:
+                for row in _signed(record):
+                    result.basis.append(f"{record.id} closed by a person's decision: {_who(row)}")
+                    result.signoffs.append(str(row.get("id")))
+            if signed_gap is not None:
+                result.basis.extend(by_person)
+                result.signoffs.extend(str(row.get("id")) for row in file_signoffs)
+            result.signoffs = sorted(set(result.signoffs))
         else:
             result.outcome = NOT_ASSESSED
             if not hypotheses:
@@ -577,8 +653,8 @@ def _review_mechanism(
         result.gaps.append(
             Gap(
                 "surface_not_reviewed",
-                f"no review record binds {len(unreviewed)} file(s) of the plan's surfaces: "
-                + _some(unreviewed),
+                f"no review record binds {len(unreviewed)} file(s) of the plan's surfaces, "
+                "with every mechanism they carry in its scope: " + _some(unreviewed),
             )
         )
         result.basis.append("the review records do not bind every file of the plan's surfaces")
@@ -589,7 +665,8 @@ def _review_mechanism(
         result.basis.append(
             f"{len(review_records)} review record(s) under policy {policy.version}, within "
             f"{policy.review_max_age_days} days, bound to the artifacts as they are now and to "
-            "every file of the plan's surfaces, and no review or control finding remains"
+            "every file of the plan's surfaces, within their scope, and no review or control "
+            "finding remains"
         )
     return result
 
@@ -607,20 +684,28 @@ def _unreviewed_files(
     surfaces: Sequence[dict[str, Any]], review_records: Sequence[dict[str, Any]]
 ) -> list[str]:
     """The files of the plan's surfaces no review record binds, read as `ReviewRecord.covers`
-    reads a file. The surface of a person-facing unit is a directory."""
+    reads a file. The surface of a person-facing unit is a directory, so no file test applies
+    to it; its unit and its mechanisms do. A record binds a surface only when its `scope`
+    holds every mechanism of the surface's hypotheses; a surface with none asks for the
+    file binding alone."""
 
     def binds(row: dict[str, Any], surface: dict[str, Any]) -> bool:
         units = row.get("units") or ()
-        return surface.get("file") in (row.get("artifact_files") or ()) and (
-            not units or surface.get("unit") in units
+        carried = {hyp.get("mechanism") for hyp in surface.get("hypotheses") or []}
+        return (
+            (
+                surface.get("type") == "person_facing_unit"
+                or surface.get("file") in (row.get("artifact_files") or ())
+            )
+            and (not units or surface.get("unit") in units)
+            and carried <= set(row.get("scope") or ())
         )
 
     return sorted(
         {
             str(surface.get("file"))
             for surface in surfaces
-            if surface.get("type") != "person_facing_unit"
-            and not any(binds(row, surface) for row in review_records)
+            if not any(binds(row, surface) for row in review_records)
         }
     )
 

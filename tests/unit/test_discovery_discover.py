@@ -493,23 +493,32 @@ def test_report_of_unknown_age_is_flagged(reports_root: Path, monkeypatch) -> No
 @pytest.mark.parametrize(
     "kind", ["audit", "audit-baseline", "inventory", "attestation", "decision", "measure", "review"]
 )
-def test_own_output_and_retired_reports_are_skipped_silently(tmp_path: Path, kind: str) -> None:
+def test_own_output_and_retired_reports_are_no_evidence_and_get_a_row(
+    tmp_path: Path, kind: str
+) -> None:
     # The toolchain's own output and the reports of retired commands match the report
-    # glob and carry `schema: aisg/1`. They are not evidence about the system: no
-    # ReportRecord, and no "unknown report" noise either.
+    # glob and carry `schema: aisg/1`. They are not evidence about the system, and their
+    # text is not scanned, so each gets a row: anyone can write the label. A real baseline
+    # is the exception, because an ordinary tree keeps one.
     body = {"schema": "aisg/1", "kind": kind, "generated_at": "2026-08-20T10:15:00Z"}
     if kind == "audit-baseline":
         body["fingerprints"] = ["0123456789abcdef"]
     path = write_json(tmp_path, "evaluation-report.json", body)
-    assert read_report(path, tmp_path) == (None, None)
+    report, item = read_report(path, tmp_path)
+    assert report is None
+    assert (item is None) == (kind == "audit-baseline")
     inv, _hits = run(tmp_path)
     assert inv.reports == []
-    assert not unknown_of(inv, UnknownCategory.REPORTS)
+    # The walk skips the tool's own kinds before discovery sees them: `aisafe audit` gives
+    # those their row, from what the walk says it skipped.
+    own_output = kind in ("audit", "audit-baseline", "inventory", "attestation")
+    assert bool(unknown_of(inv, UnknownCategory.REPORTS)) == (not own_output)
 
 
-def test_legacy_measure_report_shape_without_kind_is_skipped(tmp_path: Path) -> None:
+def test_legacy_measure_report_shape_without_kind_gets_a_row(tmp_path: Path) -> None:
     path = write_json(tmp_path, "measure-report.json", {"schema": "aisg/1", "guards": []})
-    assert read_report(path, tmp_path) == (None, None)
+    report, item = read_report(path, tmp_path)
+    assert report is None and item is not None and "not an evaluation report" in item.why
 
 
 def test_report_is_found_by_its_schema_head_not_only_its_name(tmp_path: Path) -> None:

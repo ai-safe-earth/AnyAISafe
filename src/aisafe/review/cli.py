@@ -86,6 +86,11 @@ def _note(text: str) -> None:
     print(text, file=sys.stderr)
 
 
+def _console(text: str) -> str:
+    """A name, which may be in any alphabet, as output that stays ASCII on any console."""
+    return text.encode("ascii", "backslashreplace").decode("ascii")
+
+
 def _plural(count: int) -> str:
     return "" if count == 1 else "s"
 
@@ -322,7 +327,7 @@ def cmd_record(args: argparse.Namespace) -> int:
         if value
     ]
     print(
-        f"wrote {shown}: reviewer {args.reviewer}, reviewed_at {when.isoformat()}, "
+        f"wrote {shown}: reviewer {_console(args.reviewer)}, reviewed_at {when.isoformat()}, "
         f"scope {','.join(scope)}, {len(refs)} artifact{_plural(len(refs))}, "
         f"policy_version {policy.version}"
     )
@@ -367,7 +372,8 @@ def cmd_check(args: argparse.Namespace) -> int:
                 f"policy {policy.version}"
             )
         print(
-            f"record {record.index + 1}: {record.reviewer}, reviewed_at {record.reviewed_at_iso}, "
+            f"record {record.index + 1}: {_console(record.reviewer)}, "
+            f"reviewed_at {record.reviewed_at_iso}, "
             f"scope {','.join(record.scope) or '-'}, "
             f"{len(record.artifacts)} artifact{_plural(len(record.artifacts))}"
         )

@@ -19,11 +19,19 @@ nested repository), because the rules read it; and a tracked file git does not c
 (skip-worktree, assume-unchanged). A `git status` that fails is never read as clean, and
 neither is a root outside the work tree git is looking at (`core.worktree`). Git runs
 through `walk.run_git`, and `git status` with the repository's filter drivers blanked, so
-the audited repository's own configuration starts no program.
+the audited repository's own configuration starts no program. A repository whose files
+name a path on another machine is never opened (`walk.network_reference`): that tree is in
+git and unknown. A tracked file the walk took for the tool's own output counts like any
+other: when it differs from the commit it is dirt, and a regenerated committed report is
+dirt too.
 
 `tracked_not_walked` are the files of the commit the walk did not read (a skipped
-directory, a binary or UTF-16 file, the size limit, the ignore marker, an exclude): every
-one of them is scope an assessment did not read, and is listed as such.
+directory, a binary or UTF-16 file, the size limit, the ignore marker, an exclude, a label
+saying the tool wrote it): every one of them is scope an assessment did not read, and is
+listed as such, so a person signs a tracked file that says it is own output. Outside git no
+commit gives that list, so it holds what the walk says it stepped over, and
+`dirs_not_walked` names each directory it did not go into, caches left out (see `walk`).
+In git `dirs_not_walked` stays empty: the commit's files say more than a directory's name.
 """
 
 from __future__ import annotations
@@ -155,6 +163,8 @@ class MachineScan:
     walked: dict[str, Any] = field(default_factory=dict)
     # None when git could not list the commit's files: unknown, never empty.
     tracked_not_walked: list[str] | None = field(default_factory=list)
+    # Outside git only: the directories the walk did not go into.
+    dirs_not_walked: list[str] = field(default_factory=list)
 
     def lang_of(self, relpath: str) -> str | None:
         record = self.walked.get(relpath)
@@ -187,19 +197,22 @@ def tree_state(
     inputs: set[str] = frozenset(),
 ) -> TreeState:
     """The commit `root` is at, the files it tracks and the paths that differ (see the
-    module docstring). `skipped` are paths the walk named as the tool's own output. `inputs`
-    are files outside the commit that the assessment lists as inputs of its own (evaluation
-    reports, review records); they are named there, so being gitignored is no dirt. Only
-    that: an input git tracks and that differs, or an untracked one, stays dirty."""
+    module docstring). `skipped` are paths the walk named as the tool's own output: outside
+    the commit they are no dirt. `inputs` are files outside the commit that the assessment
+    lists as inputs of its own (evaluation reports, review records); they are named there,
+    so being gitignored is no dirt. Only that: an input git tracks and that differs, or an
+    untracked one, stays dirty."""
     head = _git(["rev-parse", "HEAD"], root)
     if head is None:
+        if walk.network_reference(root) is not None:
+            return TreeState(commit=None, is_git=True, status_failed=True)
         return TreeState(commit=None, is_git=False)
     commit = head.strip()
     tree = walk.git_tree(root, _git)
     tracked = None if tree.tracked is None or tree.unlisted else frozenset(tree.tracked)
     if tracked is None or tree.status_failed:
         return TreeState(commit=commit, is_git=True, tracked=tracked, status_failed=True)
-    dirty = {rel for rel in tree.changed if rel not in skipped}
+    dirty = set(tree.changed)
     dirty |= {rel for rel in tree.untracked if rel in walked and rel not in skipped}
     for rel in walked:
         # A submodule's `.git` pointer file is walked and belongs to no commit.
@@ -236,9 +249,13 @@ def machine_scan(
     inputs = {str(getattr(report, "file", "")) for report in ctx.evaluation}
     inputs |= {str(row.get("file")) for row in ctx.inventory.review_records or []}
     state = tree_state(ctx.root, set(walked), skipped, inputs)
-    not_walked: list[str] | None = None if state.is_git and state.tracked is None else []
-    if state.tracked is not None:
-        not_walked = sorted(p for p in state.tracked if p not in walked and p not in skipped)
+    not_walked: list[str] | None = list(ctx.unread_files)
+    dirs_not_walked = list(ctx.unread_dirs)
+    if state.is_git:
+        dirs_not_walked = []
+        not_walked = None
+        if state.tracked is not None:
+            not_walked = sorted(p for p in state.tracked if p not in walked)
     return MachineScan(
         root=ctx.root,
         mode=mode,
@@ -250,4 +267,5 @@ def machine_scan(
         policy=policy,
         walked=walked,
         tracked_not_walked=not_walked,
+        dirs_not_walked=dirs_not_walked,
     )

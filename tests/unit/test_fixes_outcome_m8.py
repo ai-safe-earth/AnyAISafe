@@ -53,7 +53,7 @@ def _review(root: Path, *, sha256: str, file: str = "app.py") -> None:
             {
                 "reviewer": "T. Tester <reviewer>",
                 "reviewed_at": date.today().isoformat(),
-                "scope": ["M1"],
+                "scope": [m.id for m in POLICY.mechanisms],
                 "declared_purpose": "answers questions about the shop",
                 "artifacts": [{"path": file, "sha256": sha256}],
             }

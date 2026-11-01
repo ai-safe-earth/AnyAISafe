@@ -130,7 +130,8 @@ AnyAISafe/
 |   |-- reporting/               # report.py (terminal, json, markdown, sarif), html.py
 |   |-- investigation/           # plan.py (the queue of surfaces), records.py (the record and
 |   |                            #   skeptic formats), text.py (hashes, quotes), validate.py,
-|   |                            #   scan.py (the workbench's scan, the tree's git state), cli.py
+|   |                            #   scan.py (the workbench's scan, the tree's git state),
+|   |                            #   signoff.py (a person's decision), cli.py
 |   |-- assessment/              # assess.py (`aisafe assess`), outcome.py (one outcome per
 |   |                            #   mechanism), render.py (markdown, html, terminal), cli.py
 |   |-- engagement/              # model.py (engagement.json, evidence requests, responses, QA),
@@ -267,7 +268,7 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
 |---|---|
 | `path` | the repository or subdirectory to audit (default: `.`) |
 | `--format {terminal,json,sarif,markdown,html}` | the renderer (default: terminal) |
-| `--output PATH`, `-o PATH` | write the rendered document here instead of stdout |
+| `--output PATH`, `-o PATH` | write the rendered document here instead of stdout. Refused (exit 2) when the path or a folder on the way is a symbolic link or a junction: `.aisafe-audit` can be one the audited tree delivered. Never read from `pyproject.toml` |
 | `--fail-on {critical,high,medium,low,info,never}` | the minimum severity that yields exit 1 (default: `low`; `never` = findings never count) |
 | `--fail-on-unknown [CATEGORIES]` | exit 1 on an UNKNOWN item in these categories (csv of `coverage,deep,reports,runtime`); the bare flag means all four |
 | `--include-ignored` | also walk files that `.gitignore` excludes |
@@ -277,7 +278,7 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
 | `--accept FINGERPRINT=REASON` | with `--amend-baseline`: the reason a listed fingerprint stays (repeatable; ASCII, no verdict language, nothing secret-shaped) |
 | `--inventory-only` | print the inventory document and exit 0; no rules run |
 | `--deep {python,none}` | the syntax-tree layer (default: `python`) |
-| `--mode {self-assessment,auditor}` | who is scanning (default: `self-assessment`); the report states it. In `auditor` mode the ignore-file marker and the own-output heads skip nothing, and every file git tracks is read whatever a folder name says. In both modes `.gitignore` never hides a tracked file, and what stays unread is listed under UNKNOWN: a tracked file with a NUL byte, unless its type is binary by nature, and the tracked files themselves when git could not list them. Never read from `pyproject.toml` |
+| `--mode {self-assessment,auditor}` | who is scanning (default: `self-assessment`); the report states it. In `auditor` mode the ignore-file marker and the own-output heads skip nothing, and every file git tracks is read whatever a folder name says. In both modes `.gitignore` never hides a tracked file, and what stays unread is listed under UNKNOWN: a file with a NUL byte anywhere in it, a UTF-16 or UTF-32 byte order mark or a Git LFS pointer, unless its type is binary by nature; a tracked file not found under its own name (a sparse checkout, a submodule not checked out, a folder renamed by case only, a deleted file); the tracked files themselves when git could not list them; and outside git, in one row, every file and folder the walk left unread, whatever the reason. Never read from `pyproject.toml` |
 | `--rules CSV` | run only these rule ids (a demoted id runs with a stderr note) |
 | `--experimental` | include rules measured below `MIN_PRECISION` (0.80) |
 | `--exclude GLOBS` | walker excludes (csv of globs; repeatable) |
@@ -292,12 +293,13 @@ usage: aisafe audit [-h] [--format {terminal,json,sarif,markdown,html}]
 **`[tool.aisafe-audit]`.** Defaults may be set in `pyproject.toml`, read from where you
 run the command (the file is looked for upward from the working directory). Keys are the
 flags without the dashes in front: `exclude` (a list), `fail-on`, `fail-on-unknown` (a
-list), `rules` (a list), `baseline`, `review-record`, `evaluation-report`, `format`,
-`output`, `deep`, `include-ignored`, `experimental`, `quiet`, `debug`; a key that is not a
-flag is ignored. An explicit flag always wins. The per-invocation
+list), `rules` (a list), `baseline`, `review-record`, `evaluation-report`, `deep`,
+`include-ignored`, `experimental`, `quiet`, `debug`; a key that is not a flag is ignored.
+An explicit flag always wins. The per-invocation
 actions `--write-baseline`, `--amend-baseline`, `--accept`, `--inventory-only` and
-`--list-rules` are never read from the file, and neither is `--mode`: the audited tree never
-chooses how it is audited. A boolean set to `true` in the file has no
+`--list-rules` are never read from the file, and neither are `--mode`, `--output` and
+`--format`: the audited tree never chooses how it is audited, or where a file lands. A
+boolean set to `true` in the file has no
 command-line flag to switch it back off. This repository's own table:
 
 ```toml
@@ -314,7 +316,11 @@ output, a bad baseline, a refused flag); `130` interrupted. Findings below `--fa
 still findings: the summary line says how many were not counted.
 
 **Pipeline.** walk -> discover -> pydeep (Python) -> checks -> flows -> review records
--> rules -> baseline -> report. The audit skips its own earlier output (JSON reports,
+-> rules -> baseline -> report. The audit opens no network connection, and that includes
+git's: when the repository's `.git` file, `config` (and what it includes), `commondir` or
+object alternates name a path on another machine (a value that starts `//` or `\\`), git
+is not started at all, and one UNKNOWN row says the tree's tracked files and state are not
+known. A remote's URL does not count: nothing here opens one. The audit skips its own earlier output (JSON reports,
 inventory documents and SARIF files are recognised by parsing the file: the schema and
 kind keys at its top level, HTML pages by the marker on line 1), so a re-run does not report
 the previous run's snippets; `own_output_skipped` in the inventory names what was skipped,
@@ -323,7 +329,11 @@ keys or that line into a file of their own. `.aisafe-audit/pr-body.md` is skippe
 way unless the commit holds it: words the tool wrote about a helpline are not a crisis path.
 The baseline, the review record and the evaluation reports are not skipped: the
 first two are read as text, which is why a reason or a justification never quotes the
-matched text, and the third is evidence. The workbench's scan (`investigate`, `assess`) also
+matched text, and the third is evidence. A JSON file at a prompt's path is a prompt
+whatever keys it carries. Elsewhere one that names the schema and a kind of the tool's own
+output or of a retired command at its top level is no evidence and is not scanned as text,
+so it gets an UNKNOWN row under `reports`; only a real baseline stays silent. The
+workbench's scan (`investigate`, `assess`) also
 leaves `.aisafe-audit/audit-baseline.json` unread unless the commit holds it; any other file
 in that folder that is not in the commit is read, and makes the tree dirty.
 
@@ -449,10 +459,10 @@ non-Python AI-surface unit carries a `deep` item.
 
 | category | what lands there |
 |---|---|
-| `coverage` | a language read only with patterns, a prompt fetched at runtime, an opaque model behind a gateway, a unit with prompt material but no runtime code |
+| `coverage` | a language read only with patterns, a prompt fetched at runtime, an opaque model behind a gateway, a unit with prompt material but no runtime code, a file not read as text, a tracked file not found under its own name, and outside git every file and folder left unread |
 | `deep` | a Python file the syntax-tree layer could not parse; a non-Python unit |
-| `reports` | an evaluation report that could not be read or dated |
-| `runtime` | anything else: a malformed review record, a symlink, an unreadable file, gitignored directories not walked |
+| `reports` | an evaluation report that could not be read or dated, a document that says the tool wrote it |
+| `runtime` | anything else: a malformed review record, a symlink or a junction, an unreadable file, gitignored directories not walked |
 
 ### The five formats
 
@@ -506,8 +516,8 @@ same entry as a removed mechanism.
 aisafe audit: baseline audit-baseline.json amended: 1 reason recorded under policy 1.0.0; no scan ran, exit 0 because recording a reason does not judge the finding
 ```
 
-A reason is refused (exit 2) when it is not printable ASCII, reads as a verdict or looks
-like a secret, and when its fingerprint is not in the file:
+A reason is refused (exit 2) when it is not one line of text, holds a hidden character or a
+word that mixes two alphabets, reads as a verdict or looks like a secret, and when its fingerprint is not in the file:
 
 ```
 aisafe audit: baseline error: accepted reason for 4231f0cb911759c5 reads as a verdict; a reason says why the finding stays, not that the target is safe
@@ -534,8 +544,9 @@ the current policy. Re-create it with `--write-baseline` to carry the reasons ov
 ## `aisafe investigate`
 
 The deterministic half of an investigation: the plan of surfaces to read, the citation of a
-line, the validation of the records a host coding agent writes, and the digest a skeptic
-pass binds to. None of the four reasons about the code.
+line, the validation of the records a host coding agent writes, the digest a skeptic pass
+binds to, and the sign-off by which a person records a decision the machine cannot make.
+None of them reasons about the code.
 
 ```
 usage: aisafe investigate [-h] action ...
@@ -549,6 +560,8 @@ positional arguments:
     validate  check investigation records against the tree
     cite      print a citation (file, line, quote, sha256) for a record
     digest    print the record_sha256 a skeptic file binds to
+    signoff   record a person's decision on a record at review or an unread
+              file
 
 options:
   -h, --help  show this help message and exit
@@ -674,6 +687,68 @@ options:
   -h, --help  show this help message and exit
 ```
 
+### `signoff`
+
+```
+usage: aisafe investigate signoff [-h] --by NAME --reason TEXT [--record ID]
+                                  [--file PATH] --target PATH
+                                  [--engagement DIR]
+                                  DIR
+
+Record a decision the machine cannot make, by name, with a reason, bound to
+this commit and to the records and files named. A person runs this; an agent
+never does.
+
+positional arguments:
+  DIR               the records directory; the file goes here
+
+options:
+  -h, --help        show this help message and exit
+  --by NAME         the person deciding
+  --reason TEXT     why, in their words
+  --record ID       a record at review (repeat)
+  --file PATH       an unread file (repeat)
+  --target PATH     the audited tree
+  --engagement DIR  the engagement directory; in auditor mode, --by must be
+                    its auditor
+```
+
+Two gaps have no other way to clear: a record the machine sent to a person
+(`record_at_review`, any closing by a control outside Python, for example), and a file nobody
+read (`files_not_read`, one shell script in a repository, for example). The command writes
+`DIR/<id>.json`, computing the digests and hashes itself:
+
+```json
+{
+  "schema": "aisg/signoff/1",
+  "kind": "signoff",
+  "id": "signoff-1a2b3c4d5e6f",
+  "by": "Ana Ruiz",
+  "at": "2026-11-01",
+  "mode": "self-assessment",
+  "target": {"commit": "<the commit>"},
+  "policy_version": "1.1.0",
+  "reason": "read deploy.sh with the team; it copies files and calls no model",
+  "records": [{"id": "inv-crisis-chat", "record_sha256": "<the digest>"}],
+  "files": [{"path": "deploy.sh", "sha256": "<the file at the commit, CRLF read as LF>"}]
+}
+```
+
+It names at least one record or one file. Exit 2, and nothing written, on an empty name or
+reason, a tool's or an agent's name (the review record's checks), a name with no letter before
+any `<role>` or one that reads as a verdict, a reason that pronounces a verdict, a tree that is
+not a commit (outside git, or with uncommitted changes: commit
+first), or anything `aisafe assess` would refuse below. In auditor mode `--by` must be the
+engagement's `auditor.name` and DIR must lie outside the audited tree: the audited team
+cannot sign. It never writes over an existing file.
+
+**The limit.** A sign-off carries no signature, and signatures are out of scope. In
+self-assessment anyone with write access can write a sign-off file in any name, an AI agent
+included, so every report labels it self-assessed. Agents are told never to write or run one
+(the skill prints the command for the person), and no check here can enforce that: the name
+check knows a list of tools, and a list of tools can never be complete. In auditor
+mode the same holds for anyone who can write to the engagement directory.
+
 ## `aisafe assess`
 
 ```
@@ -721,7 +796,8 @@ records and the evaluation reports, and keeps them apart: `machine` (the scan an
 records), `human` (the review records and the decisions a named person recorded, shown
 beside the outcome and never changing it), `auditee` (the audited team's responses and the
 state of every evidence request, from the engagement, shown beside and never changing it),
-`evaluation`, and `legal` (with an engagement). It records the commit, the deployment and
+`signoffs` (a person's sign-offs, `accepted` and `refused`), `evaluation`, and `legal` (with
+an engagement). It records the commit, the deployment and
 configuration (from the engagement's scope), the engagement itself (who audits whom, the
 independence statement, the authorisations, the applicability answers, the file's sha256),
 the mode, the policy version, the investigators
@@ -729,64 +805,130 @@ the mode, the policy version, the investigators
 queued and investigated, and what was left unassessed: surfaces not investigated,
 unsupported ones, files the marker or the own-output check kept out, the scan's UNKNOWN
 items), the inputs with their hashes, and the remediation check. `assessment.md` and
-`assessment.html` start with the tool's own marker line, so a later walk skips them.
+`assessment.html` start with the tool's own marker line, so a later walk skips them. The
+four formats name who signed what and why.
 
 **Outcomes**, per mechanism:
 
 | outcome | when |
 |---|---|
 | `violations_identified` | a record establishes the mechanism (a complete, connected trace, upheld by a bound skeptic pass) or the scan reports a violation on supported or observed evidence; a closing record never lowers it |
-| `inconclusive` | a blocking gap remains: a high-priority surface carrying one of the mechanism's hypotheses without a deciding record for it (left out by the budget, unreached or unsupported); a skeptic refutation; a deciding claim no bound skeptic pass upheld; runtime-only evidence for a required link; a record a person still has to weigh; a rejected record; a supported scan finding no deciding record covers; a closing record next to text addressed to auditors or AI tools; a file nobody read that may hold code or prompts (a tracked file the walk skipped, a file in a language this version does not read), or a tree whose tracked files git could not list. Pictures, fonts, recordings, drawings, style sheets and dependency lock files do not block |
+| `inconclusive` | a blocking gap remains: a high-priority surface carrying one of the mechanism's hypotheses without a deciding record for it (left out by the budget, unreached or unsupported); a skeptic refutation; a deciding claim no bound skeptic pass upheld; runtime-only evidence for a required link; a record a person still has to weigh; a rejected record; a supported scan finding no deciding record covers; a closing record next to text addressed to auditors or AI tools; a file nobody read that may hold code or prompts (a tracked file the walk skipped, a file in a language this version does not read), or a tree whose tracked files git could not list; outside git, a file the walk skipped or a directory it did not go into. Caches, pictures, fonts, recordings, drawings, style sheets and dependency lock files do not block |
 | `not_assessed` | no record names the mechanism, the scan holds no supported or observed finding of it, and nothing blocks |
 | `no_violation_identified_within_assessed_scope` | a record closes the mechanism, upheld by its skeptic pass, and no gap remains; it says "closed on k of n surface hypotheses" |
 
 M8 (missing or stale review) is read from the scan's AUD-1106 and AUD-1107 facts and the
 review records. It closes only when every record stands, when between them the records bind
-every file of the plan's surfaces (a record that names units binds files of those units
-only), and when no file stayed unread as above. A record the parser dropped and a second
+every file of the plan's surfaces, and when no file stayed unread as above. A record that
+names units binds files of those units only. A record binds a surface only when its `scope`
+holds every mechanism among the surface's hypotheses: a review of M1 says nothing about a
+surface that carries M5, the scopes of two records do not add up, and a surface with no
+hypotheses needs only the file binding. A record the parser dropped and a second
 record file nobody read count as records that do not stand, and a review rule that crashed
-leaves M8 `not_assessed`. Outside git there is no commit and nothing lists what the walk
-skipped (a `vendor/` directory, say), so only files in an unread language block there. The
+leaves M8 `not_assessed`. Outside git there is no commit to list the tree, so the walk says
+what it skipped and that blocks too: files by name (the ignore-file marker, a `.gitignore`
+line, the size limit, a NUL byte, a symlink, a read error), and directories by name without
+walking them, so a large `node_modules` stays fast. That counts `vendor`, `build`, `dist`,
+`node_modules`, a virtual environment and a directory a `.gitignore` line hides: outside git
+nothing shows who put what there, and the gap says that committing the tree gives a precise
+list. Version control data and tool caches (`.git`, `__pycache__`, `.pytest_cache`,
+`.ruff_cache`, `.mypy_cache`, `.hypothesis`) do not count. The
 overall outcome is the least favourable one, in the order of the
 table. Acceptances and baselines are not inputs. Without an accepted record the command
 exits 2: an assessment never falls back to the scan.
 
+**Sign-offs.** `aisafe assess` reads every `aisg/signoff/1` file among the records. A sign-off
+counts only while it is bound: the same commit as the assessment, on a tree that is that
+commit; the same policy version; the same mode; each record's digest equal to the record as it
+is now; each file on the list of unread files and equal to the file at the commit; no record or
+file listed twice; a person's name and a reason with no verdict in it; in auditor mode, the engagement's auditor, in a file
+outside the audited tree. Each is checked again on the file as it stands, since a file can be
+written by hand. One that fails any of this counts for nothing, whole: it is listed under
+`signoffs.refused` with why, and the gap stays. Outside git there is no commit, so every
+sign-off is refused and the reason says to commit first.
+
+- On a record: only a record with claim `review`, a proposed `no_violation_identified_in_scope`,
+  `supported_mechanism` evidence, a bound upheld skeptic pass and no runtime-only link. It
+  becomes a closing that carries the sign-off (`machine_effective` keeps the machine's own
+  reading): `record_at_review` goes, the record decides its own surface hypothesis, and it
+  counts as a closing. Every other gap still applies, `untrusted_text_near_closing` for one. A
+  sign-off answers no scan finding, so `scan_finding_to_decide` stays.
+- On a file: it leaves the count of `files_not_read`, and stays listed as "signed off, not read"
+  with the name and the reason (`scope.unassessed.signed_off_not_read`). It cannot clear "git
+  could not list the commit's files".
+- A sign-off never lowers a violation: `violations_identified` stays, whatever is signed, and in
+  a retest a signed record does not show a violation remediated. It clears neither
+  `skeptic_refuted`, `skeptic_not_run`, `runtime_only` nor a rejected record, and evidence that
+  is `unknown` stays unknown.
+- A mechanism closed through a sign-off says so in its basis line ("closed by a person's
+  decision", with the name, self-assessed or auditor, and the sign-off id) and in `signoffs` on
+  the mechanism. The tool states who decided; it never says the system is safe.
+- A sign-off binds one commit and one digest, so it does not carry to a new commit.
+- The legal section does not read a sign-off: a record it closed is no upheld closing there and
+  holds its pattern's item back even beside another closing, a file it left out still holds the
+  item back, and a mechanism closed through one is not decided for an article's linked
+  mechanisms.
+
 **Retest.** `--retest PREVIOUS` re-runs the verification steps of the previous
 assessment's records on the tree as it is now; it needs at least one record made at the new
 commit. The retest reads a record's steps, mechanism, pattern, surface and proposed decision
-from the copy embedded in the previous assessment, which must match its digest. A record is
-`remediated` only when every remediation step failed at its commit
-(re-checked there through `git show` for `absent` and `present` steps) and passes now, no
-regression step fails, no current record establishes the same hypothesis on the surface,
-and the scan reports no supported violation of the mechanism in the surface's file, a cited
-file, a file changed since the record's commit or, for a unit surface, the whole unit. It
-also needs a commit with no uncommitted changes, every record on that surface and pattern to
-be an upheld closing, and a step that can show the fix: `no_finding` and `present` steps
-never do so alone. A closing record at the new commit, on the same surface with nothing
-contesting it, is required when a step cannot run, when a cited file or a changed file is
-not read, or when the surface's file did not change (for a unit, no cited file changed): a
-step on another file shows nothing about a text that stayed the same. A closing next to text
-addressed to an auditor counts only if its skeptic pass says it checked that text. When the
-surface's file is gone, or its anchor line was rewritten, the plan no longer lists the old
-surface: a closing on the same type in the same file answers it, and so does a closing on
-the same mechanism and pattern whose `supersedes` names the old record. The other
-statuses: `not_remediated`, `regressed` (a regression step fails, or a record or the scan
-shows the mechanism on a closed surface), `needs_reinvestigation` (a step that cannot
-run mechanically, or only a `no_finding` step, and no record at the new commit closes the
-hypothesis), `not_verified` (a remediation step already passed at the previous commit),
-`held` (regression steps only, all passing, and every cited file read), `same_commit`. A
-step on a file the walk no longer reads cannot run, and is never a pass. A finding that is
-no longer reported is listed as "not reported", never as remediated, and a violation the
-retest does not show remediated stands in the new assessment, and its record is carried in
-`remediation.carried_records` to be retested again at the next retest, against its own
-commit. Only a violation whose skeptic pass was bound and upheld is carried. The previous
-assessment is an unsigned document: an entry someone removed from it leaves no trace, and
-whether a skeptic pass was bound is its word. A surface new or changed at the new commit
-counts as high priority for the outcome.
+from the copy embedded in the previous assessment, stripped of spaces the way validation
+strips them. Every embedded copy must match its digest: a broken one refuses the retest with
+exit 2.
+
+Steps fail a record; passing steps never show a remediation by themselves, whatever their
+kind. A record is `remediated` only when all of this holds:
+
+- every remediation step failed at its commit (re-checked there through `git show` for
+  `absent` and `present` steps) and does not fail now, and no regression step fails;
+- no current record establishes the same hypothesis on the surface, and the scan reports no
+  supported violation of the mechanism in the surface's file, a cited file, a file changed
+  since the record's commit or, for a unit surface, the whole unit;
+- the commit has no uncommitted changes, and the surface's file or a cited file changed its
+  text. A rename alone changes no text, and a new closing on unchanged code shows no fix;
+- an upheld closing at the new commit sits on the surface, and every record on that surface
+  and pattern is an upheld closing. A closing next to text addressed to an auditor counts
+  only if its skeptic pass says it checked that text;
+- nothing is left open. A changed file that still holds the quote of an `absent` step needs a
+  closing that cites it, and any other finding of the mechanism in those files needs a
+  closing that covers it. The audit's own files are not searched: `.aisafe-audit/`, a report
+  the walk skipped as its own output, the records this run reads and the previous assessment.
+
+The plan still listing the surface means only a closing on that plan id answers it. When the
+anchor line was rewritten, a closing on the same type in the same file does. When the
+surface's file moved, a closing on the rename target (`git diff --find-renames`) whose
+`supersedes` names the old record does. When the file was deleted, so does such a closing on
+a changed or cited file the plan lists a surface in; when there is no such file, the deletion
+is the whole change, and such a closing on any surface does. A closing that supersedes the
+old record from anywhere else answers nothing. To supersede a record of an earlier commit,
+keep its record file in the folder: without it the closing is rejected. A kept old record is
+`previous` only when its digest matches the entry in the previous assessment. Other content
+under that id stays rejected and leaves its gap.
+
+The other statuses: `not_remediated`, `regressed` (a regression step fails, or a record or
+the scan shows the mechanism on a closed surface), `needs_reinvestigation` (the steps did not
+fail, and no closing answers the hypothesis, or something above is left open), `not_verified`
+(a remediation step already passed at the previous commit, nothing the record read changed,
+or git cannot say what changed), `held` (regression steps only, all passing, and every cited
+file read), `same_commit`. A step on a file the walk no longer reads cannot run, and is never
+a pass. A finding that is no longer reported is listed as "not reported", never as
+remediated, and a violation the retest does not show remediated stands in the new assessment,
+and its record is carried in `remediation.carried_records` to be retested again at the next
+retest, against its own commit. Only a violation whose skeptic pass was bound and upheld is
+carried. A surface new or changed at the new commit counts as high priority for the outcome,
+and goes on counting so at the next retest while a hypothesis on it has no deciding record
+(`plan_changes.carried_blocking`).
+
+The previous assessment is an unsigned document. One partial check runs against an edit: a
+record named in `outcome.mechanisms[].establishing` with no entry that reads as an upheld
+violation refuses the retest with exit 2. An edit that removes the entry and the name
+together, or changes an embedded record and recomputes its digest without touching what the
+check reads, leaves no trace, and whether a skeptic pass was bound is the document's word.
 The previous records are retested rather than counted as rejected; a mechanism closes again
 only through a new record on the new code.
 In auditor mode the auditor recommends and the auditee implements: the retest runs on the
-auditee's new commit, which the engagement's `scope.commits` must list.
+auditee's new commit, which the engagement's `scope.commits` must list. The remediation
+section of every format prints the previous assessment's mode and engagement.
 
 **With an engagement** (`--engagement DIR`): the mode is the engagement's (a contradicting
 `--mode` is refused), the records default to `DIR/investigations`, the outputs to
@@ -796,8 +938,17 @@ must name the auditor, the organisation, the auditee, the independence statement
 least one written authorisation; `--working-tree` is refused and no output may go inside
 the tree. In auditor mode the only evaluation read is the report passed with
 `--evaluation-report`, which must lie outside the tree (the tree's own reports are listed
-as UNKNOWN, never read). A retest must be of the same mode and, in auditor mode, the same
-engagement, and it never writes over the assessment it retests (pass `-o`).
+as UNKNOWN, never read). When an evaluation report is passed in auditor mode and no written
+authorisation names an endpoint, a line in the report's head says so and
+`engagement.evaluation_endpoint_named` is false; nothing is refused, and an authorisation
+whose document no longer matches its sha256 does not count. A retest must be of the same
+mode. In auditor mode it must also be of the same auditor (name and organisation) and the
+same auditee, and the previous assessment's commit must be an ancestor of this one, or this
+commit itself. Git decides that; when git cannot say (the commit is not in this clone, for
+one), the retest is refused with exit 2 and the message says so. Paths are not compared, so
+a clone in another folder, or an engagement directory moved whole, can retest; the names
+compared are the previous assessment's word, since that document is unsigned. A retest
+never writes over the assessment it retests (pass `-o`).
 
 **The legal section** reads the profiles whose jurisdiction the engagement selects against
 its applicability answers, the audit date (the assessment's UTC date) and the evidence:
@@ -805,7 +956,14 @@ one result per provision, `gap_identified`, `insufficient_evidence`,
 `requires_specialist_review`, `satisfied_within_scope` or `not_applicable` (with its
 reason), each with the evidence rows behind it and the profile's `legal_review` status. How
 a result is reached, the coverage and what is not covered are in `legal-profiles.md`. The
-legal section never changes a mechanism's outcome or the exit code.
+legal section never changes a mechanism's outcome or the exit code. In auditor mode its first
+line, in every format, says whether the applicability answers are the auditor's own:
+`answered_by` against `auditor.name`, case and spacing aside, and anything else reads as not
+theirs. Answers from someone else are still read, since an auditee's answer can be legitimate
+input, but the line says so plainly: a self-serving definition answer can make a whole profile
+not applicable. `legal.answers_source` holds the same fact. The terminal prints what a
+profile does not cover on one line: the items when there are three or fewer, otherwise their
+count and a pointer to `assessment.md`. The files keep every item.
 
 **Evidence requests.** Each organisational evidence item of a provision that applies and
 is in force, and each `missing_evidence` line of an accepted record, becomes a request in
@@ -816,9 +974,10 @@ questions first.
 
 **The bundle manifest.** Every run writes `bundle.json` (`aisg/bundle/1`) next to the
 assessment: the target commit, the mode, and the sha256 of every input (records, skeptic
-passes, the previous assessment, the evaluation reports, the policy, and with an
+passes, sign-offs, accepted or refused, the previous assessment, the evaluation reports, the policy, and with an
 engagement `engagement.json`, the requests as read, every received document, every
-response and the legal profiles) and every output (`assessment.json`, `.md`, `.html`,
+written authorisation's document, every response and the legal profiles) and every output
+(`assessment.json`, `.md`, `.html`,
 `evidence-requests.json`). The hashes are of the bytes as read, what `sha256sum` prints,
 so a third party holding the files can check them; `aisafe engagement status` re-checks the
 engagement's bundle.
@@ -839,6 +998,8 @@ positional arguments:
   action
     init          write a new engagement.json with every answer empty
     status        what is still to fill in, and the state of every file
+    authorise     record a written authorisation (the document copied and
+                  hashed)
     receive       record documents received for an evidence request (copied
                   and hashed)
     insufficient  mark an evidence request insufficient, with the reason
@@ -859,6 +1020,7 @@ DIR/evidence/               documents received from the auditee, copied in and h
 DIR/evidence-requests.json  aisg/evidence-requests/1: requested | received | insufficient
 DIR/responses/*.json        aisg/auditee-response/1: the auditee's management responses
 DIR/qa.json                 aisg/qa-signoff/1: optional second-auditor sign-off
+DIR/authorisations/         written authorisations, copied in and hashed
 DIR/assessment/             the assessment and its bundle manifest
 ```
 
@@ -901,37 +1063,70 @@ The applicability answers the legal profiles read:
 | `age_assurance` | `none`, `self_declaration`, `age_estimation`, `age_verification`, `unknown` |
 | `eu_placement` | `placed_on_market`, `put_into_service`, `used`, `none` |
 | `definitions` | per scope definition a profile asks about (`us-ny-gbl-47/ai-companion`, ...): `{answer: meets / does_not_meet / unknown, reason}`; an answer without its reason does not decide |
-| `answered_by`, `answered_on` | who gave the answers, and when |
+| `answered_by`, `answered_on` | who gave the answers, and when; in auditor mode the report and `status` say whether this is the auditor |
 
 `unknown` never decides a condition: a provision whose applicability depends on it is
 `insufficient_evidence`. Answers with no `answered_by` decide nothing.
 
-**`status`** says what is still to fill in, the questions behind each open definition, the
+**`status`** says what is still to fill in, the questions behind each open definition, in
+auditor mode whether the applicability answers are the auditor's own (a fact, which leaves
+the exit code as it is), the
 state of every evidence request and received document (a document that no longer matches
 its sha256 is `changed` and stops counting), the auditee's responses, whether the last
 assessment's bundle still matches, and the QA sign-offs (each bound to the assessment's
 sha256; one for an earlier assessment is shown as such, and the latest sign-off of the
-current assessment is the one that stands). It also says when a response or a document
-came after the last assessment, when the bundle is missing, and when a written
-authorisation's document no longer matches its sha256. Exit 0 when nothing is open or
-changed (no field to fill in, no request outstanding, no changed file, the QA approval
-when it is required), 1 otherwise.
+current assessment is the one that stands). It also says when a response, a document or an
+authorisation's document came after the last assessment, when the bundle is missing, when a
+written authorisation's document no longer matches its sha256, and which responses name
+nothing in the last assessment; with no assessment to read, that last one is unknown, and
+says so. Exit 0 when nothing is open or changed (no field to fill in, no request outstanding,
+no changed file, no response that names nothing, the QA approval when it is required), 1
+otherwise.
+
+**`authorise`** copies a written authorisation into `DIR/authorisations/`, hashes it and adds
+an entry to `engagement.json`, with what it authorises, who gave it, its date, the endpoint
+and the data it covers, and the document's path and sha256. It refuses a date that is not
+ISO, an empty name, a file with the same name as another document, and an entry already
+there. An entry written by hand stays valid, with or without a document. `status` and the
+bundle read these documents like any other, and one that changes is reported as changed.
+
+```
+usage: aisafe engagement authorise [-h] --engagement DIR --what TEXT --by NAME
+                                   --date ISO --file PATH [--endpoint URL]
+                                   [--data TEXT]
+
+record a written authorisation (the document copied and hashed)
+
+options:
+  -h, --help        show this help message and exit
+  --engagement DIR  the engagement directory
+  --what TEXT       what it authorises
+  --by NAME         who gave it
+  --date ISO        its date, YYYY-MM-DD
+  --file PATH       the signed document
+  --endpoint URL    the endpoint it covers
+  --data TEXT       the data it covers
+```
 
 **`receive`** copies documents into `DIR/evidence/<request>/`, records their sha256, who
 received them and when, and marks the request `received`. **`insufficient`** marks a
 request insufficient with the person and the reason; sending the same documents again
 does not undo that decision, only a new document does. A request whose wording changes
 after a decision is open again (`requested`), with its documents kept. **`respond`** records the auditee's
-management response to a mechanism, a record, a finding fingerprint or a provision; the
-assessment shows it beside what it answers and it never changes the outcome. **`qa`**
+management response to a mechanism, a record, a finding fingerprint or a provision
+(`profile/provision`, or the bare provision id when exactly one applied profile holds it);
+the assessment shows it beside what it answers and it never changes the outcome. `respond`
+accepts any `--to`, because it cannot always know the valid ids. A response that names
+nothing is flagged where the assessment is known: in the Auditee inputs of every report
+format, in `auditee.unmatched`, and in `status`. **`qa`**
 records a second auditor's sign-off (`approved` or `changes_requested`), bound to the
 assessment file's sha256; the engagement's auditor cannot sign it. With `qa.required: true`
 in the engagement, `status` stays at 1 until the latest sign-off of the current assessment
 is an approval.
 
-The auditor decides. `receive`, `insufficient`, `respond` and `qa` record what a named
-person did or said, on that person's instruction; the agent skill never runs them on its
-own and never writes a statement, an answer, a response or a sign-off.
+The auditor decides. `authorise`, `receive`, `insufficient`, `respond` and `qa` record
+what a named person did or said, on that person's instruction; the agent skill never runs
+them on its own and never writes a statement, an answer, a response or a sign-off.
 
 ## `aisafe review`
 
@@ -1038,20 +1233,25 @@ reviews:
 |---|---|---|
 | `schema`, `kind` | yes | `aisg/1`, `review` |
 | `policy_version` | yes | the policy the review was done under; older than the current policy, the record is reported by AUD-1107 `/policy` |
-| `reviews[].reviewer` | yes | the person who read the artifacts, by name and role; printable ASCII, never a tool, never verdict language |
+| `reviews[].reviewer` | yes | the person who read the artifacts, by name and role; any alphabet, never a tool, never verdict language |
 | `reviews[].assisted_by` | no | a tool or model that helped; attribution only, never the reviewer |
 | `reviews[].reviewed_at` | yes | ISO date (`YYYY-MM-DD`); null in a skeleton, and a skeleton covers nothing |
 | `reviews[].units` | no | the units the record speaks for; empty means every unit the artifacts fall in |
-| `reviews[].scope` | yes, non-empty | the mechanism ids considered (`M1`..`M8`); a finding of a mechanism outside the scope is reported `/uncovered` for that mechanism |
+| `reviews[].scope` | yes, non-empty | the mechanism ids considered (`M1`..`M8`); a finding of a mechanism outside the scope is reported `/uncovered` for that mechanism, and `aisafe assess` closes M8 for a surface only when one record's scope holds every mechanism the surface carries |
 | `reviews[].declared_purpose` | yes | what the system is for, in the operator's words; shown on findings as `declared_purpose` next to the encoded objective |
 | `reviews[].affected_population` | no | who uses the system or is decided about; copied to findings as `affected_population` |
 | `reviews[].artifacts` | yes, non-empty | `{path, sha256}` per file read; the hash is the binding |
 | `reviews[].decisions` | no | `{fingerprint, decision, justification}` per finding decided in context |
 | `reviews[].notes` | no | free text, several lines allowed |
 
-Every free-text field is held to the baseline's bar: printable ASCII, no verdict language,
-nothing secret-shaped, and no quoting of the matched text (the record is walked like any
-other file). A verdict-shaped purpose is refused:
+Every free-text field may be in any alphabet: a name with an accent is a name. It carries no
+control or hidden character (a zero-width space, a right-to-left override), no word that
+mixes two alphabets, no verdict language, nothing secret-shaped, and no quoting of the matched
+text (the record is walked like any other file). The verdict, secret and tool-name checks
+read the text with accents and compatibility forms removed, so an accent or a fullwidth letter
+does not step around them. The list of tool names can never be complete: it stops the plain
+cases, and a tool it does not know passes.
+A verdict-shaped purpose is refused:
 
 ```
 refused: aisafe-review.yaml: reviews[0].declared_purpose reads as a verdict; a record says who reviewed what, not that the system is fine
@@ -1359,16 +1559,25 @@ per-mechanism totals), `fleet-report.csv`, `fleet-report.md`, one `<name>/audit-
 per repository, and with `--proposal` one `<name>/proposal.md`: a plan table with
 `file:line` and no code snippets, for the repository's owners. No evidence snippet
 reaches the fleet documents. Each repository runs as its own `aisafe audit` subprocess
-with the clone as working directory, so the target's own `[tool.aisafe-audit]` applies; from
-Python 3.11 a package in the clone cannot stand in for `aisafe`. A clone may use https, http,
-ssh, git and file URLs, and nothing else: an `ext::` URL, which is a command, is refused.
+with the clone as working directory, so the target's own `[tool.aisafe-audit]` applies.
+`aisafe fleet` needs Python 3.11 or later, though the rest of the package runs on 3.10: it
+sets `PYTHONSAFEPATH` so a package in the clone cannot stand in for `aisafe`, and older
+Pythons ignore that variable, so on 3.10 it refuses with exit 2 before it clones anything.
+Only absolute `PYTHONPATH` entries reach the child: a relative or empty one is the clone. A
+clone may use https, http,
+ssh, git and file URLs, and nothing else: an `ext::` URL, which is a command, is refused,
+and so is a `url`, `path` or `branch` that starts with `-`, which git would read as an
+option. A clone leaves Git LFS files as pointers, because fetching them would call whatever
+host the repository's `.lfsconfig` names; the audit lists each pointer as a file not read,
+and a submodule, which a clone does not fetch, as a tracked file not read.
 Defaults for the fleet itself go in `[tool.aisafe-fleet]`.
 
 **Exit codes.** `0` every listed repository was audited (findings in other people's
 repositories are the survey's content, not its failure); `1` at least one could not be
 (clone failed, timeout, fatal audit), so an incomplete survey never looks complete;
 `--fail-on-findings` adds exit 1 when any repository's own audit exited 1; `2` fleet-level
-fatal (unreadable list, `git` missing, `--out` unwritable); `130` interrupted.
+fatal (Python older than 3.11, unreadable list, `git` missing, `--out` unwritable); `130`
+interrupted.
 
 ## `aisafe skill`
 

@@ -630,7 +630,7 @@ def _unrecordable_reasons() -> list[tuple[str, str]]:
     banned_word = "cl" + "ean"
     secret = "sk-ant-" + "a1b2c3d4e5f6g7h8i9j0k1l2m3n4"
     cases = [
-        ("caf" + chr(0xE9) + " fixture, not a live key", "ASCII"),
+        ("a hidden" + chr(0x200B) + " letter, not a live key", "printable"),
         # ASCII, but not one printable line: JSON carries these as escapes, so a hand
         # edit can put them in a file, and the renderers print the reason as one line.
         ("fixture key\nassembled at runtime", "single line"),
@@ -1189,7 +1189,7 @@ def _refusals() -> list[tuple[str, str]]:
     cases = [
         ("", "empty"),
         ("   ", "empty"),
-        ("caf" + chr(0xE9) + " fixture, not a live key", "ASCII"),
+        ("a hidden" + chr(0x200B) + " letter, not a live key", "printable"),
         ("a quoted example\nsee the ticket", "single line"),
         ("a quoted example\rsee the ticket", "single line"),
         ("a quoted example\tsee the ticket", "single line"),

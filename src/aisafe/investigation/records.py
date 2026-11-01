@@ -23,6 +23,7 @@ from __future__ import annotations
 import hashlib
 import json
 import re
+import unicodedata
 from pathlib import Path
 from typing import Any
 
@@ -35,6 +36,8 @@ __all__ = [
     "ON_PATH",
     "RECORD_DIR",
     "SHA_RE",
+    "SIGNOFF_KIND",
+    "SIGNOFF_SCHEMA",
     "SKEPTIC_KIND",
     "SKEPTIC_RESULTS",
     "SKEPTIC_SCHEMA",
@@ -42,6 +45,7 @@ __all__ = [
     "STEP_PURPOSES",
     "VERDICT_WORDS",
     "RecordError",
+    "fold_text",
     "load_json",
     "record_digest",
     "verdict_words_in",
@@ -51,6 +55,9 @@ INVESTIGATION_SCHEMA = "aisg/investigation/1"
 INVESTIGATION_KIND = "investigation"
 SKEPTIC_SCHEMA = "aisg/skeptic/1"
 SKEPTIC_KIND = "skeptic"
+# A person's decision, read by `aisafe.investigation.signoff`.
+SIGNOFF_SCHEMA = "aisg/signoff/1"
+SIGNOFF_KIND = "signoff"
 # Where the skill keeps records in self-assessment mode; an auditor keeps them in the
 # engagement directory, outside the audited tree.
 RECORD_DIR = ".aisafe-audit/investigations"
@@ -90,6 +97,7 @@ _VERDICT_RE = re.compile(
     r"(?<![A-Za-z])(?:" + "|".join(re.escape(w) for w in VERDICT_WORDS) + r")(?![A-Za-z])",
     re.I,
 )
+_SPACE_RE = re.compile(r"\s+")
 
 
 class RecordError(Exception):
@@ -128,6 +136,21 @@ def record_digest(record: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8", "surrogatepass")).hexdigest()
 
 
+def fold_text(text: str) -> str:
+    """`text` as a check reads it, never as it is kept: compatibility forms undone (NFKD, so
+    a fullwidth or mathematical letter is the plain one), combining marks and format
+    characters gone. An accent or a hidden character cannot step around a list of words."""
+    if text.isascii():
+        return text
+    return "".join(
+        char
+        for char in unicodedata.normalize("NFKD", text)
+        if unicodedata.category(char)[0] != "M" and unicodedata.category(char) != "Cf"
+    )
+
+
 def verdict_words_in(text: str) -> list[str]:
-    """The verdict phrases `text` holds, lowercased, in order of appearance."""
-    return [match.group(0).lower() for match in _VERDICT_RE.finditer(text or "")]
+    """The verdict phrases `text` holds, lowercased, in order of appearance, however their
+    words are spaced. Reads the fold: an accent on a verdict is still a verdict."""
+    spaced = _SPACE_RE.sub(" ", fold_text(text or ""))
+    return [match.group(0).lower() for match in _VERDICT_RE.finditer(spaced)]

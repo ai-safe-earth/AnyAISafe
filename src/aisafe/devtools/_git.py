@@ -5,7 +5,10 @@ callers. This module opens no socket itself; `git` is a child process, and the o
 it contacts are the URLs an operator wrote down in a corpus or a fleet list. It starts git
 the way the audit does (`walk.git_program`, `walk.GIT_SAFE`), with `CLONE_PROTOCOLS` as the
 only transports: a clone needs one, and none of these is a program (`ext::` is, and a URL
-in a list someone else wrote should not run a command).
+in a list someone else wrote should not run a command). A URL or a branch follows `--`, so
+neither can be read as an option. Large files are left as Git LFS pointers: fetching them
+would send a request to whatever host the repository's `.lfsconfig` names, and the audit
+names each pointer as a file it did not read.
 
 `fetch_pinned` reaches an exact commit. `git clone --depth 1` only reaches branch tips, so an
 empty repository is initialised and the SHA is fetched directly, which pins a scan to the
@@ -61,7 +64,7 @@ def _run(args: list[str], *, cwd: Path | None, timeout: float) -> subprocess.Com
         return subprocess.run(
             [program, *GIT_SAFE, "-c", "core.longpaths=true", *args],
             cwd=str(cwd) if cwd is not None else None,
-            env=git_env(CLONE_PROTOCOLS),
+            env={**git_env(CLONE_PROTOCOLS), "GIT_LFS_SKIP_SMUDGE": "1"},
             capture_output=True,
             text=True,
             check=True,
@@ -123,13 +126,13 @@ def fetch_pinned(
         return stamped
     _reset(dest)
     _run(["init", "-q"], cwd=dest, timeout=timeout)
-    _run(["remote", "add", "origin", url], cwd=dest, timeout=timeout)
+    _run(["remote", "add", "--", "origin", url], cwd=dest, timeout=timeout)
     try:
-        _run(["fetch", "--depth", "1", "--quiet", "origin", sha], cwd=dest, timeout=timeout)
+        _run(["fetch", "--depth", "1", "--quiet", "--", "origin", sha], cwd=dest, timeout=timeout)
     except GitError:
         # Some servers refuse fetch-by-sha; fall back to the recorded branch, else HEAD.
         _run(
-            ["fetch", "--depth", "50", "--quiet", "origin", branch or "HEAD"],
+            ["fetch", "--depth", "50", "--quiet", "--", "origin", branch or "HEAD"],
             cwd=dest,
             timeout=timeout,
         )
@@ -152,7 +155,7 @@ def clone_shallow(
     args = ["clone", "--depth", "1", "--quiet"]
     if branch:
         args += ["--branch", branch]
-    args += [url, str(dest)]
+    args += ["--", url, str(dest)]
     _run(args, cwd=None, timeout=timeout)
     resolved = head_sha(dest, timeout=timeout)
     _stamp(dest, resolved)

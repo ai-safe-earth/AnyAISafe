@@ -283,6 +283,7 @@ def _standing_review() -> dict:
         "reviewed_at": date.today().isoformat(),
         "stale": [],
         "artifact_files": ["app.py"],
+        "scope": [mechanism.id for mechanism in POLICY.mechanisms],
     }
 
 

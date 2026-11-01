@@ -26,6 +26,8 @@ Per provision, in this order:
 Scanner silence never counts: no item is met by the absence of a finding. A code item is
 met only by validated records whose skeptic pass upheld them, on every plan surface that
 carries the hypothesis, while the ethical outcome holds no blocking gap for that pattern.
+A person's sign-off moves the ethical outcome and no legal item: a record it closed is no
+upheld closing here, and the unread files it left out still hold the item back.
 Applicability answers that name nobody (`answered_by` empty) decide nothing. A `gap_identified` result is a reading of the evidence against a
 testable control, not a finding of infringement.
 """
@@ -221,7 +223,15 @@ class _Evidence:
         # The ethical outcome's gaps for this pattern (or for no pattern in particular)
         # keep the item from being met: a record a gap names does not count, and a gap that
         # names no record (a finding nobody decided, a closing off the plan) blocks it.
-        gaps = [g for g in getattr(outcome, "gaps", None) or [] if g.pattern in (None, pattern)]
+        signed_gap = getattr(outcome, "signed_gap", None)
+        gaps = [
+            g
+            for g in [
+                *(getattr(outcome, "gaps", None) or []),
+                *([signed_gap] if signed_gap else []),
+            ]
+            if g.pattern in (None, pattern)
+        ]
         blocked = {g.record for g in gaps if g.record}
         # A refuted or unchallenged record, a record at review, a rejected record, a finding
         # nobody decided: each holds the item back, as it holds the ethical outcome back.
@@ -250,12 +260,22 @@ class _Evidence:
                 and record.mechanism == mech
                 and record.pattern == pattern
                 and record.claim == "closes"
+                and not getattr(record, "signoffs", None)
                 and self._upheld(record)
                 and record.id not in blocked
             ):
                 closing.setdefault(sid, []).append(record)
         open_surfaces = [s["id"] for s in surfaces if s["id"] not in closing]
         used = sorted({r.id for rs in closing.values() for r in rs})
+        # A sign-off takes its record's gap away, and this section does not read a sign-off:
+        # the signed record stays the loose end it was, whatever else closes the surface.
+        signed = sorted(
+            {
+                r.id
+                for r in self.records
+                if r.mechanism == mech and r.pattern == pattern and getattr(r, "signoffs", None)
+            }
+        )
         if open_surfaces:
             return {
                 **row,
@@ -268,12 +288,17 @@ class _Evidence:
                 ),
                 "records": used,
             }
-        if loose:
+        if loose or signed:
             return {
                 **row,
                 "status": "missing",
                 "detail": "the ethical outcome holds a blocking gap for it: "
-                + "; ".join(g.detail for g in loose[:3]),
+                + "; ".join(
+                    [
+                        *(g.detail for g in loose[:3]),
+                        *(f"{rid} is closed only by a person's sign-off" for rid in signed[:3]),
+                    ]
+                ),
                 "records": used,
             }
         if item["kind"] == "control":
@@ -335,7 +360,8 @@ class _Evidence:
 
     def indicators_item(self, item: dict[str, Any]) -> dict[str, Any]:
         """Article 5's reading of the linked mechanisms: missing while any is not assessed
-        or inconclusive; otherwise the violations established, as indicators."""
+        or inconclusive, or closed through a sign-off, which this section does not read;
+        otherwise the violations established, as indicators."""
         rows = []
         missing = []
         present = []
@@ -345,6 +371,8 @@ class _Evidence:
             rows.append({"mechanism": mech, "outcome": value})
             if value in ("not_assessed", "inconclusive"):
                 missing.append(f"{mech} {value}")
+            elif getattr(outcome, "signoffs", None):
+                missing.append(f"{mech} closed through a person's sign-off")
             elif value == "violations_identified":
                 present.append(mech)
         base = {"kind": "indicators", "what": item.get("what"), "mechanisms": rows}

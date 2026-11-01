@@ -123,6 +123,13 @@ def no_socket(monkeypatch: pytest.MonkeyPatch) -> None:
     monkeypatch.setattr(socket, "create_connection", refuse)
 
 
+@pytest.fixture(autouse=True)
+def safe_path_works(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The Python 3.10 job of the test matrix: the refusal has its tests in
+    # test_unread_outside_git.py, and the rest of the fleet is tested here on every Python.
+    monkeypatch.setattr(fleet, "_safe_path_works", lambda: True)
+
+
 @pytest.fixture
 def neutral_cwd(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     cwd = tmp_path / "cwd"

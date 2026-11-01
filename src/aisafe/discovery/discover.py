@@ -132,10 +132,12 @@ _MODEL_TABLE_KEY_RE = re.compile(r"""^["']?\s*:\s*[\(\[\{]?\s*[-+]?\d""")
 
 # ``kind`` values the toolchain itself emits, now or before the pivot. Its own output is
 # never evidence about the system, and a report of a retired command is not an
-# evaluation; both are skipped without an UNKNOWN row.
+# evaluation. Neither is scanned as text, so each gets an UNKNOWN row: anyone can write the
+# word. A real baseline is the one exception (`_is_baseline`).
 _OWN_OUTPUT_KINDS = frozenset(
     {"audit", "audit-baseline", "inventory", "attestation", "decision", "measure", "review"}
 )
+_REPORT_KINDS = _OWN_OUTPUT_KINDS | {"evaluation", "probe"}
 
 _IDENT_RE = re.compile(r"\b[A-Za-z_][A-Za-z0-9_]{3,}\b")
 _IDENT_STOP = frozenset(
@@ -179,6 +181,7 @@ _REPORT_NAME_RE = re.compile(r"^(?:evaluation|probe)[-_]?report.*\.json$", re.I)
 # as UNKNOWN (reports), not vanish because the file looked unfamiliar. `aisg/N` is the
 # document format's label and did not change when the command became `aisafe`.
 _REPORT_SCHEMA_RE = re.compile(r'"schema"\s*:\s*"aisg/[0-9]+"')
+_REPORT_SCHEMA_VALUE_RE = re.compile(r"aisg/[0-9]+")
 _COMMENT_LINE_RE = re.compile(r"^\s*(?:#|//|/\*|\*|<!--|--)")
 
 
@@ -1210,8 +1213,9 @@ def _build_report(kind: str, path: Path, root: Path, body: dict[str, Any]) -> Re
 
 def read_report(path: Path, root: Path) -> tuple[ReportRecord | None, UnknownItem | None]:
     """Read an `aisafe evaluate` JSON report (or a legacy `aisafe probe` one); refuse any
-    schema but aisg/1. The toolchain's own output and the reports of retired commands
-    are skipped silently: they are not evidence about the system."""
+    schema but aisg/1. The toolchain's own output and the reports of retired commands are
+    not evidence about the system, and they are not scanned as text either, so each gets
+    an UNKNOWN row: its label is the file's own claim. Only a real baseline stays silent."""
     path = Path(path)
     relpath = _relpath(path, root)
     body, error = _load_json(path)
@@ -1229,8 +1233,19 @@ def read_report(path: Path, root: Path) -> tuple[ReportRecord | None, UnknownIte
             file=relpath,
         )
     kind = _report_kind(body)
-    if kind is None and (body.get("kind") in _OWN_OUTPUT_KINDS or "guards" in body):
+    if kind is None and _is_baseline(body):
         return None, None
+    if kind is None and (body.get("kind") in _OWN_OUTPUT_KINDS or "guards" in body):
+        return None, UnknownItem(
+            category=UnknownCategory.REPORTS,
+            what=relpath,
+            why=(
+                "not an evaluation report: it says the tool wrote it, so it is no evidence "
+                "and its text was not scanned"
+            ),
+            how_to_resolve="Check the file is what it says; a prompt can carry these keys too.",
+            file=relpath,
+        )
     if kind is None:
         return None, UnknownItem(
             category=UnknownCategory.REPORTS,
@@ -1257,8 +1272,20 @@ def read_system_card(path: Path) -> dict[str, Any] | None:
     return data if isinstance(data, dict) else None
 
 
+def _is_baseline(body: dict[str, Any]) -> bool:
+    """`aisafe audit --write-baseline`'s document, which an ordinary tree keeps at its root."""
+    return body.get("kind") == "audit-baseline" and isinstance(body.get("fingerprints"), list)
+
+
 def _looks_like_report(record: FileRecord) -> bool:
+    """A document read as a report, and so left out of the scan for prompt text. A file at
+    a prompt's path is a prompt, whatever keys it carries. Elsewhere the name decides, or a
+    parsed document whose top level holds the schema and a report's kind or shape. Words in
+    the file's head alone decide nothing: a prompt can quote them. Another schema version
+    counts, so it surfaces as UNKNOWN instead of vanishing."""
     if PurePosixPath(record.relpath).suffix.lower() != ".json":
+        return False
+    if _is_prompt_file(record.relpath):
         return False
     if _REPORT_NAME_RE.match(PurePosixPath(record.relpath).name):
         return True
@@ -1267,7 +1294,17 @@ def _looks_like_report(record: FileRecord) -> bool:
             head = fh.read(_REPORT_HEAD)
     except OSError:
         return False
-    return _REPORT_SCHEMA_RE.search(head.decode("utf-8", errors="replace")) is not None
+    if _REPORT_SCHEMA_RE.search(head.decode("utf-8", errors="replace")) is None:
+        return False
+    body, _error = _load_json(record.path)
+    if body is None:
+        return False
+    schema = body.get("schema")
+    if not isinstance(schema, str) or _REPORT_SCHEMA_VALUE_RE.fullmatch(schema) is None:
+        return False
+    if schema != SCHEMA_VERSION:
+        return True
+    return body.get("kind") in _REPORT_KINDS or _report_kind(body) is not None
 
 
 def _build_system_card(

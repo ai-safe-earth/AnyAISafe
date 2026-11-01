@@ -620,7 +620,9 @@ def test_a_commit_that_reads_as_an_option_never_reaches_git(tmp_path: Path, monk
     assert not [arg for arg in sent if "--output" in arg]
 
 
-def test_an_embedded_record_that_does_not_match_its_digest_verifies_nothing(tmp_path: Path) -> None:
+def test_an_embedded_record_that_does_not_match_its_digest_refuses_the_retest(
+    tmp_path: Path,
+) -> None:
     root, commit = _bakery(tmp_path)
     previous = _first(root, tmp_path, _conceal(root, _plan(root), commit))
     after = _next_commit(root, tmp_path, FIXED)
@@ -628,10 +630,9 @@ def test_an_embedded_record_that_does_not_match_its_digest_verifies_nothing(tmp_
     def change(doc: dict) -> None:
         doc["machine"]["records"][0]["raw"]["hypothesis"] = "edited after the assessment"
 
-    document = _retest(root, _edited(previous, change), after)
-    row = _row(document, "A-conceal")
-    assert row["status"] == "not_verified", row["why"]
-    _stands(document)
+    run = run_assessment(root, [after], retest=_edited(previous, change))
+    assert run.document is None and run.exit_code == 2
+    assert "does not match its digest" in str(run.fatal)
 
 
 def test_a_reinvestigate_step_closed_again_is_still_remediated(tmp_path: Path) -> None:

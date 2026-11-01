@@ -1155,7 +1155,7 @@ def _refused_reasons() -> list[tuple[str, str]]:
     cases = [
         ("empty", ""),
         ("whitespace", "   "),
-        ("non-ascii", "caf" + chr(0xE9) + " review"),
+        ("hidden", "a hidden" + chr(0x200B) + " letter"),
         ("newline", "sandbox owns the shell\nsee ticket 42"),
         ("carriage-return", "sandbox owns the shell\rsee ticket 42"),
         ("tab", "sandbox owns the shell\tsee ticket 42"),
@@ -1203,7 +1203,7 @@ def test_amend_baseline_refuses_a_multi_line_reason_by_name(
 
     err = capsys.readouterr().err
     assert "baseline error:" in err and fingerprint in err
-    assert "single line of printable ASCII" in err
+    assert "single line" in err
     assert "second line" not in err
     assert json.loads(baseline.read_text(encoding="utf-8")) == before
 
@@ -2066,8 +2066,10 @@ def test_not_configurable_names_every_per_invocation_action() -> None:
         "write_baseline",
         "inventory_only",
         "list_rules",
-        # The audited tree never chooses how it is audited.
+        # The audited tree never chooses how it is audited, or where a file lands.
         "mode",
+        "output",
+        "format",
     }
     actions = {action.dest for action in build_parser()._actions}
     assert NOT_CONFIGURABLE <= actions

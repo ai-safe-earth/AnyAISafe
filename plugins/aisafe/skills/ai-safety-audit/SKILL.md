@@ -79,11 +79,15 @@ Hard rules, in force for every phase:
 12. A person's fields stay a person's. Never write, prefill or suggest the engagement's
     independence statement, scope, authorisations or applicability answers (a definition
     answer and its reason included), an evidence request's status, an auditee response or
-    a QA sign-off. `aisafe engagement receive`, `insufficient`, `respond` and `qa` record
-    what a named person did or said: run them only when that person tells you to, with
-    their words. Legal results are read out with the profile's review status ("not
-    reviewed by a lawyer") and never merged with the ethical outcome; they are not legal
-    advice, and you never turn one into a statement that the system is lawful.
+    a QA sign-off. `aisafe engagement authorise`, `receive`, `insufficient`, `respond` and
+    `qa` record what a named person did or said: run them only when that person tells you
+    to, with their words. You never write or run a sign-off (`aisafe investigate signoff`),
+    not even when told to: it is a person's decision by name, and a report reads better for
+    it. Print the exact command, with the record ids and file paths filled in and `--by` and
+    `--reason` left for that person, and let them run it. Legal results are read out with
+    the profile's review status ("not reviewed by a lawyer") and never merged with the
+    ethical outcome; they are not legal advice, and you never turn one into a statement that
+    the system is lawful.
 
 ## Where things live
 
@@ -306,7 +310,7 @@ user approves like any other:
     decisions:
       - fingerprint: "3f9a1c0b2d4e5f67"
         decision: requires_contextual_review
-        justification: "<the user's words: ASCII, no verdict language>"
+        justification: "<the user's words: no verdict language>"
 
 A `no_violation_identified_in_scope` decision never hides the finding: the next audit shows
 it next to the finding as `review_decision` with the justification and the reviewer's
@@ -359,7 +363,7 @@ A finding the user wants to keep is accepted with a reason:
     sh <skill>/scripts/audit.sh . --amend-baseline .aisafe-audit/audit-baseline.json --accept <fingerprint>="<reason>"
     powershell -ExecutionPolicy Bypass -File <skill>/scripts/audit.ps1 . --amend-baseline .aisafe-audit/audit-baseline.json --accept <fingerprint>="<reason>"
 
-The reason is the user's words, ASCII, non-empty, and free of verdict language; the command
+The reason is the user's words, one line, non-empty, and free of verdict language; the command
 refuses anything else (exit 2), refuses a fingerprint the baseline does not hold, does not
 scan and does not render. A reason must describe the evidence without quoting the text that
 produced the finding: the baseline file is walked like any other file, and a quoted literal
@@ -410,14 +414,23 @@ no record reads `remediated`. It re-runs the verification steps of the records i
     powershell -ExecutionPolicy Bypass -File <skill>/scripts/assess.ps1 . --investigations .aisafe-audit/investigations --retest .aisafe-audit/assessment/assessment.json -o .aisafe-audit/assessment-after
 
 The retest needs at least one record made on the new code: investigate the changed
-surfaces again (phase 2) before you run it. A record counts as remediated only when each of
-its remediation steps failed at its commit and passes now, no regression step fails,
-nothing at the new commit shows the mechanism on that surface, and every record on that
-surface and pattern is an upheld closing; read each `status` out
-(`remediated`, `not_remediated`, `regressed`, `needs_reinvestigation`, `not_verified`,
-`held`, `same_commit`). A finding that is no longer reported is "not reported", never
-remediated, and a violation not shown remediated stands in the new assessment. A mechanism
-closes again only through a new record on the new code, with its own skeptic pass.
+surfaces again (phase 2) before you run it. Passing steps never show a remediation by
+themselves. A record counts as remediated only when each of its remediation steps failed at
+its commit and does not fail now, no regression step fails, nothing at the new commit shows
+the mechanism on that surface, the text of the surface's file or a cited file changed, and an
+upheld closing at the new commit sits on the surface, with every record on that surface and
+pattern an upheld closing. When the surface's file moved, the closing sits on the rename
+target; when it was deleted, on a changed or cited file that still holds a surface, or on any
+surface when none does. In both cases it names the old record in `supersedes`, and the old
+record file stays in the folder. A changed file that still holds an `absent` step's quote
+needs a closing that cites it, and any other finding of the mechanism in those files needs a
+closing that covers it. Read each
+`status` out (`remediated`, `not_remediated`, `regressed`, `needs_reinvestigation`,
+`not_verified`, `held`, `same_commit`). A finding that is no longer reported is "not
+reported", never remediated, and a violation not shown remediated stands in the new
+assessment. A mechanism closes again only through a new record on the new code, with its own
+skeptic pass. The retest refuses, with exit 2, a previous assessment with a broken embedded
+record, or one that names an established record it holds no entry for.
 
 ## Phase 6 -- Evaluate
 

@@ -6,11 +6,15 @@
     aisafe investigate cite app.py:17
     aisafe investigate validate .aisafe-audit/investigations/
     aisafe investigate digest .aisafe-audit/investigations/inv-crisis.json
+    aisafe investigate signoff .aisafe-audit/investigations --by "Ana Ruiz" \\
+        --reason "read deploy.sh; it only copies files" --file deploy.sh --target .
 
 `plan` writes the ranked queue of surfaces; `cite` prints a link's `file`, `line`, `quote`
 and `sha256` exactly as `validate` will check them; `validate` checks records against the
 tree; `digest` prints the hash a skeptic file binds to. None of them reasons about the
 code: the reasoning is the investigator's, in the host agent, and enters only as records.
+`signoff` records a decision the machine cannot make: a person runs it, by name, with a
+reason (`investigation.signoff`).
 
 Exit codes: 0 done (validate: every record accepted), 1 a record rejected, 2 fatal.
 """
@@ -21,9 +25,12 @@ import argparse
 import json
 import re
 import sys
+from dataclasses import replace
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Sequence
 
+from aisafe.discovery.walk import crosses_link
 from aisafe.evidence.model import MODES, redact
 
 __all__ = ["build_parser", "main"]
@@ -72,6 +79,33 @@ def build_parser() -> argparse.ArgumentParser:
 
     digest = sub.add_parser("digest", help="print the record_sha256 a skeptic file binds to")
     digest.add_argument("record", help="an investigation record")
+
+    signoff = sub.add_parser(
+        "signoff",
+        help="record a person's decision on a record at review or an unread file",
+        description=(
+            "Record a decision the machine cannot make, by name, with a reason, bound to this "
+            "commit and to the records and files named. A person runs this; an agent never does."
+        ),
+    )
+    signoff.add_argument(
+        "directory", metavar="DIR", help="the records directory; the file goes here"
+    )
+    signoff.add_argument("--by", required=True, metavar="NAME", help="the person deciding")
+    signoff.add_argument("--reason", required=True, metavar="TEXT", help="why, in their words")
+    signoff.add_argument(
+        "--record", action="append", default=[], metavar="ID", help="a record at review (repeat)"
+    )
+    signoff.add_argument(
+        "--file", action="append", default=[], metavar="PATH", help="an unread file (repeat)"
+    )
+    signoff.add_argument("--target", required=True, metavar="PATH", help="the audited tree")
+    signoff.add_argument(
+        "--engagement",
+        default=None,
+        metavar="DIR",
+        help="the engagement directory; in auditor mode, --by must be its auditor",
+    )
     return parser
 
 
@@ -213,16 +247,96 @@ def _digest(ns: argparse.Namespace) -> int:
     return 0
 
 
+def _signoff(ns: argparse.Namespace) -> int:
+    from aisafe.assessment.assess import _engagement_problem
+    from aisafe.assessment.outcome import unread_files
+    from aisafe.engagement.model import load_engagement
+    from aisafe.investigation.plan import build_plan
+    from aisafe.investigation.scan import machine_scan
+    from aisafe.investigation.signoff import (
+        build_signoff,
+        person_problems,
+        refusals,
+        scene_of,
+        tree_problems,
+        write_signoff,
+    )
+    from aisafe.investigation.validate import validate_paths
+
+    def refuse(problems: Sequence[str]) -> int:
+        for problem in problems:
+            _note(f"no sign-off written: {problem}")
+        return 2
+
+    problems = person_problems(ns.by, ns.reason)
+    if not ns.record and not ns.file:
+        problems.append("name at least one --record or --file")
+    if problems:
+        return refuse(problems)
+    engagement = load_engagement(Path(ns.engagement)) if ns.engagement else None
+    mode = engagement.mode if engagement is not None else "self-assessment"
+    if engagement is not None:
+        problem = _engagement_problem(engagement, Path(ns.target), mode)
+        if problem is not None:
+            return refuse([problem])
+    scan = machine_scan(ns.target, mode=mode)
+    plan = build_plan(scan)
+    not_read = plan["not_read"]
+    scene = scene_of(
+        scan,
+        unread_files(not_read["tracked_not_walked"], not_read["unsupported_files"]),
+        today=datetime.now(timezone.utc).date(),
+        engagement=engagement,
+    )
+    problems = tree_problems(scene)
+    if problems:
+        return refuse(problems)
+    if ns.record:
+        directory = Path(ns.directory)
+        if not directory.is_dir():
+            return refuse([f"no such directory: {directory.as_posix()}"])
+        run = validate_paths(
+            [directory], scan, plan_surfaces={s["id"]: s for s in plan["surfaces"]}
+        )
+        if run.fatal is not None:
+            return refuse([run.fatal])
+        accepted = {r.id: r for r in run.results if r.accepted and r.id}
+        scene = replace(scene, records=accepted)
+    files = [path.replace("\\", "/").removeprefix("./") for path in ns.file]
+    doc = build_signoff(
+        by=ns.by, reason=ns.reason, record_ids=ns.record, file_paths=files, scene=scene
+    )
+    path = Path(ns.directory) / f"{doc['id']}.json"
+    problems = refusals(doc, scene, path)
+    if problems:
+        return refuse(problems)
+    try:
+        written = write_signoff(Path(ns.directory), doc)
+    except FileExistsError:
+        return refuse([f"{path.as_posix()} exists, and a sign-off is never written over"])
+    _note(f"sign-off {doc['id']} by {doc['by']} written to {written.as_posix()}")
+    if mode != "auditor":
+        _note("it binds this commit; `aisafe assess` reports it as self-assessed")
+    return 0
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     parser = build_parser()
     ns = parser.parse_args(list(argv) if argv is not None else None)
     try:
+        # `.aisafe-audit` can be a link the audited tree delivered.
+        output = getattr(ns, "output", None)
+        if output is not None and crosses_link(output):
+            _note(f"refused: -o {Path(output).as_posix()} goes through a link")
+            return 2
         if ns.action == "plan":
             return _plan(ns)
         if ns.action == "validate":
             return _validate(ns)
         if ns.action == "cite":
             return _cite(ns)
+        if ns.action == "signoff":
+            return _signoff(ns)
         return _digest(ns)
     except KeyboardInterrupt:
         _note("interrupted")

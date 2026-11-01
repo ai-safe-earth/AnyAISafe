@@ -15,12 +15,25 @@ Rules that hold here:
   not ignore a tracked file. A tracked file under a `SKIP_DIRS` directory is read with
   `WalkOptions.read_tracked` (auditor mode), where a folder name is the audited team's
   claim; without it the directory stays pruned and one UNKNOWN row names the files. A file
-  skipped for a NUL byte gets one UNKNOWN row too when git tracks it and its suffix is not
-  on the known-binary list, or when it looks like text (a code file type, or a UTF-16 or
-  UTF-32 byte order mark). Outside git nothing is known to be tracked and none of this
-  applies. When git fails inside a repository the list is not known: that is one UNKNOWN
-  row, never the silence of "outside git", and one submodule that cannot be listed costs
-  only its own files.
+  skipped as not text (a NUL byte anywhere in it, a UTF-16 or UTF-32 byte order mark, a
+  Git LFS pointer whose real content was never fetched) gets one UNKNOWN row unless its
+  suffix is on the known-binary list. When git fails inside a repository the list is not
+  known: that is one UNKNOWN row, never the silence of "outside git", and one submodule
+  that cannot be listed costs only its own files. A tracked file the walk never met and
+  no row names (a sparse checkout, a submodule not checked out, a folder renamed by case
+  only, a deleted file) gets one row too; on Windows spelling differs by case without
+  being another file, so the comparison ignores case there.
+- Outside git no commit lists what the walk stepped over, so the walk does: `unread_files`
+  names every file left unread (marker, gitignore line, exclude, size limit, not text,
+  symlink, read error) and `unread_dirs` every directory it did not go into. A directory
+  is named and never walked, so a large `node_modules` costs one line. A cache
+  (`CACHE_OWN_TYPES`) and version control data are left out, unless the cache holds a file
+  of another type, which nothing but a person put there. The audit's own output has its
+  own list. One UNKNOWN row counts both lists, the known-binary suffixes left out, and the
+  workbench reads the lists themselves.
+- A junction or a directory symlink is a link (`is_link`), not a folder of the tree: on
+  Windows `os.path.islink` says False for a junction and `os.walk` goes through it, which
+  read other folders' files as the tree's own and walked a loop.
 - The walker never raises on an unreadable file or directory; it counts and reports
   once under UNKNOWN. Silence is never a pass.
 - `subprocess` is used only for read-only `git` commands, never with `shell=True`, never
@@ -57,7 +70,12 @@ Rules that hold here:
   to the folder the audit runs from never starts, and it runs with `GIT_SAFE` and with
   `GIT_ALLOW_PROTOCOL` set (`git_env`). `git status` also blanks the filter drivers the
   repository can write (`status_args`) and never goes into a submodule by itself, because a
-  submodule has its own configuration; `git_tree` reads each one in turn.
+  submodule has its own configuration; `git_tree` reads each one in turn. A gitlink whose
+  path leaves the tree is no submodule of it: git never runs there. A folder laid out like
+  a bare repository is never taken for one (`safe.bareRepository=explicit`), so a folder a
+  clone delivered cannot bring its own configuration. Git is not started at all when the
+  repository's files name a path on another machine (`network_reference`): reading it
+  would open a connection, and the audit promises none. The tree is then unknown.
 - `.aisafe-audit/` (`AUDIT_DIR`) is never pruned by `.gitignore`, in either the directory
   or the file branch. The skill puts every artefact there and proposes the gitignore line
   for it, so the measure and probe reports the skill itself produces would otherwise stop
@@ -85,12 +103,15 @@ from typing import Any
 
 from aisafe.discovery.patterns import (
     AUDIT_DIR,
+    CACHE_OWN_NAMES,
+    CACHE_OWN_TYPES,
     ENV_FILE_RE,
     IGNORE_MARKER,
     LANG_BY_EXT,
     LEGACY_AUDIT_DIRS,
     LEGACY_IGNORE_MARKERS,
     LEGACY_OWN_HTML_MARKER_LINES,
+    NOTHING_WRITTEN_DIRS,
     OWN_HTML_MARKER_LINE,
     SKIP_DIRS,
     UNIT_MANIFESTS,
@@ -122,6 +143,8 @@ __all__ = [
     "git_tree",
     "file_age",
     "in_audit_dir",
+    "is_link",
+    "network_reference",
     "run_git",
     "status_args",
 ]
@@ -141,6 +164,10 @@ GIT_TIMEOUT = 10.0
 # only the environment can close them: see `git_env`. `GIT_ALLOW_PROTOCOL` is a list and has
 # no empty form, so `none` is a name the configuration can ask for too; the blank alias is
 # what stops a helper called `none`.
+#
+# A folder holding HEAD, config, objects/ and refs/ reads to git as a bare repository, and
+# a commit can deliver such a folder: `safe.bareRepository=explicit` keeps git from taking
+# its `config` for the audited repository's. Only the command line can set that key.
 GIT_SAFE: tuple[str, ...] = (
     "--no-optional-locks",
     "-c",
@@ -155,6 +182,8 @@ GIT_SAFE: tuple[str, ...] = (
     "core.useReplaceRefs=false",
     "-c",
     "alias.remote-none=",
+    "-c",
+    "safe.bareRepository=explicit",
 )
 _NO_TRANSPORT = "none"
 _GIT_NAME = "git.exe" if os.name == "nt" else "git"
@@ -164,8 +193,22 @@ _COMPARE_TIMEOUT = 60.0
 _OPERATOR_SCOPES = frozenset({"system", "global"})
 # `git -c` cannot override a key with `=` in it, so a filter driver is named only by these.
 _FILTER_NAME_RE = re.compile(r"[A-Za-z0-9._-]+")
+# The `lfs.` keys git-lfs writes into a repository itself. Any other can name a program
+# (`lfs.extension.<name>.clean`, `lfs.customtransfer.<name>.path`) or a folder to write to
+# (`lfs.storage`), and git-lfs starts for a file `.gitattributes` gives its filter.
+_LFS_OWN_KEY_RE = re.compile(r"lfs\.(?:repositoryformatversion|.+\.(?:access|locksverify))")
 _GITLINK_MODE = "160000"
 _MAX_SUBMODULE_DEPTH = 8
+# A value that starts with two slashes, either way round, is a path on another machine.
+# `%(prefix)/` is git's own spelling of a folder, and what follows it can start one too.
+_HOST_VALUE_RE = re.compile(r'\s*"?(?:%\(prefix\)/)?[/\\]{2}')
+_CONFIG_HOST_RE = re.compile(r"([A-Za-z][A-Za-z0-9-]*)[ \t]*=[ \t]*(?:%\(prefix\)/)?[/\\]{2}")
+_CONFIG_INCLUDE_RE = re.compile(r"\bpath[ \t]*=[ \t]*([^\r\n;#]+)", re.IGNORECASE)
+# Remote addresses: git status never opens one, and no transport is allowed (`git_env`). A
+# team's remote on a file share is ordinary.
+_REMOTE_KEYS = frozenset({"url", "pushurl", "insteadof", "pushinsteadof"})
+_GIT_FILE_LIMIT = 16 * 1024 * 1024
+_MAX_GIT_FILES = 64
 ROOT_UNIT_ID = "u0"
 ROOT_UNIT_PATH = "."
 
@@ -204,6 +247,15 @@ _OWN_HTML_SUFFIXES = (".html", ".htm")
 _OWN_MARKDOWN_NAMES = frozenset({"assessment.md"})
 # A byte order mark of UTF-16 or UTF-32: text the walk does not decode.
 _WIDE_BOMS = (b"\xff\xfe", b"\xfe\xff", b"\x00\x00\xfe\xff")
+# What git-lfs leaves in the tree when the real file was not fetched: never over this size.
+_LFS_POINTER_HEADS = (
+    b"version https://git-lfs.github.com/spec/v1",
+    b"version https://hawser.github.com/spec/v1",
+)
+_LFS_POINTER_LIMIT = 1024
+# The bit of a Windows reparse tag that says "this name stands for another one": a junction
+# or a symlink. A cloud placeholder has a reparse tag too, and it is the file itself.
+_REPARSE_NAME_SURROGATE = 0x20000000
 # File types that are binary by nature, where a NUL byte says nothing. `.bin` and `.dat` are
 # not here: either can hold anything.
 _BINARY_SUFFIXES = frozenset(
@@ -222,9 +274,9 @@ PR_BODY = f"{AUDIT_DIR}/pr-body.md"
 WORKBENCH_INPUTS: tuple[str, ...] = (f"{AUDIT_DIR}/audit-baseline.json", PR_BODY)
 # The workbench documents: investigation records and their validation, skeptic passes,
 # investigation plans, assessments, engagements, evidence requests, auditee responses, QA
-# sign-offs and bundle manifests. Their quotes would re-report every line they cite. A
-# head match on the exact schema label and the kind that goes with it, like the audit
-# report's.
+# sign-offs, a person's sign-offs and bundle manifests. Their quotes would re-report every
+# line they cite. A head match on the exact schema label and the kind that goes with it,
+# like the audit report's.
 _OWN_WORKBENCH: dict[str, str] = {
     name: name
     for name in (
@@ -238,6 +290,7 @@ _OWN_WORKBENCH: dict[str, str] = {
         "evidence-requests",
         "auditee-response",
         "qa-signoff",
+        "signoff",
     )
 }
 _OWN_WORKBENCH_RE = re.compile(
@@ -297,13 +350,35 @@ def _norm_rel(relpath: str) -> str:
     return "" if rel == "." else rel
 
 
+def _clean_rel(rel: str) -> str:
+    """`rel` with what UTF-8 cannot write replaced: a file name can hold a lone surrogate,
+    and a report, a fingerprint or a rule that encodes it would stop for the whole tree."""
+    return rel.encode("utf-8", "replace").decode("utf-8")
+
+
 def _join(dir_rel: str, name: str) -> str:
-    return f"{dir_rel}/{name}" if dir_rel else name
+    return _clean_rel(f"{dir_rel}/{name}" if dir_rel else name)
+
+
+def _fold(rel: str) -> str:
+    """`rel` for comparing with git's spelling: Windows does not tell `Build` from `build`."""
+    return rel.casefold() if os.name == "nt" else rel
 
 
 def _ancestors(rel: str) -> list[str]:
     parts = rel.split("/")
     return ["/".join(parts[:i]) for i in range(1, len(parts))]
+
+
+def is_link(path: str | os.PathLike[str]) -> bool:
+    """`path` is a symlink or a Windows junction. Never raises: `os.path.islink` swallows
+    OSError, and `Path.is_symlink` does not."""
+    if os.path.islink(path):
+        return True
+    try:
+        return bool(getattr(os.lstat(path), "st_reparse_tag", 0) & _REPARSE_NAME_SURROGATE)
+    except (OSError, ValueError):
+        return False
 
 
 def _is_env_file(name: str) -> bool:
@@ -691,13 +766,37 @@ def _tracked(root: Path, unlisted: list[str] | None = None) -> frozenset[str] | 
     return frozenset(tree.tracked)
 
 
-def _looks_like_text(name: str, head: bytes, tracked: bool) -> bool:
-    """A file with a NUL byte the walk should say it did not read: a wide text encoding, a
-    code or text file type, or a tracked file of a type that is not binary by nature. A
-    prompt can start with a stray NUL or be BOM-less UTF-16, whatever its name says."""
+def _not_text(data: bytes) -> bool:
+    """The walk will not read `data` as UTF-8: a NUL byte anywhere, a byte order mark of a
+    wide encoding (UTF-16 needs no NUL when every character is outside Latin), or a Git LFS
+    pointer standing in for a file that was never fetched."""
+    if b"\x00" in data or data.startswith(_WIDE_BOMS):
+        return True
+    return len(data) <= _LFS_POINTER_LIMIT and data.startswith(_LFS_POINTER_HEADS)
+
+
+def _looks_like_text(name: str, head: bytes) -> bool:
+    """A file not read as text the walk should say it did not read: a wide text encoding, a
+    code or text file type, or any type that is not binary by nature. A prompt can start
+    with a stray NUL or be BOM-less UTF-16, whatever its name says."""
     if head.startswith(_WIDE_BOMS) or _lang_for(name) != "other":
         return True
-    return tracked and Path(name).suffix.lower() not in _BINARY_SUFFIXES
+    return Path(name).suffix.lower() not in _BINARY_SUFFIXES
+
+
+def _holds_foreign_file(name: str, folder: str) -> bool:
+    """The cache `folder`, called `name`, holds a file of a type the cache does not write.
+    Version control data has no such test and is never listed."""
+    own = CACHE_OWN_TYPES.get(name)
+    if own is None:
+        return False
+    for _dirpath, _dirnames, filenames in os.walk(folder):
+        for filename in filenames:
+            if filename in CACHE_OWN_NAMES:
+                continue
+            if os.path.splitext(filename)[1].lower() not in own:
+                return True
+    return False
 
 
 def in_audit_dir(rel: str) -> bool:
@@ -729,6 +828,8 @@ def walk(
     own_output_skipped: list[str] | None = None,
     oversize_skipped: list[str] | None = None,
     marker_skipped: list[str] | None = None,
+    unread_files: list[str] | None = None,
+    unread_dirs: list[str] | None = None,
 ) -> tuple[list[FileRecord], list[Unit], list[UnknownItem]]:
     """
     Enumerate `root`. Never raises on an unreadable entry; see the module docstring.
@@ -744,6 +845,11 @@ def walk(
 
     `marker_skipped`, when given, receives the POSIX relpath of every file skipped for the
     ignore marker, sorted. With `honour_marker=False` no file is skipped for it.
+
+    `unread_files` and `unread_dirs`, when given, receive the POSIX relpath of every file
+    left unread and every directory not gone into, sorted (see the module docstring). The
+    audit's own output is in `own_output_skipped` instead, and version control data and a
+    cache holding only its own file types in neither.
     """
     opts = options or WalkOptions()
     root = Path(root).resolve()
@@ -752,6 +858,7 @@ def walk(
     unlisted: list[str] = []
     listing = _tracked(root, unlisted)
     tracked = listing or frozenset()
+    outside_git = listing is not None and not tracked
     tracked_dirs = frozenset(a for rel in tracked for a in _ancestors(rel))
     pending: list[_Pending] = []
     manifests: dict[str, str | None] = {"": None}
@@ -763,15 +870,29 @@ def walk(
     # `SKIP_DIRS` directories kept open for their tracked files, and the ones left pruned.
     opened: set[str] = set()
     pruned: list[str] = []
+    not_read_files: list[str] = []
+    not_read_dirs: list[str] = []
+    # Files the walk met and can answer for, and the folders it said it left out. A tracked
+    # file in neither was never seen. A gitignored file is not answered for: `.gitignore`
+    # does not hide a tracked file, so it only applies here when git spells the name
+    # differently.
+    met: set[str] = set()
+    left_out: list[str] = []
 
-    def _onerror(_err: OSError) -> None:
+    def _onerror(err: OSError) -> None:
         nonlocal unreadable
         unreadable += 1
+        if err.filename:
+            not_read_dirs.append(_clean_rel(_norm_rel(os.path.relpath(err.filename, root))) or ".")
+
+    def _not_entered(name: str, rel: str, folder: str) -> None:
+        if name not in NOTHING_WRITTEN_DIRS or (outside_git and _holds_foreign_file(name, folder)):
+            not_read_dirs.append(rel)
 
     for dirpath, dirnames, filenames in os.walk(
         root, topdown=True, onerror=_onerror, followlinks=opts.follow_symlinks
     ):
-        dir_rel = _norm_rel(os.path.relpath(dirpath, root))
+        dir_rel = _clean_rel(_norm_rel(os.path.relpath(dirpath, root)))
         if dir_rel and ".gitignore" in filenames:
             text = read_text(Path(dirpath) / ".gitignore")
             if text:
@@ -783,10 +904,15 @@ def walk(
         keep: list[str] = []
         for name in sorted(dirnames):
             rel = _join(dir_rel, name)
-            if not opts.follow_symlinks and os.path.islink(os.path.join(dirpath, name)):
+            folder = os.path.join(dirpath, name)
+            if not opts.follow_symlinks and is_link(folder):
                 symlinks += 1
+                not_read_files.append(rel)
+                met.add(rel)
                 continue
             if _excluded(rel, exclude):
+                left_out.append(rel)
+                _not_entered(name, rel, folder)
                 continue
             if _skip_dir(name, rel) or dir_rel in opened:
                 if rel in tracked_dirs and opts.read_tracked:
@@ -794,11 +920,13 @@ def walk(
                     keep.append(name)
                 elif rel in tracked_dirs:
                     pruned.append(rel)
+                _not_entered(name, rel, folder)
                 continue
             if not opts.include_ignored and ignore.match(rel, is_dir=True):
                 ignored_dirs.append(rel)
                 # Its tracked files are the commit's; the rest stays ignored below.
                 if rel not in tracked_dirs:
+                    _not_entered(name, rel, folder)
                     continue
             keep.append(name)
         dirnames[:] = keep
@@ -806,11 +934,13 @@ def walk(
         for name in filenames:
             rel = _join(dir_rel, name)
             full = Path(dirpath) / name
-            # os.path.islink swallows OSError; Path.is_symlink does not.
-            if not opts.follow_symlinks and os.path.islink(full):
+            met.add(rel)
+            if not opts.follow_symlinks and is_link(full):
                 symlinks += 1
+                not_read_files.append(rel)
                 continue
             if _excluded(rel, exclude) or (dir_rel in opened and rel not in tracked):
+                not_read_files.append(rel)
                 continue
             if rel in opts.skip_untracked and rel not in tracked:
                 if own_output_skipped is not None:
@@ -818,19 +948,25 @@ def walk(
                 continue
             gitignored = rel not in tracked and ignore.would_ignore(rel, is_dir=False)
             if gitignored and not opts.include_ignored and ignore.match(rel, is_dir=False):
+                not_read_files.append(rel)
+                met.discard(rel)
                 continue
             try:
                 size = full.stat().st_size
                 if size > opts.max_size:
                     oversize.append(rel)
+                    not_read_files.append(rel)
                     continue
                 with open(full, "rb") as fh:
-                    head = fh.read(HEAD_BYTES)
+                    data = fh.read()
             except OSError:
                 unreadable += 1
+                not_read_files.append(rel)
                 continue
-            if b"\x00" in head:
-                if _looks_like_text(name, head, listing is None or rel in tracked):
+            head = data[:HEAD_BYTES]
+            if _not_text(data):
+                not_read_files.append(rel)
+                if _looks_like_text(name, head):
                     not_text.append(rel)
                 continue
             # `utf-8-sig`: the same text `read_text` returns. A BOM left in place put
@@ -848,6 +984,7 @@ def walk(
             if opts.honour_marker and has_ignore_marker(text_head):
                 if marker_skipped is not None:
                     marker_skipped.append(rel)
+                not_read_files.append(rel)
                 continue
             pending.append(_Pending(full, rel, _lang_for(name), size, gitignored))
 
@@ -926,13 +1063,24 @@ def walk(
     if not_text:
         unknown.append(_not_text_item(not_text))
     if listing is None or unlisted:
-        unknown.append(_not_listed_item(unlisted))
+        unknown.append(_not_listed_item(unlisted, network_reference(root)))
+    lost = _lost_tracked(tracked, met, [*pruned, *left_out])
+    if lost:
+        unknown.append(_lost_tracked_item(lost))
+    if outside_git:
+        unread = [rel for rel in not_read_files if Path(rel).suffix.lower() not in _BINARY_SUFFIXES]
+        if unread or not_read_dirs:
+            unknown.append(_unread_item({*unread, *not_read_dirs}))
     # Filename visit order from os.walk is OS-dependent; sort so inventory/SARIF lists
     # match across Windows and Linux (same invariant as oversize_skipped and records).
     if own_output_skipped is not None:
         own_output_skipped[:] = sorted(own_output_skipped)
     if marker_skipped is not None:
         marker_skipped[:] = sorted(marker_skipped)
+    if unread_files is not None:
+        unread_files[:] = sorted(set(not_read_files))
+    if unread_dirs is not None:
+        unread_dirs[:] = sorted(set(not_read_dirs))
     return records, units, unknown
 
 
@@ -983,32 +1131,83 @@ def _tracked_skipped_item(tracked: frozenset[str], pruned: Sequence[str]) -> Unk
 
 
 def _not_text_item(paths: Sequence[str]) -> UnknownItem:
-    """A NUL byte in the first 8 KiB ends the read, and UTF-16 text is full of them. A
-    prompt saved that way is still a prompt, so the skip is named."""
+    """A NUL byte ends the read, and UTF-16 text is full of them; a byte order mark ends it
+    too; a Git LFS pointer is a few lines standing for a file that was never fetched. A
+    prompt saved or stored that way is still a prompt, so the skip is named."""
     return UnknownItem(
         category=UnknownCategory.COVERAGE,
         what="files not read as text",
         why=(
-            f"{len(paths)} file(s) with a NUL byte (binary data, or UTF-16 or UTF-32 text) "
-            f"not read: {_shown(paths)}"
+            f"{len(paths)} file(s) with a NUL byte (binary data, or UTF-16 or UTF-32 text), a "
+            f"wide byte order mark, or a Git LFS pointer not read: {_shown(paths)}"
         ),
-        how_to_resolve="Save text as UTF-8, or audit those files directly.",
+        how_to_resolve=(
+            "Save text as UTF-8, fetch Git LFS files (`git lfs pull`), or audit those files "
+            "directly."
+        ),
     )
 
 
-def _not_listed_item(unlisted: Sequence[str]) -> UnknownItem:
+def _not_listed_item(unlisted: Sequence[str], network: str | None = None) -> UnknownItem:
     """`.gitignore` never hides a tracked file, but only git can say which are tracked. When
     it cannot, a committed file can stay hidden, so the walk says what it could not know."""
+    if network is not None:
+        why = f"git was not started: {network} names a path on another machine"
+    elif unlisted:
+        why = f"git could not list the files of {len(unlisted)} submodule(s): {_shown(unlisted)}"
+    else:
+        why = "git could not list the tracked files of this repository"
     return UnknownItem(
         category=UnknownCategory.COVERAGE,
         what="tracked files not listed",
+        why=why + "; a .gitignore line or a folder name may have hidden a committed file",
+        how_to_resolve=(
+            "Take the network path out of the repository's git files, or audit a copy "
+            "without `.git`."
+            if network is not None
+            else "Repair the repository (`git status` names the error) and re-run."
+        ),
+    )
+
+
+def _lost_tracked(tracked: frozenset[str], met: set[str], left_out: Sequence[str]) -> list[str]:
+    """The files of the commit the walk never met, in a folder it did not say it left out."""
+    seen = {_fold(rel) for rel in met}
+    folders = tuple(_fold(rel) + "/" for rel in left_out)
+    return [rel for rel in tracked if _fold(rel) not in seen and not _fold(rel).startswith(folders)]
+
+
+def _lost_tracked_item(paths: Sequence[str]) -> UnknownItem:
+    """A file of the commit that is not on disk under its name was read by nobody, and git
+    can call the tree unchanged all the same."""
+    return UnknownItem(
+        category=UnknownCategory.COVERAGE,
+        what="tracked files not read",
         why=(
-            f"git could not list the files of {len(unlisted)} submodule(s): {_shown(unlisted)}"
-            if unlisted
-            else "git could not list the tracked files of this repository"
-        )
-        + "; a .gitignore line or a folder name may have hidden a committed file",
-        how_to_resolve="Repair the repository (`git status` names the error) and re-run.",
+            f"{len(paths)} tracked file(s) or submodule(s) not found under their own name: "
+            f"{_shown(paths)}"
+        ),
+        how_to_resolve=(
+            "Check out the whole commit: leave the sparse checkout, run `git submodule update "
+            "--init --recursive`, restore a deleted file, or put a folder's name back in the "
+            "case the commit spells it."
+        ),
+    )
+
+
+def _unread_item(paths: set[str]) -> UnknownItem:
+    """Outside git no commit shows what the walk left out, so the walk says it once."""
+    return UnknownItem(
+        category=UnknownCategory.COVERAGE,
+        what="files and folders not read",
+        why=(
+            f"{len(paths)} file(s) or folder(s) not read, and no commit lists them: "
+            f"{_shown(sorted(paths))}"
+        ),
+        how_to_resolve=(
+            "Check nothing the system runs is among them: a folder's name, a .gitignore line "
+            "or an exclude says nothing about what it holds."
+        ),
     )
 
 
@@ -1059,6 +1258,112 @@ def git_env(protocols: str = _NO_TRANSPORT) -> dict[str, str]:
     return {**os.environ, "GIT_ALLOW_PROTOCOL": protocols}
 
 
+def _config_text(text: str) -> str:
+    """Git configuration with its line continuations and quotes taken out, so a value reads
+    as git reads it. Coarse on purpose: a comment that looks like a value counts as one."""
+    return re.sub(r"\\\r?\n", "", text).replace('"', "")
+
+
+def _names_host(text: str) -> bool:
+    return any(
+        match.group(1).lower() not in _REMOTE_KEYS for match in _CONFIG_HOST_RE.finditer(text)
+    )
+
+
+def _link_target(path: Path) -> str | None:
+    """What a link points at, without touching it. Windows writes a local target of a
+    junction as `\\\\?\\C:\\...`, which is no path on another machine, and a remote one as
+    `\\\\?\\UNC\\host\\share`."""
+    try:
+        target = os.readlink(path)
+    except (OSError, ValueError):
+        return None
+    if target.startswith("\\\\?\\UNC\\"):
+        return "\\\\" + target[len("\\\\?\\UNC\\") :]
+    return target.removeprefix("\\\\?\\")
+
+
+def _host_in_git_files(dotgit: Path) -> Path | None:
+    """The file behind `dotgit` that names a path on another machine, or None. It follows
+    what git would follow: the `.git` file, `commondir`, `config`, `config.worktree` and the
+    files they include, and object alternates, each by its own syntax."""
+    queue: list[tuple[str, Path]] = [(".git", dotgit)]
+    seen: set[Path] = set()
+    while queue:
+        kind, path = queue.pop()
+        if path in seen:
+            continue
+        if len(seen) >= _MAX_GIT_FILES:
+            return path  # more than a repository has: what is left cannot be taken as read
+        seen.add(path)
+        if is_link(path):
+            target = _link_target(path)
+            if target is not None and _HOST_VALUE_RE.match(target):
+                return path
+            if target is not None:
+                queue.append((kind, path.parent / target))
+            continue
+        if kind == "folder" or (kind == ".git" and os.path.isdir(path)):
+            queue += [
+                ("commondir", path / "commondir"),
+                ("config", path / "config"),
+                ("config", path / "config.worktree"),
+                ("alternates", path / "objects" / "info" / "alternates"),
+            ]
+            continue
+        if not os.path.isfile(path):
+            continue
+        try:
+            if os.path.getsize(path) > _GIT_FILE_LIMIT:
+                return path
+            text = path.read_bytes().decode("latin-1")
+        except OSError:
+            continue
+        if kind == "config":
+            text = _config_text(text)
+            if _names_host(text):
+                return path
+            includes = (m.group(1).strip() for m in _CONFIG_INCLUDE_RE.finditer(text))
+            queue += [("config", path.parent / rel) for rel in includes if rel[:1] != "~"]
+            continue
+        for line in text.splitlines():
+            value = line.partition("gitdir:")[2] if kind == ".git" else line
+            value = value.strip().strip('"')
+            if _HOST_VALUE_RE.match(value):
+                return path
+            if not value or value.startswith("#"):
+                continue
+            if kind == "alternates":
+                queue.append(("alternates", path.parents[1] / value / "info" / "alternates"))
+            else:
+                queue.append(("folder", path.parent / value))
+    return None
+
+
+def network_reference(cwd: Path) -> str | None:
+    """Which file of the repository around `cwd` names a path on another machine, or None.
+    Git opens such a path while it starts, before any command, so a repository's own files
+    could make the audit connect to a host: `include.path=//host/share/x`, a `gitdir:` line,
+    `commondir`, or an object alternate. A value that starts `//` or `\\\\` is enough; remote
+    addresses are not counted, because nothing here opens one."""
+    start = Path(os.path.abspath(cwd))
+    for folder in (start, *start.parents):
+        if not os.path.lexists(folder / ".git"):
+            continue
+        found = _host_in_git_files(folder / ".git")
+        if found is not None:
+            found = Path(os.path.normpath(found))
+            return found.relative_to(folder).as_posix() if folder in found.parents else found.name
+    return None
+
+
+def crosses_link(output: str) -> bool:
+    """The file itself or a folder on its way is a symlink or a junction. Nothing but the
+    path's own parts is compared, so an 8.3 short name or a drive letter's case is no link."""
+    path = Path(os.path.abspath(output))
+    return any(is_link(part) for part in (path, *path.parents))
+
+
 def run_git(
     args: Sequence[str],
     cwd: Path,
@@ -1068,9 +1373,10 @@ def run_git(
     timeout: float = GIT_TIMEOUT,
 ) -> bytes | None:
     """Run a read-only git command, the one way this package does: stdout when it exits with
-    a code in `ok`, None on any failure. `env` is added to `git_env()`."""
+    a code in `ok`, None on any failure, and None without starting git when the repository
+    names a path on another machine (`network_reference`). `env` is added to `git_env()`."""
     program = git_program()
-    if program is None:
+    if program is None or network_reference(cwd) is not None:
         return None
     try:
         proc = subprocess.run(
@@ -1108,22 +1414,27 @@ def status_args(root: Path) -> list[str] | None:
     a filter cannot make a changed file read as unchanged. A driver only the operator wrote
     (system or global scope, where `git lfs install` puts its own) stays: it is what makes an
     LFS file equal its pointer, and a repository can only point at it. A driver the
-    repository touches in any key, even to shadow the operator's, is blanked whole. None when
-    the drivers cannot be listed or one cannot be overridden: git is then not run at all."""
+    repository touches in any key, even to shadow the operator's, is blanked whole, and so is
+    the `lfs` driver when the repository sets an `lfs.` key git-lfs does not write itself,
+    because git-lfs reads those and they can start a program. None when the drivers cannot
+    be listed or one cannot be overridden: git is then not run at all."""
     # `git config --get-regexp` exits 1 when nothing matches.
     listed = _git(
-        ["config", "--show-scope", "-z", "--name-only", "--get-regexp", r"^filter\."],
+        ["config", "--show-scope", "-z", "--name-only", "--get-regexp", r"^(filter|lfs)\."],
         root,
         ok=(0, 1),
     )
     if listed is None:
         return None
     fields = listed.split("\0")
-    drivers = {
-        key[len("filter.") :].rpartition(".")[0]
-        for scope, key in zip(fields[0::2], fields[1::2])
-        if scope not in _OPERATOR_SCOPES
-    }
+    drivers: set[str] = set()
+    for scope, key in zip(fields[0::2], fields[1::2]):
+        if scope in _OPERATOR_SCOPES:
+            continue
+        if key.startswith("filter."):
+            drivers.add(key[len("filter.") :].rpartition(".")[0])
+        elif not _LFS_OWN_KEY_RE.fullmatch(key):
+            drivers.add("lfs")
     drivers.discard("")
     if not all(_FILTER_NAME_RE.fullmatch(driver) for driver in drivers):
         return None
@@ -1140,7 +1451,8 @@ class GitTree:
 
     `tracked`: the commit's files; a submodule that is not checked out stays as one path,
     so it reads as a tracked file nobody read. None when git could not list them.
-    `unlisted`: checked-out submodules git could not list; `tracked` holds the rest.
+    `unlisted`: checked-out submodules git could not list, and gitlinks that leave the tree;
+    `tracked` holds the rest.
     `changed`: tracked paths that differ, and submodules at another commit. `untracked`:
     what `git status` lists as untracked. `uncompared`: tracked files `git status` does not
     look at (skip-worktree, assume-unchanged); a file a sparse checkout left off the disk
@@ -1153,6 +1465,12 @@ class GitTree:
     untracked: set[str] = field(default_factory=set)
     uncompared: set[str] = field(default_factory=set)
     status_failed: bool = False
+
+
+def _leaves_tree(path: str) -> bool:
+    """A path in the index that points out of the work tree."""
+    rel = path.replace("\\", "/")
+    return rel.startswith("/") or rel[1:2] == ":" or ".." in rel.split("/")
 
 
 def git_tree(
@@ -1179,6 +1497,11 @@ def git_tree(
         if not tab:
             continue
         tag, _, rest = head.partition(" ")
+        if rest.startswith(_GITLINK_MODE) and _leaves_tree(path):
+            # A crafted index: never a place to run git. What it held stays unknown.
+            tree.status_failed = True
+            tree.unlisted.add(path)
+            continue
         if rest.startswith(_GITLINK_MODE) and (root / path / ".git").exists():
             submodules.append(path)
         elif tree.tracked is not None:
@@ -1263,10 +1586,10 @@ def _read_status(status: str, prefix: str, tree: GitTree) -> None:
 
 def git_meta(root: Path) -> tuple[str | None, bool | None]:
     """(HEAD sha, dirty). `(None, False)` when git is absent or `root` is not a repo; dirty
-    is None when git could not say: unknown, never "no changes"."""
+    is None when git could not say, or was not started: unknown, never "no changes"."""
     out = _git(["rev-parse", "HEAD"], Path(root))
     if out is None:
-        return None, False
+        return None, None if network_reference(Path(root)) is not None else False
     sha = out.strip()
     if not _SHA_RE.match(sha):
         return None, False

@@ -693,10 +693,10 @@ def test_a_known_binary_file_gets_no_row(tmp_path: Path) -> None:
     assert _rows(root, NOT_TEXT) == []
 
 
-def test_an_untracked_file_of_no_known_type_gets_no_row(tmp_path: Path) -> None:
+def test_an_untracked_file_of_no_known_type_gets_a_row(tmp_path: Path) -> None:
     root = _bot(tmp_path)
     (root / "cache.store").write_bytes(b"a\x00b")
-    assert _rows(root, NOT_TEXT) == []
+    assert len(_rows(root, NOT_TEXT)) == 1
 
 
 def test_when_git_cannot_list_a_nul_file_counts_as_tracked(tmp_path: Path) -> None:

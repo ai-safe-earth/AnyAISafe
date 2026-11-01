@@ -87,9 +87,19 @@ CONFIG_SECTION = "aisafe-audit"
 # `[tool.aisafe-audit]`. Otherwise a pyproject could make every audit rewrite a baseline
 # (`write_baseline`), run no rule (`inventory_only`) or print the catalogue and exit 0
 # (`list_rules`) -- and the two booleans, once `true` there, have no flag to undo them.
-# `mode` among them: the audited tree's pyproject never chooses how it is audited.
+# `mode` among them: the audited tree's pyproject never chooses how it is audited. `output`
+# and `format` too: an audited tree would choose where a file lands, outside itself included.
 NOT_CONFIGURABLE: frozenset[str] = frozenset(
-    {"amend_baseline", "accept", "write_baseline", "inventory_only", "list_rules", "mode"}
+    {
+        "amend_baseline",
+        "accept",
+        "write_baseline",
+        "inventory_only",
+        "list_rules",
+        "mode",
+        "output",
+        "format",
+    }
 )
 
 # `EXIT_OK` says "nothing counted", on purpose: a zero exit is not a bill of health.
@@ -119,6 +129,11 @@ _WRITE_BASELINE_REFUSED = (
 _SAME_PATH_REFUSED = (
     "--output and --write-baseline both name {path}: the baseline would overwrite the "
     "report just written there; give the two different paths"
+)
+_LINK_REFUSED = (
+    "{flag} {path} goes through a symbolic link or a junction, so the file would land "
+    "somewhere the path does not say; in an audited tree that place is the tree's choice. "
+    "Give the real path."
 )
 _EVALUATION_NOT_A_REPORT = (
     "not an evaluation report (kind evaluation, or legacy probe); the file was read and not used"
@@ -316,14 +331,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument("path", nargs="?", default=".", help="repo or subdirectory to audit")
     parser.add_argument(
-        "--format", choices=FORMATS, default="terminal", help="renderer (default: terminal)"
+        "--format",
+        choices=FORMATS,
+        default="terminal",
+        help="renderer (default: terminal) (not settable from pyproject)",
     )
     parser.add_argument(
         "--output",
         "-o",
         default=None,
         metavar="PATH",
-        help="write the rendered document here instead of stdout",
+        help="write the rendered document here instead of stdout (not settable from pyproject)",
     )
     parser.add_argument(
         "--fail-on",
@@ -616,6 +634,8 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
     own_output_skipped: list[str] = []
     oversize_skipped: list[str] = []
     marker_skipped: list[str] = []
+    unread_files: list[str] = []
+    unread_dirs: list[str] = []
     auditor = getattr(options, "mode", "self-assessment") == "auditor"
     files, units, walk_unknown = walk.walk(
         root,
@@ -630,6 +650,8 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
         own_output_skipped=own_output_skipped,
         oversize_skipped=oversize_skipped,
         marker_skipped=marker_skipped,
+        unread_files=unread_files,
+        unread_dirs=unread_dirs,
     )
     # The walker names the audit's own reports it stepped over; discover copies the list
     # onto the inventory so every renderer can say what was not looked at.
@@ -708,6 +730,8 @@ def _build_context(options: AuditOptions, root: Path, policy: Policy) -> AuditCo
         evaluation=evaluation,
         checks=check_facts,
         review=review,
+        unread_files=unread_files,
+        unread_dirs=unread_dirs,
     )
     # The Python texts were read once for the checks; the rules share the same copy.
     ctx.texts.update(texts)
@@ -993,6 +1017,12 @@ def run_audit(args: argparse.Namespace | AuditOptions) -> int:
             if value is not None:
                 _note(_INVENTORY_BASELINE_REFUSED.format(flag=flag))
                 return EXIT_FATAL
+
+    # `.aisafe-audit` can be a link the audited tree delivered, and action.yml writes there.
+    for flag, value in (("--output", options.output), ("--write-baseline", options.write_baseline)):
+        if value is not None and walk.crosses_link(value):
+            _note(_LINK_REFUSED.format(flag=flag, path=Path(value).as_posix()))
+            return EXIT_FATAL
 
     # Read before the scan: a target that cannot be overwritten is found out before any
     # work is done, and the file is left exactly as it was.

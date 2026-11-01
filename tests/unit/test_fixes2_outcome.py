@@ -53,7 +53,7 @@ def _entry(root: Path, sha256: str | None = None, **over: Any) -> dict[str, Any]
     return {
         "reviewer": "T. Tester <reviewer>",
         "reviewed_at": date.today().isoformat(),
-        "scope": ["M1"],
+        "scope": [m.id for m in POLICY.mechanisms],
         "declared_purpose": "answers questions about the shop",
         "artifacts": [{"path": "app.py", "sha256": sha256 or sha256_of(root / "app.py")}],
         **over,

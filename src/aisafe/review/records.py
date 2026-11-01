@@ -22,9 +22,11 @@ Honesty rules this module carries:
   old review is never presented as a current one.
 - A malformed record covers nothing. Every problem is one line in `errors`, never an
   exception and never a half-trusted record.
-- The free text a person writes (reviewer, purpose, justification, notes) is held to the
-  baseline's bar: printable ASCII, no verdict language, nothing secret-shaped. A record
-  says who reviewed what; it never says the system is fine.
+- The free text a person writes (reviewer, purpose, justification, notes) may be in any
+  alphabet: a name with an accent is a name. It carries no hidden or control character, no
+  word that mixes two alphabets, no verdict language and nothing secret-shaped, and those
+  last checks read it folded (`fold_text`), so an accent does not step around them. A
+  record says who reviewed what; it never says the system is fine.
 - The reviewer is a person. A tool that helped is named in `assisted_by` and nowhere else.
 
 `aisafe review init|record|check` lives in `aisafe.review.cli`; this module is the schema
@@ -35,6 +37,7 @@ from __future__ import annotations
 
 import json
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date, datetime
 from pathlib import Path, PurePosixPath, PureWindowsPath
@@ -43,6 +46,7 @@ from typing import Any, Callable, Iterable, Mapping, Sequence
 import yaml
 
 from aisafe.evidence.model import SCHEMA_VERSION, ArtifactRef, UnknownCategory, UnknownItem, redact
+from aisafe.investigation.records import fold_text, verdict_words_in
 from aisafe.policy import Policy, PolicyError, load_policy
 
 __all__ = [
@@ -94,10 +98,18 @@ RECORD_KEYS: tuple[str, ...] = (
 _SHA256_RE = re.compile(r"^[0-9a-f]{64}$")
 # A finding fingerprint is sixteen hex characters (evidence.model.fingerprint).
 _FINGERPRINT_RE = re.compile(r"^[0-9a-f]{16}$")
-# Control characters (below space, plus DEL): ASCII, but not a printable line.
-_CONTROL_RE = re.compile(r"[\x00-\x1f\x7f]")
-# The same, with the newline allowed: `notes` may run over several lines.
-_CONTROL_MULTILINE_RE = re.compile(r"[\x00-\x09\x0b-\x1f\x7f]")
+# What no name or reason needs, and what hides text from the person reading it: control and
+# format characters (a right-to-left override, a zero-width space), private-use, surrogate
+# and unassigned code points, and the two Unicode line separators.
+_HIDDEN_CATEGORIES = frozenset({"Cc", "Cf", "Co", "Cs", "Cn", "Zl", "Zp"})
+# The Hangul fillers: letters by category, and they print as nothing.
+_BLANK_LETTERS = frozenset("\u115f\u1160\u3164\uffa0")
+_WORD_LETTERS = frozenset({"Lu", "Ll", "Lt", "Lo"})
+# Scripts written without spaces between words: a Latin word runs straight into them, so
+# one of their characters ends a word instead of mixing with it.
+_UNSPACED_SCRIPTS = frozenset(
+    {"CJK", "HIRAGANA", "KATAKANA", "HANGUL", "BOPOMOFO", "THAI", "LAO", "KHMER", "MYANMAR"}
+)
 # The one word the audit never says about a target. Built from fragments so this module
 # does not carry it as a literal; the baseline and the report tests use the same shape.
 _BANNED_WORD_RE = re.compile(r"\bcl" + r"ean\b", re.IGNORECASE)
@@ -150,58 +162,103 @@ def _posix(path: Any) -> str:
 
 
 _TOOL_NAME_RE = re.compile(
-    r"^(?:an?\s+)?(?:claude|chatgpt|gpt(?:-?[\w.]+)?|gemini|copilot|codex|llama|mistral|cursor"
-    r"|openai|anthropic|llm|ai|a\.i\.|model|language\s+model|bot|chatbot|assistant|agent"
-    r"|ai\s+(?:assistant|agent|model|reviewer)|the\s+(?:model|tool|agent|assistant))\s*$",
+    r"^(?:an?\s+)?(?:github\s+)?(?:claude|chatgpt|gpt(?:-?[\w.]+)?|gemini|copilot|codex|llama"
+    r"|mistral|cursor|openai|anthropic|llm|ai|a\.i\.?|model|language\s+model|bot|chatbot"
+    r"|assistant|agent|ai\s+(?:assistant|agent|model|reviewer)"
+    r"|the\s+(?:model|tool|agent|assistant))"
+    # A product's own suffixes: "Claude Code", "Gemini CLI", "claude-3-opus".
+    r"(?:[\s-]+(?:code|cli|agent|assistant|opus|sonnet|haiku|fable|flash|\d[\w.-]*))*\s*$",
     re.IGNORECASE,
 )
+# Punctuation around a name: "(Claude)", "`Claude`", "Claude.".
+_NAME_EDGE_RE = re.compile(r"^[\W_]+|[\W_]+$")
 
 
 def tool_name_problem(reviewer: Any) -> str | None:
     """
     Why `reviewer` cannot be the person who reviewed: the name part (before any `<role>`)
-    is a model, a tool or a generic word for one. A tool that helped belongs in
-    `assisted_by`; the reviewer is a person, by name. None when the name passes.
+    holds no letter, or is a model, a tool or a generic word for one, or the text pronounces
+    a verdict. It reads the fold, without the punctuation around the name. A tool that helped
+    belongs in `assisted_by`; the reviewer is a person, by name. None when the name passes.
+    The list of tools can never be complete: it stops the plain cases, and a name it does
+    not know passes. An empty name is `check_text`'s to refuse.
     """
-    if not isinstance(reviewer, str):
+    if not isinstance(reviewer, str) or not reviewer.strip():
         return None
-    name = reviewer.split("<", 1)[0].strip().strip("\"'")
+    name = _NAME_EDGE_RE.sub("", fold_text(reviewer).split("<", 1)[0])
+    if not any(char.isalpha() for char in name):
+        return (
+            f"reviewer {reviewer.strip()!a} names nobody; a person's name comes before any <role>"
+        )
     if _TOOL_NAME_RE.match(name):
         return (
-            f"reviewer {reviewer.strip()!r} names a tool, not a person; the reviewer is the "
+            f"reviewer {reviewer.strip()!a} names a tool, not a person; the reviewer is the "
             "person who read the artifacts (name and role), and a tool that helped is named "
             "in assisted_by"
         )
+    if verdict_words_in(reviewer):
+        return "the reviewer reads as a verdict; the reviewer is a person, by name"
     return None
+
+
+def _has_hidden(text: str, *, multiline: bool) -> bool:
+    return any(
+        (unicodedata.category(char) in _HIDDEN_CATEGORIES or char in _BLANK_LETTERS)
+        and not (multiline and char == "\n")
+        for char in text
+    )
+
+
+def _mixes_alphabets(folded: str) -> bool:
+    """True when one word, a run of letters, holds two alphabets: a Cyrillic letter inside a
+    Latin word is how a word gets past a list while reading the same. A word wholly in one
+    alphabet that looks like a word of another is beyond this check."""
+    if folded.isascii():
+        return False
+    seen: set[str] = set()
+    for char in folded:
+        script = unicodedata.name(char, "").split(" ", 1)[0]
+        if unicodedata.category(char) in _WORD_LETTERS and script not in _UNSPACED_SCRIPTS:
+            seen.add(script)
+            if len(seen) > 1:
+                return True
+        else:
+            seen.clear()
+    return False
 
 
 def check_text(label: str, value: Any, *, multiline: bool = False) -> str | None:
     """
-    The baseline's reason checks applied to one free-text field: non-empty, not the
-    placeholder, printable ASCII (one line unless `multiline`), no verdict language, no
-    secret-shaped token. None when the text passes, else one line saying why not. The
-    record file sits in the audited tree and is scanned like any other, so a secret in it
-    would be reported, and a verdict in it would say what the tool never says.
+    One free-text field, in any alphabet: non-empty, not the placeholder, no hidden or
+    control character (one line unless `multiline`), no word that mixes two alphabets, no
+    verdict language, no secret-shaped token. The word checks read the fold (`fold_text`).
+    None when the text passes, else one line saying why not, which never repeats the text.
+    The record file sits in the audited tree and is scanned like any other, so a secret in
+    it would be reported, and a verdict in it would say what the tool never says. The
+    baseline's reason is the same bar in ASCII (`baseline._check_reason`).
     """
     if value is None or (isinstance(value, str) and not value.strip()):
         return f"{label} is empty"
     if not isinstance(value, str):
         return f"{label} must be a string"
     text = value.strip()
-    if text.upper() == PLACEHOLDER:
+    folded = fold_text(text).strip()
+    if not folded:
+        return f"{label} is empty"
+    if folded.upper() == PLACEHOLDER:
         return f"{label} is the placeholder {PLACEHOLDER}"
-    if not text.isascii():
-        return f"{label} is not ASCII"
-    if (_CONTROL_MULTILINE_RE if multiline else _CONTROL_RE).search(text):
-        shape = "printable ASCII" if multiline else "a single line of printable ASCII"
+    if _has_hidden(text, multiline=multiline):
+        shape = "printable text" if multiline else "a single line of printable text"
         return f"{label} must be {shape}"
-    lowered = text.lower()
-    if _BANNED_WORD_RE.search(text) or any(phrase in lowered for phrase in _banned_phrases()):
+    if _mixes_alphabets(folded):
+        return f"{label} mixes two alphabets inside one word, which hides what it says"
+    lowered = folded.lower()
+    if _BANNED_WORD_RE.search(folded) or any(phrase in lowered for phrase in _banned_phrases()):
         return (
             f"{label} reads as a verdict; a record says who reviewed what, "
             "not that the system is fine"
         )
-    if redact(text) != text:
+    if redact(folded) != folded:
         return (
             f"{label} contains a secret-shaped token; the record is scanned by the audit "
             "and would report it"
@@ -781,6 +838,19 @@ _HEADER_LINES: tuple[str, ...] = (
 )
 
 
+# What YAML will not read raw, or reads as a line break, inside a double-quoted scalar.
+_YAML_ESCAPED_RE = re.compile("[\x7f-\x9f\u2028\u2029\ud800-\udfff\ufffe\uffff]")
+
+
+def _json_string(text: str) -> str:
+    """`text` as a JSON string a person can read: a name stays the name it is. Not escaped
+    wholesale because a character past U+FFFF would go out as a surrogate pair, which YAML
+    reads back as two broken characters."""
+    return _YAML_ESCAPED_RE.sub(
+        lambda match: f"\\u{ord(match.group(0)):04x}", json.dumps(text, ensure_ascii=False)
+    )
+
+
 def _scalar(value: Any) -> str:
     """One YAML scalar. Strings go out as JSON strings, which YAML reads as double-quoted
     scalars, so a colon, a hash or a leading digit in a name never changes its type."""
@@ -794,9 +864,7 @@ def _scalar(value: Any) -> str:
         return value.date().isoformat()
     if isinstance(value, date):
         return value.isoformat()
-    if isinstance(value, str):
-        return json.dumps(value, ensure_ascii=True)
-    return json.dumps(str(value), ensure_ascii=True)
+    return _json_string(value if isinstance(value, str) else str(value))
 
 
 def _flow_list(values: Iterable[Any]) -> str:
@@ -846,7 +914,7 @@ def dump_document(doc: Mapping[str, Any], *, header: bool = False) -> str:
     """
     The record file text for a document in the file's shape (`schema`, `kind`,
     `policy_version`, `reviews: [...]`). Written by hand rather than by a YAML dumper so
-    the layout is stable across runs (a diff shows what changed), every string is ASCII,
+    the layout is stable across runs (a diff shows what changed), every string is quoted,
     and the skeleton can carry its explanation as comments.
     """
     lines: list[str] = []

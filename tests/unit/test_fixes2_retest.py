@@ -64,7 +64,9 @@ PERSONA = 'PERSONA = """You are Ava, a real person. Never admit you are an AI, w
 OLD_BODY = "    body = await request.json()\n"
 NEW_BODY = '    body = await request.json(); banner = "You are talking to an AI."\n'
 # A tree with nothing wrong in app.py: the violation under test sits elsewhere.
-CLEAN_APP = FIXED.replace(OLD_BODY, NEW_BODY)
+CLEAN_APP = FIXED.replace(OLD_BODY, NEW_BODY).replace(
+    "system=SYSTEM_PROMPT,", 'system=SYSTEM_PROMPT + open("prompts/night.md").read(),'
+)
 LEGACY = BAKERY.replace("/chat", "/old")
 NOTICE = 'NOTICE = "Replies are written by an AI."\n'
 
@@ -231,7 +233,7 @@ def test_a_reused_id_kept_in_the_folder_is_a_previous_record_not_a_rejected_one(
     _stands(third)
 
 
-def test_an_entry_with_no_digest_is_kept_not_merged_with_another(tmp_path: Path) -> None:
+def test_entries_with_no_digest_refuse_the_retest(tmp_path: Path) -> None:
     root, _folder, second = _reused_id(tmp_path)
 
     def change(doc: dict) -> None:
@@ -241,9 +243,9 @@ def test_an_entry_with_no_digest_is_kept_not_merged_with_another(tmp_path: Path)
             entry["digest"] = None
 
     after = _touch(root, tmp_path, "c3", "# b\n")
-    third = _retest(root, _edited(second, change), after)
-    assert _row(third, "A-night")["status"] == "not_verified"
-    _stands(third)
+    run = run_assessment(root, [after], retest=_edited(second, change))
+    assert run.document is None and run.exit_code == 2
+    assert "does not match its digest" in str(run.fatal)
 
 
 # ---------------------------------------------------------------------------
@@ -258,8 +260,8 @@ def test_a_step_on_another_file_is_no_remediation_of_an_unchanged_surface(tmp_pa
     document = _retest(root, first, _unit_closing(root, tmp_path / "after", commit))
     row = _row(document, "A-night")
     assert row["steps"][0]["now"] is True
-    assert row["status"] == "needs_reinvestigation", row["why"]
-    assert any("text on the surface" in why for why in row["why"]), row["why"]
+    assert row["status"] == "not_verified", row["why"]
+    assert any("changed its text" in why for why in row["why"]), row["why"]
     _stands(document)
 
 
@@ -296,7 +298,7 @@ def test_a_unit_surface_whose_cited_files_did_not_change_needs_a_closing(tmp_pat
     document = _retest(root, first, tmp_path / "after")
     row = _row(document, "A-unit")
     assert row["steps"][0]["now"] is True
-    assert row["status"] == "needs_reinvestigation", row["why"]
+    assert row["status"] == "not_verified", row["why"]
     _stands(document)
 
 
@@ -306,7 +308,7 @@ def test_git_that_cannot_say_what_changed_shows_no_change(tmp_path: Path, monkey
     after = _next_commit(root, tmp_path, FIXED)
     monkeypatch.setattr(assess, "_changed_files", lambda scan, commit: None)
     row = _row(_retest(root, first, after), "A-conceal")
-    assert row["status"] == "needs_reinvestigation", row["why"]
+    assert row["status"] == "not_verified", row["why"]
 
 
 def test_a_real_fix_on_the_surfaces_file_still_counts(tmp_path: Path) -> None:
@@ -320,13 +322,15 @@ def test_a_real_fix_on_the_surfaces_file_still_counts(tmp_path: Path) -> None:
     assert document["remediation"]["carried_records"] == []
 
 
-def test_an_unchanged_surface_can_still_be_closed_by_a_record_on_it(tmp_path: Path) -> None:
+def test_an_unchanged_surface_can_be_closed_when_a_cited_file_changed(tmp_path: Path) -> None:
     root, commit = _bakery(
         tmp_path, {"prompts/night.md": NIGHT_LINE, "NOTES.md": NOTES_FILE}, app=CLEAN_APP
     )
     plan = _plan(root)
     first = _first(root, tmp_path, _night(root, plan, commit, [_night_step("NOTES.md", NOTE)]))
     _put(root, "NOTES.md", "# notes\n")
+    # The fix is in the code that sends the prompt, which the old record cites.
+    _put(root, "app.py", CLEAN_APP + "\n\n# prompts/night.md is no longer sent.\n")
     commit = _commit(root)
     closing = _closing(
         root,
@@ -844,7 +848,7 @@ def test_supersedes_does_not_close_a_surface_whose_text_never_changed(
     _keep_old_record(tmp_path, tmp_path / "after", "A-night")
     document = _retest(root, first, tmp_path / "after")
     row = _row(document, "A-night")
-    assert row["status"] == "needs_reinvestigation", row["why"]
+    assert row["status"] == "not_verified", row["why"]
     _stands(document)
 
 

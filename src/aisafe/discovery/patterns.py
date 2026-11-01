@@ -68,6 +68,9 @@ __all__ = [
     "QUOTED_SPAN_RE",
     "REMOTE_PROMPT_PATTERNS",
     "RUNTIME_PROMPT_CONFIG_PATTERNS",
+    "CACHE_OWN_NAMES",
+    "CACHE_OWN_TYPES",
+    "NOTHING_WRITTEN_DIRS",
     "SKIP_DIRS",
     "SYSTEM_CARD_GLOBS",
     "Table",
@@ -169,6 +172,31 @@ SKIP_DIRS = frozenset(
         ".vscode/extensions",
     }
 )
+# Directories that hold nothing a person wrote: version control data and tool caches.
+# Outside git every other directory the walk skips is unread scope, `vendor` and `build`
+# included, because nothing there shows who put what in them.
+NOTHING_WRITTEN_DIRS = frozenset(
+    {
+        ".git",
+        ".hg",
+        ".svn",
+        "__pycache__",
+        ".mypy_cache",
+        ".ruff_cache",
+        ".pytest_cache",
+        ".hypothesis",
+    }
+)
+# The file types each cache writes, by suffix ("" is none at all), and the names any of them
+# writes beside those. A prompt saved into a cache folder is none of these: outside git that
+# folder is named as unread like any other. Version control data has no entry.
+CACHE_OWN_TYPES: dict[str, frozenset[str]] = {
+    "__pycache__": frozenset({".pyc", ".pyo"}),
+    ".mypy_cache": frozenset({".json", ".ff", ".db", ".db-shm", ".db-wal"}),
+    ".ruff_cache": frozenset({""}),
+    ".pytest_cache": frozenset({""}),
+}
+CACHE_OWN_NAMES = frozenset({".gitignore", "CACHEDIR.TAG", "README.md"})
 
 LANG_BY_EXT: dict[str, str] = {
     ".py": "python",

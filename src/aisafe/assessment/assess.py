@@ -2,13 +2,18 @@
 --------------------------------
 `aisafe assess PATH --investigations DIR`: the assessment, distinct from the scan.
 
-It merges four inputs and keeps them apart in the document:
+It merges five inputs and keeps them apart in the document:
 
 - **machine**: the scan (`aisafe audit`'s findings before any person's decision, with the
   workbench's fixed options) and the validated investigation records with their skeptic
   passes;
 - **human**: the review records and the decisions a named person recorded in them, shown
   beside the outcome and never changing it;
+- **signoffs**: a person's sign-offs from the records directory
+  (`investigation.signoff`), each accepted or refused with why. The one human input that
+  moves an outcome, and only two ways: a record at review becomes a closing, and an unread
+  file leaves the `files_not_read` gap. A sign-off never moves a retest: a violation stays
+  unremediated however a record at the new commit is signed;
 - **auditee**: responses and evidence from the team being audited (from the engagement),
   shown beside and never changing it;
 - **evaluation**: the evaluation reports the scan read (in auditor mode, only the one the
@@ -30,39 +35,55 @@ back to the scan, and a retest is no exception.
 
 `--retest PREVIOUS` re-runs the verification steps of the previous assessment's records on
 this commit. The steps, the covered fingerprints, the mechanism, the pattern, the surface
-and the claim's basis come from each record's embedded copy, which must match its digest;
-the fields derived beside it are not evidence. A record is `remediated` only on a commit,
-with every walked file as that commit holds it, and only when every remediation step
-failed at its commit (re-checked there through git for the quote steps, and unknown when
-git cannot; read from the previous assessment otherwise, and said so) and passes now; when
-no current record establishes the mechanism on the surface; and when the scan reports no
-supported violation of the mechanism in the surface's file, in a file the record cites, in
-a file changed since the record's commit or, for a person-facing unit, anywhere in that
-unit. A step that cannot run is never a pass: a step on a file no longer read, a regression
-step included. A record at this commit has to close the hypothesis, with its skeptic pass
-upheld, the text addressed to auditors near it checked, and no other record contesting it,
-when a step cannot run; when a file the record cites, or a file changed since its commit,
-is not read; when the surface's file did not change (for a person-facing unit, no file the
-record cites); when another record contests it; or when the remediation steps are only
-`no_finding` and `present` (a finding that disappears is "not reported", and a quote that
-appears is not shown on the path).
+and the claim's basis come from each record's embedded copy, its fields stripped the way
+the validator strips them; the fields derived beside it are not evidence. Every embedded
+copy must match its digest: one that does not refuses the retest (exit 2), since a derived
+field beside a broken copy could otherwise lower a violation.
+
+Steps fail a record; passing steps never show a remediation by themselves: they are
+evidence of a change, whatever their kind. A record is `remediated` only on a commit, with
+every walked file as that commit holds it, and only when all of this holds: every
+remediation step failed at its commit (re-checked there through git for the quote steps, and
+unknown when git cannot; read from the previous assessment otherwise, and said so) and does
+not fail now; no regression step fails; no current record establishes the mechanism on the
+surface; the scan reports no supported violation of the mechanism in the surface's file, in
+a file the record cites, in a file changed since the record's commit or, for a person-facing
+unit, anywhere in that unit; the surface's file or a file the record cites changed, its text
+and not only its name (when git cannot say, or nothing changed, the status is
+`not_verified`); and a record at this commit closes the hypothesis on the surface, with its
+skeptic pass upheld, the text addressed to auditors near it checked, and no other record
+contesting it. Two things stay open until a closing answers them, any closing of the
+mechanism at this commit: a changed file that still holds the quote of an `absent` step
+needs a closing that cites it, and any other finding of the mechanism in the files watched
+above needs a closing that covers it.
 
 A record on the surface closes it: the same plan id while the plan still lists the surface,
-and otherwise the same type in the same file, or, when the surface's file is gone or was
-rewritten, a record whose `supersedes` names the old id. So a fix that deletes or renames
-the surface's file, or rewrites its anchor line, can still be shown.
+and otherwise the same type in the same file. When the surface's file moved, a record whose
+`supersedes` names the old id closes it from the rename target (`git diff --find-renames`);
+when the file was deleted, from a changed or cited file the plan lists a surface in, or from
+any surface when there is none, since the deletion is then the whole change. So a fix that
+deletes or renames the surface's file, or rewrites its anchor line, can still be shown, and
+a closing that read something else cannot.
 
 A violation established at the previous commit, with its skeptic pass bound and upheld, and
 not shown remediated stands in this assessment, and in the retest of this assessment: its
 record is kept in `remediation.carried_records`, and is retested again. The previous
 assessment of this same commit shows no fix. A surface new or changed since the previous
-assessment blocks like a high-priority one until a deciding record answers it.
+assessment blocks like a high-priority one until a deciding record answers it, and goes on
+blocking at the next retest while a hypothesis on it has no deciding record.
 
 The previous assessment is an unsigned document, and the retest reads it as it stands. The
-digest binds a record's embedded copy to the digest beside it, nothing more: a person who
-removes a whole entry, or recomputes a digest, leaves no trace here. A skeptic pass is a
-separate file outside the digest, so whether it was bound and upheld is the previous
-assessment's word.
+digest binds a record's embedded copy to the digest beside it, nothing more. One partial
+check runs against an edit: each record `outcome.mechanisms[].establishing` names must have
+an entry that reads as an upheld violation, or the retest is refused (exit 2). What stays
+undetectable: an edit that removes an entry and its name in `establishing` together, one
+that recomputes a digest after changing the embedded record the same way on both sides, and
+any change to a verdict the document does not cross-check. A skeptic pass is a separate file
+outside the digest, so whether it was bound and upheld is the previous assessment's word.
+
+In auditor mode a retest must also name the same auditor and auditee, and the previous commit
+must be an ancestor of this one; when git cannot say, the retest is refused. Paths are never
+compared: a clone in another folder is legitimate.
 """
 
 from __future__ import annotations
@@ -70,8 +91,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
-from pathlib import Path
-from typing import TYPE_CHECKING, Any, Sequence
+from pathlib import Path, PurePosixPath
+from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from aisafe.assessment.outcome import (
     _UNREMEDIATED,
@@ -80,14 +101,25 @@ from aisafe.assessment.outcome import (
     _untrusted_near,
     least_favourable,
     mechanism_outcomes,
+    unread_files,
 )
+from aisafe.discovery.patterns import AUDIT_DIR, LEGACY_AUDIT_DIRS
 from aisafe.discovery.walk import run_git
 from aisafe.evidence.model import MODES, Decision, EvidenceStatus, Finding, now_iso
 from aisafe.investigation.plan import DEFAULT_BUDGET, build_plan
 from aisafe.investigation.records import RecordError, load_json, record_digest
 from aisafe.investigation.scan import MachineScan, machine_scan
+from aisafe.investigation.signoff import apply_signoffs, bind_signoffs, scene_of
 from aisafe.investigation.text import content_sha256, quote_in_text
-from aisafe.investigation.validate import RecordResult, _unit_of, run_step, validate_paths
+from aisafe.investigation.validate import (
+    SIGNOFF_SKIPPED,
+    RecordResult,
+    _text,
+    _unit_of,
+    quote_copies,
+    run_step,
+    validate_paths,
+)
 
 if TYPE_CHECKING:
     from aisafe.engagement.model import Engagement
@@ -114,10 +146,9 @@ _DISCLAIMER = (
 # text git could read as an option.
 _COMMIT_RE = re.compile(r"[0-9a-f]{40}|[0-9a-f]{64}")
 _STRONG = frozenset({EvidenceStatus.SUPPORTED_MECHANISM, EvidenceStatus.OBSERVED_BEHAVIOR})
-# Step kinds that never show a remediation on their own: a finding that disappears is "not
-# reported", and a quote that appears is not shown on the path.
-_NOT_ALONE = frozenset({"no_finding", "present"})
 _UNIT_SURFACE = "person_facing_unit"
+# How `outcome.establishing` marks a violation carried from an earlier commit.
+_CARRIED_MARK = " (previous commit)"
 
 
 def assessment_disclaimer(version: str) -> str:
@@ -211,8 +242,26 @@ def _human(scan: MachineScan) -> dict[str, Any]:
     }
 
 
+def _signed_not_read(signed: Sequence[dict[str, Any]]) -> list[dict[str, Any]]:
+    """Each file a bound sign-off left out of the gap: still not read, and said so."""
+    return [
+        {
+            "path": item["path"],
+            "by": row["by"],
+            "reason": row["reason"],
+            "signoff": row["id"],
+            "self_assessed": row["self_assessed"],
+        }
+        for row in signed
+        for item in row["files"]
+    ]
+
+
 def _scope(
-    scan: MachineScan, plan: dict[str, Any], records: Sequence[RecordResult]
+    scan: MachineScan,
+    plan: dict[str, Any],
+    records: Sequence[RecordResult],
+    signed: Sequence[dict[str, Any]] = (),
 ) -> dict[str, Any]:
     by_surface: dict[str, list[RecordResult]] = {}
     for record in records:
@@ -273,6 +322,8 @@ def _scope(
             "tracked_not_walked": None
             if plan["not_read"].get("tracked_not_walked") is None
             else list(plan["not_read"]["tracked_not_walked"]),
+            "dirs_not_walked": list(plan["not_read"].get("dirs_not_walked") or []),
+            "signed_off_not_read": _signed_not_read(signed),
             "marker_skipped": list(plan["not_read"]["marker_skipped"]),
             "own_output_skipped": list(plan["not_read"]["own_output_skipped"]),
             "oversize_files": plan["not_read"]["oversize_files"],
@@ -311,17 +362,31 @@ def _at_commit(root: Path, commit: str, relpath: str) -> str | None:
     return None if out is None else out.decode("utf-8", errors="replace").replace("\r\n", "\n")
 
 
-def _changed_files(scan: MachineScan, commit: str | None) -> set[str] | None:
-    """The files that differ between `commit` and the tree as read now, under the tree's
-    root; None when git cannot say."""
+@dataclass(frozen=True)
+class _Changes:
+    """What differs between a commit and the tree as read now, under the tree's root.
+    `files` holds both sides of a rename, `renames` maps an old path to its new one, and
+    `moved_only` holds both sides of a rename that kept the text byte for byte."""
+
+    files: frozenset[str]
+    renames: dict[str, str]
+    moved_only: frozenset[str]
+
+    def text_of(self, files: Iterable[str | None]) -> bool:
+        """Whether a file among `files` changed its text, not only its name."""
+        return any(file in self.files and file not in self.moved_only for file in files)
+
+
+def _changed_files(scan: MachineScan, commit: str | None) -> _Changes | None:
+    """What changed since `commit` (see `_Changes`); None when git cannot say."""
     state = scan.state
     if not state.is_git or state.status_failed or not _COMMIT_RE.fullmatch(commit or ""):
         return None
     out = _git_stdout(
         scan.root,
         "diff",
-        "--name-only",
-        "--no-renames",
+        "--name-status",
+        "--find-renames",
         "--no-ext-diff",
         "--no-textconv",
         "--relative",
@@ -332,8 +397,39 @@ def _changed_files(scan: MachineScan, commit: str | None) -> set[str] | None:
     )
     if out is None:
         return None
-    named = out.decode("utf-8", errors="replace").split("\0")
-    return {name for name in named if name} | set(state.dirty)
+    fields = out.decode("utf-8", errors="replace").split("\0")
+    files: set[str] = set(state.dirty)
+    renames: dict[str, str] = {}
+    moved_only: set[str] = set()
+    index = 0
+    while index + 1 < len(fields):
+        status = fields[index]
+        if status.startswith("R"):
+            old, new = fields[index + 1], fields[index + 2]
+            files |= {old, new}
+            renames[old] = new
+            if status == "R100":
+                moved_only |= {old, new}
+            index += 3
+        else:
+            files.add(fields[index + 1])
+            index += 2
+    return _Changes(frozenset(files), renames, frozenset(moved_only - set(state.dirty)))
+
+
+def _system_files(files: Iterable[str], scan: MachineScan, inputs: Iterable[Path]) -> list[str]:
+    """`files` without the audit's own: its output folder, what the walk skipped as its own
+    output, and the records and the previous assessment this run reads. They quote the text
+    they judge, so a hit there says nothing about the system."""
+    own = set(getattr(scan.ctx.inventory, "own_output_skipped", None) or ())
+    read = {Path(path).resolve() for path in inputs}
+    return [
+        file
+        for file in sorted(files)
+        if file not in own
+        and not {AUDIT_DIR, *LEGACY_AUDIT_DIRS} & set(PurePosixPath(file).parts)
+        and (scan.root / file).resolve() not in read
+    ]
 
 
 def _before(step: dict[str, Any], scan: MachineScan, commit: str | None) -> tuple[Any, str]:
@@ -352,27 +448,43 @@ def _before(step: dict[str, Any], scan: MachineScan, commit: str | None) -> tupl
     return step.get("passes_at_record"), "as the previous assessment recorded it"
 
 
+def _listed(block: Any, key: str) -> list[Any]:
+    """`block[key]` when that is a list; an empty list otherwise."""
+    value = block.get(key) if isinstance(block, dict) else None
+    return value if isinstance(value, list) else []
+
+
+def _all_entries(prev: dict[str, Any]) -> list[Any]:
+    """Every record entry of `prev`, carried ones first."""
+    return [
+        *_listed(prev.get("remediation"), "carried_records"),
+        *_listed(prev.get("machine"), "records"),
+    ]
+
+
 def _retested_entries(prev: dict[str, Any]) -> list[dict[str, Any]]:
-    """The records a retest of `prev` answers for: the ones it embedded, and the ones it
-    carried because a retest before it did not show them remediated. One record is one
-    digest: an id says nothing, since a later record may reuse it for another reading."""
-    entries = list((prev.get("machine") or {}).get("records") or [])
-    seen = {entry.get("digest") for entry in entries}
-    for entry in (prev.get("remediation") or {}).get("carried_records") or []:
+    """The records a retest of `prev` answers for: the ones it carried because a retest
+    before it did not show them remediated, and the ones it embedded. One record is one
+    digest: an id says nothing, since a later record may reuse it for another reading. The
+    carried copy comes first and wins: a re-run at the same commit can list the same digest
+    with its skeptic file gone, and that copy would lose a violation that stands."""
+    entries = []
+    seen = set()
+    for entry in _all_entries(prev):
         digest = entry.get("digest")
-        if digest is None or digest not in seen:
+        if digest not in seen:
             entries.append(entry)
             seen.add(digest)
     return entries
 
 
-def _embedded(entry: dict[str, Any]) -> tuple[bool, dict[str, Any]]:
-    """Whether the entry's embedded record matches the digest stored beside it, and that
-    record (an empty one when it does not)."""
-    raw = entry.get("raw")
-    if isinstance(raw, dict) and record_digest(raw) == entry.get("digest"):
-        return True, raw
-    return False, {}
+def _intact(entry: Any) -> bool:
+    """Whether the entry's embedded record matches the digest stored beside it."""
+    return (
+        isinstance(entry, dict)
+        and isinstance(entry.get("raw"), dict)
+        and record_digest(entry["raw"]) == entry.get("digest")
+    )
 
 
 def _claim_of(entry: dict[str, Any], raw: dict[str, Any]) -> str | None:
@@ -383,27 +495,69 @@ def _claim_of(entry: dict[str, Any], raw: dict[str, Any]) -> str | None:
     proposed = raw.get("proposed") if isinstance(raw.get("proposed"), dict) else {}
     readings = [c for c in raw.get("counterevidence") or [] if isinstance(c, dict)]
     if (
-        proposed.get("decision") == "violates_policy"
-        and proposed.get("evidence_status") in ("supported_mechanism", "observed_behavior")
+        _text(proposed.get("decision")) == "violates_policy"
+        and _text(proposed.get("evidence_status")) in ("supported_mechanism", "observed_behavior")
         and not raw.get("open_questions")
         and not raw.get("missing_evidence")
-        and not any(reading.get("result") == "supported" for reading in readings)
+        and not any(_text(reading.get("result")) == "supported" for reading in readings)
     ):
         return "establishes"
     return "review" if entry.get("claim") == "establishes" else entry.get("claim")
 
 
+def _upheld_before(entry: dict[str, Any]) -> bool:
+    """Whether the previous assessment says a skeptic pass was bound and upheld the record."""
+    skeptic = entry.get("skeptic") if isinstance(entry.get("skeptic"), dict) else {}
+    return bool(skeptic.get("bound")) and skeptic.get("result") == "upheld"
+
+
+def _entries_problem(prev: dict[str, Any]) -> str | None:
+    """Why the previous assessment's records cannot be retested; None when they can. A broken
+    embedded copy says nothing, and the fields beside it could lower a violation. A record
+    the outcome names as establishing must have an entry that reads so: the one cheap check
+    against an edited document (the module docstring says what it leaves undetected)."""
+    entries = _all_entries(prev)
+    broken = [entry for entry in entries if not _intact(entry)]
+    if broken:
+        names = [str(e.get("id")) if isinstance(e, dict) else "an entry" for e in broken]
+        return (
+            f"--retest: the previous assessment's copy of {', '.join(names)} is missing or does "
+            "not match its digest, so its own steps cannot be read; the retest is refused"
+        )
+    standing = {
+        (_text(entry["raw"].get("mechanism")), _text(entry["raw"].get("id")))
+        for entry in entries
+        if _claim_of(entry, entry["raw"]) == "establishes" and _upheld_before(entry)
+    }
+    for mechanism in _listed(prev.get("outcome"), "mechanisms"):
+        mechanism_id = _text(mechanism.get("id")) if isinstance(mechanism, dict) else ""
+        for name in _listed(mechanism, "establishing"):
+            record = str(name).removesuffix(_CARRIED_MARK)
+            if (mechanism_id, record) not in standing:
+                return (
+                    f"--retest: the previous assessment says {record} established "
+                    f"{mechanism_id}, and no entry in it reads as that upheld violation: the "
+                    "document was edited; the retest is refused"
+                )
+    return None
+
+
 def _surface_of(raw: dict[str, Any]) -> dict[str, Any]:
     """The embedded record's surface, its file spelled as validation spells it."""
     surface = raw.get("surface") if isinstance(raw.get("surface"), dict) else {}
-    return {**surface, "file": str(surface.get("file") or "").replace("\\", "/") or None}
+    return {
+        **surface,
+        "id": _text(surface.get("id")) or None,
+        "type": _text(surface.get("type")) or None,
+        "file": _text(surface.get("file")).replace("\\", "/") or None,
+    }
 
 
 def _record_commit(entry: dict[str, Any], prev_commit: str | None) -> str | None:
     """The commit the record was made at: a carried record is older than the assessment
     that carried it."""
-    _, raw = _embedded(entry)
-    return (raw.get("target") or {}).get("commit") or prev_commit
+    target = entry["raw"].get("target")
+    return _text(target.get("commit") if isinstance(target, dict) else None) or prev_commit
 
 
 def _own_steps(entry: dict[str, Any], raw: dict[str, Any]) -> list[dict[str, Any]]:
@@ -418,17 +572,18 @@ def _own_steps(entry: dict[str, Any], raw: dict[str, Any]) -> list[dict[str, Any
     for index, item in enumerate(raw.get("verification_steps") or []):
         if not isinstance(item, dict):
             continue
-        step_id = str(item.get("id") or "").strip() or f"v{index + 1}"
+        step_id = _text(item.get("id")) or f"v{index + 1}"
+        spec = {key: _text(item[key]) for key in ("rule", "family", "note") if key in item}
+        if "file" in item:
+            spec["file"] = _text(item["file"]).replace("\\", "/")
+        if "quote" in item:
+            spec["quote"] = item["quote"]
         steps.append(
             {
                 "id": step_id,
-                "purpose": item.get("purpose"),
-                "kind": item.get("kind"),
-                "spec": {
-                    key: item[key]
-                    for key in ("file", "quote", "rule", "family", "note")
-                    if key in item
-                },
+                "purpose": _text(item.get("purpose")),
+                "kind": _text(item.get("kind")),
+                "spec": spec,
                 "passes_at_record": recorded.get(step_id),
             }
         )
@@ -442,7 +597,11 @@ def _cited_files(entry: dict[str, Any], raw: dict[str, Any]) -> set[str]:
     for item in raw.get("links") or []:
         if isinstance(item, dict):
             hops = [hop for hop in item.get("via") or [] if isinstance(hop, dict)]
-            files |= {str(place["file"]) for place in (item, *hops) if place.get("file")}
+            files |= {
+                _text(place["file"]).replace("\\", "/")
+                for place in (item, *hops)
+                if _text(place.get("file"))
+            }
     return files
 
 
@@ -458,36 +617,82 @@ def _on_surface(record: RecordResult, surface: dict[str, Any]) -> bool:
     )
 
 
+def _places(
+    scan: MachineScan,
+    surface: dict[str, Any],
+    changes: _Changes | None,
+    cited: set[str],
+    plan: dict[str, Any],
+) -> set[str] | None:
+    """Where the surface may have gone: the rename target of its file; when its file was
+    deleted, the changed and cited files the plan lists a surface in; nowhere when its file
+    is still there, or when git cannot say. None means anywhere: a deleted file and no such
+    file, so the deletion is the whole change, and a README in the same commit, which holds
+    no surface, says nothing."""
+    file = surface.get("file")
+    if changes is None or not file:
+        return set()
+    if file in changes.renames:
+        return {changes.renames[file]}
+    if file in changes.files and not (scan.root / file).exists():
+        return ({s["file"] for s in plan["surfaces"]} & (changes.files | cited)) or None
+    return set()
+
+
 def _closes_surface(
-    record: RecordResult, surface: dict[str, Any], planned: bool, moved: bool
+    record: RecordResult, surface: dict[str, Any], planned: bool, places: set[str] | None
 ) -> bool:
     """Whether an upheld closing speaks for this surface. While the plan lists the surface,
     only a record on its id does: a closing on the prompt beside it read something else.
-    When the surface's file is gone or was rewritten, `moved`, nothing can sit on the old id,
-    so a record that supersedes the old one counts too."""
+    Otherwise a record on the same file does, and a record that supersedes the old one does
+    from where the surface went (`_places`). A unit is a folder, which no rename names: any
+    record on a unit that supersedes the old one."""
     if planned:
         return record.surface.get("id") == surface.get("id")
-    return moved or _on_surface(record, surface)
+    if surface.get("type") == _UNIT_SURFACE:
+        return record.surface.get("type") == _UNIT_SURFACE
+    return places is None or _on_surface(record, surface) or record.surface.get("file") in places
+
+
+def _undecided_blocking(prev: dict[str, Any]) -> set[str]:
+    """The surfaces the previous retest held blocking with a hypothesis no deciding record
+    answered. A clean commit on top of them answers nothing."""
+    blocking = {
+        s
+        for s in _listed((prev.get("remediation") or {}).get("plan_changes"), "blocking")
+        if isinstance(s, str)
+    }
+    return {
+        surface["id"]
+        for surface in _listed(prev.get("scope"), "surfaces")
+        if surface.get("id") in blocking
+        and any(
+            not any(r.get("claim") in ("establishes", "closes") for r in _listed(hyp, "records"))
+            for hyp in _listed(surface, "hypotheses")
+        )
+    }
 
 
 def _plan_changes(
-    scan: MachineScan, plan: dict[str, Any], prev: dict[str, Any], changed: set[str] | None
+    scan: MachineScan, plan: dict[str, Any], prev: dict[str, Any], changed: _Changes | None
 ) -> dict[str, list[str]]:
     """How the plan moved since the previous assessment. `blocking`: the surfaces new or
-    changed since then; every surface when git cannot say what changed."""
+    changed since then (every surface when git cannot say what changed), and the ones
+    `carried_blocking`, which blocked there and stayed undecided."""
     prev_ids = {s.get("id") for s in (prev.get("scope") or {}).get("surfaces") or []}
     now_ids = {s["id"] for s in plan["surfaces"]}
     new_ids = now_ids - prev_ids
+    undecided = _undecided_blocking(prev) & now_ids
     if changed is None:
         changed_ids = now_ids & prev_ids
     else:
-        units = {getattr(scan.walked.get(file), "unit", None) for file in changed} - {None}
+        units = {getattr(scan.walked.get(file), "unit", None) for file in changed.files} - {None}
         changed_ids = {
             s["id"]
             for s in plan["surfaces"]
             if s["id"] in prev_ids
             and (
-                s["file"] in changed
+                s["file"] in changed.files
                 or (s["type"] == "person_facing_unit" and s.get("unit") in units)
             )
         }
@@ -498,7 +703,8 @@ def _plan_changes(
         ),
         "changed_surfaces": sorted(changed_ids),
         "gone_surfaces": sorted(prev_ids - now_ids),
-        "blocking": sorted(new_ids | changed_ids),
+        "carried_blocking": sorted(undecided),
+        "blocking": sorted(new_ids | changed_ids | undecided),
     }
 
 
@@ -506,10 +712,19 @@ def _outcome_surfaces(
     surfaces: Sequence[dict[str, Any]], remediation: dict[str, Any] | None
 ) -> list[dict[str, Any]]:
     """The surfaces as the outcome reads them. In a retest a surface new or changed since
-    the previous assessment blocks like a high-priority one, whatever its priority; the
-    document keeps the priority the plan gave it."""
+    the previous assessment, or still undecided from the retest before, blocks like a
+    high-priority one, whatever its priority; the document keeps the priority the plan gave
+    it."""
     blocking = set(((remediation or {}).get("plan_changes") or {}).get("blocking") or ())
     return [{**s, "priority": "high"} if s["id"] in blocking else s for s in surfaces]
+
+
+def _engagement_of(prev: dict[str, Any]) -> dict[str, Any] | None:
+    """Who audited whom in the previous assessment, as it says; None when it had no engagement."""
+    before = prev.get("engagement")
+    if not isinstance(before, dict):
+        return None
+    return {key: before.get(key) for key in ("auditor", "auditee", "sha256")}
 
 
 def _retest(
@@ -518,6 +733,7 @@ def _retest(
     scan: MachineScan,
     records: Sequence[RecordResult],
     plan: dict[str, Any],
+    inputs: Iterable[Path] = (),
 ) -> dict[str, Any]:
     prev_commit = (prev.get("target") or {}).get("commit")
     same_commit = prev_commit is not None and prev_commit == scan.state.commit
@@ -525,31 +741,30 @@ def _retest(
     dirty = sorted(scan.state.dirty)
     changed = _changed_files(scan, prev_commit)
     changed_since = {prev_commit: changed}
+    inputs = [*inputs, previous]
     reported = {f.fingerprint for f in scan.findings}
     planned_ids = {s["id"] for s in plan["surfaces"]}
     not_walked = set(scan.tracked_not_walked or ())
     results = []
     carried_records = []
     for entry in _retested_entries(prev):
-        intact, raw = _embedded(entry)
+        raw = entry["raw"]
         steps = _own_steps(entry, raw)
-        if intact and not steps:
-            continue
-        # A broken copy says nothing: the row keeps what the document says, as not verified.
-        recorded = raw if intact else entry
-        record_id = recorded.get("id")
-        mechanism, pattern = recorded.get("mechanism"), recorded.get("pattern")
-        surface = _surface_of(recorded)
-        claim = _claim_of(entry, raw) if intact else entry.get("claim")
-        skeptic = entry.get("skeptic") or {}
-        upheld_before = bool(skeptic.get("bound")) and skeptic.get("result") == "upheld"
+        claim = _claim_of(entry, raw)
+        upheld_before = _upheld_before(entry)
         established = claim == "establishes" and upheld_before
+        if not steps and not established:
+            continue
+        record_id = _text(raw.get("id"))
+        mechanism, pattern = _text(raw.get("mechanism")), _text(raw.get("pattern"))
+        surface = _surface_of(raw)
         record_commit = _record_commit(entry, prev_commit)
         if record_commit not in changed_since:
             changed_since[record_commit] = _changed_files(scan, record_commit)
         # A carried record is older than the previous assessment: what changed since then
         # says nothing about what moved between its own commit and that one.
-        since = changed_since[record_commit]
+        changes = changed_since[record_commit]
+        since = None if changes is None else changes.files
         ran = []
         for step in steps:
             now, detail = run_step({"kind": step.get("kind"), **step["spec"]}, scan)
@@ -568,7 +783,7 @@ def _retest(
         fixes = [s for s in ran if s["purpose"] == "remediation"]
         regressions = [s for s in ran if s["purpose"] == "regression" and s["now"] is False]
         unrun = [s for s in ran if s["purpose"] == "regression" and s["now"] is None]
-        covers = [fp for fp in raw.get("covers") or [] if isinstance(fp, str)]
+        covers = [_text(fp) for fp in raw.get("covers") or [] if isinstance(fp, str)]
         still = [fp for fp in covers if fp in reported]
         gone = [fp for fp in covers if fp not in reported]
         cited = _cited_files(entry, raw)
@@ -577,10 +792,9 @@ def _retest(
             {f for f in cited if f not in scan.walked} | (set(since or ()) & not_walked)
         )
         is_unit = surface.get("type") == _UNIT_SURFACE
-        # Nothing shows the surface's text changed, whatever a step on another file says.
-        same_text = since is None or (
-            not cited & since if is_unit else surface.get("file") not in since
-        )
+        # Whether the code the record read changed at all: a new reading of the same text
+        # shows no fix, and a rename alone leaves the text as it was.
+        text_changed = changes is not None and changes.text_of({surface.get("file"), *cited})
         planned = surface.get("id") in planned_ids
         on_surface = [
             r
@@ -588,31 +802,45 @@ def _retest(
             if r.mechanism == mechanism and (_on_surface(r, surface) or record_id in r.supersedes)
         ]
         now_records = [r for r in on_surface if r.pattern == pattern]
-        upheld_closings = [
+        # Every record that may answer for this mechanism at this commit. A person's sign-off
+        # never lowers a violation: to an established one, the record it closed is still a
+        # record at review, and it contests.
+        closings = [
             r
-            for r in now_records
-            if r.claim == "closes"
+            for r in records
+            if r.mechanism == mechanism
+            and r.claim == "closes"
             and _skeptic_upheld(r)
             and (
                 (r.skeptic or {}).get("untrusted_text_checked")
                 or not _untrusted_near(r, plan["untrusted_text"])
             )
+            and not (established and r.signoffs)
         ]
+        upheld_closings = [r for r in now_records if r in closings]
         contested = [r for r in now_records if r not in upheld_closings]
-        closed_again = [
-            r
-            for r in upheld_closings
-            if _closes_surface(r, surface, planned, moved=not planned and not same_text)
-        ]
+        places = set() if planned else _places(scan, surface, changes, cited, plan)
+        closed_again = [r for r in upheld_closings if _closes_surface(r, surface, planned, places)]
         established_again = [r for r in on_surface if r.claim == "establishes"]
+        # An `absent` step reads one file: the same text in another changed file is open
+        # until a closing has read that file.
+        searched = _system_files(since or (), scan, inputs)
+        cited_now = {file for r in closings for file in r.cited_files}
+        copies = sorted(
+            {
+                file
+                for step in steps
+                if step.get("kind") == "absent"
+                for file in quote_copies(step["spec"], searched, scan)
+                if file not in cited_now
+            }
+        )
         unit = _unit_of(surface, scan) if is_unit else None
         watched = {surface.get("file"), *cited, *(since or ())}
-        violating = [
+        in_sight = [
             f
             for f in scan.findings
             if f.mechanism == mechanism
-            and f.decision is Decision.VIOLATES
-            and f.evidence_status in _STRONG
             and (
                 any(leg.file in watched for leg in f.evidence)
                 or (
@@ -627,6 +855,12 @@ def _retest(
                 )
             )
         ]
+        violating = [
+            f for f in in_sight if f.decision is Decision.VIOLATES and f.evidence_status in _STRONG
+        ]
+        # A weaker finding of the mechanism is a signal, not a violation: open, not failed.
+        covered = {fp for r in closings for fp in r.covers_valid}
+        signals = [f for f in in_sight if f not in violating and f.fingerprint not in covered]
         why: list[str] = []
         if same_commit:
             # Nothing was fixed on a new commit: a violation the previous assessment
@@ -637,15 +871,13 @@ def _retest(
                 + (f" and {len(dirty)} file(s) differ from it" if dirty else "")
                 + ": a fix counts only on a new commit"
             )
-        elif not intact:
-            status = "not_verified"
-            why.append(
-                "the previous assessment's copy of the record is missing or does not match its "
-                "digest, so the record's own steps cannot be read"
-            )
         elif regressions:
             status = "regressed"
             why.append("a regression step fails now")
+        elif not fixes and established:
+            # The validator refuses such a record, so the copy was edited with its digest.
+            status = "not_verified"
+            why.append("a violation with no remediation step cannot be shown remediated")
         elif not fixes:
             blocked = [str(s["id"]) for s in unrun] + unread
             if established_again:
@@ -656,7 +888,7 @@ def _retest(
                 why.append(
                     "the scan reports " + ", ".join(sorted({f.display_id for f in violating}))
                 )
-            elif contested or (blocked and not closed_again):
+            elif contested or copies or (blocked and not closed_again):
                 status = "needs_reinvestigation"
                 why.append(
                     "no uncontested record at this commit closes the hypothesis"
@@ -664,6 +896,10 @@ def _retest(
                 )
                 if contested:
                     why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
+                if copies:
+                    why.append(
+                        f"the step's quote is in {', '.join(copies)}, which no closing cites"
+                    )
             else:
                 status = "held"
                 why.append(
@@ -699,36 +935,45 @@ def _retest(
         elif still:
             status = "not_remediated"
             why.append("a finding the record covers is still reported")
-        elif (
-            unread
-            or unrun
-            or contested
-            or same_text
-            or any(s["now"] is None for s in fixes)
-            or all(s["kind"] in _NOT_ALONE for s in fixes)
-        ):
-            if closed_again and not contested:
-                status = "remediated"
-                why.append(
-                    "the mechanical steps pass and a record at this commit closes the hypothesis "
-                    "on the surface: " + ", ".join(r.id or "" for r in closed_again)
-                )
-            else:
-                status = "needs_reinvestigation"
-                why.append(
-                    "a step cannot run mechanically, or the only evidence is a finding no longer "
-                    "reported or a quote now present; a record at this commit has to close the "
-                    "hypothesis, with nothing contesting it"
-                )
-                if unread:
-                    why.append("the walk does not read " + ", ".join(unread))
-                if same_text:
-                    why.append("nothing shows the text on the surface changed")
-                if contested:
-                    why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
-        else:
+        elif not text_changed:
+            status = "not_verified"
+            why.append(
+                "git cannot say what changed since the record's commit"
+                if changes is None
+                else "neither the surface's file nor a file the record cites changed its text "
+                "since the record's commit: a new reading of the same code shows no fix"
+            )
+        elif closed_again and not (contested or copies or signals):
             status = "remediated"
-            why.append("every remediation step failed at the previous commit and passes now")
+            why.append(
+                "the steps pass and a record at this commit closes the hypothesis on the "
+                "surface: " + ", ".join(r.id or "" for r in closed_again)
+            )
+        else:
+            status = "needs_reinvestigation"
+            why.append(
+                "passing steps show a change, not a remediation: a record at this commit has "
+                "to close the hypothesis on the surface, with nothing contesting it"
+            )
+            if unread:
+                why.append("the walk does not read " + ", ".join(unread))
+            if contested:
+                why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
+            if upheld_closings and not closed_again:
+                why.append(
+                    "no closing sits on the surface as it is now"
+                    + (f": {', '.join(sorted(places))}" if places else "")
+                )
+            if copies:
+                why.append(
+                    f"the step's quote is still in {', '.join(copies)}, which no closing cites"
+                )
+            if signals:
+                named = {
+                    f"{f.display_id} in {f.evidence[0].file if f.evidence else 'the unit'}"
+                    for f in signals
+                }
+                why.append(f"the scan reports {', '.join(sorted(named))}: no closing covers it")
         if status == "remediated" and not on_commit:
             status = "not_verified"
             why = [
@@ -763,6 +1008,8 @@ def _retest(
             "sha256": content_sha256(previous),
             "commit": prev_commit,
             "generated_at": prev.get("generated_at"),
+            "mode": prev.get("mode"),
+            "engagement": _engagement_of(prev),
         },
         # True only when nothing changed: the same commit, and the tree as it holds it.
         "same_commit": same_commit and scan.state.clean,
@@ -772,12 +1019,11 @@ def _retest(
         "plan_changes": _plan_changes(scan, plan, prev, changed),
         "note": (
             "A remediation counts only on a commit, when every remediation step of the record "
-            "failed at its commit and passes on this one, and nothing at this commit shows the "
-            "mechanism on that surface. A step on another file shows nothing when the "
-            "surface's own file did not change. A finding no longer reported is not reported, "
-            "and a quote that appears is not shown on the path: neither is ever a remediation "
-            "on its own. A step that cannot run is never a pass. Steps that pass are evidence "
-            "of a change, not proof the mechanism is gone: a record at this commit closes it."
+            "failed at its commit and passes on this one, the code the record read changed, "
+            "nothing at this commit shows the mechanism on that surface, and an upheld record "
+            "at this commit closes the hypothesis there. Steps fail a record; steps that pass "
+            "are evidence of a change, never a remediation by themselves. A finding no longer "
+            "reported is not reported, and a step that cannot run is never a pass."
         ),
     }
 
@@ -841,16 +1087,49 @@ def _same_dir(a: Path, b: Path) -> bool:
         return False
 
 
+def _who(block: Any, key: str) -> str:
+    """A name as compared across assessments: case and spacing aside."""
+    value = block.get(key) if isinstance(block, dict) else None
+    return " ".join(str(value or "").split()).casefold()
+
+
 def _previous_problem(prev: dict[str, Any], mode: str, engagement: Engagement | None) -> str | None:
-    """Why the previous assessment cannot be retested here; None when it can."""
+    """Why the previous assessment cannot be retested here; None when it can. In auditor
+    mode it must be the same auditor and the same auditee. Paths say nothing: a clone in
+    another folder, or an engagement directory moved whole, is legitimate."""
     if prev.get("mode") != mode:
         return (
             f"--retest: the previous assessment is in {prev.get('mode')} mode, this run in {mode}"
         )
     if mode == "auditor" and engagement is not None:
-        before = (prev.get("engagement") or {}).get("path")
-        if not before or not _same_dir(Path(str(before)).parent, engagement.dir):
-            return "--retest: the previous assessment was made in another engagement"
+        before = prev.get("engagement")
+        for block, key in (("auditor", "name"), ("auditor", "organisation"), ("auditee", "name")):
+            then = before.get(block) if isinstance(before, dict) else None
+            if _who(then, key) != _who(engagement.data.get(block), key):
+                return f"--retest: the previous assessment has another {block} ({block}.{key})"
+    return None
+
+
+def _target_problem(prev: dict[str, Any], scan: MachineScan) -> str | None:
+    """Why the previous assessment's commit is not in this commit's past; None when it is.
+    Commits, never paths: when git cannot say, that is the refusal. The count is of commits
+    the previous one has and this one does not: none means an ancestor, or the same commit."""
+    before = str((prev.get("target") or {}).get("commit") or "")
+    now = scan.state.commit
+    count = None
+    if now and _COMMIT_RE.fullmatch(before):
+        count = _git_stdout(scan.root, "rev-list", "--count", before, f"^{now}")
+    if count is None:
+        return (
+            f"--retest: git cannot say whether the previous assessment's commit "
+            f"({before or 'none'}) is an ancestor of this commit ({now}): an auditor retests "
+            "the same system's later commit, so the retest is refused"
+        )
+    if count.strip() != b"0":
+        return (
+            f"--retest: the previous assessment's commit ({before}) is not an ancestor of this "
+            f"commit ({now}): it assessed another target"
+        )
     return None
 
 
@@ -957,7 +1236,7 @@ def run_assessment(
             return AssessmentRun(fatal=f"no such file or directory: {Path(item).as_posix()}")
     prev = _load_previous(Path(retest)) if retest is not None else None
     if prev is not None:
-        problem = _previous_problem(prev, mode, engagement)
+        problem = _previous_problem(prev, mode, engagement) or _entries_problem(prev)
         if problem is not None:
             return AssessmentRun(fatal=problem)
     if mode == "auditor" and evaluation_report is not None:
@@ -983,6 +1262,10 @@ def run_assessment(
                 ),
                 scan=scan,
             )
+        if prev is not None:
+            problem = _target_problem(prev, scan)
+            if problem is not None:
+                return AssessmentRun(fatal=problem, scan=scan)
     plan = build_plan(scan, budget=budget)
     run = validate_paths(
         investigations,
@@ -996,14 +1279,15 @@ def run_assessment(
         # The records of the previous assessment, made at its commit, are retested below
         # through their steps; here they are neither accepted nor rejected.
         prev_commit = (prev.get("target") or {}).get("commit")
-        prev_commits: dict[Any, set[str | None]] = {}
-        for entry in _retested_entries(prev):
-            prev_commits.setdefault(entry.get("id"), set()).add(_record_commit(entry, prev_commit))
+        prev_records = {
+            (_text(entry["raw"].get("id")), _record_commit(entry, prev_commit), entry["digest"])
+            for entry in _retested_entries(prev)
+        }
         for result in run.results:
             if (
                 result.status == "rejected"
                 and result.commit is not None
-                and result.commit in prev_commits.get(result.id, ())
+                and (result.id, result.commit, result.digest) in prev_records
                 and result.commit != scan.state.commit
             ):
                 result.status = "previous"
@@ -1025,9 +1309,24 @@ def run_assessment(
     rejected = [r for r in run.results if r.status == "rejected"]
     superseded = [r for r in run.results if r.status == "superseded"]
     previous_records = [r for r in run.results if r.status == "previous"]
+    tracked_not_walked = plan["not_read"]["tracked_not_walked"]
+    unsupported_files = plan["not_read"]["unsupported_files"]
+    # Before the retest and the outcome: to them a signed record is a closing.
+    signoffs = bind_signoffs(
+        [Path(row["path"]) for row in run.skipped if row["why"] == SIGNOFF_SKIPPED],
+        scene_of(
+            scan,
+            unread_files(tracked_not_walked, unsupported_files),
+            today=today,
+            results=accepted,
+            engagement=engagement,
+        ),
+    )
+    apply_signoffs(accepted, signoffs.accepted)
     remediation = None
     if retest is not None and prev is not None:
-        remediation = _retest(Path(retest), prev, scan, accepted, plan)
+        read = [*(r.path for r in run.results), *(row["path"] for row in run.skipped)]
+        remediation = _retest(Path(retest), prev, scan, accepted, plan, map(Path, read))
     carried = (remediation or {}).get("results") or []
     outcomes = mechanism_outcomes(
         scan.policy,
@@ -1040,8 +1339,10 @@ def run_assessment(
         rules_ran=_rules_that_ran(scan),
         carried=carried,
         today=today,
-        tracked_not_walked=plan["not_read"]["tracked_not_walked"],
-        unsupported_files=plan["not_read"]["unsupported_files"],
+        tracked_not_walked=tracked_not_walked,
+        unsupported_files=unsupported_files,
+        signed_files=signoffs.accepted,
+        dirs_not_walked=plan["not_read"]["dirs_not_walked"],
     )
     overall = least_favourable(o.outcome for o in outcomes)
     investigators, operators = _people(accepted)
@@ -1074,6 +1375,18 @@ def run_assessment(
                 bundle_inputs.append({"role": "skeptic pass", "path": skeptic_path.as_posix()})
             except OSError:
                 pass
+    for row in [*signoffs.accepted, *signoffs.refused]:
+        try:
+            inputs.append(
+                {
+                    "role": "sign-off",
+                    "path": row["file"],
+                    "sha256": content_sha256(Path(row["file"])),
+                }
+            )
+            bundle_inputs.append({"role": "sign-off", "path": row["file"]})
+        except OSError:
+            continue
     if remediation is not None:
         inputs.append(
             {
@@ -1145,6 +1458,7 @@ def run_assessment(
         )
         states = eng_model.request_states(engagement.dir, requests_doc)
         legal, _ = evaluate_legal(profiles, requests=states, **legal_args)
+        legal["answers_source"] = eng_model.answers_source(engagement.data)
         responses, problems = eng_model.load_responses(engagement.dir)
         auditee["responses"] = responses
         auditee["evidence"] = list(states.values())
@@ -1178,7 +1492,14 @@ def run_assessment(
             )
         for profile in profiles:
             bundle_inputs.append({"role": "legal profile", "path": profile.path.as_posix()})
-        for auth in eng_model.authorisation_states(engagement.dir, engagement.data):
+        authorisations = eng_model.authorisation_states(engagement.dir, engagement.data)
+        if mode == "auditor" and evaluation_report is not None:
+            # A document that no longer matches its sha256 stops counting, as evidence does.
+            engagement_doc["evaluation_endpoint_named"] = any(
+                str(auth.get("endpoint") or "").strip() and auth["state"] in (None, "intact")
+                for auth in authorisations
+            )
+        for auth in authorisations:
             document = auth.get("document") or {}
             if document.get("path"):
                 bundle_inputs.append(
@@ -1187,7 +1508,6 @@ def run_assessment(
                         "path": (engagement.dir / str(document["path"])).as_posix(),
                     }
                 )
-        auditee["unmatched"] = _unmatched_responses(responses, outcomes, accepted, scan, legal)
 
     exit_code = 0 if all(o.outcome == OUTCOMES[-1] for o in outcomes) and not rejected else 1
     scope_eng = (engagement.data.get("scope") or {}) if engagement is not None else {}
@@ -1214,7 +1534,7 @@ def run_assessment(
         "policy": {"version": scan.policy.version},
         "investigators": investigators,
         "operators": operators,
-        "scope": _scope(scan, plan, accepted),
+        "scope": _scope(scan, plan, accepted, signoffs.accepted),
         "outcome": {
             "overall": overall,
             "order": list(OUTCOMES),
@@ -1234,6 +1554,7 @@ def run_assessment(
             "skipped_files": list(run.skipped),
         },
         "human": _human(scan),
+        "signoffs": signoffs.to_dict(),
         "auditee": auditee,
         "evaluation": [
             {
@@ -1249,6 +1570,8 @@ def run_assessment(
         "inputs": inputs,
         "exit_code": exit_code,
     }
+    if engagement is not None:
+        auditee["unmatched"] = eng_model.place_responses(auditee["responses"], document)
     return AssessmentRun(
         document=document,
         exit_code=exit_code,
@@ -1257,19 +1580,3 @@ def run_assessment(
         requests=requests_doc,
         bundle_inputs=bundle_inputs,
     )
-
-
-def _unmatched_responses(
-    responses: Sequence[dict[str, Any]],
-    outcomes: Sequence[Any],
-    records: Sequence[RecordResult],
-    scan: MachineScan,
-    legal: dict[str, Any] | None,
-) -> list[str]:
-    """Responses whose `to` names no mechanism, record, finding or provision of this
-    assessment: shown, never placed beside the wrong thing."""
-    known = {o.id for o in outcomes} | {r.id for r in records if r.id}
-    known |= {f.fingerprint for f in scan.findings}
-    for prof in (legal or {}).get("profiles") or []:
-        known |= {f"{prof['id']}/{prov['id']}" for prov in prof.get("provisions") or []}
-    return [str(r.get("file")) for r in responses if r.get("to") not in known]
