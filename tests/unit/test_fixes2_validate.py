@@ -234,7 +234,9 @@ def test_a_hop_with_a_real_call_closes(tmp_path: Path) -> None:
     record = _crisis_record(root, plan, cite(root, "safety.py", 7, end_line=10), via=[hop])
     write_record(records, record, skeptic="upheld")
     result = _results(scan, plan, records)["inv-m5"]
-    assert result.control_on_path and result.claim == "closes"
+    # The call is on the right of `or`: it runs only when the left side is falsy, which the
+    # syntax tree cannot show, so the record goes to a person.
+    assert not result.control_on_path and result.claim == "review"
 
 
 def test_a_constant_read_in_the_syntax_tree_is_reached_and_named_in_a_string_is_not(
@@ -257,7 +259,9 @@ def test_a_constant_read_in_the_syntax_tree_is_reached_and_named_in_a_string_is_
     write_record(records, _crisis_record(root, plan, constant, via=[named]), skeptic="upheld")
     assert _results(scan, plan, records)["inv-m5"].claim == "review"
     write_record(records, _crisis_record(root, plan, constant, via=[used]), skeptic="upheld")
-    assert _results(scan, plan, records)["inv-m5"].claim == "closes"
+    # Read inside the `if` arm only: a branch the floor cannot tell from a check that runs on
+    # some requests only. It goes to review, where the skeptic and a person decide it.
+    assert _results(scan, plan, records)["inv-m5"].claim == "review"
 
 
 def _send_then_check(root: Path) -> tuple[int, int]:

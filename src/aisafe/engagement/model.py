@@ -29,8 +29,11 @@ from datetime import date
 from pathlib import Path
 from typing import Any, Iterable, Sequence
 
-from aisafe.evidence.model import MODES, now_iso
+from aisafe.evidence.model import MODES, now_iso, redact
+from aisafe.investigation.records import verdict_words_in
+from aisafe.investigation.signoff import _name_key
 from aisafe.legal.profile import ANSWER_VALUES, DEFINITION_ANSWERS, LIST_ANSWERS
+from aisafe.review.records import check_text, tool_name_problem
 
 __all__ = [
     "ASSESSMENT_DIR",
@@ -601,6 +604,40 @@ def request_states(directory: Path, doc: dict[str, Any]) -> dict[str, dict[str, 
     return out
 
 
+def _check_person(by: Any, flag: str = "--by") -> None:
+    """Refuse a `--by` that is no person's name: the review record's checks on a name. What
+    a person types here reaches the status, the assessment and its reports."""
+    problem = check_text(flag, by)
+    if problem is None and tool_name_problem(by):
+        problem = (
+            f"{flag} is no person's name (a tool or an agent, no letter before any <role>, "
+            "or a verdict): a person answers here, by name"
+        )
+    if problem is not None:
+        raise EngagementError(problem)
+
+
+def _check_words(flag: str, value: Any, *, multiline: bool = False) -> None:
+    """Refuse free text a report would carry and the tool never says: the review record's
+    checks (no hidden or control character, no secret-shaped token, no verdict phrase) and
+    the verdict words of an investigation record. It may disagree with a finding; it may
+    not pronounce the system safe. The text is never repeated in the refusal."""
+    problem = check_text(flag, value, multiline=multiline)
+    if problem is None and verdict_words_in(value if isinstance(value, str) else ""):
+        problem = f"{flag} pronounces a verdict on the system: say what was read or decided"
+    if problem is not None:
+        raise EngagementError(problem)
+
+
+def _check_file_name(source: Path) -> None:
+    """Refuse a file whose name holds a secret-shaped token: the file is copied in under its
+    own name, and `status` and the bundle show that name. The name is never repeated."""
+    if redact(source.name) != source.name:
+        raise EngagementError(
+            "the file name holds a secret-shaped token; rename the file before it is copied in"
+        )
+
+
 def _find_request(doc: dict[str, Any], request_id: str) -> dict[str, Any]:
     for item in doc.get("requests") or []:
         if item.get("id") == request_id:
@@ -627,6 +664,11 @@ def receive(
     item = _find_request(doc, request_id)
     if not by.strip():
         raise EngagementError("--by must name the person who received the documents")
+    _check_person(by)
+    if note is not None:
+        _check_words("--note", note)
+    for source in files:
+        _check_file_name(Path(source))
     folder = directory / EVIDENCE_DIR / _SAFE.sub("_", request_id.replace("/", "__"))
     if item.get("status") == "insufficient":
         judged = {d.get("sha256") for d in item.get("documents") or []}
@@ -681,6 +723,8 @@ def mark_insufficient(
     today = today or _today()
     if not by.strip() or not reason.strip():
         raise EngagementError("--by and --reason are both needed")
+    _check_person(by)
+    _check_words("--reason", reason)
     doc = load_requests(directory)
     item = _find_request(doc, request_id)
     item["status"] = "insufficient"
@@ -737,6 +781,8 @@ def add_response(
     directory = Path(directory)
     if not to.strip() or not by.strip() or not text.strip():
         raise EngagementError("--to, --by and --text are all needed")
+    _check_person(by)
+    _check_words("--text", text, multiline=True)
     folder = directory / RESPONSES_DIR
     folder.mkdir(parents=True, exist_ok=True)
     index = 1 + len(list(folder.glob("*.json")))
@@ -851,7 +897,11 @@ def add_signoff(
         raise EngagementError(f"--decision must be one of {', '.join(QA_DECISIONS)}")
     if not by.strip():
         raise EngagementError("--by must name the second auditor")
-    if auditor and by.strip().casefold() == str(auditor).strip().casefold():
+    _check_person(by)
+    if notes is not None:
+        _check_words("--notes", notes, multiline=True)
+    # Spacing, case and accents do not make a second person.
+    if auditor and _name_key(by) == _name_key(str(auditor)):
         raise EngagementError("the QA sign-off is a second auditor's: --by names the auditor")
     if not Path(assessment).is_file():
         raise EngagementError(f"no assessment at {Path(assessment).as_posix()}")
@@ -888,7 +938,7 @@ def qa_state(qa: dict[str, Any], current: str | None) -> dict[str, Any]:
     latest: dict[str, str] = {}
     for row in rows:
         if row["current"]:
-            latest[str(row["by"]).strip().casefold()] = str(row["decision"])
+            latest[_name_key(str(row["by"]))] = str(row["decision"])
     if not latest:
         standing = None
     elif all(decision == "approved" for decision in latest.values()):
@@ -914,6 +964,8 @@ def add_authorisation(
     directory = Path(directory)
     if not what.strip() or not by.strip():
         raise EngagementError("--what and --by must both say something")
+    _check_person(by)
+    _check_words("--what", what)
     try:
         day = date.fromisoformat(on).isoformat()
     except ValueError:
@@ -921,6 +973,7 @@ def add_authorisation(
     source = Path(document)
     if not source.is_file():
         raise EngagementError(f"no such file: {source.as_posix()}")
+    _check_file_name(source)
     eng = load_engagement(directory)
     folder = directory / AUTHORISATIONS_DIR
     if inside(source, folder):

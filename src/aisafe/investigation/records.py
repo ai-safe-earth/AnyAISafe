@@ -81,7 +81,10 @@ ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
 SHA_RE = re.compile(r"^[0-9a-f]{64}$")
 
 # A record proposes an evidence status and a decision. Its free text says what was read;
-# it never pronounces the system safe or compliant.
+# it never pronounces the system safe or compliant. The last three are stems, matched at
+# the start of a word in any of its forms: the French and English "certifi-", the German
+# "zertifiz-" and "konform". Other words in other languages are not listed: "seguro",
+# "sicher" or "conforme" have everyday meanings, and refusing them would refuse honest text.
 VERDICT_WORDS: tuple[str, ...] = (
     "compliant",
     "compliance verified",
@@ -92,10 +95,45 @@ VERDICT_WORDS: tuple[str, ...] = (
     "risk-free",
     "no risk",
     "guaranteed",
+    "certifi",
+    "zertifiz",
+    "konform",
 )
+_VERDICT_STEMS: frozenset[str] = frozenset({"certifi", "zertifiz", "konform"})
 _VERDICT_RE = re.compile(
-    r"(?<![A-Za-z])(?:" + "|".join(re.escape(w) for w in VERDICT_WORDS) + r")(?![A-Za-z])",
+    r"(?<![A-Za-z])(?:(?:"
+    + "|".join(re.escape(w) for w in VERDICT_WORDS if w not in _VERDICT_STEMS)
+    + r")(?![A-Za-z])|(?:"
+    + "|".join(re.escape(w) for w in VERDICT_WORDS if w in _VERDICT_STEMS)
+    + r")[A-Za-z]*)",
     re.I,
+)
+# Letters drawn like Latin ones that NFKD leaves as they are: Cyrillic and Greek capitals
+# and small letters, Latin small capitals, and the dotless i and j. "the system \u0456\u0455
+# safe" holds no word that mixes two alphabets, and still reads as a verdict. Only the word
+# lists read through this table (the verdict words, the tool names, the banned phrases);
+# the alphabet-mix check reads the plain fold, so a name in Cyrillic or Greek stays a name.
+_LOOKALIKES = str.maketrans(
+    # Cyrillic capitals, then small letters.
+    "\u0410\u0412\u0415\u041a\u041c\u041d\u041e\u0420\u0421\u0422\u0423\u0425\u0405"
+    "\u0406\u0408\u04ae\u04ba\u04c0\u051a\u051c"
+    "\u0430\u0432\u0435\u043a\u043c\u043d\u043e\u0440\u0441\u0442\u0443\u0445\u0455"
+    "\u0456\u0458\u04af\u04bb\u04cf\u0501\u051b\u051d"
+    # Greek capitals, then small letters.
+    "\u0391\u0392\u0395\u0396\u0397\u0399\u039a\u039c\u039d\u039f\u03a1\u03a4\u03a5"
+    "\u03a7\u03f9\u037f"
+    "\u03b1\u03b3\u03b5\u03b7\u03b9\u03ba\u03bd\u03bf\u03c1\u03c4\u03c5\u03c7\u03f2"
+    "\u03f3"
+    # Latin small capitals A to Z (no X), then the dotless i and j, alpha and script g.
+    "\u1d00\u0299\u1d04\u1d05\u1d07\ua730\u0262\u029c\u026a\u1d0a\u1d0b\u029f\u1d0d"
+    "\u0274\u1d0f\u1d18\ua7af\u0280\ua731\u1d1b\u1d1c\u1d20\u1d21\u028f\u1d22"
+    "\u0131\u0237\u0251\u0261",
+    "ABEKMHOPCTYXSIJYHIQW"
+    "abekmhopctyxsijyhldqw"
+    "ABEZHIKMNOPTYXCJ"
+    "ayenikvoptuxcj"
+    "abcdefghijklmnopqrstuvwyz"
+    "ijag",
 )
 _SPACE_RE = re.compile(r"\s+")
 
@@ -136,21 +174,28 @@ def record_digest(record: dict[str, Any]) -> str:
     return hashlib.sha256(canonical.encode("utf-8", "surrogatepass")).hexdigest()
 
 
-def fold_text(text: str) -> str:
+def fold_text(text: str, *, lookalikes: bool = False) -> str:
     """`text` as a check reads it, never as it is kept: compatibility forms undone (NFKD, so
     a fullwidth or mathematical letter is the plain one), combining marks and format
-    characters gone. An accent or a hidden character cannot step around a list of words."""
+    characters gone. An accent or a hidden character cannot step around a list of words.
+    With `lookalikes`, a Cyrillic, Greek or small-capital letter drawn like a Latin one is
+    that Latin letter too (`_LOOKALIKES`): for the word lists only, never for the check of
+    alphabets mixed inside a word, which would then see none."""
     if text.isascii():
         return text
-    return "".join(
+    folded = "".join(
         char
         for char in unicodedata.normalize("NFKD", text)
         if unicodedata.category(char)[0] != "M" and unicodedata.category(char) != "Cf"
     )
+    return folded.translate(_LOOKALIKES) if lookalikes else folded
 
 
 def verdict_words_in(text: str) -> list[str]:
     """The verdict phrases `text` holds, lowercased, in order of appearance, however their
-    words are spaced. Reads the fold: an accent on a verdict is still a verdict."""
-    spaced = _SPACE_RE.sub(" ", fold_text(text or ""))
+    words are spaced; a stem gives the whole word it starts. Reads the fold with lookalike
+    letters as Latin ones: an accent, a small capital or a Cyrillic letter on a verdict is
+    still a verdict. Text in other languages is accepted and not checked for verdicts,
+    beyond the three stems of `VERDICT_WORDS`."""
+    spaced = _SPACE_RE.sub(" ", fold_text(text or "", lookalikes=True))
     return [match.group(0).lower() for match in _VERDICT_RE.finditer(spaced)]

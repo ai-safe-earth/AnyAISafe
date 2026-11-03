@@ -46,6 +46,11 @@ writes a closing record for a skeptic; or an evaluation runs against an authoris
 - `retest-1/`, `retest-2/`: the assessment at each later commit.
 - `evidence/`, `evidence-requests.json`: what the auditor asked for and received.
 
+Each folder was written by the tool as it was at that commit. A later fix changed one label:
+in `retest-1/`, the closings on `prompts/style.md` read `regressed` because a finding on
+`prompts/persona.md` was already there. The current tool gives `needs_reinvestigation`
+there, which counts the same way: not remediated.
+
 `aisafe engagement status` reads `assessment/`. It reports `engagement.json` and the request
 list as changed, because the scope gained two commits after that first bundle was made. The
 bundles in `retest-1/` and `retest-2/` record each later state.

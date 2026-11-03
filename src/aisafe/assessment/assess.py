@@ -91,7 +91,7 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass, field
 from datetime import date, datetime, timezone
-from pathlib import Path, PurePosixPath
+from pathlib import Path
 from typing import TYPE_CHECKING, Any, Iterable, Sequence
 
 from aisafe.assessment.outcome import (
@@ -103,8 +103,7 @@ from aisafe.assessment.outcome import (
     mechanism_outcomes,
     unread_files,
 )
-from aisafe.discovery.patterns import AUDIT_DIR, LEGACY_AUDIT_DIRS
-from aisafe.discovery.walk import run_git
+from aisafe.discovery.walk import in_audit_dir, run_git
 from aisafe.evidence.model import MODES, Decision, EvidenceStatus, Finding, now_iso
 from aisafe.investigation.plan import DEFAULT_BUDGET, build_plan
 from aisafe.investigation.records import RecordError, load_json, record_digest
@@ -116,7 +115,7 @@ from aisafe.investigation.validate import (
     RecordResult,
     _text,
     _unit_of,
-    quote_copies,
+    quote_places,
     run_step,
     validate_paths,
 )
@@ -366,7 +365,8 @@ def _at_commit(root: Path, commit: str, relpath: str) -> str | None:
 class _Changes:
     """What differs between a commit and the tree as read now, under the tree's root.
     `files` holds both sides of a rename, `renames` maps an old path to its new one, and
-    `moved_only` holds both sides of a rename that kept the text byte for byte."""
+    `moved_only` holds both sides of a rename that kept the text byte for byte. A changed
+    submodule or directory stands for every walked file under it."""
 
     files: frozenset[str]
     renames: dict[str, str]
@@ -414,21 +414,28 @@ def _changed_files(scan: MachineScan, commit: str | None) -> _Changes | None:
         else:
             files.add(fields[index + 1])
             index += 2
+    # A submodule pointer (or a directory git lists whole) names no file: every file the
+    # walk reads under it may have changed. When the walk reads none, git cannot say.
+    for path in sorted(files):
+        if path and (scan.root / path).is_dir():
+            under = {file for file in scan.walked if file.startswith(path.rstrip("/") + "/")}
+            if not under:
+                return None
+            files |= under
     return _Changes(frozenset(files), renames, frozenset(moved_only - set(state.dirty)))
 
 
 def _system_files(files: Iterable[str], scan: MachineScan, inputs: Iterable[Path]) -> list[str]:
-    """`files` without the audit's own: its output folder, what the walk skipped as its own
-    output, and the records and the previous assessment this run reads. They quote the text
-    they judge, so a hit there says nothing about the system."""
+    """`files` without the audit's own: its output folder at the root (the walk's own test:
+    a folder of that name deeper down is the system's, and the walk reads it), what the walk
+    skipped as its own output, and the records and the previous assessment this run reads.
+    They quote the text they judge, so a hit there says nothing about the system."""
     own = set(getattr(scan.ctx.inventory, "own_output_skipped", None) or ())
     read = {Path(path).resolve() for path in inputs}
     return [
         file
         for file in sorted(files)
-        if file not in own
-        and not {AUDIT_DIR, *LEGACY_AUDIT_DIRS} & set(PurePosixPath(file).parts)
-        and (scan.root / file).resolve() not in read
+        if file not in own and not in_audit_dir(file) and (scan.root / file).resolve() not in read
     ]
 
 
@@ -765,9 +772,22 @@ def _retest(
         # says nothing about what moved between its own commit and that one.
         changes = changed_since[record_commit]
         since = None if changes is None else changes.files
+        cited = _cited_files(entry, raw)
+        planned = surface.get("id") in planned_ids
+        # Where the surface may have gone. A quote step on its file reads there too, and a
+        # step on a renamed file reads the rename target: a rename never dodges a step.
+        moved_to = _places(scan, surface, changes, cited, plan)
+        renames = {} if changes is None else changes.renames
         ran = []
         for step in steps:
-            now, detail = run_step({"kind": step.get("kind"), **step["spec"]}, scan)
+            step_file = step["spec"].get("file")
+            if step_file and step_file == surface.get("file"):
+                step_places = moved_to or set()
+            else:
+                step_places = {renames[step_file]} if step_file in renames else set()
+            now, detail = run_step(
+                {"kind": step.get("kind"), **step["spec"]}, scan, places=step_places
+            )
             before, source = _before(step, scan, record_commit)
             ran.append(
                 {
@@ -786,7 +806,6 @@ def _retest(
         covers = [_text(fp) for fp in raw.get("covers") or [] if isinstance(fp, str)]
         still = [fp for fp in covers if fp in reported]
         gone = [fp for fp in covers if fp not in reported]
-        cited = _cited_files(entry, raw)
         # A changed file the walk does not read may hold the text: a move out of sight.
         unread = sorted(
             {f for f in cited if f not in scan.walked} | (set(since or ()) & not_walked)
@@ -795,7 +814,6 @@ def _retest(
         # Whether the code the record read changed at all: a new reading of the same text
         # shows no fix, and a rename alone leaves the text as it was.
         text_changed = changes is not None and changes.text_of({surface.get("file"), *cited})
-        planned = surface.get("id") in planned_ids
         on_surface = [
             r
             for r in records
@@ -819,20 +837,27 @@ def _retest(
         ]
         upheld_closings = [r for r in now_records if r in closings]
         contested = [r for r in now_records if r not in upheld_closings]
-        places = set() if planned else _places(scan, surface, changes, cited, plan)
+        places = set() if planned else moved_to
         closed_again = [r for r in upheld_closings if _closes_surface(r, surface, planned, places)]
         established_again = [r for r in on_surface if r.claim == "establishes"]
         # An `absent` step reads one file: the same text in another changed file is open
-        # until a closing has read that file.
+        # until a closing has read it there: a closing clears a copy only when it cites the
+        # lines that hold it, and one that cites another line of that file read something else.
         searched = _system_files(since or (), scan, inputs)
-        cited_now = {file for r in closings for file in r.cited_files}
+        cited_now: dict[str, list[tuple[int, int]]] = {}
+        for r in closings:
+            for file, lo, hi in r.cited_spans:
+                cited_now.setdefault(file, []).append((lo, hi))
         copies = sorted(
             {
                 file
                 for step in steps
                 if step.get("kind") == "absent"
-                for file in quote_copies(step["spec"], searched, scan)
-                if file not in cited_now
+                for file, spans in quote_places(step["spec"], searched, scan).items()
+                if not all(
+                    any(lo <= last and hi >= first for lo, hi in cited_now.get(file, ()))
+                    for first, last in spans
+                )
             }
         )
         unit = _unit_of(surface, scan) if is_unit else None
@@ -858,6 +883,28 @@ def _retest(
         violating = [
             f for f in in_sight if f.decision is Decision.VIOLATES and f.evidence_status in _STRONG
         ]
+        # A regression is on what the record read: the surface's file, its unit, a file it
+        # cites. A violation only in another changed file is open, not a regression of it.
+        near = {surface.get("file"), *cited}
+        violating_here = [
+            f
+            for f in violating
+            if any(leg.file in near for leg in f.evidence)
+            or (
+                unit is not None
+                and (
+                    f.scope.unit == unit
+                    or any(
+                        getattr(scan.walked.get(leg.file), "unit", None) == unit
+                        for leg in f.evidence
+                    )
+                )
+            )
+        ]
+        violating_elsewhere = [f for f in violating if f not in violating_here]
+        # Whether the surface's own file changed its text since the record's commit: a
+        # regression step that passes on rewritten text has to be read again by a record.
+        surface_rewritten = changes is not None and changes.text_of({surface.get("file")})
         # A weaker finding of the mechanism is a signal, not a violation: open, not failed.
         covered = {fp for r in closings for fp in r.covers_valid}
         signals = [f for f in in_sight if f not in violating and f.fingerprint not in covered]
@@ -883,12 +930,24 @@ def _retest(
             if established_again:
                 status = "regressed"
                 why.append("a record at this commit establishes the mechanism on the surface")
-            elif violating:
+            elif violating_here:
                 status = "regressed"
                 why.append(
-                    "the scan reports " + ", ".join(sorted({f.display_id for f in violating}))
+                    "the scan reports "
+                    + ", ".join(sorted({f.display_id for f in violating_here}))
+                    + (
+                        " in the surface's unit or a file the record cites"
+                        if unit is not None
+                        else " in the surface's file or a file the record cites"
+                    )
                 )
-            elif contested or copies or (blocked and not closed_again):
+            elif (
+                contested
+                or copies
+                or violating_elsewhere
+                or (blocked and not closed_again)
+                or (surface_rewritten and not closed_again)
+            ):
                 status = "needs_reinvestigation"
                 why.append(
                     "no uncontested record at this commit closes the hypothesis"
@@ -898,7 +957,22 @@ def _retest(
                     why.append("contested by " + ", ".join(str(r.id or r.path) for r in contested))
                 if copies:
                     why.append(
-                        f"the step's quote is in {', '.join(copies)}, which no closing cites"
+                        f"the step's quote is in {', '.join(copies)}, where no closing cites it"
+                    )
+                if violating_elsewhere:
+                    named = {
+                        f"{f.display_id} in {f.evidence[0].file if f.evidence else 'the unit'}"
+                        for f in violating_elsewhere
+                    }
+                    why.append(
+                        f"the scan reports {', '.join(sorted(named))}, a changed file the "
+                        "record did not read: a record has to read it"
+                    )
+                if surface_rewritten and not closed_again:
+                    why.append(
+                        f"{surface.get('file')} changed its text since the record's commit, and "
+                        "no record at this commit reads it again: passing regression steps "
+                        "alone do not hold a rewritten surface"
                     )
             else:
                 status = "held"
@@ -906,11 +980,18 @@ def _retest(
                     "no remediation step; a record at this commit closes the hypothesis and "
                     "every regression step that can run passes"
                     if blocked
+                    else "no remediation step; a record at this commit closes the hypothesis "
+                    "and every regression step ran and passes"
+                    if closed_again
                     else "no remediation step; every regression step ran and passes"
                 )
         elif any(s["now"] is False for s in fixes):
             status = "not_remediated"
-            why.append("a remediation step still fails")
+            # Whatever the closings cite: the step reads the quote where the surface went.
+            why.append(
+                "a remediation step still fails: "
+                + "; ".join(str(s["detail"]) for s in fixes if s["now"] is False)
+            )
         elif any(s["before"] is not False for s in fixes if s["kind"] != "reinvestigate"):
             status = "not_verified"
             why.append(
@@ -966,7 +1047,7 @@ def _retest(
                 )
             if copies:
                 why.append(
-                    f"the step's quote is still in {', '.join(copies)}, which no closing cites"
+                    f"the step's quote is still in {', '.join(copies)}, where no closing cites it"
                 )
             if signals:
                 named = {
@@ -1199,6 +1280,15 @@ def _rules_that_ran(scan: MachineScan) -> list[str]:
     ]
 
 
+def _shown_skip(row: dict[str, Any]) -> dict[str, Any]:
+    """A skipped file's row as the report shows it: a name that holds a verdict, a secret or a
+    hidden character is not shown, since naming a file is no way into a report."""
+    from aisafe.investigation.signoff import _NOT_SHOWN, _shown
+
+    path = str(row.get("path"))
+    return {**row, "path": path if _shown(path) != _NOT_SHOWN else _NOT_SHOWN}
+
+
 def run_assessment(
     path: str | Path,
     investigations: Sequence[Path],
@@ -1375,16 +1465,17 @@ def run_assessment(
                 bundle_inputs.append({"role": "skeptic pass", "path": skeptic_path.as_posix()})
             except OSError:
                 pass
-    for row in [*signoffs.accepted, *signoffs.refused]:
+    # The row's `file` is the path as a report may show it; `sources` is where it sits.
+    for row, source in zip([*signoffs.accepted, *signoffs.refused], signoffs.sources):
         try:
             inputs.append(
                 {
                     "role": "sign-off",
                     "path": row["file"],
-                    "sha256": content_sha256(Path(row["file"])),
+                    "sha256": content_sha256(source),
                 }
             )
-            bundle_inputs.append({"role": "sign-off", "path": row["file"]})
+            bundle_inputs.append({"role": "sign-off", "path": source.as_posix()})
         except OSError:
             continue
     if remediation is not None:
@@ -1551,7 +1642,7 @@ def run_assessment(
             "superseded": [_record_doc(r) for r in superseded],
             "rejected": [r.to_dict() for r in rejected],
             "previous": [{**r.to_dict(), "previous": True} for r in previous_records],
-            "skipped_files": list(run.skipped),
+            "skipped_files": [_shown_skip(row) for row in run.skipped],
         },
         "human": _human(scan),
         "signoffs": signoffs.to_dict(),

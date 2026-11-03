@@ -166,8 +166,8 @@ _TOOL_NAME_RE = re.compile(
     r"|mistral|cursor|openai|anthropic|llm|ai|a\.i\.?|model|language\s+model|bot|chatbot"
     r"|assistant|agent|ai\s+(?:assistant|agent|model|reviewer)"
     r"|the\s+(?:model|tool|agent|assistant))"
-    # A product's own suffixes: "Claude Code", "Gemini CLI", "claude-3-opus".
-    r"(?:[\s-]+(?:code|cli|agent|assistant|opus|sonnet|haiku|fable|flash|\d[\w.-]*))*\s*$",
+    # A product's own suffixes: "Claude Code", "Gemini CLI", "claude-3-opus", "GPT-4 AI".
+    r"(?:[\s-]+(?:code|cli|agent|assistant|ai|opus|sonnet|haiku|fable|flash|\d[\w.-]*))*\s*$",
     re.IGNORECASE,
 )
 # Punctuation around a name: "(Claude)", "`Claude`", "Claude.".
@@ -180,12 +180,14 @@ def tool_name_problem(reviewer: Any) -> str | None:
     holds no letter, or is a model, a tool or a generic word for one, or the text pronounces
     a verdict. It reads the fold, without the punctuation around the name. A tool that helped
     belongs in `assisted_by`; the reviewer is a person, by name. None when the name passes.
+    A Cyrillic, Greek or small-capital letter drawn like a Latin one reads as that letter
+    here (`fold_text(lookalikes=True)`), so "\u0391\u0399" is the two letters it looks like.
     The list of tools can never be complete: it stops the plain cases, and a name it does
     not know passes. An empty name is `check_text`'s to refuse.
     """
     if not isinstance(reviewer, str) or not reviewer.strip():
         return None
-    name = _NAME_EDGE_RE.sub("", fold_text(reviewer).split("<", 1)[0])
+    name = _NAME_EDGE_RE.sub("", fold_text(reviewer, lookalikes=True).split("<", 1)[0])
     if not any(char.isalpha() for char in name):
         return (
             f"reviewer {reviewer.strip()!a} names nobody; a person's name comes before any <role>"
@@ -231,7 +233,11 @@ def check_text(label: str, value: Any, *, multiline: bool = False) -> str | None
     """
     One free-text field, in any alphabet: non-empty, not the placeholder, no hidden or
     control character (one line unless `multiline`), no word that mixes two alphabets, no
-    verdict language, no secret-shaped token. The word checks read the fold (`fold_text`).
+    verdict language, no secret-shaped token. The word checks read the fold (`fold_text`),
+    the verdict phrases with lookalike letters as the Latin ones they look like; the check of
+    mixed alphabets reads the plain fold, so a name written wholly in Cyrillic or Greek
+    passes. Text in other languages is accepted and not checked for verdicts: the phrases are
+    English, and a translated verdict passes here (`verdict_words_in` adds three stems).
     None when the text passes, else one line saying why not, which never repeats the text.
     The record file sits in the audited tree and is scanned like any other, so a secret in
     it would be reported, and a verdict in it would say what the tool never says. The
@@ -252,8 +258,9 @@ def check_text(label: str, value: Any, *, multiline: bool = False) -> str | None
         return f"{label} must be {shape}"
     if _mixes_alphabets(folded):
         return f"{label} mixes two alphabets inside one word, which hides what it says"
-    lowered = folded.lower()
-    if _BANNED_WORD_RE.search(folded) or any(phrase in lowered for phrase in _banned_phrases()):
+    lookalike = fold_text(text, lookalikes=True).strip()
+    lowered = lookalike.lower()
+    if _BANNED_WORD_RE.search(lookalike) or any(phrase in lowered for phrase in _banned_phrases()):
         return (
             f"{label} reads as a verdict; a record says who reviewed what, "
             "not that the system is fine"

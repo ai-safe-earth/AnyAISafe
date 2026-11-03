@@ -15,7 +15,8 @@ sign. Each section also pins the honest code that must keep closing.
   reason; a three-record supersession; a closing that replaced a proposed violation.
 
 True limits, pinned so a change to them is a decision: a location on any running line, a stub
-in the same function, a real condition, `logging` ruled out over a real log line.
+in the same function, `logging` ruled out over a real log line. (A real condition such as
+`if admin:` was one; it goes to review now: `test_fixes6_validate.py`.)
 """
 
 from __future__ import annotations
@@ -337,8 +338,9 @@ def test_two_arms_of_one_statement_are_not_one_path(
     "code",
     [
         CHECK,
+        # The handler ends: what raises in the check never reaches the reply.
         '    try:\n        urgent = crisis_check(body["text"])\n    except ValueError:\n'
-        "        urgent = None\n",
+        "        raise\n",
         '    with open("x") as handle:\n        urgent = crisis_check(body["text"])\n',
         '    if True:\n        urgent = crisis_check(body["text"])\n',
         '    while False:\n        pass\n    else:\n        urgent = crisis_check(body["text"])\n',
@@ -1483,9 +1485,8 @@ def test_a_proposed_violation_is_replaced_by_another(tmp_path: Path) -> None:
             "    def crisis_check(t):\n        return t\n    crisis_check(body)\n",
             "    crisis_check(body)",
         ),
-        ('    if body.get("admin"):\n        crisis_check(body)\n', "        crisis_check(body)"),
     ],
-    ids=["any running line", "a stub in the same function", "a real condition"],
+    ids=["any running line", "a stub in the same function"],
 )
 def test_what_a_line_cannot_show_is_a_true_limit(tmp_path: Path, code: str, needle: str) -> None:
     root = _with_handler(tmp_path, code)

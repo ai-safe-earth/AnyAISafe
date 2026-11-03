@@ -72,6 +72,7 @@ import operator
 import re
 import stat
 import tokenize
+from bisect import bisect_right
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from pathlib import Path, PurePosixPath
@@ -122,6 +123,8 @@ __all__ = [
     "ValidationRun",
     "find_record_files",
     "quote_copies",
+    "quote_places",
+    "quote_spans",
     "render_validation",
     "run_step",
     "validate_paths",
@@ -237,6 +240,13 @@ _COMPARISONS = {
     ast.Gt: operator.gt,
     ast.GtE: operator.ge,
 }
+# `is` between two singletons is settled by syntax; between other constants it is not.
+_IDENTITIES = {ast.Is: operator.is_, ast.IsNot: operator.is_not}
+_SINGLETONS = (type(None), bool, type(Ellipsis))
+# A method that puts its argument into the object it is called on: `msgs.append(prompt)`.
+_MUTATORS = frozenset(
+    {"append", "extend", "insert", "update", "add", "setdefault", "appendleft", "extendleft"}
+)
 
 
 def _surface_types() -> tuple[str, ...]:
@@ -287,6 +297,9 @@ class RecordResult:
     steps: list[dict[str, Any]] = field(default_factory=list)
     untrusted: list[dict[str, Any]] = field(default_factory=list)
     cited_files: list[str] = field(default_factory=list)
+    # Every verified citation as (file, first line, last line): a retest clears a copy of a
+    # step's quote only where a closing cites the lines that hold it.
+    cited_spans: list[tuple[str, int, int]] = field(default_factory=list)
     readings: list[str] = field(default_factory=list)
     digest: str | None = None
     raw: dict[str, Any] | None = None
@@ -468,8 +481,15 @@ def _truth(node: ast.AST | None) -> bool | None:
         return None if None in values else not decider
     if isinstance(node, ast.Compare) and len(node.ops) == 1:
         left, right = node.left, node.comparators[0]
+        if not (isinstance(left, ast.Constant) and isinstance(right, ast.Constant)):
+            return None
+        identity = _IDENTITIES.get(type(node.ops[0]))
+        if identity is not None:
+            if isinstance(left.value, _SINGLETONS) and isinstance(right.value, _SINGLETONS):
+                return bool(identity(left.value, right.value))
+            return None
         compare = _COMPARISONS.get(type(node.ops[0]))
-        if compare and isinstance(left, ast.Constant) and isinstance(right, ast.Constant):
+        if compare:
             try:
                 return bool(compare(left.value, right.value))
             except TypeError:
@@ -503,6 +523,40 @@ def _ends(body: list[ast.stmt]) -> bool:
     return any(_leaves(stmt) for stmt in body)
 
 
+def _after(body: list[ast.stmt]) -> int:
+    """The line after a block: where an `else:` that follows it can start."""
+    return (body[-1].end_lineno or body[-1].lineno) + 1 if body else 0
+
+
+def _breaks(loop: ast.While | ast.For | ast.AsyncFor) -> bool:
+    """A `break` of this loop (not of a loop inside it) sits in its body."""
+    stack: list[ast.AST] = list(loop.body)
+    while stack:
+        node = stack.pop()
+        if isinstance(node, ast.Break):
+            return True
+        if isinstance(node, (ast.While, ast.For, ast.AsyncFor)):
+            stack.extend(node.orelse)  # a `break` there leaves this loop
+        elif not isinstance(node, (*_SCOPES, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+    return False
+
+
+def _surely_run(node: ast.AST, live: list[ast.AST]) -> set[int]:
+    """ids of the parts of an expression that run whenever it does: not an arm of
+    `a if c else b`, not a value of `and`/`or` after the first, not the inside of a
+    comprehension past its first iterable."""
+    if isinstance(node, ast.IfExp) and len(live) > 1:
+        return {id(node.test)}
+    if isinstance(node, ast.BoolOp):
+        return {id(node.values[0])}
+    if isinstance(node, _COMPREHENSIONS):
+        return {id(node.generators[0])}
+    if isinstance(node, ast.comprehension):
+        return {id(node.iter)}
+    return {id(child) for child in live}
+
+
 def _branches(node: ast.AST) -> tuple[list[ast.AST], list[ast.AST]]:
     """The parts of an expression that run, and those a constant condition shuts off."""
     if isinstance(node, ast.IfExp):
@@ -527,6 +581,56 @@ def _dotted(node: ast.AST) -> tuple[str, ...]:
         return ()
     parts.append(node.id)
     return tuple(reversed(parts))
+
+
+def _own_nodes(scope: ast.AST) -> Iterable[ast.AST]:
+    """The nodes of a definition (or the module) that are its own: not those of a function,
+    a class or a lambda defined inside it."""
+    stack = list(ast.iter_child_nodes(scope))
+    while stack:
+        node = stack.pop()
+        yield node
+        if not isinstance(node, (*_SCOPES, ast.Lambda)):
+            stack.extend(ast.iter_child_nodes(node))
+
+
+def _parts_of(stmt: ast.stmt) -> list[ast.AST]:
+    """What a statement evaluates where it stands: the whole of a simple statement, the
+    header of one that holds a block; nothing of a definition (its body runs elsewhere)."""
+    if isinstance(stmt, _SCOPES):
+        return []
+    if isinstance(stmt, (ast.If, ast.While)):
+        return [stmt.test]
+    if isinstance(stmt, (ast.For, ast.AsyncFor)):
+        return [stmt.iter]
+    if isinstance(stmt, (ast.With, ast.AsyncWith)):
+        return [item.context_expr for item in stmt.items]
+    if isinstance(stmt, ast.Match):
+        return [stmt.subject]
+    if isinstance(stmt, _TRIES):
+        return []
+    return [stmt]
+
+
+def _filled(parts: list[ast.AST], names: set[str] | None) -> set[str]:
+    """The names of objects a call puts a value into (`msgs.append(x)`): with `names`, only
+    when the value reads one of them."""
+    found: set[str] = set()
+    for part in parts:
+        for node in ast.walk(part):
+            if not (
+                isinstance(node, ast.Call)
+                and isinstance(node.func, ast.Attribute)
+                and node.func.attr in _MUTATORS
+                and isinstance(node.func.value, ast.Name)
+            ):
+                continue
+            values = [*node.args, *(k.value for k in node.keywords)]
+            if names is None or any(
+                isinstance(n, ast.Name) and n.id in names for v in values for n in ast.walk(v)
+            ):
+                found.add(node.func.value.id)
+    return found
 
 
 def _span(node: Any) -> range:
@@ -572,6 +676,11 @@ class _Use:
     parts: tuple[str, ...]
     called: bool
     scope: _Scope
+    # Inside a part of an expression that may not run: an arm of `a if c else b`, a value of
+    # `and`/`or` after the first, the inside of a comprehension.
+    maybe: bool = False
+    # A call that is awaited, or an argument of an awaited call (`asyncio.gather(f(x))`).
+    awaited: bool = False
 
 
 @dataclass(frozen=True)
@@ -583,6 +692,10 @@ class _Target:
     must_call: bool
     lo: int = 0
     hi: int = 0
+    # An `async def`: calling it only makes a coroutine, which runs when it is awaited.
+    awaits: bool = False
+    # A generator: calling it runs none of its body.
+    yields: bool = False
 
 
 class _Tree:
@@ -594,7 +707,11 @@ class _Tree:
     generator expression, a line that calls nothing and whose comment holds a call. `dead`
     lines never run: after a return, under `if False:`, in `for _ in ():`. `uses` are the
     names read or called in code that runs; a lambda's body, a generator's, a decorator, a
-    default value and an annotation give none.
+    default value and an annotation give none. An `assert` is inert: `python -O` drops it.
+    `blocks` may not run when the code around them does: an arm of an `if` or a `match` the
+    syntax does not settle, the body of a loop and its `else` when it can `break`, the body
+    and the `else` of a `try` with a handler that carries on. Each comes with the header
+    lines that decide it.
     """
 
     def __init__(self, tree: ast.Module, lines: list[str], prompts: list[tuple[int, int]]) -> None:
@@ -612,6 +729,13 @@ class _Tree:
         # (statement, arm, first line, last line): two arms of one statement exclude each other
         self.arms: list[tuple[int, int, int, int]] = []
         self.excepts: list[tuple[int, int]] = []
+        # (header first line, header last line, block first line, block last line)
+        self.blocks: list[tuple[int, int, int, int]] = []
+        # (parts as spelled, scope) of each attribute stored to: `safety.check = ...`, and
+        # `setattr(safety, "check", ...)` with the name spelled out
+        self.attr_stores: list[tuple[tuple[str, ...], _Scope]] = []
+        # (first line, last line, text) of each string constant in code that runs
+        self.strings: list[tuple[int, int, str]] = []
         self.comments = self._comments("\n".join(lines))
         self._statements = [node for node in ast.walk(tree) if isinstance(node, ast.stmt)]
         self._in_strings: set[int] = set()
@@ -661,6 +785,13 @@ class _Tree:
             last = body[-1].end_lineno or body[-1].lineno
             self.arms.append((id(stmt), arm, _span(body[0]).start, last))
 
+    def _may_skip(self, head: tuple[int, int], body: list[ast.stmt], start: int = 0) -> None:
+        """`body` may not run when the code around it does. It holds its lines from `start`
+        when that comes first (an `else:`, a `case`, a `try:` line)."""
+        if body:
+            first = min(start or _span(body[0]).start, _span(body[0]).start)
+            self.blocks.append((*head, first, body[-1].end_lineno or body[-1].lineno))
+
     def _branch(self, stmt: Any, scope: _Scope, truth: bool | None) -> None:
         """The two blocks of an `if` or a `while`, as a condition settled by syntax leaves
         them. A settled condition's header runs nothing."""
@@ -686,22 +817,36 @@ class _Tree:
         elif isinstance(stmt, ast.If):
             truth = _truth(stmt.test)
             if truth is None:
+                head = _statement_lines(stmt)
                 self._arm(stmt, 0, stmt.body)
                 self._arm(stmt, 1, stmt.orelse)
+                self._may_skip(head, stmt.body)
+                self._may_skip(head, stmt.orelse, _after(stmt.body))
             self._branch(stmt, scope, truth)
-        elif isinstance(stmt, ast.While):
-            self._branch(stmt, scope, _truth(stmt.test))
-        elif isinstance(stmt, (ast.For, ast.AsyncFor)):
-            if _truth(stmt.iter) is False:
-                self._header(stmt)
-                self._kill(*stmt.body)
+        elif isinstance(stmt, (ast.While, ast.For, ast.AsyncFor)):
+            # A loop's body may run no time; its `else` is skipped by a `break`.
+            head = _statement_lines(stmt)
+            self._may_skip(head, stmt.body)
+            if _breaks(stmt):
+                self._may_skip(head, stmt.orelse, _after(stmt.body))
+            if isinstance(stmt, ast.While):
+                self._branch(stmt, scope, _truth(stmt.test))
             else:
-                self._read([stmt.iter], scope)
-                self._block(stmt.body, scope)
-            self._block(stmt.orelse, scope)
+                if _truth(stmt.iter) is False:
+                    self._header(stmt)
+                    self._kill(*stmt.body)
+                else:
+                    self._read([stmt.iter], scope)
+                    self._block(stmt.body, scope)
+                self._block(stmt.orelse, scope)
         elif isinstance(stmt, _TRIES):
             self._arm(stmt, 0, stmt.body)
             self._arm(stmt, 0, stmt.orelse)
+            if any(not _ends(handler.body) for handler in stmt.handlers):
+                # A handler that carries on: what raises in the body skips the rest of it
+                # and the `else`, and the code after the `try` still runs.
+                self._may_skip((0, 0), stmt.body, stmt.lineno)
+                self._may_skip((0, 0), stmt.orelse, _after(stmt.handlers[-1].body))
             self._block(stmt.body, scope)
             for index, handler in enumerate(stmt.handlers, 1):
                 self.excepts.append((handler.lineno, handler.end_lineno or handler.lineno))
@@ -715,8 +860,10 @@ class _Tree:
             self._block(stmt.body, scope)
         elif isinstance(stmt, ast.Match):
             self._read([stmt.subject], scope)
+            head = (stmt.lineno, stmt.subject.end_lineno or stmt.lineno)
             for index, case in enumerate(stmt.cases):
                 self._arm(stmt, index, case.body)
+                self._may_skip(head, case.body, case.pattern.lineno)
                 self._read([case.guard], scope)
                 self._block(case.body, scope)
         elif isinstance(stmt, (ast.Import, ast.ImportFrom)):
@@ -732,7 +879,8 @@ class _Tree:
             if isinstance(stmt.value, ast.Constant):
                 self.text_statements.update(_span(stmt))
         elif isinstance(stmt, ast.Assert):
-            self._read([stmt.test], scope, shut=[stmt.msg] if stmt.msg else [])
+            # `python -O` drops the statement: nothing in it can be shown to run.
+            self.inert.update(_span(stmt))
         else:
             if isinstance(stmt, (ast.Return, ast.Raise)):
                 self.exits.append((stmt.lineno, scope))
@@ -744,12 +892,13 @@ class _Tree:
         """Take in a statement's expressions: their uses, and the lines where all that happens
         is shut away (a lambda, a generator, a branch a constant rules out). Says whether any
         of it acts: a call, an await, a yield."""
-        stack = [node for node in nodes if node is not None]
+        stack = [(node, False) for node in nodes if node is not None]
         closed = list(shut)
         calls: list[ast.Call] = []
+        awaited: set[int] = set()
         acts = False
         while stack:
-            node = stack.pop()
+            node, maybe = stack.pop()
             if isinstance(node, (ast.Lambda, ast.GeneratorExp)) or (
                 isinstance(node, _COMPREHENSIONS) and _truth(node.generators[0].iter) is False
             ):
@@ -757,18 +906,29 @@ class _Tree:
                 continue
             live, off = _branches(node)
             closed.extend(off)
-            stack.extend(live)
+            sure = _surely_run(node, live)
+            stack.extend((child, maybe or id(child) not in sure) for child in live)
             if isinstance(node, ast.Call):
                 calls.append(node)
                 self.calling.add(node.lineno)
-                self._use(node.func, node.lineno, True, scope)
+                self._use(node.func, node.lineno, True, scope, maybe, id(node) in awaited)
             elif isinstance(node, (ast.Await, ast.Yield, ast.YieldFrom)):
                 acts = True
+                if isinstance(node, ast.Await) and isinstance(node.value, ast.Call):
+                    inner = node.value
+                    awaited.add(id(inner))
+                    awaited.update(
+                        id(arg)
+                        for arg in [*inner.args, *(k.value for k in inner.keywords)]
+                        if isinstance(arg, ast.Call)
+                    )
             elif isinstance(node, (ast.Name, ast.Attribute)):
                 if isinstance(node.ctx, ast.Load):
-                    self._use(node, node.lineno, False, scope)
+                    self._use(node, node.lineno, False, scope, maybe)
             elif isinstance(node, (ast.Constant, ast.JoinedStr)):
                 self._in_strings.update(range(node.lineno + 1, (node.end_lineno or 0) + 1))
+                if isinstance(node, ast.Constant) and isinstance(node.value, str):
+                    self.strings.append((node.lineno, node.end_lineno or node.lineno, node.value))
         if closed:
             ids = {id(node) for node in closed}
             clear = {c.lineno for c in calls if not any(id(n) in ids for n in ast.walk(c))}
@@ -776,10 +936,18 @@ class _Tree:
                 self.inert.update(set(_span(node)) - clear)
         return acts or bool(calls)
 
-    def _use(self, target: ast.AST, line: int, called: bool, scope: _Scope) -> None:
+    def _use(
+        self,
+        target: ast.AST,
+        line: int,
+        called: bool,
+        scope: _Scope,
+        maybe: bool = False,
+        awaited: bool = False,
+    ) -> None:
         parts = _dotted(target)
         if parts:
-            self.uses.append(_Use(line, parts, called, scope))
+            self.uses.append(_Use(line, parts, called, scope, maybe, awaited))
 
     @staticmethod
     def _imported_paths(stmt: ast.Import | ast.ImportFrom) -> list[tuple[tuple[str, ...], int]]:
@@ -792,39 +960,67 @@ class _Tree:
         """What each name is bound to, scope by scope; code that never runs binds nothing."""
         for scope in (self.module, *self.scopes):
             node = scope.node
+            # `global x` in a function: what the function binds to `x` is the module's `x`.
+            shared = (
+                {name for n in _own_nodes(node) if isinstance(n, ast.Global) for name in n.names}
+                if isinstance(node, _DEFS)
+                else set()
+            )
             stack: list[Any] = [*node.body, *([node.args] if isinstance(node, _DEFS) else [])]
             while stack:
                 item = stack.pop()
                 if getattr(item, "lineno", 0) in self.dead:
                     continue
+                found: list[tuple[str, _Binding]] = []
                 if isinstance(item, _SCOPES):
-                    scope.bindings.setdefault(item.name, []).append(_Binding(item.lineno))
+                    found.append((item.name, _Binding(item.lineno)))
                 elif isinstance(item, ast.Import):
                     for alias in item.names:
                         head = alias.name.split(".")
                         path = tuple(head) if alias.asname else (head[0],)
-                        name = alias.asname or head[0]
-                        scope.bindings.setdefault(name, []).append(_Binding(item.lineno, path))
+                        found.append((alias.asname or head[0], _Binding(item.lineno, path)))
                 elif isinstance(item, ast.ImportFrom):
                     base = tuple(item.module.split(".")) if item.module else ()
                     for alias in item.names:
                         binding = _Binding(item.lineno, (*base, alias.name), item.level)
-                        scope.bindings.setdefault(alias.asname or alias.name, []).append(binding)
+                        found.append((alias.asname or alias.name, binding))
                 elif not isinstance(item, (ast.Lambda, ast.GeneratorExp, *_COMPREHENSIONS)):
-                    self._bind_plain(item, scope)
+                    name = self._bind_plain(item)
+                    if name:
+                        found.append((name, _Binding(getattr(item, "lineno", 0))))
+                    self._store_attr(item, scope)
                     stack.extend(ast.iter_child_nodes(item))
+                for name, binding in found:
+                    where = self.module if name in shared else scope
+                    where.bindings.setdefault(name, []).append(binding)
 
     @staticmethod
-    def _bind_plain(item: Any, scope: _Scope) -> None:
-        name = None
+    def _bind_plain(item: Any) -> str | None:
         if isinstance(item, ast.Name) and isinstance(item.ctx, ast.Store):
-            name = item.id
-        elif isinstance(item, ast.arg):
-            name = item.arg
-        elif isinstance(item, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
-            name = item.name
-        if name:
-            scope.bindings.setdefault(name, []).append(_Binding(getattr(item, "lineno", 0)))
+            return item.id
+        if isinstance(item, ast.arg):
+            return item.arg
+        if isinstance(item, (ast.ExceptHandler, ast.MatchAs, ast.MatchStar)):
+            return item.name
+        return None
+
+    def _store_attr(self, item: Any, scope: _Scope) -> None:
+        """Note an attribute stored to: `a.b = ...`, `setattr(a, "b", ...)`."""
+        parts: tuple[str, ...] = ()
+        if isinstance(item, ast.Attribute) and isinstance(item.ctx, ast.Store):
+            parts = _dotted(item)
+        elif (
+            isinstance(item, ast.Call)
+            and isinstance(item.func, ast.Name)
+            and item.func.id == "setattr"
+            and len(item.args) >= 2
+            and isinstance(item.args[1], ast.Constant)
+            and isinstance(item.args[1].value, str)
+        ):
+            owner = _dotted(item.args[0])
+            parts = (*owner, item.args[1].value) if owner else ()
+        if len(parts) >= 2:
+            self.attr_stores.append((parts, scope))
 
     # -- asking -----------------------------------------------------------------------
     def scope_at(self, line: int) -> _Scope:
@@ -849,18 +1045,32 @@ class _Tree:
     def in_except(self, line: int) -> bool:
         return any(lo <= line <= hi for lo, hi in self.excepts)
 
-    def same_path(self, line: int, target: int) -> bool:
-        """`line` can run on the way to `target`: the same function, no two arms of one `if`,
-        `try` or `match`, and no `except` branch unless `target` is in it too."""
+    def same_path(self, line: int, target: int, *, surely: bool = True) -> bool:
+        """`line` runs on the way to `target`: the same function, no two arms of one `if`,
+        `try` or `match`, and no `except` branch unless `target` is in it too. With `surely`,
+        also in no block that may not run (`blocks`) unless `target` is in it too; without,
+        `line` only can run on the way."""
         if self.scope_at(line) is not self.scope_at(target):
             return False
         if any(lo <= line <= hi and not lo <= target <= hi for lo, hi in self.excepts):
+            return False
+        if surely and any(
+            lo <= line <= hi and not lo <= target <= hi for _first, _last, lo, hi in self.blocks
+        ):
             return False
         arms = {group: arm for group, arm, lo, hi in self.arms if lo <= line <= hi}
         return not any(
             group in arms and arms[group] != arm
             for group, arm, lo, hi in self.arms
             if lo <= target <= hi
+        )
+
+    def heads_into(self, line: int, lo: int, hi: int) -> bool:
+        """`line` is the header of a block that may not run, and lines `lo` to `hi` reach into
+        that block: the header runs, what the citation shows inside the block may not."""
+        return any(
+            first <= line <= last and b_lo <= hi and b_hi >= lo
+            for first, last, b_lo, b_hi in self.blocks
         )
 
     def exits_between(self, line: int, target: int) -> bool:
@@ -890,9 +1100,12 @@ class _Tree:
                         yield (*binding.path, *use.parts[1:]), binding.level
 
     def bound_from(self, line: int, calls: set[int]) -> set[int]:
-        """The lines of the statement at `line`, and of each statement after it, in its
-        scope, that takes a value from a name that statement bound. A model call on `calls`
-        takes the prompt in and hands back a reply, so the names stop there."""
+        """The lines of the statement at `line`, and of each statement that reads a name it
+        bound: after it in its scope, anywhere in a function defined in that scope (which
+        runs later). A statement that reads one binds in turn what it assigns, and the
+        object it puts the value into (`msgs.append(prompt)`). A model call on `calls` takes
+        the prompt in and hands back a reply, so the names stop there. Of a statement that
+        holds a block, only its header counts."""
         stmt = self.statement_at(line)
         if stmt is None:
             return {line}
@@ -904,19 +1117,51 @@ class _Tree:
                 node.id
                 for node in ast.walk(stmt)
                 if isinstance(node, ast.Name) and isinstance(node.ctx, ast.Store)
-            }
-        kinds = (ast.Assign, ast.AnnAssign, ast.AugAssign, ast.NamedExpr)
-        later = [n for n in ast.walk(self.scope_at(line).node) if isinstance(n, kinds)]
-        for node in sorted(later, key=lambda n: n.lineno):
-            if node.lineno <= hi or node.value is None:
-                continue
-            if any(isinstance(n, ast.Name) and n.id in names for n in ast.walk(node.value)):
-                found.update(_span(node))
-                if not calls.intersection(_span(node)):
-                    targets = node.targets if isinstance(node, ast.Assign) else [node.target]
-                    names.update(
-                        n.id for t in targets for n in ast.walk(t) if isinstance(n, ast.Name)
-                    )
+            } | _filled(_parts_of(stmt), None)
+        scope = self.scope_at(line)
+        later = [
+            node
+            for node in ast.walk(scope.node)
+            if isinstance(node, ast.stmt)
+            and node is not scope.node
+            and (node.lineno > hi or self.scope_at(node.lineno) is not scope)
+        ]
+        later.sort(key=lambda n: n.lineno)
+        taken: set[int] = set()
+        grew = bool(names)
+        while grew:
+            grew = False
+            for node in later:
+                if id(node) in taken:
+                    continue
+                parts = _parts_of(node)
+                if not any(
+                    isinstance(n, ast.Name) and isinstance(n.ctx, ast.Load) and n.id in names
+                    for part in parts
+                    for n in ast.walk(part)
+                ):
+                    continue
+                taken.add(id(node))
+                first, last = _statement_lines(node)
+                found.update(range(first, last + 1))
+                if calls.intersection(range(first, last + 1)):
+                    continue
+                bound = _filled(parts, names)
+                for part in parts:
+                    for n in ast.walk(part):
+                        if isinstance(n, ast.NamedExpr):
+                            bound.add(n.target.id)
+                targets: list[ast.AST] = []
+                if isinstance(node, ast.Assign):
+                    targets = list(node.targets)
+                elif isinstance(node, (ast.AnnAssign, ast.AugAssign, ast.For, ast.AsyncFor)):
+                    targets = [node.target]
+                elif isinstance(node, (ast.With, ast.AsyncWith)):
+                    targets = [i.optional_vars for i in node.items if i.optional_vars]
+                bound.update(n.id for t in targets for n in ast.walk(t) if isinstance(n, ast.Name))
+                if not bound <= names:
+                    names |= bound
+                    grew = True
         return found
 
 
@@ -935,6 +1180,7 @@ class _Checker:
         self._lines: dict[str, list[str]] = {}
         self._hashes: dict[str, str] = {}
         self._trees: dict[str, _Tree | None] = {}
+        self._patched: dict[tuple[str, str], bool] = {}
         # (file, first line, last line, where) of every accepted citation
         self.citations: list[tuple[str, int, int, str]] = []
 
@@ -1083,6 +1329,62 @@ class _Checker:
         ]
         return anywhere[0] if len(anywhere) == 1 else None
 
+    def patched(self, module: str, name: str) -> bool:
+        """A parsed file stores to `name` in the file `module` as an attribute:
+        `safety.crisis_check = ...`, `setattr(safety, "crisis_check", ...)`. Whatever a use
+        resolves to there may not be what runs."""
+        key = (module, name)
+        if key not in self._patched:
+            self._patched[key] = any(
+                self._stores_to(relpath, module, name)
+                for relpath in self.scan.walked
+                if self.scan.reading_of(relpath) == "deep"
+            )
+        return self._patched[key]
+
+    def _stores_to(self, relpath: str, module: str, name: str) -> bool:
+        text = "\n".join(self.lines_of(relpath) or [])
+        if name not in text:
+            return False
+        tree = self.tree_of(relpath)
+        if tree is None:
+            return False
+        for parts, scope in tree.attr_stores:
+            if parts[-1] != name:
+                continue
+            for binding in tree.bindings_of(parts[0], scope):
+                if binding.path is None:
+                    continue
+                owner = (*binding.path, *parts[1:-1])
+                if self.module_file(relpath, owner, binding.level) == module:
+                    return True
+        return False
+
+    def resolves(
+        self,
+        importer: str,
+        path: tuple[str, ...],
+        level: int,
+        target_file: str,
+        name: str,
+        depth: int = 0,
+    ) -> bool:
+        """The dotted `path`, seen from `importer`, is `name` in `target_file`: directly, or
+        through a package or module that imports it under one binding and does nothing else
+        with the name (a re-export: `from guard.safety import crisis_check`)."""
+        module = self.module_file(importer, path[:-1], level)
+        if module == target_file:
+            return path[-1] == name
+        if module is None or depth >= 4:
+            return False
+        tree = self.tree_of(module)
+        if tree is None:
+            return False
+        found = tree.module.bindings.get(path[-1], [])
+        if len(found) != 1 or found[0].path is None or self.patched(module, path[-1]):
+            return False
+        return self.resolves(module, found[0].path, found[0].level, target_file, name, depth + 1)
+
     def imports_file(self, importer: str, path: tuple[str, ...], level: int, other: str) -> bool:
         """`path` (a module, or a thing inside one) is in the file `other`."""
         return any(
@@ -1156,8 +1458,8 @@ class _Checker:
         words = verdict_words_in(value if isinstance(value, str) else "")
         if words:
             self.error(
-                f"{where}: the text pronounces a verdict ({', '.join(sorted(set(words)))}); "
-                "a record says what was read, never a verdict on the system"
+                f"{where}: the text pronounces a verdict; a record says what was read, never "
+                "a verdict on the system"
             )
 
     def required_text(self, value: Any, where: str) -> str:
@@ -1596,6 +1898,7 @@ def validate_record(
         ):
             check.error(f"the record cites no link in {s_file}, the person-facing unit it answers")
     result.cited_files = sorted({file for file, _lo, _hi, _role in check.citations})
+    result.cited_spans = sorted({(file, lo, hi) for file, lo, hi, _role in check.citations})
 
     # -- skeptic ----------------------------------------------------------------------------
     skeptic = raw.get("skeptic") if isinstance(raw.get("skeptic"), dict) else None
@@ -1721,7 +2024,7 @@ def validate_record(
                 control_located = True
                 control_read = control_read or all(
                     check.tree_of(file) is not None
-                    for file in _closing_files(located, supported, chain, result.surface, scan)
+                    for file in _closing_files(located, supported, chain, result.surface, check)
                 )
             else:
                 check.note(f"{where}: {problem}; it closes nothing")
@@ -1916,10 +2219,16 @@ def _chain(links: list[dict[str, Any]], required: list[str], check: _Checker) ->
     }
 
 
+_QUOTED_RE = re.compile(r"""(["'`])((?:\\.|(?!\1).)*)\1""")
+
+
 def _hop_joins(hop: dict[str, Any], other: str, check: _Checker) -> bool:
-    """The hop imports `other` or calls it, on a line that runs. Between two Python files the
-    syntax tree shows it, through the import. Anywhere else a line can only name the file: the
-    stem of `other`, in code, on a line that is no comment."""
+    """The hop imports `other` or opens it, on a line that runs. From Python the syntax tree
+    shows the import of a Python file. Anywhere else a line can only name the file: a string
+    literal on a line that runs (no comment) holds the file's name with its extension, or for a
+    code file its path as a module (`"./telemetry"`), with any folders before it matching the
+    file's own. A word that only looks like the file's stem (`persona = ...`, a log message)
+    joins nothing."""
     scan = check.scan
     file = hop["file"]
     lo, hi = hop["line"], hop["end_line"] or hop["line"]
@@ -1928,16 +2237,47 @@ def _hop_joins(hop: dict[str, Any], other: str, check: _Checker) -> bool:
         return any(
             check.imports_file(file, path, level, other) for path, level in tree.paths_in(lo, hi)
         )
-    numbers = range(lo, hi + 1)
     if tree is not None:
-        text = " ".join(tree.code(n) for n in numbers if check.runs(file, n))
+        if any(
+            check.imports_file(file, path, level, other) for path, level in tree.paths_in(lo, hi)
+        ):
+            return True
+        literals = [
+            text
+            for first, _last, text in tree.strings
+            if lo <= first <= hi and check.runs(file, first)
+        ]
     else:
         lines = check.lines_of(file) or []
         comment = ("#", "//", "/*", "*")
-        text = " ".join(
-            lines[n - 1] for n in numbers if not lines[n - 1].strip().startswith(comment)
-        )
-    return bool(re.search(rf"\b{re.escape(PurePosixPath(other).stem)}\b", text))
+        literals = [
+            match.group(2)
+            for n in range(lo, hi + 1)
+            if not lines[n - 1].strip().startswith(comment)
+            for match in _QUOTED_RE.finditer(lines[n - 1])
+        ]
+    module = scan.reading_of(other) in ("deep", "read")
+    return any(_names_file(text, other, module) for text in literals)
+
+
+def _names_file(text: str, other: str, module: bool) -> bool:
+    """A string names the file `other`: its name with the extension, or (`module`) its stem as
+    the last part of a path; the folders written before it are the last folders of its own."""
+    path = PurePosixPath(other)
+    text = text.replace("\\", "/")
+    spellings = [path.name, *([path.stem] if module and path.suffix else [])]
+    folders = [part for part in path.parent.parts if part not in (".", "")]
+    for spelling in spellings:
+        pattern = rf"(?<![\w.@-]){re.escape(spelling)}(?![\w-]|\.\w)"
+        if spelling == path.stem:
+            pattern = rf"(?:^|/){re.escape(spelling)}$"
+        for match in re.finditer(pattern, text):
+            before = re.search(r"[\w./@-]*$", text[: match.start()]).group()
+            written = [part for part in before.split("/") if part not in ("", ".", "..")]
+            size = min(len(written), len(folders))
+            if written[len(written) - size :] == folders[len(folders) - size :]:
+                return True
+    return False
 
 
 def _followed(
@@ -2072,6 +2412,12 @@ def _control_problem(
                 f"the model call at {where}:{line} is in the unit, and the control is not on the "
                 "way to it nor to a guarded link that call's reply reaches"
             )
+    for where, line in _prompt_calls(surface, check):
+        if not _call_answered(where, line, located, hops, guarded, check):
+            return (
+                f"the model call at {where}:{line} takes the prompt the record answers, and the "
+                "control is not on the way to it nor to a guarded link that call's reply reaches"
+            )
     return None
 
 
@@ -2115,32 +2461,88 @@ def _unit_calls(surface: dict[str, Any], scan: MachineScan) -> list[tuple[str, i
     )
 
 
+def _prompt_calls(surface: dict[str, Any], check: _Checker) -> list[tuple[str, int]]:
+    """The model calls a prompt surface reaches; none for any other surface. In a parsed
+    Python file: each call fed from a name the prompt's statement binds (`_Tree.bound_from`),
+    each call the scan ties to the prompt, and every call of another file that imports the
+    prompt's file and names what it binds. Anywhere else the machine cannot tell which calls
+    take the prompt: every model call of its unit."""
+    if surface.get("type") != "prompt":
+        return []
+    scan = check.scan
+    rows = sorted(
+        {
+            (str(row.get("file")), int(row.get("line") or 0), str(row.get("unit")))
+            for row in scan.ctx.inventory.llm_calls or []
+            if not _is_import_row(row)
+        }
+    )
+    file, line = str(surface.get("file") or ""), int(surface.get("line") or 0)
+    tree = check.tree_of(file) if file else None
+    if tree is None or not line:
+        unit = _unit_of(surface, scan)
+        return [(f, n) for f, n, u in rows if unit is None or u == str(unit)]
+    reached = tree.bound_from(line, {n for f, n, _u in rows if f == file})
+    found = {(f, n) for f, n, _u in rows if f == file and n in reached}
+    facts = scan.ctx.pyfacts
+    if facts is not None:
+        for prompts, feeds in (
+            (facts.prompt_literals, facts.literal_feeds_call),
+            (facts.prompt_assemblies, facts.assembly_feeds_call),
+        ):
+            for index, call in feeds.items():
+                prompt = prompts[index]
+                if prompt.file == file and prompt.line <= line <= max(prompt.end_line, prompt.line):
+                    found.add((facts.llm_calls[call].file, facts.llm_calls[call].line))
+    stmt = tree.statement_at(line)
+    names = (
+        {n.id for n in ast.walk(stmt) if isinstance(n, ast.Name) and isinstance(n.ctx, ast.Store)}
+        if stmt is not None and tree.scope_at(line) is tree.module
+        else set()
+    )
+    for other in sorted({f for f, _n, _u in rows if f != file}):
+        text = "\n".join(check.lines_of(other) or [])
+        if not any(re.search(rf"\b{re.escape(name)}\b", text) for name in names):
+            continue
+        held = check.tree_of(other)
+        if held is None or any(
+            check.imports_file(other, path, level, file) for _a, _b, path, level in held.imports
+        ):
+            found.update((f, n) for f, n, _u in rows if f == other)
+    return sorted(found)
+
+
 def _closing_files(
     located: dict[str, Any],
     supported: list[dict[str, Any]],
     chain: set[str],
     surface: dict[str, Any],
-    scan: MachineScan,
+    check: _Checker,
 ) -> set[str]:
     """What the machine must have read for a control to close: the control, every link of the
-    chain, every model call a unit surface answers for."""
+    chain, every model call a unit surface answers for or a prompt surface reaches."""
     return {
         located["file"],
         *(x["file"] for x in supported if x["id"] in chain),
-        *(file for file, _line in _unit_calls(surface, scan)),
+        *(file for file, _line in _unit_calls(surface, check.scan)),
+        *(file for file, _line in _prompt_calls(surface, check)),
     }
 
 
 def _comes_before(cited: dict[str, Any], file: str, line: int, check: _Checker) -> bool:
     """`cited` is wholly at or before `line` of `file`, and in Python a line of it that runs
-    is on the path to that line."""
-    last = cited["end_line"] or cited["line"]
+    is surely on the path to that line (`_Tree.same_path`): not in a block that may not run
+    unless that line is in it too, and not the header of such a block the citation reaches
+    into (the header runs; what the citation shows inside may not)."""
+    first, last = cited["line"], cited["end_line"] or cited["line"]
     if cited["file"] != file or last > line:
         return False
     tree = check.tree_of(file)
     return tree is None or any(
-        check.runs(file, number) and tree.same_path(number, line)
-        for number in range(cited["line"], last + 1)
+        check.runs(file, number)
+        and tree.same_path(number, line)
+        and not tree.heads_into(number, first, last)
+        for number in range(first, last + 1)
     )
 
 
@@ -2158,8 +2560,10 @@ def _hop_reaches(
 ) -> bool:
     """The hop runs on the way to `line` of `file` and reaches `located`. From parsed Python to
     parsed Python, a call (or, for a constant, a read) on the hop must be bound to `located`
-    (`_bound_to`). Otherwise only the text of the hop can be read: it names what `_target_of`
-    gives. No name at all reaches nothing from Python."""
+    (`_bound_to`), in no part of an expression that may not run; an `async def` must be
+    awaited (directly, or as an argument of an awaited call such as `asyncio.gather`), and a
+    generator reaches nothing. Otherwise only the text of the hop can be read: it names what
+    `_target_of` gives. No name at all reaches nothing from Python."""
     if not _comes_before(hop, file, line, check) or check.names_only(hop):
         return False
     target = _target_of(located, file, check)
@@ -2169,16 +2573,23 @@ def _hop_reaches(
     lo, hi = hop["line"], hop["end_line"] or hop["line"]
     tree = check.tree_of(file)
     if tree is not None and check.tree_of(located["file"]) is not None:
-        return any(
+        # Calling a generator runs none of its body; nothing here shows it iterated.
+        return not target.yields and any(
             lo <= use.line <= hi
+            and not use.maybe
             and tree.same_path(use.line, line)
             and (use.called or not target.must_call)
+            and (use.awaited or not target.awaits)
             and _bound_to(use, tree, file, target, located["file"], check)
             for use in tree.uses
         )
     numbers = range(lo, hi + 1)
     if tree is not None:
-        text = " ".join(tree.code(n) for n in numbers if tree.same_path(n, line))
+        text = " ".join(
+            tree.code(n)
+            for n in numbers
+            if tree.same_path(n, line) and not tree.heads_into(n, lo, hi)
+        )
     else:
         text = " ".join((check.lines_of(file) or [])[lo - 1 : hi])
     return bool(re.search(rf"\b{re.escape(target.name)}\b", text))
@@ -2188,12 +2599,15 @@ def _bound_to(
     use: _Use, tree: _Tree, file: str, target: _Target, target_file: str, check: _Checker
 ) -> bool:
     """Every binding of the name the code uses leads to the target: the definition itself in
-    the file, or, through an import, the target's name in the target's file, which binds that
-    name there and nowhere else. A local name, a stub, an object's attribute or an import of
-    another file does not."""
+    the file, or, through an import (a package's re-export included, `_Checker.resolves`), the
+    target's name in the target's file, which binds that name there and nowhere else (a
+    `global` statement in a function binds it in the module too). No parsed file stores to
+    that name as an attribute of its module (`safety.crisis_check = ...`), nor to the name the
+    code uses. A local name, a stub, an object's attribute or an import of another file does
+    not lead there."""
     bindings = tree.bindings_of(use.parts[0], use.scope)
     held = check.tree_of(target_file)
-    if not bindings or held is None:
+    if not bindings or held is None or check.patched(target_file, target.name):
         return False
     for binding in bindings:
         if binding.path is None:
@@ -2205,10 +2619,9 @@ def _bound_to(
                 return False
             continue
         path = (*binding.path, *use.parts[1:])
-        if (
-            path[-1] != target.name
-            or check.module_file(file, path[:-1], binding.level) != target_file
-        ):
+        if not check.resolves(file, path, binding.level, target_file, target.name):
+            return False
+        if len(use.parts) == 1 and check.patched(file, use.parts[0]):
             return False
         others = held.module.bindings.get(target.name, [])
         if not others or not all(target.lo <= other.line <= target.hi for other in others):
@@ -2237,7 +2650,16 @@ def _target_of(located: dict[str, Any], link_file: str, check: _Checker) -> _Tar
         return None
     scope = tree.scope_at(running[0])
     if isinstance(scope.node, _DEFS):
-        return _Target(scope.node.name, True, scope.lo, scope.hi)
+        return _Target(
+            scope.node.name,
+            True,
+            scope.lo,
+            scope.hi,
+            awaits=isinstance(scope.node, ast.AsyncFunctionDef),
+            yields=any(
+                isinstance(node, (ast.Yield, ast.YieldFrom)) for node in _own_nodes(scope.node)
+            ),
+        )
     stmt = tree.statement_at(running[0])
     if scope is not tree.module or not isinstance(stmt, (ast.Assign, ast.AnnAssign)):
         return None
@@ -2263,7 +2685,7 @@ def _call_answered(
     return tree is not None and any(
         link["file"] == file
         and line <= link["line"]
-        and tree.same_path(line, link["line"])
+        and tree.same_path(line, link["line"], surely=False)
         and not tree.exits_between(line, link["line"])
         for link in guarded
     )
@@ -2541,26 +2963,74 @@ def _step_shape(step: dict[str, Any], kind: str) -> str | None:
     return None
 
 
-def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]:
+def _quote_step(kind: str, relpath: str, quote: str, scan: MachineScan) -> tuple[bool | None, str]:
+    """An `absent` or `present` step on one file: True passes, False fails, None cannot run."""
+    record = scan.walked.get(relpath)
+    if record is None:
+        return None, (
+            f"{relpath} is not in the walked tree, so the step cannot run: a file that "
+            "disappears, moves or is skipped is not evidence either way"
+        )
+    try:
+        text = "\n".join(file_lines(record.path))
+    except OSError:
+        return None, f"{relpath} cannot be read, so the step cannot run"
+    found = quote_in_text(text, quote)
+    state = "present in" if found else "absent from"
+    return (not found if kind == "absent" else found), f"the quote is {state} {relpath}"
+
+
+def run_step(
+    step: dict[str, Any], scan: MachineScan, places: Iterable[str] = ()
+) -> tuple[bool | None, str]:
     """Run one verification step against `scan`. True passes, False fails, None cannot run
     (`reinvestigate`, or an `absent`, `present` or `no_finding` step whose file the walk does
-    not read: a file that is not read has no findings, which shows nothing)."""
+    not read: a file that is not read has no findings, which shows nothing).
+
+    `places` are the files the step's file may have gone to: a rename target, or the files a
+    deleted one's text may have moved to. An `absent` or `present` step reads them too, so a
+    rename never dodges it. The quote in any of them fails an `absent` step; a `present` step
+    passes when the quote is in its file or in one of them. A step that cannot run on its own
+    file, and finds the quote nowhere it went, still cannot run: it named another file."""
     kind = _text(step.get("kind"))
     if kind in ("absent", "present"):
         relpath = _text(step.get("file")).replace("\\", "/")
-        record = scan.walked.get(relpath)
-        if record is None:
-            return None, (
-                f"{relpath} is not in the walked tree, so the step cannot run: a file that "
-                "disappears, moves or is skipped is not evidence either way"
+        quote = str(step.get("quote"))
+        now, detail = _quote_step(kind, relpath, quote, scan)
+        moved = sorted({str(place) for place in places} - {relpath})
+        if not moved:
+            return now, detail
+        if now is None:
+            detail = f"the step cannot run on {relpath}"
+        ran = {place: _quote_step(kind, place, quote, scan)[0] for place in moved}
+        unread = [place for place in moved if ran[place] is None]
+        if len(unread) == len(moved):
+            return now, f"{detail}; {', '.join(moved)}, where it may have gone, cannot be read"
+        unread_note = f" ({', '.join(unread)} cannot be read)" if unread else ""
+        if kind == "absent":
+            holding = [place for place in moved if ran[place] is False]
+            if holding:
+                return False, (
+                    f"{detail}; the quote is present in {', '.join(holding)}, where "
+                    f"{relpath} may have gone"
+                )
+            return now, (
+                f"{detail}; the quote is absent from "
+                + ", ".join(place for place in moved if place not in unread)
+                + f", where {relpath} may have gone{unread_note}"
             )
-        try:
-            text = "\n".join(file_lines(record.path))
-        except OSError:
-            return None, f"{relpath} cannot be read, so the step cannot run"
-        found = quote_in_text(text, str(step.get("quote")))
-        state = "present in" if found else "absent from"
-        return (not found if kind == "absent" else found), f"the quote is {state} {relpath}"
+        holding = [place for place in moved if ran[place] is True]
+        if now is True or holding:
+            return True, detail + (
+                f"; the quote is present in {', '.join(holding)}, where {relpath} may have gone"
+                if holding
+                else ""
+            )
+        return False, (
+            f"{detail}; the quote is absent from "
+            + ", ".join(place for place in moved if place not in unread)
+            + f" too, where {relpath} may have gone{unread_note}"
+        )
     if kind == "no_finding":
         rule = _text(step.get("rule"))
         relpath = _text(step.get("file")).replace("\\", "/") or None
@@ -2595,14 +3065,48 @@ def run_step(step: dict[str, Any], scan: MachineScan) -> tuple[bool | None, str]
     return None, "read again by a person or an agent; never passes mechanically"
 
 
-def quote_copies(step: dict[str, Any], files: Iterable[str], scan: MachineScan) -> list[str]:
-    """The files among `files` that hold the quote of an `absent` step, its own file aside.
-    The step reads one file, so a copy beside a stub passes it. A file the walk does not read
-    is read here too, since a move out of its sight is the case this is for; one over
+def quote_spans(text: str, quote: str) -> list[tuple[int, int]]:
+    """The lines (first, last) of every place the quote occurs in the text, both normalised:
+    what `quote_in_text` matches, located. A quote may run across lines."""
+    q = normalise(quote)
+    if not q:
+        return []
+    flat = ""
+    starts: list[int] = []
+    numbers: list[int] = []
+    for number, line in enumerate(text.split("\n"), start=1):
+        part = normalise(line)
+        if not part:
+            continue
+        if flat:
+            flat += " "
+        starts.append(len(flat))
+        numbers.append(number)
+        flat += part
+    spans = []
+    index = flat.find(q)
+    while index != -1:
+        first = numbers[bisect_right(starts, index) - 1]
+        last = numbers[bisect_right(starts, index + len(q) - 1) - 1]
+        spans.append((first, last))
+        index = flat.find(q, index + 1)
+    if not spans and quote_in_text(text, quote):
+        # Not expected; a match this cannot place is one no citation covers.
+        spans.append((0, 0))
+    return spans
+
+
+def quote_places(
+    step: dict[str, Any], files: Iterable[str], scan: MachineScan
+) -> dict[str, list[tuple[int, int]]]:
+    """The files among `files` that hold the quote of an `absent` step, its own file aside,
+    each with the lines (first, last) of every place the quote occurs there. The step reads
+    one file, so a copy beside a stub passes it. A file the walk does not read is read here
+    too, since a move out of its sight is the case this is for; one over
     `_MAX_SEARCHED_BYTES` is not, and stays in the `files_not_read` gap."""
     quote = str(step.get("quote") or "")
     own = _text(step.get("file")).replace("\\", "/")
-    hits = []
+    hits: dict[str, list[tuple[int, int]]] = {}
     for relpath in sorted(set(files) - {own}):
         record = scan.walked.get(relpath)
         path = record.path if record is not None else scan.root / relpath
@@ -2614,9 +3118,16 @@ def quote_copies(step: dict[str, Any], files: Iterable[str], scan: MachineScan) 
             text = "\n".join(file_lines(path))
         except OSError:
             continue
-        if quote_in_text(text, quote):
-            hits.append(relpath)
+        spans = quote_spans(text, quote)
+        if spans:
+            hits[relpath] = spans
     return hits
+
+
+def quote_copies(step: dict[str, Any], files: Iterable[str], scan: MachineScan) -> list[str]:
+    """The files among `files` that hold the quote of an `absent` step, its own file aside
+    (`quote_places` says where in each)."""
+    return sorted(quote_places(step, files, scan))
 
 
 # ---------------------------------------------------------------------------

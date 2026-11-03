@@ -99,7 +99,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from functools import lru_cache
 from pathlib import Path
-from typing import Any
+from typing import Any, Iterator
 
 from aisafe.discovery.patterns import (
     AUDIT_DIR,
@@ -207,6 +207,23 @@ _CONFIG_INCLUDE_RE = re.compile(r"\bpath[ \t]*=[ \t]*([^\r\n;#]+)", re.IGNORECAS
 # Remote addresses: git status never opens one, and no transport is allowed (`git_env`). A
 # team's remote on a file share is ordinary.
 _REMOTE_KEYS = frozenset({"url", "pushurl", "insteadof", "pushinsteadof"})
+# git's C quoting (`unquote_c_style`), which reads an object alternate that starts with a
+# quote: `"\057\057host/share"` is `//host/share`. A configuration value has fewer escapes,
+# and no octal. `_C_SPACE` is C's `isspace`, which git's parsers use.
+_C_ESCAPES = {
+    "a": "\a",
+    "b": "\b",
+    "f": "\f",
+    "n": "\n",
+    "r": "\r",
+    "t": "\t",
+    "v": "\v",
+    "\\": "\\",
+    '"': '"',
+}
+_CONFIG_ESCAPES = {"t": "\t", "b": "\b", "n": "\n", "\\": "\\", '"': '"'}
+_OCTAL = "01234567"
+_C_SPACE = " \t\n\v\f\r"
 _GIT_FILE_LIMIT = 16 * 1024 * 1024
 _MAX_GIT_FILES = 64
 ROOT_UNIT_ID = "u0"
@@ -753,11 +770,16 @@ def _skip_dir(name: str, rel: str) -> bool:
     return any(rel == p or rel.endswith("/" + p) for p in _SKIP_PATHS)
 
 
-def _tracked(root: Path, unlisted: list[str] | None = None) -> frozenset[str] | None:
+def _tracked(
+    root: Path, unlisted: list[str] | None = None, network: list[str] | None = None
+) -> frozenset[str] | None:
     """The files git tracks under `root`, submodules included, relative to it; empty outside
     git. None when git fails inside a repository, which must not read as outside git.
-    `unlisted`, when given, receives the submodules git could not list: the rest stands."""
+    `unlisted`, when given, receives the submodules git could not list: the rest stands.
+    `network` receives the submodule files that name a path on another machine."""
     tree = git_tree(root, compare=False)
+    if network is not None:
+        network.extend(tree.network)
     if tree.tracked is None:
         inside = any((folder / ".git").exists() for folder in (root, *root.parents))
         return None if inside else frozenset()
@@ -784,13 +806,41 @@ def _looks_like_text(name: str, head: bytes) -> bool:
     return Path(name).suffix.lower() not in _BINARY_SUFFIXES
 
 
+def _walk(top: str, onerror: Any = None, followlinks: bool = False) -> Iterator[Any]:
+    """`os.walk(top, topdown=True)`, except that a link is never followed to learn whether it
+    is a folder: `os.walk` stats the target of every link it meets, and a link to another
+    machine would make that a network connection. A link is listed with the files, and the
+    caller decides; `followlinks` keeps the old behaviour. Prune `dirnames` in place, as with
+    `os.walk`."""
+    stack = [top]
+    while stack:
+        folder = stack.pop()
+        try:
+            with os.scandir(folder) as listing:
+                entries = list(listing)
+        except OSError as err:
+            if onerror is not None:
+                onerror(err)
+            continue
+        dirnames: list[str] = []
+        filenames: list[str] = []
+        for entry in entries:
+            try:
+                is_folder = entry.is_dir(follow_symlinks=followlinks)
+            except OSError:
+                is_folder = False
+            (dirnames if is_folder else filenames).append(entry.name)
+        yield folder, dirnames, filenames
+        stack.extend(os.path.join(folder, name) for name in reversed(dirnames))
+
+
 def _holds_foreign_file(name: str, folder: str) -> bool:
     """The cache `folder`, called `name`, holds a file of a type the cache does not write.
     Version control data has no such test and is never listed."""
     own = CACHE_OWN_TYPES.get(name)
     if own is None:
         return False
-    for _dirpath, _dirnames, filenames in os.walk(folder):
+    for _dirpath, _dirnames, filenames in _walk(folder):
         for filename in filenames:
             if filename in CACHE_OWN_NAMES:
                 continue
@@ -856,7 +906,8 @@ def walk(
     exclude = _normalise_excludes(opts.exclude)
     ignore = GitIgnore.load(root)
     unlisted: list[str] = []
-    listing = _tracked(root, unlisted)
+    network: list[str] = []
+    listing = _tracked(root, unlisted, network)
     tracked = listing or frozenset()
     outside_git = listing is not None and not tracked
     tracked_dirs = frozenset(a for rel in tracked for a in _ancestors(rel))
@@ -878,6 +929,8 @@ def walk(
     # differently.
     met: set[str] = set()
     left_out: list[str] = []
+    # Every `.git` below the root the walk meets: `git status` opens them (`git_tree`).
+    dotgits: list[Path] = []
 
     def _onerror(err: OSError) -> None:
         nonlocal unreadable
@@ -889,8 +942,8 @@ def walk(
         if name not in NOTHING_WRITTEN_DIRS or (outside_git and _holds_foreign_file(name, folder)):
             not_read_dirs.append(rel)
 
-    for dirpath, dirnames, filenames in os.walk(
-        root, topdown=True, onerror=_onerror, followlinks=opts.follow_symlinks
+    for dirpath, dirnames, filenames in _walk(
+        root, onerror=_onerror, followlinks=opts.follow_symlinks
     ):
         dir_rel = _clean_rel(_norm_rel(os.path.relpath(dirpath, root)))
         if dir_rel and ".gitignore" in filenames:
@@ -902,6 +955,8 @@ def walk(
             manifests[dir_rel] = manifest
 
         keep: list[str] = []
+        if dir_rel and (".git" in dirnames or ".git" in filenames):
+            dotgits.append(Path(dirpath) / ".git")
         for name in sorted(dirnames):
             rel = _join(dir_rel, name)
             folder = os.path.join(dirpath, name)
@@ -1063,7 +1118,13 @@ def walk(
     if not_text:
         unknown.append(_not_text_item(not_text))
     if listing is None or unlisted:
-        unknown.append(_not_listed_item(unlisted, network_reference(root)))
+        own = network_reference(root)
+        sub = _shown(network) if network and own is None else None
+        unknown.append(_not_listed_item(unlisted, own or sub, in_submodule=sub is not None))
+    nested = {_host_in_git_files(dotgit) for dotgit in dotgits} - {None}
+    nested_rels = sorted({_shown_rel(hit, root) for hit in nested if hit} - set(network))
+    if nested_rels:
+        unknown.append(_nested_network_item(nested_rels))
     lost = _lost_tracked(tracked, met, [*pruned, *left_out])
     if lost:
         unknown.append(_lost_tracked_item(lost))
@@ -1148,11 +1209,15 @@ def _not_text_item(paths: Sequence[str]) -> UnknownItem:
     )
 
 
-def _not_listed_item(unlisted: Sequence[str], network: str | None = None) -> UnknownItem:
+def _not_listed_item(
+    unlisted: Sequence[str], network: str | None = None, *, in_submodule: bool = False
+) -> UnknownItem:
     """`.gitignore` never hides a tracked file, but only git can say which are tracked. When
-    it cannot, a committed file can stay hidden, so the walk says what it could not know."""
+    it cannot, a committed file can stay hidden, so the walk says what it could not know.
+    `in_submodule`: the file naming another machine is a submodule's, not the root's."""
     if network is not None:
-        why = f"git was not started: {network} names a path on another machine"
+        where = " in the submodule" if in_submodule else ""
+        why = f"git was not started{where}: {network} names a path on another machine"
     elif unlisted:
         why = f"git could not list the files of {len(unlisted)} submodule(s): {_shown(unlisted)}"
     else:
@@ -1166,6 +1231,24 @@ def _not_listed_item(unlisted: Sequence[str], network: str | None = None) -> Unk
             "without `.git`."
             if network is not None
             else "Repair the repository (`git status` names the error) and re-run."
+        ),
+    )
+
+
+def _nested_network_item(paths: Sequence[str]) -> UnknownItem:
+    """A nested repository whose git files name a path on another machine: `git status`
+    would open them, so it is not run (`git_tree`), and the tree's state is not known."""
+    return UnknownItem(
+        category=UnknownCategory.COVERAGE,
+        what="tree state not compared",
+        why=(
+            f"git status was not run: {_shown(paths)} in a nested repository names a path on "
+            "another machine, and git status opens it; whether the tree differs from its "
+            "commit is not known"
+        ),
+        how_to_resolve=(
+            "Take the network path out of the nested repository's git files, or audit a copy "
+            "without them."
         ),
     )
 
@@ -1283,10 +1366,208 @@ def _link_target(path: Path) -> str | None:
     return target.removeprefix("\\\\?\\")
 
 
+def _unquote_c(text: str, start: int) -> tuple[str, int] | None:
+    """git's `unquote_c_style` on the quoted string at `text[start]`: its value and the index
+    just past the closing quote, or None where git finds the quoting broken."""
+    out: list[str] = []
+    index = start + 1
+    while index < len(text):
+        char = text[index]
+        index += 1
+        if char == '"':
+            return "".join(out), index
+        if char == "\0":
+            return None
+        if char != "\\":
+            out.append(char)
+            continue
+        code, index = text[index : index + 1], index + 1
+        digits = code + text[index : index + 2]
+        if code and code in _C_ESCAPES:
+            out.append(_C_ESCAPES[code])
+        elif code and code in "0123" and len(digits) == 3 and all(d in _OCTAL for d in digits):
+            out.append(chr(int(digits, 8)))
+            index += 2
+        else:
+            return None
+    return None
+
+
+def _alternate_entries(text: str) -> list[str] | None:
+    """The entries of `objects/info/alternates` as git reads them (`parse_alt_odb_entry`):
+    one a line and `#` a comment, but an entry that starts with a quote is C-unquoted, may
+    run past its line, and git skips the one character after its closing quote. None when a
+    quoted entry does not decode: git would read it as written, this counts it as a host."""
+    entries: list[str] = []
+    index = 0
+    while index < len(text):
+        if text[index] == '"':
+            decoded = _unquote_c(text, index)
+            if decoded is None:
+                return None
+            entries.append(decoded[0])
+            index = decoded[1] + 1
+            continue
+        end = text.find("\n", index)
+        end = len(text) if end < 0 else end
+        if text[index] != "#":
+            entries.append(text[index:end])
+        index = end + 1
+    return entries
+
+
+def _config_entries(text: str) -> list[tuple[str, str, str | None]] | None:
+    """A git configuration file parsed the way git parses it (`git_parse_source`): `(section,
+    key, value)`, section and key lowercased (the subsection is dropped), each value with its
+    quotes, escapes, comments and continuation lines resolved, None for a key without `=`.
+    None at a line git rejects: git stops there."""
+    text = text.replace("\r\n", "\n").removeprefix("\xef\xbb\xbf")  # BOM, read as latin-1
+    entries: list[tuple[str, str, str | None]] = []
+    section = ""
+    index = 0
+    comment = False
+    while index < len(text):
+        char = text[index]
+        index += 1
+        if char == "\n":
+            comment = False
+        elif comment or char in _C_SPACE:
+            continue
+        elif char in "#;":
+            comment = True
+        elif char == "[":
+            header = _config_section(text, index)
+            if header is None:
+                return None
+            section, index = header
+        elif not (char.isascii() and char.isalpha()):
+            return None
+        else:
+            start = index - 1
+            while index < len(text) and _key_char(text[index]):
+                index += 1
+            key = text[start:index].lower()
+            while text[index : index + 1] in (" ", "\t"):
+                index += 1
+            if text[index : index + 1] in ("", "\n"):
+                entries.append((section, key, None))
+                continue
+            if text[index] != "=":
+                return None
+            value = _config_value(text, index + 1)
+            if value is None:
+                return None
+            entries.append((section, key, value[0]))
+            index = value[1]
+    return entries
+
+
+def _key_char(char: str) -> bool:
+    return char.isascii() and (char.isalnum() or char == "-")
+
+
+def _config_section(text: str, index: int) -> tuple[str, int] | None:
+    """A `[section]` or `[section "subsection"]` header read from just past its `[`: the
+    section's name, lowercased, and the index past its `]` (`get_base_var`)."""
+    start = index
+    while index < len(text):
+        char = text[index]
+        index += 1
+        if char == "]":
+            name = text[start : index - 1].lower()
+            return (name, index) if name else None
+        if char in _C_SPACE:
+            if char == "\n":
+                return None
+            name = text[start : index - 1].lower()
+            while text[index : index + 1] in tuple(_C_SPACE.replace("\n", "")):
+                index += 1
+            if text[index : index + 1] != '"':
+                return None
+            index += 1
+            while index < len(text):
+                char = text[index]
+                index += 1
+                if char == "\n":
+                    return None
+                if char == '"':
+                    return (name, index + 1) if text[index : index + 1] == "]" else None
+                if char == "\\":
+                    if text[index : index + 1] in ("", "\n"):
+                        return None
+                    index += 1
+            return None
+        if not (_key_char(char) or char == "."):
+            return None
+    return None
+
+
+def _config_value(text: str, index: int) -> tuple[str, int] | None:
+    """A configuration value read from just past its `=` (`parse_value`): the value and the
+    index past its line, or None at a line git rejects (an open quote, an unknown escape)."""
+    out: list[str] = []
+    trim: int | None = None
+    quote = comment = False
+    while True:
+        char = text[index] if index < len(text) else "\n"
+        index += 1
+        if char == "\n":
+            if quote:
+                return None
+            return "".join(out[:trim] if trim is not None else out), index
+        if comment:
+            continue
+        if char in _C_SPACE and not quote:
+            trim = len(out) if trim is None else trim
+            if out:
+                out.append(char)
+            continue
+        if char in ";#" and not quote:
+            comment = True
+            continue
+        trim = None
+        if char == "\\":
+            code = text[index] if index < len(text) else "\n"
+            index += 1
+            if code == "\n":
+                continue
+            if code not in _CONFIG_ESCAPES:
+                return None
+            out.append(_CONFIG_ESCAPES[code])
+        elif char == '"':
+            quote = not quote
+        else:
+            out.append(char)
+
+
+def _config_includes(path: Path, text: str) -> list[Path] | None:
+    """The files a configuration file includes, or None when it names a path on another
+    machine. Read twice: coarsely (`_config_text`), which can only count more, and as git
+    parses it, which decodes what the coarse read cannot and finds an include path quoted
+    around a `;`. A file git rejects counts as naming one: git has read the lines above the
+    bad one, includes and all, before it stops."""
+    coarse = _config_text(text)
+    entries = _config_entries(text)
+    if _names_host(coarse) or entries is None:
+        return None
+    for _section, key, value in entries:
+        if value is not None and key not in _REMOTE_KEYS and _HOST_VALUE_RE.match(value):
+            return None
+    rels = [match.group(1).strip() for match in _CONFIG_INCLUDE_RE.finditer(coarse)]
+    rels += [
+        value
+        for section, key, value in entries
+        if key == "path" and section in ("include", "includeif") and value
+    ]
+    return [path.parent / rel for rel in dict.fromkeys(rels) if rel[:1] != "~"]
+
+
 def _host_in_git_files(dotgit: Path) -> Path | None:
     """The file behind `dotgit` that names a path on another machine, or None. It follows
     what git would follow: the `.git` file, `commondir`, `config`, `config.worktree` and the
-    files they include, and object alternates, each by its own syntax."""
+    files they include, and object alternates, each by its own syntax. A configuration value
+    and a quoted alternate are decoded first, as git decodes them (`\\057` is `/`), and one
+    that does not decode counts as naming a host."""
     queue: list[tuple[str, Path]] = [(".git", dotgit)]
     seen: set[Path] = set()
     while queue:
@@ -1320,23 +1601,32 @@ def _host_in_git_files(dotgit: Path) -> Path | None:
         except OSError:
             continue
         if kind == "config":
-            text = _config_text(text)
-            if _names_host(text):
+            includes = _config_includes(path, text)
+            if includes is None:
                 return path
-            includes = (m.group(1).strip() for m in _CONFIG_INCLUDE_RE.finditer(text))
-            queue += [("config", path.parent / rel) for rel in includes if rel[:1] != "~"]
+            queue += [("config", include) for include in includes]
             continue
-        for line in text.splitlines():
-            value = line.partition("gitdir:")[2] if kind == ".git" else line
-            value = value.strip().strip('"')
-            if _HOST_VALUE_RE.match(value):
+        # git reads a `gitdir:` line and `commondir` as written, quotes and backslashes
+        # included; stripping them only counts more.
+        lines = [
+            (line.partition("gitdir:")[2] if kind == ".git" else line).strip().strip('"')
+            for line in text.splitlines()
+        ]
+        if kind == "alternates":
+            entries = _alternate_entries(text)
+            if entries is None:
                 return path
-            if not value or value.startswith("#"):
-                continue
-            if kind == "alternates":
-                queue.append(("alternates", path.parents[1] / value / "info" / "alternates"))
-            else:
-                queue.append(("folder", path.parent / value))
+            values = [*entries, *lines]
+            follow = [entry.split("\0")[0].strip() for entry in entries]
+            nexts = [
+                ("alternates", path.parents[1] / v / "info" / "alternates") for v in follow if v
+            ]
+        else:
+            values = lines
+            nexts = [("folder", path.parent / v) for v in lines if v and not v.startswith("#")]
+        if any(_HOST_VALUE_RE.match(value) for value in values):
+            return path
+        queue += nexts
     return None
 
 
@@ -1352,9 +1642,70 @@ def network_reference(cwd: Path) -> str | None:
             continue
         found = _host_in_git_files(folder / ".git")
         if found is not None:
-            found = Path(os.path.normpath(found))
-            return found.relative_to(folder).as_posix() if folder in found.parents else found.name
+            return _shown_rel(found, folder)
     return None
+
+
+def _shown_rel(path: Path, folder: Path) -> str:
+    """`path` relative to `folder` when it lies inside it, its name otherwise."""
+    path = Path(os.path.normpath(path))
+    return path.relative_to(folder).as_posix() if folder in path.parents else path.name
+
+
+def _host_on_the_way(path: Path, root: Path, depth: int = 0) -> Path | None:
+    """The link between `root` and `path` whose target is on another machine, or None.
+    Opening a path through a link opens the link's target first, so a link to a local folder
+    is followed and the folders on its own way are checked too."""
+    here = root
+    for part in path.relative_to(root).parts:
+        here = here / part
+        target = _link_target(here) if is_link(here) else None
+        if target is None:
+            continue
+        if _HOST_VALUE_RE.match(target) or depth >= _MAX_SUBMODULE_DEPTH:
+            return here
+        resolved = Path(os.path.abspath(here.parent / target))
+        if _host_on_the_way(resolved, Path(resolved.anchor), depth + 1) is not None:
+            return here
+    return None
+
+
+def _host_in_gitlink(root: Path, rel: str) -> Path | None:
+    """The file of the submodule at `rel` that names a path on another machine, or None.
+    The parent's `git status` reads every submodule's HEAD, so it opens what the submodule's
+    `.git` names before a check inside the submodule could refuse it."""
+    found = _host_on_the_way(root / rel, root)
+    return found if found is not None else _host_in_git_files(root / rel / ".git")
+
+
+def _nested_git_hosts(root: Path) -> list[str]:
+    """The git files below `root` that name a path on another machine, relative to it.
+    `git status` opens the `.git` of a folder it does not track to tell a nested repository
+    from a folder, so one such file anywhere in the tree makes it connect. Links and `.git`
+    folders are not entered."""
+    found: set[str] = set()
+    stack = [root]
+    while stack:
+        folder = stack.pop()
+        try:
+            with os.scandir(folder) as listing:
+                entries = list(listing)
+        except OSError:
+            continue
+        for entry in entries:
+            path = Path(entry.path)
+            if entry.name == ".git":
+                hit = None if folder == root else _host_in_git_files(path)
+                if hit is not None:
+                    found.add(_shown_rel(hit, root))
+                continue
+            try:
+                folder_like = entry.is_dir(follow_symlinks=False)
+            except OSError:
+                continue
+            if folder_like and not is_link(path):
+                stack.append(path)
+    return sorted(found)
 
 
 def crosses_link(output: str) -> bool:
@@ -1457,7 +1808,9 @@ class GitTree:
     what `git status` lists as untracked. `uncompared`: tracked files `git status` does not
     look at (skip-worktree, assume-unchanged); a file a sparse checkout left off the disk
     is not one of them. `status_failed`: git could not say, so nothing here may be read as
-    "no changes"."""
+    "no changes". `network`: the git files of submodules and nested repositories that name a
+    path on another machine, relative to the root; `git status` opens them, so it was not
+    run, and such a submodule was not listed either."""
 
     tracked: set[str] | None = field(default_factory=set)
     unlisted: set[str] = field(default_factory=set)
@@ -1465,6 +1818,7 @@ class GitTree:
     untracked: set[str] = field(default_factory=set)
     uncompared: set[str] = field(default_factory=set)
     status_failed: bool = False
+    network: list[str] = field(default_factory=list)
 
 
 def _leaves_tree(path: str) -> bool:
@@ -1479,10 +1833,13 @@ def git_tree(
     *,
     depth: int = 0,
     compare: bool = True,
+    nested: bool = True,
 ) -> GitTree:
     """Read the work tree at `root`, then each checked-out submodule as its own repository.
     `run` is the command runner, `_git` by default. `compare=False` lists the files and asks
-    nothing about differences."""
+    nothing about differences. Before anything is compared, every submodule's `.git` and,
+    with `nested`, every `.git` below `root` is checked for a path on another machine: one
+    found means no `git status` runs anywhere in the tree."""
     git = run or _git
     tree = GitTree()
     root = Path(root)
@@ -1502,6 +1859,13 @@ def git_tree(
             tree.status_failed = True
             tree.unlisted.add(path)
             continue
+        hit = _host_in_gitlink(root, path) if rest.startswith(_GITLINK_MODE) else None
+        if hit is not None:
+            # Checked before `.exists()`, which would follow a link to the other machine too.
+            tree.status_failed = True
+            tree.unlisted.add(path)
+            tree.network.append(_shown_rel(hit, root))
+            continue
         if rest.startswith(_GITLINK_MODE) and (root / path / ".git").exists():
             submodules.append(path)
         elif tree.tracked is not None:
@@ -1510,6 +1874,11 @@ def git_tree(
             sparse.add(path)
         elif tag != "H":  # `git ls-files -v`: every other tag is a file status does not compare
             tree.uncompared.add(path)
+    if compare and nested:
+        tree.network += [rel for rel in _nested_git_hosts(root) if rel not in tree.network]
+    if compare and tree.network:
+        tree.status_failed = True
+        compare = False
     if compare:
         _compare(root, git, tree)
         tree.changed -= sparse
@@ -1518,7 +1887,7 @@ def git_tree(
             tree.status_failed = True
             tree.unlisted.add(rel)
             continue
-        inner = git_tree(root / rel, run, depth=depth + 1, compare=compare)
+        inner = git_tree(root / rel, run, depth=depth + 1, compare=compare, nested=False)
         tree.status_failed = tree.status_failed or inner.status_failed
         if inner.tracked is None:
             tree.unlisted.add(rel)
@@ -1528,6 +1897,7 @@ def git_tree(
         tree.changed |= {f"{rel}/{p}" for p in inner.changed}
         tree.untracked |= {f"{rel}/{p}" for p in inner.untracked}
         tree.uncompared |= {f"{rel}/{p}" for p in inner.uncompared}
+        tree.network += [f"{rel}/{p}" for p in inner.network]
     return tree
 
 

@@ -864,7 +864,8 @@ def test_a_chain_with_two_renames_is_shown(tmp_path: Path) -> None:
     (root / "prompts/night.md").rename(root / "prompts/n2.md")
     commit = _commit(root)
     second = _retest(root, first, _with_other(root, tmp_path, commit, "b"))
-    assert _row(second, "A-night")["status"] == "not_verified"
+    # The step reads the rename target, which still holds the line.
+    assert _row(second, "A-night")["status"] == "not_remediated"
     saved = _saved(second, tmp_path / "b.json")
     (root / "prompts/n2.md").unlink()
     _put(root, "prompts/n3.md", CLEANED)

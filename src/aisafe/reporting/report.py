@@ -1285,6 +1285,13 @@ def _md_cell(text: Any) -> str:
     return str(text).replace("|", "\\|")
 
 
+def _md_text(text: str) -> str:
+    """A detail line for Markdown: `&` and `<` become entities and a backtick is escaped, so
+    text from the tree or a person (a baseline reason, a quote) opens no HTML comment, which
+    a viewer would hide, no raw HTML and no code span. The assessment's `_md` does the same."""
+    return text.replace("&", "&amp;").replace("<", "&lt;").replace("`", "\\`")
+
+
 def _md_finding(
     finding: Finding, first: Finding | None, anchored: bool, policy_version: str | None
 ) -> list[str]:
@@ -1301,7 +1308,7 @@ def _md_finding(
     if first is not None:
         ref = _T_MD_LINK.format(text=first.display_id, anchor=_anchor(first))
     details = _finding_detail_lines(finding, first, ref, policy_version)
-    return [head] + [f"  - {line}" for line in details]
+    return [head] + [f"  - {_md_text(line)}" for line in details]
 
 
 def _md_mechanisms(rows: Sequence[dict[str, Any]]) -> list[str]:

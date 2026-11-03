@@ -47,6 +47,7 @@ from pathlib import Path
 from typing import Any, Iterable, Mapping
 
 from aisafe.evidence.model import SCHEMA_VERSION, Finding, Report, now_iso, redact
+from aisafe.investigation.records import verdict_words_in
 from aisafe.policy import load_policy
 
 __all__ = [
@@ -510,8 +511,14 @@ def _check_reason(fingerprint: str, reason: str) -> str:
     problem = check_text(f"accepted reason for {fingerprint}", text)
     if problem:
         raise BaselineError(problem)
+    # The verdict words of an investigation record too: "no risk", "is safe", and the stems
+    # that catch a German or French verdict ("konform").
     lowered = text.lower()
-    if _BANNED_WORD_RE.search(text) or any(phrase in lowered for phrase in BANNED_PHRASES):
+    if (
+        _BANNED_WORD_RE.search(text)
+        or any(phrase in lowered for phrase in BANNED_PHRASES)
+        or verdict_words_in(text)
+    ):
         raise BaselineError(
             f"accepted reason for {fingerprint} reads as a verdict; a reason says why the "
             "finding stays, not that the target is safe"

@@ -320,7 +320,12 @@ still findings: the summary line says how many were not counted.
 git's: when the repository's `.git` file, `config` (and what it includes), `commondir` or
 object alternates name a path on another machine (a value that starts `//` or `\\`), git
 is not started at all, and one UNKNOWN row says the tree's tracked files and state are not
-known. A remote's URL does not count: nothing here opens one. The audit skips its own earlier output (JSON reports,
+known. Values are read the way git decodes them: a configuration value with its quotes and
+escapes resolved, a quoted alternate C-unquoted (`"\057\057host/share"` is `//host/share`),
+and a file or alternate that does not decode counts as naming a host. `git status` opens
+every submodule's and nested repository's `.git`, so when one of those names another
+machine, git status is not run anywhere in the tree, the tree's state reads as unknown,
+and a row names the file. A remote's URL does not count: nothing here opens one. The audit skips its own earlier output (JSON reports,
 inventory documents and SARIF files are recognised by parsing the file: the schema and
 kind keys at its top level, HTML pages by the marker on line 1), so a re-run does not report
 the previous run's snippets; `own_output_skipped` in the inventory names what was skipped,
@@ -656,7 +661,8 @@ session}`, `skeptic {result, reason, file}`; optional `covers`, `supersedes`,
 
 A record is **rejected** when a required field is empty or malformed, a cited file is not
 one the scan walked, a quote is not at its line, a content hash differs, the record names
-another commit or another mode, its free text pronounces a verdict, a quote carries a
+another commit or another mode, its free text pronounces a verdict (the English phrases, or a
+word starting `certifi`, `zertifiz` or `konform`; other languages are not checked), a quote carries a
 secret-shaped string, a remediation step already passes (it tests nothing), a regression
 step fails, a file it depends on changed, or its id is used twice. An accepted record
 keeps its claim only as far as the evidence carries it, and `notes` say why when it does
@@ -841,14 +847,19 @@ exits 2: an assessment never falls back to the scan.
 counts only while it is bound: the same commit as the assessment, on a tree that is that
 commit; the same policy version; the same mode; each record's digest equal to the record as it
 is now; each file on the list of unread files and equal to the file at the commit; no record or
-file listed twice; a person's name and a reason with no verdict in it; in auditor mode, the engagement's auditor, in a file
-outside the audited tree. Each is checked again on the file as it stands, since a file can be
+file listed twice; a person's name and a reason with no verdict in it; a file name with no
+verdict, secret-shaped token or hidden character in it; in auditor mode, the engagement's
+auditor, in a file outside the audited tree. Each is checked again on the file as it stands, since a file can be
 written by hand. One that fails any of this counts for nothing, whole: it is listed under
-`signoffs.refused` with why, and the gap stays. Outside git there is no commit, so every
+`signoffs.refused` with why, and the gap stays. A refusal never repeats the words it refused:
+the verdict is not named, and a part of the file's path that fails the check is shown as
+`(not shown)`, in the refused row and in the inputs list alike. Outside git there is no commit, so every
 sign-off is refused and the reason says to commit first.
 
 - On a record: only a record with claim `review`, a proposed `no_violation_identified_in_scope`,
-  `supported_mechanism` evidence, a bound upheld skeptic pass and no runtime-only link. It
+  `supported_mechanism` evidence, a bound upheld skeptic pass, no runtime-only link, no
+  `open_questions`, no `missing_evidence` and no counterevidence reading with result
+  `supported`: a person answers those in a new record, not in a sign-off. It
   becomes a closing that carries the sign-off (`machine_effective` keeps the machine's own
   reading): `record_at_review` goes, the record decides its own surface hypothesis, and it
   counts as a closing. Every other gap still applies, `untrusted_text_near_closing` for one. A
@@ -880,7 +891,10 @@ Steps fail a record; passing steps never show a remediation by themselves, whate
 kind. A record is `remediated` only when all of this holds:
 
 - every remediation step failed at its commit (re-checked there through `git show` for
-  `absent` and `present` steps) and does not fail now, and no regression step fails;
+  `absent` and `present` steps) and does not fail now, and no regression step fails. An
+  `absent` or `present` step on the surface's file also reads where that file went: the
+  rename target, or, when the file was deleted, the changed and cited files the plan lists a
+  surface in. The quote still there fails the step, whatever the closings cite;
 - no current record establishes the same hypothesis on the surface, and the scan reports no
   supported violation of the mechanism in the surface's file, a cited file, a file changed
   since the record's commit or, for a unit surface, the whole unit;
@@ -890,9 +904,13 @@ kind. A record is `remediated` only when all of this holds:
   and pattern is an upheld closing. A closing next to text addressed to an auditor counts
   only if its skeptic pass says it checked that text;
 - nothing is left open. A changed file that still holds the quote of an `absent` step needs a
-  closing that cites it, and any other finding of the mechanism in those files needs a
-  closing that covers it. The audit's own files are not searched: `.aisafe-audit/`, a report
-  the walk skipped as its own output, the records this run reads and the previous assessment.
+  closing that cites the lines that hold it (a closing that cites only other lines of that
+  file read something else), and any other finding of the mechanism in those files needs a
+  closing that covers it. A changed submodule, or a directory git lists whole, stands for
+  every file the walk reads under it; when the walk reads none, git cannot say what changed.
+  The audit's own files are not searched: `.aisafe-audit/` at the root of the tree (a folder
+  of that name deeper down is the system's), a report the walk skipped as its own output, the
+  records this run reads and the previous assessment.
 
 The plan still listing the surface means only a closing on that plan id answers it. When the
 anchor line was rewritten, a closing on the same type in the same file does. When the
@@ -905,12 +923,16 @@ keep its record file in the folder: without it the closing is rejected. A kept o
 `previous` only when its digest matches the entry in the previous assessment. Other content
 under that id stays rejected and leaves its gap.
 
-The other statuses: `not_remediated`, `regressed` (a regression step fails, or a record or
-the scan shows the mechanism on a closed surface), `needs_reinvestigation` (the steps did not
-fail, and no closing answers the hypothesis, or something above is left open), `not_verified`
-(a remediation step already passed at the previous commit, nothing the record read changed,
-or git cannot say what changed), `held` (regression steps only, all passing, and every cited
-file read), `same_commit`. A step on a file the walk no longer reads cannot run, and is never
+The other statuses: `not_remediated`, `regressed` (a regression step fails, a record shows
+the mechanism on a closed surface, or the scan reports a supported violation of it in the
+surface's file, its unit or a file the record cites), `needs_reinvestigation` (the steps did
+not fail, and no closing answers the hypothesis, or something above is left open; a
+violation the scan reports only in another changed file is open this way, and the row names
+it), `not_verified` (a remediation step already passed at the previous commit, nothing the
+record read changed, or git cannot say what changed), `held` (regression steps only, all
+passing, every cited file read, and, when the surface's file changed its text, a closing at
+the new commit on the surface), `same_commit`. All but `remediated`, `held` and
+`same_commit` leave a violation standing. A step on a file the walk no longer reads cannot run, and is never
 a pass. A finding that is no longer reported is listed as "not reported", never as
 remediated, and a violation the retest does not show remediated stands in the new assessment,
 and its record is carried in `remediation.carried_records` to be retested again at the next
@@ -1124,6 +1146,15 @@ assessment file's sha256; the engagement's auditor cannot sign it. With `qa.requ
 in the engagement, `status` stays at 1 until the latest sign-off of the current assessment
 is an approval.
 
+Every `--by` gets the review record's checks on a name: not empty, no hidden or control
+character, not a tool's or an agent's name, no verdict. `--reason`, `--text`, `--notes`,
+`--note` and `--what` get the free-text checks: no hidden or control character (`--text` and
+`--notes` may hold several lines), nothing secret-shaped, no verdict phrase. A response may
+disagree with a finding; it may not pronounce the system safe or certified. `receive` and
+`authorise` refuse a file whose name holds a secret-shaped token, since the file is copied in
+under its name. The QA sign-off compares names as the sign-off does: spacing, case and accents
+do not make the auditor a second auditor.
+
 The auditor decides. `authorise`, `receive`, `insufficient`, `respond` and `qa` record
 what a named person did or said, on that person's instruction; the agent skill never runs
 them on its own and never writes a statement, an answer, a response or a sign-off.
@@ -1249,8 +1280,15 @@ control or hidden character (a zero-width space, a right-to-left override), no w
 mixes two alphabets, no verdict language, nothing secret-shaped, and no quoting of the matched
 text (the record is walked like any other file). The verdict, secret and tool-name checks
 read the text with accents and compatibility forms removed, so an accent or a fullwidth letter
-does not step around them. The list of tool names can never be complete: it stops the plain
-cases, and a tool it does not know passes.
+does not step around them; the verdict and tool-name checks also read a Cyrillic, Greek or
+small-capital letter drawn like a Latin one as that letter, so a word in small capitals, or one
+spelled with a Cyrillic i, is the word it looks like. A name written wholly in Cyrillic or Greek is still a name. The list of tool names can
+never be complete: it stops the plain cases, and a tool it does not know passes. Text in other
+languages is accepted and is not checked for verdicts: the verdict phrases are English, and
+the investigation records, the sign-off, the engagement and a baseline reason add only the
+stems `certifi`, `zertifiz` and `konform` at the start of a word (so "certificate" is refused
+there too). Words such as "seguro", "sicher" or "conforme"
+have everyday meanings and are not refused.
 A verdict-shaped purpose is refused:
 
 ```

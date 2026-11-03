@@ -156,6 +156,80 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ### Fixed
 
+- **A quoted object alternate no longer reaches another machine.** git C-unquotes an
+  alternate that starts with a quote, so `"\057\057host/share/objects"` is `//host/share`;
+  the check took the quotes off and read `\057` literally, and `git cat-file` then read the
+  commit over SMB. Alternates are now decoded as git decodes them (octal and backslash
+  escapes, an entry that runs past its line, the character git skips after the closing
+  quote), and one that does not decode counts as naming a host. Configuration files are
+  parsed as git parses them too: a value is checked decoded, an include path quoted around
+  a `;` or `#` is followed to the right file, and a file git rejects counts as naming a
+  host. A `gitdir:` line and `commondir` are read verbatim by git and stay as they were.
+- **A submodule or nested repository on another machine no longer makes `git status`
+  connect.** The parent's `git status` opens every submodule's `.git`, and the `.git` of
+  every untracked folder that has one, before the check inside the submodule refuses it.
+  `git_tree` now checks each gitlink's `.git` (and any link on its way) and every `.git`
+  below the root first; when one names another machine, git status is not run anywhere in
+  the tree, the tree's state reads as unknown, and a row names the file ("tracked files not
+  listed" for a submodule, "tree state not compared" for a nested repository).
+- **A control that may not run closes nothing.** `investigate validate` took a crisis check or
+  an anonymisation for "on the path" when it sat in a block that can be skipped: an arm of an
+  `if` (`if body.get("fast"):` that returns early, `if CRISIS_ON:` with the flag off, a real
+  condition such as `if admin:`), a `match` arm, a loop body (`for _ in range(0):`,
+  `while CRISIS_ON:`), the `else` of a loop with a `break`, a `try` whose handler swallows
+  the error, a branch of `a if c else b`, the right of `and`/`or`, an `assert` (`python -O`
+  drops it). Each now goes to review unless the guarded link sits in the same block.
+  `if None is not None:` now counts as code that never runs. A `finally` and a `try` whose
+  handlers re-raise still close.
+- **A rebound control closes nothing.** A call bound to the imported check closed even when
+  the name was rebound: by an assignment under `global` in a function, or by any parsed file
+  storing to it as an attribute (`safety.crisis_check = ...`, `setattr` with the name spelled
+  out). Both go to review now.
+- **An `async def` check must be awaited, and a generator check never closes.** Calling either
+  runs none of its body. An awaited call, or one passed to an awaited call such as
+  `asyncio.gather`, still closes.
+- **An edge to a prompt file needs the file named.** A hop joined two files when any word on
+  it matched the other file's stem, so `log.info("persona check skipped")` or
+  `persona = body.get("name")` tied app.py to `prompts/persona.md` and an M4 violation read
+  `establishes`. Outside Python-to-Python imports, a string literal on a running line of the
+  hop must hold the file's name with its extension, its path, or a code file's module path,
+  with matching folders.
+- **Every statement that reads a prompt fetched at run time is a run-time line.** Only
+  assignments counted, so a prompt link on `return {... system=system_prompt ...}` counted as
+  read (M6 concealment read `establishes`), and a disclosure located on
+  `msgs.append({"content": system_prompt})` closed. A `return`, a bare call or any other
+  statement that reads the name counts now, and so does the object a call puts it into.
+- **A prompt surface answers every model call its prompt feeds.** A crisis check on the way to
+  one handler closed a prompt surface whose prompt also fed a second handler without it. Each
+  model call fed from the prompt (in its file, in a file that imports it, or, for a prompt
+  outside parsed Python, every call of its unit) must now be answered.
+- **A check re-exported by a package closes.** `from guard import crisis_check`, where
+  `guard/__init__.py` re-exports it with one import and nothing else binds the name, now
+  resolves to the definition instead of going to review.
+- Two tests in `test_fixes3_validate.py` pinned the old reading: "a real condition" was a
+  closing listed as a true limit, and "a try" closed with a handler that carries on. The first
+  now goes to review; the second re-raises in its handler and still closes.
+- **A retest no longer drops a violation whose text stays at the new commit.** Four ways let
+  an established violation read `remediated` while its line was still there:
+  - a rename, or a deletion with the line kept in a new file: the remediation step ran on the
+    old path, could not run, and did not block. An `absent` or `present` step on the
+    surface's file now also reads where it went (the rename target, or the files a deleted
+    one may have moved to); the quote still there gives `not_remediated`;
+  - any closing that cited a file cleared a copy of the quote there, at any line. A copy now
+    clears only when a closing cites the lines that hold it;
+  - a copy inside a git submodule was never searched, since `git diff` lists only the
+    submodule's path. A changed submodule or directory now stands for every walked file under
+    it; when the walk reads none, git cannot say (`not_verified`);
+  - a copy in a nested folder named `.aisafe-audit` was skipped as the audit's own. Only the
+    folder at the root of the tree is the audit's.
+- **`held` needs a fresh reading of a rewritten surface.** Passing regression steps alone held
+  a surface whose file was rewritten. With no closing at the new commit on the surface, the
+  row is now `needs_reinvestigation`.
+- **`regressed` names what the record read.** A violation the scan reports only in another
+  changed file, already there before, made a closing on a different surface `regressed`. It
+  is now `needs_reinvestigation`, and the row names the finding and its file. `regressed`
+  stays for a violation in the surface's file, its unit or a file the record cites. Both
+  leave the violation standing.
 - **Ruling out an objective or an inference now needs a citation.** The validator had no scan
   rows for these two kinds, so a closing of M4/objective on a prompt cited any other line and
   still read `closes`. When the scan holds an engagement, attachment, steering or inference
@@ -256,6 +330,41 @@ place the version lives and moves the Unreleased entries under a dated heading;
   rule reads, so AUD-1105, AUD-1108 and AUD-1109 missed them (run 4 lost persona_bot's
   "never mention you are an AI" line this way). A test now refuses any control character in
   a tracked text file.
+- **A lookalike letter gets past no verdict or tool-name check.** A Cyrillic i and dze in
+  "the system is safe", a word in small capitals, a Greek alpha and iota or a Cyrillic ve, o, te
+  as a name, and a dotless i were all accepted: no word mixed two alphabets, and NFKD leaves these letters as
+  they are. `fold_text(lookalikes=True)` now reads Cyrillic, Greek and small-capital letters
+  drawn like Latin ones as those letters, for the verdict words, the banned phrases and the tool
+  names only; the alphabet-mix check reads the plain fold, so a name written in Cyrillic or Greek
+  still passes. "GPT-4 AI" and "Claude AI" now read as tools as well.
+- **Three stems catch a verdict in German or French.** `certifi`, `zertifiz` and `konform`
+  join the verdict words, matched at the start of a word ("zertifiziert", "certifié",
+  "certification"). "seguro", "sicher" and "conforme" are left out: they have everyday meanings.
+  Other text in other languages is accepted and not checked for verdicts, as `check_text` and the
+  reference now say. A baseline reason gets the verdict words too.
+- **A refused sign-off does not carry the verdict into a report.** The refusal named the words
+  it refused ("the reason pronounces a verdict (is safe)") in the JSON, the Markdown and the
+  terminal. It no longer names them.
+- **A sign-off's file name is checked.** A file named
+  `the-system-is-certified-compliant.json`, or with a secret-shaped name, was shown as it was in
+  the refused row and the inputs list. A name that fails the check now refuses the sign-off, and
+  that part of the path shows as `(not shown)`; the inputs list still hashes the file.
+- **A record that says it is not done cannot be signed.** A record listing `open_questions` or
+  `missing_evidence`, or with a counterevidence reading found `supported`, was signed into a
+  closing with no gap left. A person answers those in a new record, not in a sign-off.
+- **The engagement checks every name and every free text it records.** `qa`, `insufficient`,
+  `respond`, `receive` and `authorise` took `--by Claude`, and a reason or a response such as
+  "safe to deploy and certified" reached the reports. Every `--by` now gets the review record's
+  name checks, and `--reason`, `--text`, `--notes`, `--note` and `--what` the free-text checks
+  (no hidden or control character, nothing secret-shaped, no verdict). A response may still
+  disagree with a finding. The QA sign-off compared names by case only, so "T.  Auditor" or
+  "T. Audítor" could approve the auditor's own work; it compares them as the sign-off does.
+- **A file named like a secret is not copied into the engagement.** `receive` and `authorise`
+  copied `AKIA….txt` under that name, and `status` printed it. Both now refuse a file whose name
+  the redaction would change.
+- **A baseline reason opens no HTML comment in the audit's Markdown.** A reason holding
+  `<!-- ... -->` was written raw into the Markdown detail lines, where a viewer hides it. `&`,
+  `<` and backticks in those lines are now escaped, as the assessment's Markdown does.
 
 ## [0.2.0] - 2026-10-30
 

@@ -829,19 +829,30 @@ def _closed_with_regression(tmp_path: Path) -> tuple[Path, Path]:
     return root, _first(root, tmp_path, closing)
 
 
-def test_a_regression_step_that_cannot_run_is_not_held(tmp_path: Path) -> None:
+def test_a_regression_step_on_a_renamed_file_is_not_held(tmp_path: Path) -> None:
     root, previous = _closed_with_regression(tmp_path)
     _git(root, "mv", "app.py", "server.py")
     commit = _commit(root)
     write_record(tmp_path / "after", _other(root, _plan(root), commit, "server.py"))
     row = _row(_retest(root, previous, tmp_path / "after"), "B-closed")
-    assert row["steps"][0]["now"] is None
+    # The step reads the rename target (a rename never dodges it); the cited app.py is not
+    # read any more, so the row is still not held.
+    assert row["steps"][0]["now"] is True
+    assert "server.py" in row["steps"][0]["detail"]
     assert row["status"] == "needs_reinvestigation", row["why"]
 
 
 def test_a_regression_step_that_ran_and_passed_is_held(tmp_path: Path) -> None:
     root, previous = _closed_with_regression(tmp_path)
     after = _next_commit(root, tmp_path, FIXED + "\n# a comment\n")
+    # app.py changed its text: passing steps hold it only with a closing that reads it again.
+    assert _row(_retest(root, previous, after), "B-closed")["status"] == "needs_reinvestigation"
+    commit = _git(root, "rev-parse", "HEAD").strip()
+    step = {"id": "v1", "purpose": "regression", "kind": "present", "file": "app.py"}
+    closing = _closing(
+        root, _plan(root), commit, id="B-again", steps=[dict(step, quote="an AI assistant")]
+    )
+    write_record(after, closing, skeptic="upheld")
     row = _row(_retest(root, previous, after), "B-closed")
     assert row["status"] == "held", row["why"]
 

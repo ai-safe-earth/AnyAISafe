@@ -16,14 +16,16 @@ data, and the command's checks mean nothing to a file written by hand. Same comm
 that is that commit; same policy version; same mode; each record's digest equal to the
 record as it is now; each file on the list of unread files and equal to the file at the
 commit; no record or file listed twice; a person's name and a reason that pronounces no
-verdict. In auditor mode the name is the engagement's auditor, and the file sits outside the
-audited tree. A sign-off that fails
-any of this counts for nothing, whole, and the assessment lists it with why. Outside git
+verdict, in a file whose own name does not either (`bind_signoffs` reads the name). In
+auditor mode the name is the engagement's auditor, and the file sits outside the audited
+tree. A sign-off that fails any of this counts for nothing, whole, and the assessment lists
+it with why. Outside git
 there is no commit to bind to, so every sign-off is refused there.
 
 A record it names must also be one a person can close (`why_not_signable`): at review, with
-a closing proposed, its evidence supported, a bound skeptic pass upheld and no runtime-only
-link. Evidence the machine could not read stays unknown, whoever signs.
+a closing proposed, its evidence supported, a bound skeptic pass upheld, no runtime-only
+link, and nothing it says itself is still open (open questions, missing evidence, another
+reading found supported). Evidence the machine could not read stays unknown, whoever signs.
 
 The limit: nothing here is signed. In self-assessment anyone with write access can write a
 sign-off file in any name, an AI agent included, so reports label it self-assessed. The tool
@@ -106,6 +108,10 @@ class SignoffSet:
 
     accepted: list[dict[str, Any]] = field(default_factory=list)
     refused: list[dict[str, Any]] = field(default_factory=list)
+    # Where each row's file sits, in the order of `accepted` then `refused`: the row's
+    # `file` hides a part of the path that `_shown` would not show, and the assessment
+    # still hashes the file. Not part of `to_dict`.
+    sources: list[Path] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -185,9 +191,9 @@ def person_problems(by: Any, reason: Any) -> list[str]:
     if name is not None:
         problems.append(name)
     why = check_text("the reason", reason)
-    words = verdict_words_in(reason if isinstance(reason, str) else "")
-    if why is None and words:
-        why = f"the reason pronounces a verdict ({', '.join(sorted(set(words)))})"
+    # The words are not repeated: a refusal is not a way to get them into a report.
+    if why is None and verdict_words_in(reason if isinstance(reason, str) else ""):
+        why = "the reason pronounces a verdict: it says what the person read and decided"
     if why is not None:
         problems.append(why)
     return problems
@@ -203,7 +209,10 @@ def tree_problems(scene: Scene) -> list[str]:
 
 
 def why_not_signable(record: RecordResult) -> str | None:
-    """Why a person's sign-off cannot close this record; None when it can."""
+    """Why a person's sign-off cannot close this record; None when it can. A record that
+    lists open questions or missing evidence, or weighed another reading and found it
+    supported, says itself that it is not done: a person answers that in a new record, which
+    the skeptic reads, and a sign-off does not answer it."""
     proposed = record.proposed.get("decision")
     status = record.effective.get("evidence_status")
     if record.claim != "review":
@@ -219,6 +228,18 @@ def why_not_signable(record: RecordResult) -> str | None:
         link.get("established_by") == "runtime-only" for link in record.links or []
     ):
         return "it rests on a runtime-only link"
+    raw = record.raw if isinstance(record.raw, dict) else {}
+    for key, what in (
+        ("open_questions", "open questions"),
+        ("missing_evidence", "missing evidence"),
+    ):
+        if isinstance(raw.get(key), list) and raw[key]:
+            return f"it lists {what}: answer them in a new record, not in a sign-off"
+    counter = raw.get("counterevidence")
+    if isinstance(counter, list) and any(
+        isinstance(item, dict) and item.get("result") == "supported" for item in counter
+    ):
+        return "it found another reading supported: weigh it in a new record, not in a sign-off"
     return None
 
 
@@ -398,6 +419,26 @@ def _read(path: Path) -> tuple[Any, str | None]:
         return None, f"it cannot be read ({exc})"
 
 
+def _file_shown(path: Path) -> str:
+    """The sign-off's path as a report shows it: each part of it that `_shown` would not
+    show (a verdict, a secret-shaped token, a hidden character) is `(not shown)`."""
+    parts = path.as_posix().split("/")
+    return "/".join(
+        part if not part or _shown(part) != _NOT_SHOWN else _NOT_SHOWN for part in parts
+    )
+
+
+def _name_refusal(path: Path) -> str | None:
+    """Why the file's own name cannot stand in a report; None when it can. The name is
+    chosen by whoever wrote the file, as its words are."""
+    if _shown(path.name) == _NOT_SHOWN:
+        return (
+            "its file name reads as a verdict, holds a secret-shaped token or a hidden "
+            "character: rename it to the id it carries"
+        )
+    return None
+
+
 def _refused_row(path: Path, doc: Any, why: list[str]) -> dict[str, Any]:
     """Shows only what passed its check: a file refused for its words is not a way to get
     those words into a report."""
@@ -406,7 +447,7 @@ def _refused_row(path: Path, doc: Any, why: list[str]) -> dict[str, Any]:
     fit = isinstance(named, str) and ID_RE.fullmatch(named) and _shown(named) != _NOT_SHOWN
     clear = not person_problems(doc.get("by"), doc.get("reason"))
     return {
-        "file": path.as_posix(),
+        "file": _file_shown(path),
         "id": named if fit else None,
         "by": _text(doc.get("by")) if clear else None,
         "reason": _text(doc.get("reason")) if clear else None,
@@ -417,7 +458,7 @@ def _refused_row(path: Path, doc: Any, why: list[str]) -> dict[str, Any]:
 def _accepted_row(path: Path, doc: dict[str, Any]) -> dict[str, Any]:
     """Rebuilt from the keys that were checked: what else a row holds was read by nobody."""
     return {
-        "file": path.as_posix(),
+        "file": _file_shown(path),
         "id": doc["id"],
         "by": _text(doc["by"]),
         "at": str(doc["at"]),
@@ -439,16 +480,23 @@ def bind_signoffs(paths: Sequence[Path], scene: Scene) -> SignoffSet:
     # One file reached by two spellings is one file, never two claims on its id.
     for path in sorted({Path(p).resolve(): Path(p) for p in paths}.values(), key=Path.as_posix):
         doc, problem = _read(path)
-        read.append((path, doc, [problem] if problem else refusals(doc, scene, path)))
+        why = [problem] if problem else refusals(doc, scene, path)
+        named_badly = _name_refusal(path)
+        read.append((path, doc, [*why, named_badly] if named_badly else why))
     named = [doc.get("id") for _, doc, _ in read if isinstance(doc, dict)]
     out = SignoffSet()
+    accepted_paths: list[Path] = []
+    refused_paths: list[Path] = []
     for path, doc, why in read:
         if isinstance(doc, dict) and named.count(doc.get("id")) > 1:
             why = [*why, "another sign-off file uses the same id"]
         if why:
             out.refused.append(_refused_row(path, doc, why))
+            refused_paths.append(path)
         else:
             out.accepted.append(_accepted_row(path, doc))
+            accepted_paths.append(path)
+    out.sources = [*accepted_paths, *refused_paths]
     return out
 
 
