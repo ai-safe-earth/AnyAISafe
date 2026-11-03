@@ -10,18 +10,24 @@ steer them toward a product or an opinion without saying so. Each finding names 
 and the line, says what was established and what the project's policy decides about it,
 and lists what could not be checked.
 
-It is a workbench for an independent auditor assessing someone else's AI system (auditor
-mode), and for the team that owns a system assessing it themselves (self-assessment
-mode); every document says which. The scan calls no model, so the same code gives the
-same findings, and it runs on every push and across every repository you own. Reading the
-code more deeply is the job of a host coding agent you already use, with no separate API
-key: its reasoning enters only as investigation records that aisafe checks line by line,
-and `aisafe assess` turns the scan and the checked records into an assessment. An auditor
-works from an engagement directory outside the audited tree: the scope, the written
-authorisations, the evidence requested from the auditee, their responses, and the answers
-a few legal profiles (EU AI Act, New York's AI companion law, California SB 243) are read
-against, in a legal section kept apart from the ethical outcome. It is not a verdict on the
-product, not a certification, not legal advice and not a score. The standard it applies is
+It comes in two parts:
+
+- **The scan** (`aisafe audit`, released in 0.2.0) reads the code and calls no model. The
+  same code always gives the same findings, so it can run on every push and across every
+  repository you own.
+- **The workbench** (on `main`, not yet released) goes deeper. Your coding agent reads the
+  code and writes investigation records, aisafe checks every record line by line, and
+  `aisafe assess` turns them into an assessment. Before a claim counts, a second agent with
+  no shared context tries to refute it.
+
+It serves an independent auditor assessing someone else's system (auditor mode) and a team
+assessing its own (self-assessment mode); every document says which. An auditor works from
+an engagement folder kept outside the audited code: the scope, the written authorisations,
+the evidence asked for, the audited team's replies, and a legal section that reads a few
+laws (the EU AI Act, New York's AI companion law, California SB 243) apart from the
+ethical outcome.
+
+It is not a verdict, a certification, legal advice or a score. The standard it applies is
 written down, versioned and named on every finding:
 [`policy/charter.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/policy/charter.md).
 
@@ -47,21 +53,29 @@ No API key, no account, no model call. On Windows, set `PYTHONIOENCODING=utf-8` 
 Releases before 0.2.0 are the product before the pivot (see
 [What changed in the pivot](https://github.com/ai-safe-earth/AnyAISafe#what-changed-in-the-pivot)).
 
-To go beyond the scan, plan an investigation, let your coding agent (with the skill) write
-the records, and assess:
-
-```bash
-aisafe investigate plan . -o .aisafe-audit/investigation-plan.json   # the surfaces to read, ranked
-aisafe investigate validate .aisafe-audit/investigations/            # every quote at its line, every hash equal
-aisafe assess . --investigations .aisafe-audit/investigations        # one outcome per mechanism, and the scope
-```
-
-Next, two files worth committing:
+Two files worth committing:
 
 ```bash
 aisafe review init .                                   # a review record skeleton: every prompt and algorithm file, with its hash
 aisafe audit . --write-baseline audit-baseline.json    # record today's findings; later, only new ones fail a build
 ```
+
+### The workbench, from `main`
+
+The workbench is not on PyPI yet. Install it from the repository, then plan the
+investigation, let your coding agent write the records with the skill, and assess:
+
+```bash
+pip install "aisafe[devtools] @ git+https://github.com/ai-safe-earth/AnyAISafe"
+aisafe investigate plan . -o .aisafe-audit/investigation-plan.json   # the surfaces to read, ranked
+aisafe investigate validate .aisafe-audit/investigations/            # every quote at its line, every hash equal
+aisafe assess . --investigations .aisafe-audit/investigations        # one outcome per mechanism, and the scope
+```
+
+To see a finished one first, read
+[`examples/companion_demo_engagement/`](https://github.com/ai-safe-earth/AnyAISafe/tree/main/examples/companion_demo_engagement):
+a fictional audit of a small companion app, with every record, skeptic pass, assessment
+and retest. It ends with the fix not yet shown, and its README says why.
 
 ## Why this exists
 
@@ -330,10 +344,21 @@ coverage, the sources and what was not verified; no profile has been reviewed by
 yet.
 
 An assessment lists its blocking gaps (a high-priority surface nobody investigated, a
-refuted or unchallenged claim, a link that exists only at run time), the scope it read
-and the scope it left out. A closing record never lowers a violation, scan silence is
-never a closing, and a finding that disappears after a change is "not reported" until
-the record's own verification steps pass on the new commit (`aisafe assess --retest`).
+refuted or unchallenged claim, a link that exists only at run time, a file nobody read),
+the scope it read and the scope it left out. A closing record never lowers a violation,
+and scan silence is never a closing.
+
+**After a fix.** `aisafe assess --retest` shows a violation as remediated only when a new
+record on the fixed code closes it and its skeptic pass upholds it. Passing checks alone
+never show a fix, because reworded or moved text passes them too. A violation that is not
+shown remediated stays in the next assessment.
+
+**A person's decision.** Some questions only a person can settle: a closing the machine
+cannot verify (a control in JavaScript, say) or a file the scan could not read.
+`aisafe investigate signoff` records that decision with the person's name and reason,
+bound to one commit and to the exact records or files. It never lowers a violation, never
+changes a legal result and does not carry over to a new commit. An agent never runs it: it
+prints the command for the person.
 
 **What it reads.** Prompt files and templates (`prompts/`, `*.prompt.*`, persona and
 character files), prompt literals and assemblies in code, model calls (the Anthropic,
@@ -531,12 +556,13 @@ audited tree, and never edits the audited code.
    reviewer, with the agent in `assisted_by`.
 5. **Remediate.** One diff per approval, preferring the change that removes the
    objective, the inference or the intervention over a filter in front of the person; a
-   re-audit after each, and a retest of the records' steps at the end.
+   re-audit after each, and a retest at the end, with a new record on the fixed code.
 6. **Evaluate.** Only with approval: `aisafe evaluate` on a loopback or authorised
    endpoint, or on held transcripts.
 
 For Claude Code, install the plugin. It is the skill and nothing else: no hooks, no
-settings changed.
+settings changed. Its investigate and assess steps need the workbench: until the next
+release, install aisafe from the repository (see above) so the skill finds it first.
 
 ```bash
 claude plugin marketplace add ai-safe-earth/AnyAISafe
@@ -631,6 +657,9 @@ repos:                       # repos.yaml
 aisafe fleet repos.yaml --jobs 4 --proposal
 ```
 
+The fleet needs Python 3.11 or later. From 3.11, Python can stop a cloned repository's own
+code from running in place of aisafe.
+
 Each repository gets its own audit process with a time limit. The output is
 `.aisafe-fleet/fleet-report.{json,csv,md}` plus one `audit-report.json` per repository.
 `--proposal` adds a `proposal.md` per repository: a plan table with `file:line` and no code
@@ -638,6 +667,8 @@ snippets, to share with the repository's owners. Exit `1` means at least one rep
 could not be audited, so an incomplete survey never looks complete.
 
 ### The commands, one line each
+
+`investigate`, `assess` and `engagement` are the workbench: on `main`, not yet released.
 
 - `aisafe audit PATH` scans the prompts and the code around them; evidence and a policy
   decision per finding, never a verdict. Its output is a scan report.
@@ -720,7 +751,7 @@ and on every pull request to main, against `audit-baseline.json`.
 
 **Where help counts most:**
 
-- **Label the sample.** The largest open task: 161 sampled findings from the 33-repository
+- **Label the sample.** The largest open task: 243 sampled findings from the 33-repository
   corpus wait for a `tp` / `fp` / `unclear` label each
   ([`research/`](https://github.com/ai-safe-earth/AnyAISafe/tree/main/research)). About
   30 to 50 judged findings per rule are enough to start.
@@ -755,12 +786,16 @@ See [`SECURITY.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/SECURIT
 **License.** MIT, see [`LICENSE`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/LICENSE).
 
 **Disclaimer.** AnyAISafe provides evidence about prompts and code, and the decision a
-written policy takes on each item. It is not legal advice and does not assess compliance
-with any regulation. Findings describe prompts and code; they do not prove a system is
-free of risk, and absence of a finding is not evidence of safety. Whether a practice falls
-under a law is a legal determination made by the operator.
+written policy takes on each item. It is not legal advice. Its legal section reads a few
+provisions against the evidence: a gap there is not a finding of infringement, and nothing
+in it says a system complies. Findings do not prove a system is free of risk, and absence
+of a finding is not evidence of safety. Whether a practice falls under a law is for a
+lawyer to decide.
 
-**Status.** Early. 0.2.0 is the first release of the pivoted auditor; 0.1.0 is the
-product before the pivot. Every rule is UNMEASURED. Known limits are listed under
+**Status.** Early. On PyPI, 0.2.0 is the scan, the review record, evaluation, the fleet
+and the skill. The workbench (investigations, assessments, engagements, the sign-off and
+the legal profiles) is on `main` and comes with the next release. 0.1.0 is the product
+before the pivot. Every rule is UNMEASURED, and no legal profile has been reviewed by a
+lawyer. Known limits are listed under
 [How it works](https://github.com/ai-safe-earth/AnyAISafe#how-it-works) and in
 [`CHANGELOG.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/CHANGELOG.md).
