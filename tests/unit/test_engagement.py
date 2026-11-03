@@ -370,7 +370,15 @@ def test_the_qa_signoff_is_bound_to_the_assessment_it_signed(tmp_path: Path, cap
     eng_main(["status", "--engagement", str(eng), "--format", "json"])
     (signoff,) = json.loads(capsys.readouterr().out)["qa"]["signoffs"]
     assert signoff["current"] is True
-    assert assess_main([str(root), "--engagement", str(eng)]) == 1  # a new assessment
+    # A new assessment that differs: on a fast machine two runs in one second are the same
+    # document, and the sign-off rightly still matches it.
+    assert (
+        eng_main(
+            ["respond", "--engagement", str(eng), "--to", "M6", "--by", "B. Owner", "--text", "x"]
+        )
+        == 0
+    )
+    assert assess_main([str(root), "--engagement", str(eng)]) == 1
     capsys.readouterr()
     eng_main(["status", "--engagement", str(eng), "--format", "json"])
     (signoff,) = json.loads(capsys.readouterr().out)["qa"]["signoffs"]

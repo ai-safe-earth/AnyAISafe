@@ -157,8 +157,12 @@ def audit(
     """
     Run the audit with the clone as cwd (so the target's own `[tool.aisafe-audit]`
     applies, as under the skill). Exit 0 and 1 are both a completed audit; 2 is fatal
-    and says so.
+    and says so. Before Python 3.11 nothing stops a folder of the clone standing in for
+    aisafe, so it refuses there, whoever calls it.
     """
+    if not _safe_path_works():
+        print("    !! audit refused: Python 3.11 or later is needed to keep the clone's code out")
+        return 2, None
     proc = subprocess.run(
         audit_argv(out_file, rules, experimental),
         capture_output=True,

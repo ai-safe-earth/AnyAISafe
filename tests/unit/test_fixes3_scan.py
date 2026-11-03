@@ -237,7 +237,12 @@ def test_the_bench_runs_the_auditor_and_not_the_clones_copy(tmp_path: Path) -> N
     spec.loader.exec_module(module)
     assert module._child_env is fleet._child_env
     code, summary = module.audit(root, tmp_path / "report.json")
-    assert code == 0 and summary is not None and not marker.exists()
+    assert not marker.exists()
+    if fleet._safe_path_works():
+        assert code == 0 and summary is not None
+    else:
+        # Before 3.11 the clone's own `aisafe` would be imported: the audit refuses instead.
+        assert code == 2 and summary is None
 
 
 # ---------------------------------------------------------------------------
