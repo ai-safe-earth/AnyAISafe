@@ -164,7 +164,7 @@ policy's severity criteria.
 - **The GitHub Action and the GitLab job** keep their inputs; a workflow that passed
   `extra-args: --tools ...` or `--run-evals` must drop them.
 
-## 5. After 0.2.0: the chain, the trace and policy 1.1.0 (unreleased)
+## 5. In 0.3.0: the chain, the trace and policy 1.1.0
 
 Policy 1.1.0 (adopted 2026-10-30) splits each mechanism into **patterns** and names the
 links a trace of each pattern needs (`policy/mechanisms.yaml`, `patterns`). The decision

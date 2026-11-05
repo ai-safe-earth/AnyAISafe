@@ -6,7 +6,7 @@
 # live under .aisafe-audit/ in self-assessment mode, and in the engagement directory in
 # auditor mode.
 set -eu
-AISAFE_VERSION="0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+AISAFE_VERSION="0.3.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 if command -v aisafe >/dev/null 2>&1; then
   v=$(aisafe --version 2>/dev/null | sed 's/^aisafe //' || true); [ -n "$v" ] || v=unknown
   echo "aisafe: $(command -v aisafe) version $v (pinned $AISAFE_VERSION)" >&2

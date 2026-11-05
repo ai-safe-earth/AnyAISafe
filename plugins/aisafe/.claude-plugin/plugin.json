@@ -1,7 +1,7 @@
 {
   "name": "aisafe",
   "displayName": "AnyAISafe",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Audit the prompts and algorithms of AI-enabled software for profiling, manipulation, engineered emotional attachment, deceptive identity and behavioural influence over the person using it (aisafe audit); walk each finding by mechanism, record a named person's review bound to the prompts they read (aisafe review), remediate one approval at a time, and evaluate the running system with fixed scenarios (aisafe evaluate). Deterministic and offline. Findings carry evidence and a policy decision, never a certification.",
   "author": {
     "name": "AI SAFE EARTH",

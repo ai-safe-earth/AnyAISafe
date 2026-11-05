@@ -8,6 +8,8 @@ place the version lives and moves the Unreleased entries under a dated heading;
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-11-05
+
 ### Added
 
 - **A person's sign-off** (`aisafe investigate signoff`, `aisg/signoff/1`). Two gaps had no way
@@ -697,6 +699,7 @@ distribution `anyaisafe` with the import and command `aisg`; none was published.
   `metadata["judge_error"]`, with `unavailable` usage, instead of swallowing it
   silently; the two AUD-802 entries on them left the self-audit baseline.
 
-[Unreleased]: https://github.com/ai-safe-earth/AnyAISafe/compare/v0.2.0...HEAD
+[Unreleased]: https://github.com/ai-safe-earth/AnyAISafe/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/ai-safe-earth/AnyAISafe/releases/tag/v0.3.0
 [0.2.0]: https://github.com/ai-safe-earth/AnyAISafe/releases/tag/v0.2.0
 [0.1.0]: https://github.com/ai-safe-earth/AnyAISafe/releases/tag/v0.1.0

@@ -12,13 +12,12 @@ and lists what could not be checked.
 
 It comes in two parts:
 
-- **The scan** (`aisafe audit`, released in 0.2.0) reads the code and calls no model. The
-  same code always gives the same findings, so it can run on every push and across every
-  repository you own.
-- **The workbench** (on `main`, not yet released) goes deeper. Your coding agent reads the
-  code and writes investigation records, aisafe checks every record line by line, and
-  `aisafe assess` turns them into an assessment. Before a claim counts, a second agent with
-  no shared context tries to refute it.
+- **The scan** (`aisafe audit`) reads the code and calls no model. The same code always
+  gives the same findings, so it can run on every push and across every repository you own.
+- **The workbench** (`aisafe investigate`, `aisafe assess`) goes deeper. Your coding agent
+  reads the code and writes investigation records, aisafe checks every record line by line,
+  and `aisafe assess` turns them into an assessment. Before a claim counts, a second agent
+  with no shared context tries to refute it.
 
 It serves an independent auditor assessing someone else's system (auditor mode) and a team
 assessing its own (self-assessment mode); every document says which. An auditor works from
@@ -60,13 +59,12 @@ aisafe review init .                                   # a review record skeleto
 aisafe audit . --write-baseline audit-baseline.json    # record today's findings; later, only new ones fail a build
 ```
 
-### The workbench, from `main`
+### Go deeper: the workbench
 
-The workbench is not on PyPI yet. Install it from the repository, then plan the
-investigation, let your coding agent write the records with the skill, and assess:
+Plan the investigation, let your coding agent write the records with the skill, and
+assess:
 
 ```bash
-pip install "aisafe[devtools] @ git+https://github.com/ai-safe-earth/AnyAISafe"
 aisafe investigate plan . -o .aisafe-audit/investigation-plan.json   # the surfaces to read, ranked
 aisafe investigate validate .aisafe-audit/investigations/            # every quote at its line, every hash equal
 aisafe assess . --investigations .aisafe-audit/investigations        # one outcome per mechanism, and the scope
@@ -561,8 +559,7 @@ audited tree, and never edits the audited code.
    endpoint, or on held transcripts.
 
 For Claude Code, install the plugin. It is the skill and nothing else: no hooks, no
-settings changed. Its investigate and assess steps need the workbench: until the next
-release, install aisafe from the repository (see above) so the skill finds it first.
+settings changed.
 
 ```bash
 claude plugin marketplace add ai-safe-earth/AnyAISafe
@@ -595,7 +592,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: ai-safe-earth/AnyAISafe@v0.2.0
+      - uses: ai-safe-earth/AnyAISafe@v0.3.0
         with:
           fail-on: high
           # optional; commit it first (aisafe audit . --write-baseline audit-baseline.json)
@@ -612,7 +609,7 @@ summary, uploads the SARIF to Code Scanning and exits with the audit's own exit 
 ```yaml
 repos:
   - repo: https://github.com/ai-safe-earth/AnyAISafe
-    rev: v0.2.0
+    rev: v0.3.0
     hooks:
       - id: aisafe-audit       # runs at pre-push
         args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]
@@ -667,8 +664,6 @@ snippets, to share with the repository's owners. Exit `1` means at least one rep
 could not be audited, so an incomplete survey never looks complete.
 
 ### The commands, one line each
-
-`investigate`, `assess` and `engagement` are the workbench: on `main`, not yet released.
 
 - `aisafe audit PATH` scans the prompts and the code around them; evidence and a policy
   decision per finding, never a verdict. Its output is a scan report.
@@ -792,10 +787,9 @@ in it says a system complies. Findings do not prove a system is free of risk, an
 of a finding is not evidence of safety. Whether a practice falls under a law is for a
 lawyer to decide.
 
-**Status.** Early. On PyPI, 0.2.0 is the scan, the review record, evaluation, the fleet
-and the skill. The workbench (investigations, assessments, engagements, the sign-off and
-the legal profiles) is on `main` and comes with the next release. 0.1.0 is the product
-before the pivot. Every rule is UNMEASURED, and no legal profile has been reviewed by a
+**Status.** Early. 0.3.0 adds the workbench: investigations, assessments, engagements,
+the sign-off and the legal profiles. 0.2.0 was the first release of the pivoted auditor,
+and 0.1.0 is the product before the pivot. Every rule is UNMEASURED, and no legal profile has been reviewed by a
 lawyer. Known limits are listed under
 [How it works](https://github.com/ai-safe-earth/AnyAISafe#how-it-works) and in
 [`CHANGELOG.md`](https://github.com/ai-safe-earth/AnyAISafe/blob/main/CHANGELOG.md).

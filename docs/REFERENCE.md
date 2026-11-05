@@ -1715,7 +1715,7 @@ finding at or above `fail-on` (only new ones when `baseline` is set):
 
 ```yaml
 - uses: actions/checkout@v4
-- uses: ai-safe-earth/AnyAISafe@v0.2.0
+- uses: ai-safe-earth/AnyAISafe@v0.3.0
   with:
     fail-on: high
     baseline: audit-baseline.json           # optional; commit it first
@@ -1738,7 +1738,7 @@ stage, `pass_filenames: false`, `always_run: true`, default args `--fail-on high
 ```yaml
 repos:
   - repo: https://github.com/ai-safe-earth/AnyAISafe
-    rev: v0.2.0
+    rev: v0.3.0
     hooks:
       - id: aisafe-audit
         args: ["--fail-on", "high", "--baseline", "audit-baseline.json"]

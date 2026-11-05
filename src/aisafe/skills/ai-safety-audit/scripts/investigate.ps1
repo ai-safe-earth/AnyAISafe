@@ -1,7 +1,7 @@
 # ai-safety-audit bootstrap: run `aisafe investigate` (plan | cite | validate | digest) through a pinned install chain (PowerShell mirror of investigate.sh).
 # aisafe-audit: ignore-file
 # The plan and the records it checks live under .aisafe-audit/ in self-assessment mode, and in the engagement directory in auditor mode.
-$AISAFE_VERSION = "0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+$AISAFE_VERSION = "0.3.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 if (Get-Command aisafe -ErrorAction SilentlyContinue) {
     $resolved = (Get-Command aisafe).Source
     $version = (& aisafe --version 2>$null) -replace '^aisafe ', ''

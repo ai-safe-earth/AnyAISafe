@@ -27,7 +27,7 @@ variables:
   AUDIT_PATH: "."                     # what `aisafe audit` walks
   AUDIT_FAIL_ON: "high"               # critical | high | medium | low | info | never
   AUDIT_BASELINE: ""                  # e.g. "audit-baseline.json"; empty = every finding counts
-  AISAFE_VERSION: "0.2.0"             # the `aisafe` release on PyPI; pinned, never "latest"
+  AISAFE_VERSION: "0.3.0"             # the `aisafe` release on PyPI; pinned, never "latest"
 
 .aisafe-base:
   stage: audit

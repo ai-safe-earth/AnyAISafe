@@ -1,7 +1,7 @@
 # ai-safety-audit bootstrap: run `aisafe review` (init | record | check) through a pinned install chain (PowerShell mirror of review.sh).
 # aisafe-audit: ignore-file
 # The record it writes, aisafe-review.yaml, lives at the repository root: the audit looks for it there.
-$AISAFE_VERSION = "0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+$AISAFE_VERSION = "0.3.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 if (Get-Command aisafe -ErrorAction SilentlyContinue) {
     $resolved = (Get-Command aisafe).Source
     $version = (& aisafe --version 2>$null) -replace '^aisafe ', ''

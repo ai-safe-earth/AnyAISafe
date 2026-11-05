@@ -14,7 +14,7 @@
 # reads it there as observed behaviour (AUD-1106, AUD-1108) whether or not .gitignore lists
 # the directory.
 set -u
-AISAFE_VERSION="0.2.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
+AISAFE_VERSION="0.3.0"   # pinned; test_skill_package.py asserts this equals pyproject.toml [project].version
 run="${AISAFE_EVALUATE_RUN:-0}"
 skip_tests="${AISAFE_EVALUATE_SKIP_TESTS:-0}"
 url="${AISAFE_EVALUATE_URL:-}"
